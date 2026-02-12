@@ -42,6 +42,12 @@ src/
 │   ├── components/          # Reusable UI components
 │   ├── views/               # Main application views
 │   └── themes/              # Theme system
+├── ai/                      # AI assistant layer (future)
+│   ├── provider.ts          # Provider abstraction interface
+│   ├── providers/           # Provider implementations (OpenAI, Anthropic, Ollama, etc.)
+│   ├── chat.ts              # Chat session management
+│   ├── tools.ts             # AI tool definitions (task CRUD, scheduling)
+│   └── voice.ts             # Voice input processing
 ├── cli/                     # CLI companion tool
 │   ├── index.ts             # Commander.js entry point
 │   ├── commands/            # CLI command handlers
@@ -342,6 +348,84 @@ Plugins declare permissions in their manifest. Users approve permissions on inst
 | `settings` | Add settings tab |
 | `storage` | Access plugin-specific storage |
 | `network` | Make HTTP requests (requires explicit approval) |
+
+## AI Assistant Architecture
+
+### Provider Abstraction
+
+All AI providers implement a common `AIProvider` interface. This allows swapping models with zero code changes — just update the config.
+
+```
+┌─────────────────────────────────────────────────┐
+│               AI Provider Interface              │
+│                                                  │
+│  chat(messages) → response                       │
+│  streamChat(messages) → AsyncIterable            │
+│  toolCall(messages, tools) → tool result          │
+│                                                  │
+├──────────┬──────────┬──────────┬────────────────┤
+│ OpenAI   │Anthropic │OpenRouter│  Ollama / LMS  │
+│ (cloud)  │ (cloud)  │ (cloud)  │  (local)       │
+└──────────┴──────────┴──────────┴────────────────┘
+```
+
+**Supported providers:**
+- **OpenAI** — GPT-4, GPT-3.5, etc. via API key
+- **Anthropic** — Claude models via API key
+- **OpenRouter** — Multi-provider gateway (access many models with one key)
+- **Ollama** — Local models, zero data exposure
+- **LM Studio** — Local models via OpenAI-compatible API
+- **Custom** — Users can build their own provider plugin
+
+### AI Chat Flow
+
+```
+User types/speaks in AI panel (sidebar)
+  │
+  ▼
+Voice input → Speech-to-text → Text
+  │
+  ▼
+Chat manager (src/ai/chat.ts)
+  ├─→ Inject context: current tasks, projects, priorities, schedule
+  ├─→ Include tool definitions (task CRUD, scheduling, reminders)
+  │
+  ▼
+AI Provider (configured by user)
+  ├─→ Model processes message with full context
+  ├─→ Returns text response and/or tool calls
+  │
+  ▼
+Tool execution (src/ai/tools.ts)
+  ├─→ Create/update/complete/delete tasks
+  ├─→ Assign priorities and projects
+  ├─→ Schedule tasks, set reminders
+  ├─→ Ask follow-up questions if unclear
+  │
+  ▼
+Response displayed in chat panel + task list updated
+```
+
+### AI Tools
+
+The AI assistant has access to structured tools that map to core operations:
+
+| Tool | What It Does |
+|------|-------------|
+| `create_task` | Create a task with title, due date, priority, project, tags |
+| `list_tasks` | List tasks with filters (today, overdue, project, etc.) |
+| `complete_task` | Mark a task as done |
+| `update_task` | Edit task fields (title, priority, due date, project) |
+| `suggest_schedule` | Suggest a daily plan based on priorities and deadlines |
+| `set_reminder` | Create a reminder for a task |
+
+### Design Principles
+
+- **AI is optional**: The app works perfectly without any AI configured. No features are gated behind AI.
+- **User controls the model**: BYOM (Bring Your Own Model). Cloud or local — the user decides.
+- **Context, not magic**: The AI is good because it sees the user's full context (tasks, projects, history), not because of prompt tricks.
+- **Conversational**: Users talk to it like an assistant. It asks follow-up questions. It remembers the conversation.
+- **Privacy-first**: API keys go directly to the user's chosen provider. Docket never proxies or stores AI traffic.
 
 ## State Management
 

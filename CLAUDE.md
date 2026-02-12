@@ -2,9 +2,11 @@
 
 ## What Is This
 
-ASF Docket is an open-source task management app built by the **AI Strategic Forum (ASF)** community. It's a Todoist alternative with an Obsidian-style plugin system — free, local-first, extensible, and privacy-respecting.
+**Build the task manager you've always wanted.**
 
-**Tagline:** "Open-source task management. Yours to extend."
+ASF Docket is an open-source, AI-native task manager with an Obsidian-style plugin system. Built by the **AI Strategic Forum (ASF)** community. **Simple. Smart. Yours.**
+
+It's the task manager that doesn't exist yet — beautiful and simple out of the box, with a real AI assistant (not a gimmick), and a plugin system so simple that anyone can build features through AI-generated code. No coding experience required.
 
 This is the second ASF project, alongside [ASF Sentinel](https://github.com/asf-org/sentinel) (a Discord bot for AI news curation).
 
@@ -18,11 +20,12 @@ This is the second ASF project, alongside [ASF Sentinel](https://github.com/asf-
 
 ## Core Principles
 
-1. **Local-first** — data lives on the user's machine by default, sync is opt-in
-2. **Plugin ecosystem** — Obsidian-style community plugins that extend core functionality
-3. **Minimal by default, powerful when needed** — clean UI out of the box, power features via plugins
-4. **Open source (MIT)** — fully transparent, community-driven
-5. **No vendor lock-in** — plain Markdown or JSON task files, easy export
+1. **Local-first, private by default** — data lives on the user's machine. Zero network calls by default. No accounts, no telemetry, no analytics.
+2. **AI-native, not AI-bolted-on** — the AI assistant is a core part of the experience: conversational sidebar, voice input, BYOM (Bring Your Own Model). But completely optional — Docket works perfectly without AI.
+3. **Vibe-code extensible** — the plugin API is designed so anyone can ask Claude or ChatGPT to build a plugin. If the API is too complicated for AI to generate correct code, it's too complicated.
+4. **Minimal by default, powerful when needed** — clean UI out of the box. The app is a canvas — plugins paint the picture.
+5. **Open source (MIT), honest business model** — free forever. Revenue from optional paid sync hosting (Docket Sync), not dark patterns.
+6. **No vendor lock-in** — SQLite or Markdown files. Export anytime. Switching away should be trivial.
 
 ## Tech Stack
 
@@ -33,6 +36,7 @@ This is the second ASF project, alongside [ASF Sentinel](https://github.com/asf-
 | Frontend | React + Tailwind CSS | Fast, huge ecosystem |
 | Local DB | SQLite (better-sqlite3) | Local-first, portable, zero config |
 | ORM | Drizzle | Type-safe, lightweight, SQL-close |
+| AI | Pluggable providers | OpenAI, Anthropic, OpenRouter, Ollama, LM Studio — or build your own |
 | Plugin Runtime | Custom loader with sandboxing | Obsidian-style, controlled execution |
 | CLI | Commander.js | Companion CLI tool |
 | NLP | chrono-node | Natural language date/time parsing |
@@ -96,6 +100,17 @@ src/
 │       ├── manager.ts       # Theme loading and switching
 │       ├── light.css        # Default light theme
 │       └── dark.css         # Default dark theme
+├── ai/                      # AI assistant layer (future)
+│   ├── provider.ts          # Provider abstraction interface
+│   ├── providers/           # Provider implementations
+│   │   ├── openai.ts        # OpenAI API provider
+│   │   ├── anthropic.ts     # Anthropic API provider
+│   │   ├── openrouter.ts    # OpenRouter provider
+│   │   ├── ollama.ts        # Ollama (local) provider
+│   │   └── lmstudio.ts      # LM Studio (local) provider
+│   ├── chat.ts              # Chat session management
+│   ├── tools.ts             # AI tool definitions (task CRUD, scheduling)
+│   └── voice.ts             # Voice input processing
 ├── cli/                     # CLI companion tool
 │   ├── index.ts             # CLI entry point (Commander.js)
 │   ├── commands/            # CLI command handlers
@@ -165,6 +180,15 @@ Two storage backends, selected by `STORAGE_MODE` env var:
 
 Both backends implement the same interface. The user chooses; the app doesn't care.
 
+### AI Assistant
+The AI assistant is a conversational interface that lives in the sidebar:
+- **Provider abstraction**: All AI providers implement a common interface. Swapping providers is one config change.
+- **BYOM (Bring Your Own Model)**: OpenAI, Anthropic, OpenRouter, Ollama, LM Studio — or build a custom provider plugin.
+- **Tool use**: The AI can read/write tasks, manage projects, suggest priorities, auto-schedule. Tools are defined in `src/ai/tools.ts`.
+- **Voice input**: Speech-to-text feeds into the same chat interface. The AI parses natural language into structured tasks.
+- **Context-aware**: The AI sees the user's task list, projects, priorities, and schedule to give relevant suggestions.
+- **Fully optional**: Zero AI code runs unless the user configures a provider. No API keys required for core functionality.
+
 ### Plugin System
 ```
 Plugin Discovery → Manifest Validation → Sandbox Creation → Lifecycle Hooks
@@ -175,6 +199,7 @@ Plugin Discovery → Manifest Validation → Sandbox Creation → Lifecycle Hook
 - Lifecycle: `onLoad()` → active → `onUnload()`. Plugins can also hook into task events.
 - Plugins can: register commands, add sidebar panels, add views, add settings tabs, listen to task events
 - Plugin settings stored in SQLite (or JSON file in Markdown mode), keyed by plugin ID
+- **Vibe-code friendly**: The API is designed so AI (Claude/ChatGPT) can generate working plugins. If the API is too complex for AI to produce correct code, it's too complex.
 
 ### State Management
 - React state for UI (useState/useReducer for local, context for shared)
@@ -191,6 +216,7 @@ Plugin Discovery → Manifest Validation → Sandbox Creation → Lifecycle Hook
 - Parse errors: show inline feedback, don't block input
 - Storage errors: surface to user (these are critical)
 - Plugin errors: isolate and disable the plugin, don't crash the app
+- AI errors: degrade gracefully — if the provider fails, the app works fine without AI
 - Network errors (registry, sync): retry with backoff, degrade gracefully
 
 ## Key Files
@@ -202,6 +228,8 @@ Plugin Discovery → Manifest Validation → Sandbox Creation → Lifecycle Hook
 | `src/core/tasks.ts` | Task CRUD — the heart of the app |
 | `src/core/types.ts` | Core type definitions (Task, Project, Tag, etc.) |
 | `src/parser/task-parser.ts` | Natural language task input parser |
+| `src/ai/provider.ts` | AI provider abstraction interface (future) |
+| `src/ai/tools.ts` | AI tool definitions for task operations (future) |
 | `src/plugins/loader.ts` | Plugin discovery and loading |
 | `src/plugins/api.ts` | Plugin API surface — what plugins can do |
 | `src/plugins/sandbox.ts` | Plugin execution sandbox |
@@ -226,7 +254,7 @@ Plugin Discovery → Manifest Validation → Sandbox Creation → Lifecycle Hook
 2. Add `manifest.json` with required fields (id, name, version, author, description, main)
 3. Create entry file (e.g., `index.ts`) that exports a class extending `Plugin`
 4. Implement `onLoad()` and `onUnload()` lifecycle hooks
-5. See [docs/PLUGIN_API.md](docs/PLUGIN_API.md) for the full API reference
+5. See [docs/plugins/API.md](docs/plugins/API.md) for the full API reference
 
 ### Add a UI view
 1. Create component in `src/ui/views/<ViewName>.tsx`
@@ -251,15 +279,19 @@ Plugin Discovery → Manifest Validation → Sandbox Creation → Lifecycle Hook
 
 ## Documentation
 
-| Doc | Content |
-|-----|---------|
-| [docs/README.md](docs/README.md) | What ASF is, what Docket is, vision |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Modules, data flow, tech decisions |
-| [docs/SETUP_LOCAL.md](docs/SETUP_LOCAL.md) | Step-by-step local development |
-| [docs/PLUGIN_API.md](docs/PLUGIN_API.md) | Plugin API reference |
-| [docs/PLUGIN_EXAMPLES.md](docs/PLUGIN_EXAMPLES.md) | Example plugin walkthroughs |
-| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | How to contribute |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Milestones and future plans |
-| [docs/BACKLOG.md](docs/BACKLOG.md) | All work items, prioritized by area |
-| [docs/SPRINTS.md](docs/SPRINTS.md) | Sprint planning and tracking |
-| [docs/SECURITY.md](docs/SECURITY.md) | Threat model, plugin sandboxing |
+```
+docs/
+├── README.md                        # Vision, design principles, why Docket exists
+├── development/                     # Developer guides
+│   ├── ARCHITECTURE.md              # Modules, data flow, tech decisions
+│   ├── SETUP_LOCAL.md               # Step-by-step local development
+│   ├── CONTRIBUTING.md              # How to contribute
+│   └── SECURITY.md                  # Threat model, plugin sandboxing
+├── plugins/                         # Plugin documentation
+│   ├── API.md                       # Plugin API reference
+│   └── EXAMPLES.md                  # Example plugin walkthroughs
+└── planning/                        # Project planning
+    ├── ROADMAP.md                   # Milestones and future plans
+    ├── BACKLOG.md                   # All work items, prioritized by area
+    └── SPRINTS.md                   # Sprint planning and tracking
+```

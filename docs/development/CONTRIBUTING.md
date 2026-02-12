@@ -25,7 +25,7 @@ Thank you for considering contributing to Docket! This guide covers everything y
 
 Before starting significant work:
 
-1. **Check the [Roadmap](ROADMAP.md)** — the feature may already be planned
+1. **Check the [Roadmap](../planning/ROADMAP.md)** — the feature may already be planned
 2. **Open an issue** describing what you want to build and why
 3. **Wait for discussion** — maintainers will confirm the direction before you invest time
 4. **Reference the issue** in your PR
@@ -34,7 +34,7 @@ Before starting significant work:
 
 Plugins are the best way to add features without modifying core code:
 
-1. Build your plugin following the [Plugin API](PLUGIN_API.md) reference
+1. Build your plugin following the [Plugin API](../plugins/API.md) reference
 2. Test it locally in the `plugins/` directory
 3. Publish it to npm or a Git repository
 4. Submit a PR to add it to `sources.json` (the community plugin registry)

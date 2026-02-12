@@ -489,4 +489,4 @@ Plugins run in a sandboxed environment with the following restrictions:
 | DOM manipulation outside plugin slots | No |
 | Other plugin data | No |
 
-See [SECURITY.md](SECURITY.md) for the full threat model and sandboxing details.
+See [SECURITY.md](../development/SECURITY.md) for the full threat model and sandboxing details.

@@ -114,6 +114,29 @@ All work items for ASF Docket, organized by area and prioritized within each sec
 | PL-17 | Plugin-specific isolated storage (persist to DB) | ready | S3 | settings.ts partial |
 | PL-18 | Built-in Pomodoro plugin (fully functional) | blocked | — | Blocked by PL-05 |
 
+## AI Assistant
+
+| ID | Item | Status | Sprint | Notes |
+|----|------|--------|--------|-------|
+| A-01 | AI provider abstraction interface | ready | — | Common interface for all providers |
+| A-02 | OpenAI provider implementation | ready | — | GPT-4, GPT-3.5 via API key |
+| A-03 | Anthropic provider implementation | ready | — | Claude models via API key |
+| A-04 | OpenRouter provider implementation | ready | — | Multi-provider gateway |
+| A-05 | Ollama provider implementation | ready | — | Local models, zero data exposure |
+| A-06 | LM Studio provider implementation | ready | — | Local via OpenAI-compatible API |
+| A-07 | AI chat panel in sidebar | ready | — | Conversational UI component |
+| A-08 | Chat session management | ready | — | Conversation history, context window |
+| A-09 | AI tool definitions (task CRUD) | ready | — | Tools for create/read/update/complete/delete |
+| A-10 | Context injection (tasks, projects, schedule) | ready | — | Feed current state to AI |
+| A-11 | Natural language task creation via AI | ready | — | "I need to finish X by Friday" |
+| A-12 | AI follow-up questions | ready | — | "Which project should this go under?" |
+| A-13 | AI priority suggestions | ready | — | "You have 3 overdue tasks — reschedule?" |
+| A-14 | AI daily schedule suggestion | ready | — | "Here's a plan for your day" |
+| A-15 | Voice input (speech-to-text) | needs-design | — | Browser Speech API or Whisper |
+| A-16 | Provider settings UI | ready | — | Select provider, enter API keys |
+| A-17 | Custom AI provider plugin support | blocked | — | Blocked by plugin system (PL-07) |
+| A-18 | AI reminders via integrations | idea | — | Discord bot, Google Calendar, etc. |
+
 ## Storage & Data
 
 | ID | Item | Status | Sprint | Notes |
@@ -149,12 +172,12 @@ All work items for ASF Docket, organized by area and prioritized within each sec
 | DOC-01 | README.md | done | — | |
 | DOC-02 | CLAUDE.md | done | — | |
 | DOC-03 | docs/README.md (project overview) | done | — | |
-| DOC-04 | docs/ARCHITECTURE.md | done | — | |
-| DOC-05 | docs/PLUGIN_API.md | done | — | |
-| DOC-06 | docs/PLUGIN_EXAMPLES.md | done | — | |
-| DOC-07 | docs/ROADMAP.md | done | — | |
-| DOC-08 | docs/CONTRIBUTING.md | done | — | |
-| DOC-09 | docs/SETUP_LOCAL.md | done | — | |
-| DOC-10 | docs/SECURITY.md | done | — | |
-| DOC-11 | docs/BACKLOG.md | done | — | This file |
-| DOC-12 | docs/SPRINTS.md | done | — | Sprint tracking |
+| DOC-04 | docs/development/ARCHITECTURE.md | done | — | |
+| DOC-05 | docs/plugins/API.md | done | — | |
+| DOC-06 | docs/plugins/EXAMPLES.md | done | — | |
+| DOC-07 | docs/planning/ROADMAP.md | done | — | |
+| DOC-08 | docs/development/CONTRIBUTING.md | done | — | |
+| DOC-09 | docs/development/SETUP_LOCAL.md | done | — | |
+| DOC-10 | docs/development/SECURITY.md | done | — | |
+| DOC-11 | docs/planning/BACKLOG.md | done | — | This file |
+| DOC-12 | docs/planning/SPRINTS.md | done | — | Sprint tracking |

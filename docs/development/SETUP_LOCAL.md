@@ -149,7 +149,7 @@ Restart the dev server. The plugin appears in Settings > Plugins.
 
 ### Creating a Plugin
 
-See [PLUGIN_API.md](PLUGIN_API.md) for the full API reference and [PLUGIN_EXAMPLES.md](PLUGIN_EXAMPLES.md) for walkthroughs.
+See [Plugin API](../plugins/API.md) for the full API reference and [Plugin Examples](../plugins/EXAMPLES.md) for walkthroughs.
 
 Quick start:
 

@@ -7,7 +7,7 @@
  * - Listens for task creation events
  *
  * Use this as a starting point for your own plugins.
- * See docs/PLUGIN_API.md for the full API reference.
+ * See docs/plugins/API.md for the full API reference.
  */
 
 import { Plugin } from "@asf-docket/plugin-api";

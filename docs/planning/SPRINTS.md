@@ -164,12 +164,14 @@ These will be planned as we get closer. See [BACKLOG.md](BACKLOG.md) for all ite
 
 | Sprint | Theme | Key Items |
 |--------|-------|-----------|
-| S5 | CI/CD & Release | GitHub Actions, ESLint/Prettier config, Tauri packaging |
-| S6 | Markdown Storage | Storage abstraction, Markdown backend, file-based projects |
-| S7 | Data Portability | Export (JSON/MD/CSV), import (Todoist), migration tools |
-| S8 | Advanced UX | Drag-and-drop, bulk ops, undo/redo, shortcut customization |
-| S9 | Hardening | Accessibility audit, performance profiling, error boundaries |
-| S10 | v1.0 Release | Stable API freeze, desktop packaging, auto-updater |
+| S5 | AI: Foundation | Provider abstraction, OpenAI/Anthropic providers, chat panel UI |
+| S6 | AI: Intelligence | Tool use (task CRUD), context injection, follow-up questions, voice input |
+| S7 | CI/CD & Release | GitHub Actions, ESLint/Prettier config, Tauri packaging |
+| S8 | Markdown Storage | Storage abstraction, Markdown backend, file-based projects |
+| S9 | Data Portability | Export (JSON/MD/CSV), import (Todoist), migration tools |
+| S10 | Advanced UX | Drag-and-drop, bulk ops, undo/redo, shortcut customization |
+| S11 | Hardening | Accessibility audit, performance profiling, error boundaries |
+| S12 | v1.0 Release | Stable API freeze, desktop packaging, auto-updater |
 
 ---
 
