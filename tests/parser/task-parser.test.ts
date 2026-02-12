@@ -1,0 +1,83 @@
+import { describe, it, expect } from "vitest";
+import { parseTask } from "../../src/parser/task-parser.js";
+
+describe("parseTask", () => {
+  it("parses a simple task title", () => {
+    const result = parseTask("buy milk");
+    expect(result.title).toBe("buy milk");
+    expect(result.priority).toBeNull();
+    expect(result.tags).toEqual([]);
+    expect(result.project).toBeNull();
+    expect(result.dueDate).toBeNull();
+    expect(result.dueTime).toBe(false);
+  });
+
+  it("extracts priority", () => {
+    const result = parseTask("buy milk p1");
+    expect(result.title).toBe("buy milk");
+    expect(result.priority).toBe(1);
+  });
+
+  it("extracts tags", () => {
+    const result = parseTask("review PR #dev #urgent");
+    expect(result.title).toBe("review PR");
+    expect(result.tags).toEqual(["dev", "urgent"]);
+  });
+
+  it("extracts project", () => {
+    const result = parseTask("deploy service +work");
+    expect(result.title).toBe("deploy service");
+    expect(result.project).toBe("work");
+  });
+
+  it("extracts date", () => {
+    const result = parseTask("buy milk tomorrow");
+    expect(result.title).toBe("buy milk");
+    expect(result.dueDate).not.toBeNull();
+    expect(result.dueTime).toBe(false);
+  });
+
+  it("extracts date with time", () => {
+    const result = parseTask("meeting tomorrow at 3pm");
+    expect(result.title).toBe("meeting");
+    expect(result.dueDate).not.toBeNull();
+    expect(result.dueDate!.getHours()).toBe(15);
+    expect(result.dueTime).toBe(true);
+  });
+
+  it("handles all fields together", () => {
+    const result = parseTask("buy milk tomorrow p1 #groceries +shopping");
+    expect(result.title).toBe("buy milk");
+    expect(result.priority).toBe(1);
+    expect(result.tags).toEqual(["groceries"]);
+    expect(result.project).toBe("shopping");
+    expect(result.dueDate).not.toBeNull();
+  });
+
+  it("handles multiple tags with priority and project", () => {
+    const result = parseTask("review code p2 #dev #review +work");
+    expect(result.title).toBe("review code");
+    expect(result.priority).toBe(2);
+    expect(result.tags).toEqual(["dev", "review"]);
+    expect(result.project).toBe("work");
+  });
+
+  it("trims whitespace", () => {
+    const result = parseTask("  buy milk  ");
+    expect(result.title).toBe("buy milk");
+  });
+
+  it("handles empty-ish input after extraction", () => {
+    const result = parseTask("p1 #tag +project");
+    expect(result.title).toBe("");
+    expect(result.priority).toBe(1);
+    expect(result.tags).toEqual(["tag"]);
+    expect(result.project).toBe("project");
+  });
+
+  it("handles tags at the start", () => {
+    const result = parseTask("#urgent fix the bug");
+    expect(result.tags).toEqual(["urgent"]);
+    expect(result.title).toBe("fix the bug");
+  });
+});

@@ -9,7 +9,10 @@ const envSchema = z.object({
   DEFAULT_THEME: z.enum(["light", "dark"]).default("light"),
   NLP_LOCALE: z.string().default("en"),
   PLUGIN_DIR: z.string().default("./plugins/"),
-  PLUGIN_SANDBOX: z.coerce.boolean().default(true),
+  PLUGIN_SANDBOX: z
+    .string()
+    .default("true")
+    .transform((v) => v !== "false" && v !== "0"),
   PLUGIN_REGISTRY_URL: z.string().optional(),
   PLUGIN_MAX_SIZE_MB: z.coerce.number().default(10),
   CLI_OUTPUT_FORMAT: z.enum(["text", "json"]).default("text"),
