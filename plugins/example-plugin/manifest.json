@@ -1,0 +1,27 @@
+{
+  "id": "example-plugin",
+  "name": "Example Plugin",
+  "version": "1.0.0",
+  "author": "ASF",
+  "description": "A minimal example plugin demonstrating the Docket Plugin API.",
+  "main": "index.ts",
+  "minDocketVersion": "0.1.0",
+  "license": "MIT",
+  "permissions": ["task:read", "commands", "ui:status"],
+  "settings": [
+    {
+      "id": "greeting",
+      "name": "Greeting Text",
+      "type": "text",
+      "default": "Hello from the example plugin!",
+      "description": "The text to display when the greet command is run"
+    },
+    {
+      "id": "showTaskCount",
+      "name": "Show Task Count",
+      "type": "boolean",
+      "default": true,
+      "description": "Show the number of pending tasks in the status bar"
+    }
+  ]
+}

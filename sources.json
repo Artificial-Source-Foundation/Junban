@@ -1,0 +1,58 @@
+{
+  "$schema": "./plugin-registry.schema.json",
+  "version": 1,
+  "description": "ASF Docket community plugin registry",
+  "lastUpdated": "2025-01-01T00:00:00Z",
+  "plugins": [
+    {
+      "id": "docket-pomodoro",
+      "name": "Pomodoro Timer",
+      "description": "Built-in Pomodoro timer with configurable work/break intervals and task integration.",
+      "author": "ASF",
+      "version": "0.1.0",
+      "repository": "https://github.com/asf-org/docket-plugin-pomodoro",
+      "tags": ["productivity", "timer"],
+      "minDocketVersion": "0.1.0"
+    },
+    {
+      "id": "docket-kanban",
+      "name": "Kanban Board",
+      "description": "Kanban-style board view for tasks with drag-and-drop columns.",
+      "author": "ASF",
+      "version": "0.1.0",
+      "repository": "https://github.com/asf-org/docket-plugin-kanban",
+      "tags": ["view", "kanban", "productivity"],
+      "minDocketVersion": "0.1.0"
+    },
+    {
+      "id": "docket-calendar",
+      "name": "Calendar View",
+      "description": "Monthly/weekly calendar view showing tasks by due date.",
+      "author": "ASF",
+      "version": "0.1.0",
+      "repository": "https://github.com/asf-org/docket-plugin-calendar",
+      "tags": ["view", "calendar"],
+      "minDocketVersion": "0.1.0"
+    },
+    {
+      "id": "docket-time-tracking",
+      "name": "Time Tracking",
+      "description": "Track time spent on tasks with start/stop timer and daily reports.",
+      "author": "ASF",
+      "version": "0.1.0",
+      "repository": "https://github.com/asf-org/docket-plugin-time-tracking",
+      "tags": ["productivity", "tracking"],
+      "minDocketVersion": "0.1.0"
+    },
+    {
+      "id": "docket-git-sync",
+      "name": "Git Sync",
+      "description": "Sync task data via Git for version control and multi-device access.",
+      "author": "ASF",
+      "version": "0.1.0",
+      "repository": "https://github.com/asf-org/docket-plugin-git-sync",
+      "tags": ["sync", "git"],
+      "minDocketVersion": "0.5.0"
+    }
+  ]
+}

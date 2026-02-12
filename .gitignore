@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-cli/
+
+# Tauri build
+src-tauri/target/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Testing
+coverage/
+
+# Logs
+*.log
+logs/
+
+# Plugin dev artifacts
+plugins/*/node_modules/
+plugins/*/dist/
+
+# Misc
+.cache/
+*.tsbuildinfo
