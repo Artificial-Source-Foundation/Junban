@@ -72,6 +72,25 @@ export function createQueries(db: BetterSQLite3Database<typeof schema>) {
 
     deleteTag: (id: string) =>
       db.delete(schema.tags).where(eq(schema.tags.id, id)).run(),
+
+    // ── Plugin Settings ─────────────────────────────────
+    loadPluginSettings: (pluginId: string) =>
+      db
+        .select()
+        .from(schema.pluginSettings)
+        .where(eq(schema.pluginSettings.pluginId, pluginId))
+        .get(),
+
+    savePluginSettings: (pluginId: string, settings: string) => {
+      const now = new Date().toISOString();
+      db.insert(schema.pluginSettings)
+        .values({ pluginId, settings, updatedAt: now })
+        .onConflictDoUpdate({
+          target: schema.pluginSettings.pluginId,
+          set: { settings, updatedAt: now },
+        })
+        .run();
+    },
   };
 }
 

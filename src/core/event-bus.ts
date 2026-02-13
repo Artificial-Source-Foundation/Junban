@@ -1,0 +1,63 @@
+import type { Task } from "./types.js";
+
+/** Map of event names to their payload types. */
+export interface EventMap {
+  "task:create": Task;
+  "task:complete": Task;
+  "task:update": { task: Task; changes: Partial<Task> };
+  "task:delete": Task;
+}
+
+export type EventName = keyof EventMap;
+export type EventCallback<E extends EventName> = (data: EventMap[E]) => void;
+
+/**
+ * Typed pub/sub event bus.
+ * Listeners are called synchronously. Errors in listeners are caught and logged.
+ */
+export class EventBus {
+  private listeners = new Map<string, Set<Function>>();
+
+  on<E extends EventName>(event: E, callback: EventCallback<E>): void {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, new Set());
+    }
+    this.listeners.get(event)!.add(callback);
+  }
+
+  off<E extends EventName>(event: E, callback: EventCallback<E>): void {
+    const set = this.listeners.get(event);
+    if (set) {
+      set.delete(callback);
+      if (set.size === 0) {
+        this.listeners.delete(event);
+      }
+    }
+  }
+
+  emit<E extends EventName>(event: E, data: EventMap[E]): void {
+    const set = this.listeners.get(event);
+    if (!set) return;
+
+    for (const callback of set) {
+      try {
+        callback(data);
+      } catch (err) {
+        console.error(
+          `[EventBus] Error in listener for "${event}":`,
+          err instanceof Error ? err.message : err,
+        );
+      }
+    }
+  }
+
+  /** Remove all listeners (used during shutdown). */
+  clear(): void {
+    this.listeners.clear();
+  }
+
+  /** Get listener count for an event (useful for testing). */
+  listenerCount(event: EventName): number {
+    return this.listeners.get(event)?.size ?? 0;
+  }
+}

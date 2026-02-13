@@ -8,6 +8,7 @@ import { createQueries } from "../../src/db/queries.js";
 import { TaskService } from "../../src/core/tasks.js";
 import { ProjectService } from "../../src/core/projects.js";
 import { TagService } from "../../src/core/tags.js";
+import { EventBus } from "../../src/core/event-bus.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(__dirname, "../../src/db/migrations");
@@ -23,7 +24,8 @@ export function createTestServices() {
   const queries = createQueries(db);
   const tagService = new TagService(queries);
   const projectService = new ProjectService(queries);
-  const taskService = new TaskService(queries, tagService);
+  const eventBus = new EventBus();
+  const taskService = new TaskService(queries, tagService, eventBus);
 
-  return { db, queries, taskService, projectService, tagService };
+  return { db, queries, taskService, projectService, tagService, eventBus };
 }

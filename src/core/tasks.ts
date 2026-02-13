@@ -2,6 +2,7 @@ import type { CreateTaskInput, UpdateTaskInput, Task, Tag } from "./types.js";
 import type { Queries } from "../db/queries.js";
 import type { TagService } from "./tags.js";
 import type { TaskFilter } from "./filters.js";
+import type { EventBus } from "./event-bus.js";
 import { filterTasks } from "./filters.js";
 import { sortByPriority } from "./priorities.js";
 import { generateId } from "../utils/ids.js";
@@ -16,6 +17,7 @@ export class TaskService {
   constructor(
     private queries: Queries,
     private tagService: TagService,
+    private eventBus?: EventBus,
   ) {}
 
   async create(input: CreateTaskInput): Promise<Task> {
@@ -51,7 +53,7 @@ export class TaskService {
       this.queries.insertTaskTag(id, tag.id);
     }
 
-    return {
+    const task: Task = {
       id,
       title: input.title,
       description: input.description ?? null,
@@ -67,6 +69,10 @@ export class TaskService {
       createdAt: now,
       updatedAt: now,
     };
+
+    this.eventBus?.emit("task:create", task);
+
+    return task;
   }
 
   async list(filter?: TaskFilter): Promise<Task[]> {
@@ -118,7 +124,10 @@ export class TaskService {
       }
     }
 
-    return (await this.get(id))!;
+    const updated = (await this.get(id))!;
+    this.eventBus?.emit("task:update", { task: updated, changes: fields });
+
+    return updated;
   }
 
   async complete(id: string): Promise<Task> {
@@ -150,14 +159,20 @@ export class TaskService {
       }
     }
 
-    // TODO: Emit task:complete event for plugins (Sprint 3)
+    const completed = (await this.get(id))!;
+    this.eventBus?.emit("task:complete", completed);
 
-    return (await this.get(id))!;
+    return completed;
   }
 
   async delete(id: string): Promise<boolean> {
+    const existing = await this.get(id);
     this.queries.deleteTaskTags(id);
     const result = this.queries.deleteTask(id);
-    return result.changes > 0;
+    const deleted = result.changes > 0;
+    if (deleted && existing) {
+      this.eventBus?.emit("task:delete", existing);
+    }
+    return deleted;
   }
 }
