@@ -23,6 +23,11 @@ All work items for ASF Docket, organized by area and prioritized within each sec
 | F-05 | CI/CD pipeline (GitHub Actions: lint, typecheck, test) | done | S7 | .github/workflows/ci.yml |
 | F-06 | ESLint config file | done | S7 | eslint.config.js (flat config) |
 | F-07 | Prettier config file | done | S7 | .prettierrc + .prettierignore |
+| F-08 | Fix Tailwind CSS (@tailwindcss/vite plugin) | done | S8 | Vite plugin + theme imports |
+| F-09 | Tauri v2 scaffold | done | S8 | src-tauri/, Cargo.toml, main.rs, icons |
+| F-10 | Browser-compatible bootstrap (bootstrap-web.ts) | done | S8 | Service wiring for WebView |
+| F-11 | isTauri() API branching in frontend | done | S8 | Direct service calls in Tauri mode |
+| F-12 | Vite build config for Tauri production | done | S8 | Conditional apiPlugin, externals |
 
 ## Core — Task CRUD
 
@@ -149,6 +154,9 @@ All work items for ASF Docket, organized by area and prioritized within each sec
 | D-06 | Storage interface abstraction | needs-design | — | v0.7 milestone |
 | D-07 | Data export (JSON, Markdown, CSV) | ready | — | |
 | D-08 | Data import (Todoist JSON, plain text) | needs-design | — | |
+| D-09 | Generalize DB layer (BaseSQLiteDatabase) | done | S8 | better-sqlite3 + sql.js share types |
+| D-10 | sql.js WebView client + bundled migrations | done | S8 | client-web.ts, migrate-web.ts |
+| D-11 | Tauri FS persistence (load/save SQLite) | done | S8 | persistence.ts via @tauri-apps/plugin-fs |
 
 ## Testing
 

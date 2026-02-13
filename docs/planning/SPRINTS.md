@@ -158,17 +158,46 @@ Two-week sprint cycles. Each sprint has a clear goal and pulls items from the [B
 
 ---
 
+## Sprint 8 — "Styling & Desktop App"
+
+**Goal**: Fix Tailwind CSS styling and build a full Tauri v2 desktop application. All business logic runs in the WebView via sql.js (WASM SQLite) with persistence through Tauri FS plugin. The app works both as a dev server and as a standalone desktop binary.
+
+**Dates**: TBD (2 weeks, after Sprint 7)
+
+| ID | Item | Size | Status |
+|----|------|------|--------|
+| F-08 | Fix Tailwind CSS (@tailwindcss/vite plugin) | S | done |
+| F-09 | Tauri v2 scaffold (Cargo.toml, main.rs, tauri.conf.json, capabilities) | L | done |
+| D-09 | Generalize DB layer (BaseSQLiteDatabase for better-sqlite3 + sql.js) | M | done |
+| D-10 | sql.js WebView client + bundled migration runner | M | done |
+| D-11 | Tauri FS persistence (load/save SQLite file) | S | done |
+| F-10 | Browser-compatible bootstrap (bootstrap-web.ts) | M | done |
+| F-11 | isTauri() API branching (direct service calls in Tauri mode) | L | done |
+| F-12 | Vite build config (conditional apiPlugin, external better-sqlite3, sql.js WASM) | M | done |
+
+**Capacity**: ~8 items (mix of S/M/L), fits a 2-week sprint.
+
+**Definition of Done**:
+- [x] `pnpm dev` → browser → app has full Tailwind styling
+- [x] `pnpm tauri dev` → native window → styled app works with Vite middleware
+- [x] `pnpm build` → working frontend bundle in `dist/`
+- [x] `pnpm tauri build` → compiles standalone desktop binary
+- [x] `pnpm check` passes (lint + typecheck + 333 tests)
+- [x] Rust `cargo check` compiles successfully
+
+---
+
 ## Future Sprints (Unscheduled)
 
 These will be planned as we get closer. See [BACKLOG.md](BACKLOG.md) for all items.
 
 | Sprint | Theme | Key Items |
 |--------|-------|-----------|
-| S8 | Markdown Storage | Storage abstraction, Markdown backend, file-based projects |
-| S9 | Data Portability | Export (JSON/MD/CSV), import (Todoist), migration tools |
-| S10 | Advanced UX | Drag-and-drop, bulk ops, undo/redo, shortcut customization |
-| S11 | Hardening | Accessibility audit, performance profiling, error boundaries |
-| S12 | v1.0 Release | Stable API freeze, desktop packaging, auto-updater |
+| S9 | Markdown Storage | Storage abstraction, Markdown backend, file-based projects |
+| S10 | Data Portability | Export (JSON/MD/CSV), import (Todoist), migration tools |
+| S11 | Advanced UX | Drag-and-drop, bulk ops, undo/redo, shortcut customization |
+| S12 | Hardening | Accessibility audit, performance profiling, error boundaries |
+| S13 | v1.0 Release | Stable API freeze, auto-updater, community plugins |
 
 ---
 
@@ -308,3 +337,20 @@ These will be planned as we get closer. See [BACKLOG.md](BACKLOG.md) for all ite
 | F-07 | Prettier config (.prettierrc + .prettierignore) | done |
 
 **Result**: 4 new files (eslint.config.js, .prettierrc, .prettierignore, .github/workflows/ci.yml), codebase-wide formatting normalization, lint violation fixes. 333 passing tests.
+
+### Sprint 8 — "Styling & Desktop App" (completed)
+
+**Goal**: Fix Tailwind CSS styling and build a full Tauri v2 desktop application with sql.js WASM backend running in the WebView.
+
+| ID | Item | Status |
+|----|------|--------|
+| F-08 | Fix Tailwind CSS (@tailwindcss/vite plugin + theme imports) | done |
+| F-09 | Tauri v2 scaffold (Cargo.toml, main.rs, tauri.conf.json, icons, capabilities) | done |
+| D-09 | Generalize DB layer (BaseSQLiteDatabase for better-sqlite3 + sql.js) | done |
+| D-10 | sql.js WebView client + bundled migration runner | done |
+| D-11 | Tauri FS persistence (load/save SQLite file to AppData) | done |
+| F-10 | Browser-compatible bootstrap (bootstrap-web.ts with debounced auto-save) | done |
+| F-11 | isTauri() API branching (all 20 endpoints branch between HTTP and direct calls) | done |
+| F-12 | Vite build config (conditional apiPlugin, external better-sqlite3, sql.js WASM) | done |
+
+**Result**: 6 new files, 4 modified files, full `src-tauri/` scaffold. Tailwind styling works. Tauri desktop app launches with native window. Production build uses sql.js in WebView with Tauri FS persistence. 333 passing tests.

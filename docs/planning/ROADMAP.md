@@ -94,7 +94,7 @@ Alternative storage backend for portability.
 Production-quality task manager with a stable plugin API.
 
 - [ ] Stable Plugin API (v1 — breaking changes require major version)
-- [ ] Tauri desktop app packaging (macOS, Windows, Linux)
+- [x] Tauri desktop app packaging (macOS, Windows, Linux)
 - [ ] Auto-update mechanism
 - [ ] Performance optimization (large task lists, many plugins)
 - [ ] Accessibility audit (screen readers, keyboard-only use)
