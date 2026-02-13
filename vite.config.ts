@@ -35,7 +35,18 @@ function apiPlugin() {
         const svc = await getServices();
 
         if (req.method === "GET") {
-          const tasks = await svc.taskService.list();
+          const url = new URL(req.url!, `http://${req.headers.host}`);
+          const filter: Record<string, string> = {};
+          const search = url.searchParams.get("search");
+          const projectId = url.searchParams.get("projectId");
+          const status = url.searchParams.get("status");
+          if (search) filter.search = search;
+          if (projectId) filter.projectId = projectId;
+          if (status) filter.status = status;
+
+          const tasks = await svc.taskService.list(
+            Object.keys(filter).length > 0 ? filter : undefined,
+          );
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify(tasks));
           return;
@@ -51,6 +62,16 @@ function apiPlugin() {
         }
 
         next();
+      });
+
+      // GET /api/projects
+      server.middlewares.use(async (req, res, next) => {
+        if (req.url !== "/api/projects" || req.method !== "GET") return next();
+
+        const svc = await getServices();
+        const projects = await svc.projectService.list();
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify(projects));
       });
 
       // /api/tasks/:id/complete and /api/tasks/:id

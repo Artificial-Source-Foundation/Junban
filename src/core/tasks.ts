@@ -6,6 +6,7 @@ import { filterTasks } from "./filters.js";
 import { sortByPriority } from "./priorities.js";
 import { generateId } from "../utils/ids.js";
 import { NotFoundError } from "./errors.js";
+import { getNextOccurrence } from "./recurrence.js";
 
 /**
  * Task service — handles task CRUD operations.
@@ -131,7 +132,24 @@ export class TaskService {
       updatedAt: now,
     });
 
-    // TODO: Handle recurrence (Sprint 2, C-11)
+    // Create next occurrence for recurring tasks
+    if (existing.recurrence) {
+      const fromDate = existing.dueDate ? new Date(existing.dueDate) : new Date();
+      const nextDate = getNextOccurrence(existing.recurrence, fromDate);
+      if (nextDate) {
+        await this.create({
+          title: existing.title,
+          description: existing.description,
+          priority: existing.priority,
+          dueDate: nextDate.toISOString(),
+          dueTime: existing.dueTime,
+          projectId: existing.projectId,
+          recurrence: existing.recurrence,
+          tags: existing.tags.map((t) => t.name),
+        });
+      }
+    }
+
     // TODO: Emit task:complete event for plugins (Sprint 3)
 
     return (await this.get(id))!;

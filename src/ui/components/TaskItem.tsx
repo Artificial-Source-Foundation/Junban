@@ -5,14 +5,19 @@ interface TaskItemProps {
   task: Task;
   onToggle: (id: string) => void;
   onSelect: (id: string) => void;
+  isSelected: boolean;
 }
 
-export function TaskItem({ task, onToggle, onSelect }: TaskItemProps) {
+export function TaskItem({ task, onToggle, onSelect, isSelected }: TaskItemProps) {
   const priority = task.priority ? getPriority(task.priority) : null;
 
   return (
     <div
-      className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md cursor-pointer"
+      className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer ${
+        isSelected
+          ? "bg-blue-50 dark:bg-blue-900/30 ring-1 ring-blue-300 dark:ring-blue-700"
+          : "hover:bg-gray-50 dark:hover:bg-gray-800"
+      }`}
       onClick={() => onSelect(task.id)}
     >
       <button

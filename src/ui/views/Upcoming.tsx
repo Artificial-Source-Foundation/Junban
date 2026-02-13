@@ -5,9 +5,10 @@ interface UpcomingProps {
   tasks: Task[];
   onToggleTask: (id: string) => void;
   onSelectTask: (id: string) => void;
+  selectedTaskId: string | null;
 }
 
-export function Upcoming({ tasks, onToggleTask, onSelectTask }: UpcomingProps) {
+export function Upcoming({ tasks, onToggleTask, onSelectTask, selectedTaskId }: UpcomingProps) {
   const upcomingTasks = tasks
     .filter((t) => t.status === "pending" && t.dueDate)
     .sort((a, b) => (a.dueDate! > b.dueDate! ? 1 : -1));
@@ -19,6 +20,7 @@ export function Upcoming({ tasks, onToggleTask, onSelectTask }: UpcomingProps) {
         tasks={upcomingTasks}
         onToggle={onToggleTask}
         onSelect={onSelectTask}
+        selectedTaskId={selectedTaskId}
         emptyMessage="No upcoming tasks with due dates."
       />
     </div>

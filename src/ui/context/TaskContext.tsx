@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from "react";
-import type { Task, CreateTaskInput } from "../../core/types.js";
+import type { Task, CreateTaskInput, UpdateTaskInput } from "../../core/types.js";
 import { api } from "../api.js";
 
 interface TaskState {
@@ -44,6 +44,7 @@ function taskReducer(state: TaskState, action: TaskAction): TaskState {
 interface TaskContextValue {
   state: TaskState;
   createTask: (input: CreateTaskInput) => Promise<void>;
+  updateTask: (id: string, input: UpdateTaskInput) => Promise<void>;
   completeTask: (id: string) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   refreshTasks: () => Promise<void>;
@@ -73,10 +74,20 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "TASK_ADDED", task });
   }, []);
 
-  const completeTask = useCallback(async (id: string) => {
-    const task = await api.completeTask(id);
+  const updateTask = useCallback(async (id: string, input: UpdateTaskInput) => {
+    const task = await api.updateTask(id, input);
     dispatch({ type: "TASK_UPDATED", task });
   }, []);
+
+  const completeTask = useCallback(async (id: string) => {
+    const task = await api.completeTask(id);
+    // If the task has recurrence, refresh to pick up the new occurrence
+    if (task.recurrence) {
+      await refreshTasks();
+    } else {
+      dispatch({ type: "TASK_UPDATED", task });
+    }
+  }, [refreshTasks]);
 
   const deleteTask = useCallback(async (id: string) => {
     await api.deleteTask(id);
@@ -88,7 +99,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   }, [refreshTasks]);
 
   return (
-    <TaskContext.Provider value={{ state, createTask, completeTask, deleteTask, refreshTasks }}>
+    <TaskContext.Provider value={{ state, createTask, updateTask, completeTask, deleteTask, refreshTasks }}>
       {children}
     </TaskContext.Provider>
   );

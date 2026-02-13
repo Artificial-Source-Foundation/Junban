@@ -8,9 +8,10 @@ interface ProjectProps {
   onCreateTask: (parsed: { title: string; priority: number | null; tags: string[]; project: string | null; dueDate: Date | null; dueTime: boolean }) => void;
   onToggleTask: (id: string) => void;
   onSelectTask: (id: string) => void;
+  selectedTaskId: string | null;
 }
 
-export function Project({ project, tasks, onCreateTask, onToggleTask, onSelectTask }: ProjectProps) {
+export function Project({ project, tasks, onCreateTask, onToggleTask, onSelectTask, selectedTaskId }: ProjectProps) {
   const projectTasks = tasks.filter(
     (t) => t.status === "pending" && t.projectId === project.id,
   );
@@ -26,6 +27,7 @@ export function Project({ project, tasks, onCreateTask, onToggleTask, onSelectTa
         tasks={projectTasks}
         onToggle={onToggleTask}
         onSelect={onSelectTask}
+        selectedTaskId={selectedTaskId}
         emptyMessage="No tasks in this project yet."
       />
     </div>

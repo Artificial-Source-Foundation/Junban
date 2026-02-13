@@ -1,7 +1,11 @@
 import { parseTask } from "../../parser/task-parser.js";
 import type { AppServices } from "../../bootstrap.js";
 
-export async function addTask(description: string, services: AppServices) {
+interface AddOptions {
+  json?: boolean;
+}
+
+export async function addTask(description: string, services: AppServices, options?: AddOptions) {
   const parsed = parseTask(description);
 
   // Resolve project if present
@@ -19,6 +23,11 @@ export async function addTask(description: string, services: AppServices) {
     tags: parsed.tags,
     projectId,
   });
+
+  if (options?.json) {
+    console.log(JSON.stringify(task, null, 2));
+    return;
+  }
 
   const parts = [` Created: ${task.title}`];
   if (task.priority) parts.push(`P${task.priority}`);

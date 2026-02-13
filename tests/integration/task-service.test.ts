@@ -200,6 +200,54 @@ describe("TaskService (integration)", () => {
         NotFoundError,
       );
     });
+
+    it("creates next occurrence for a daily recurring task", async () => {
+      const dueDate = new Date("2025-06-15T10:00:00.000Z");
+      const task = await taskService.create({
+        title: "Daily standup",
+        recurrence: "daily",
+        dueDate: dueDate.toISOString(),
+        priority: 2,
+        tags: ["work"],
+      });
+
+      await taskService.complete(task.id);
+
+      const tasks = await taskService.list({ status: "pending" });
+      expect(tasks).toHaveLength(1);
+      expect(tasks[0].title).toBe("Daily standup");
+      expect(tasks[0].recurrence).toBe("daily");
+      expect(tasks[0].priority).toBe(2);
+      expect(tasks[0].tags.map((t) => t.name)).toEqual(["work"]);
+
+      const nextDue = new Date(tasks[0].dueDate!);
+      expect(nextDue.toISOString()).toBe("2025-06-16T10:00:00.000Z");
+    });
+
+    it("does not create next occurrence for non-recurring task", async () => {
+      const task = await taskService.create({ title: "One-off task" });
+
+      await taskService.complete(task.id);
+
+      const pending = await taskService.list({ status: "pending" });
+      expect(pending).toHaveLength(0);
+    });
+
+    it("creates next occurrence for weekly recurring task", async () => {
+      const dueDate = new Date("2025-06-15T10:00:00.000Z");
+      const task = await taskService.create({
+        title: "Weekly review",
+        recurrence: "weekly",
+        dueDate: dueDate.toISOString(),
+      });
+
+      await taskService.complete(task.id);
+
+      const tasks = await taskService.list({ status: "pending" });
+      expect(tasks).toHaveLength(1);
+      const nextDue = new Date(tasks[0].dueDate!);
+      expect(nextDue.toISOString()).toBe("2025-06-22T10:00:00.000Z");
+    });
   });
 
   describe("delete", () => {

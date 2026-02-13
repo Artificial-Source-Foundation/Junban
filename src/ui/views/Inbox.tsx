@@ -7,9 +7,10 @@ interface InboxProps {
   onCreateTask: (parsed: { title: string; priority: number | null; tags: string[]; project: string | null; dueDate: Date | null; dueTime: boolean }) => void;
   onToggleTask: (id: string) => void;
   onSelectTask: (id: string) => void;
+  selectedTaskId: string | null;
 }
 
-export function Inbox({ tasks, onCreateTask, onToggleTask, onSelectTask }: InboxProps) {
+export function Inbox({ tasks, onCreateTask, onToggleTask, onSelectTask, selectedTaskId }: InboxProps) {
   const inboxTasks = tasks.filter((t) => t.status === "pending" && !t.projectId);
 
   return (
@@ -20,6 +21,7 @@ export function Inbox({ tasks, onCreateTask, onToggleTask, onSelectTask }: Inbox
         tasks={inboxTasks}
         onToggle={onToggleTask}
         onSelect={onSelectTask}
+        selectedTaskId={selectedTaskId}
         emptyMessage="Your inbox is empty. Add a task above!"
       />
     </div>

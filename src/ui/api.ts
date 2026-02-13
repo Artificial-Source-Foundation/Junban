@@ -1,10 +1,14 @@
-import type { Task, CreateTaskInput, UpdateTaskInput } from "../core/types.js";
+import type { Task, CreateTaskInput, UpdateTaskInput, Project } from "../core/types.js";
 
 const BASE = "/api";
 
 export const api = {
-  async listTasks(): Promise<Task[]> {
-    const res = await fetch(`${BASE}/tasks`);
+  async listTasks(params?: { search?: string; projectId?: string; status?: string }): Promise<Task[]> {
+    const url = new URL(`${BASE}/tasks`, window.location.origin);
+    if (params?.search) url.searchParams.set("search", params.search);
+    if (params?.projectId) url.searchParams.set("projectId", params.projectId);
+    if (params?.status) url.searchParams.set("status", params.status);
+    const res = await fetch(url.toString());
     return res.json();
   },
 
@@ -35,5 +39,10 @@ export const api = {
 
   async deleteTask(id: string): Promise<void> {
     await fetch(`${BASE}/tasks/${id}`, { method: "DELETE" });
+  },
+
+  async listProjects(): Promise<Project[]> {
+    const res = await fetch(`${BASE}/projects`);
+    return res.json();
   },
 };

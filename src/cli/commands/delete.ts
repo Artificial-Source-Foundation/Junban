@@ -1,6 +1,21 @@
 import type { AppServices } from "../../bootstrap.js";
 
-export async function deleteTask(_id: string, _services: AppServices) {
-  // TODO: Wire in Sprint 2 (L-06)
-  console.log("Delete not yet implemented.");
+interface DeleteOptions {
+  json?: boolean;
+}
+
+export async function deleteTask(id: string, services: AppServices, options?: DeleteOptions) {
+  const task = await services.taskService.get(id);
+  if (!task) {
+    console.error(`Task not found: ${id}`);
+    process.exit(1);
+  }
+
+  await services.taskService.delete(id);
+
+  if (options?.json) {
+    console.log(JSON.stringify({ deleted: true, id: task.id, title: task.title }, null, 2));
+  } else {
+    console.log(` Deleted: ${task.title} [${task.id.slice(0, 8)}]`);
+  }
 }

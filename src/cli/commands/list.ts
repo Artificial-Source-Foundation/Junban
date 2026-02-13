@@ -6,6 +6,7 @@ interface ListOptions {
   today?: boolean;
   project?: string;
   tag?: string;
+  search?: string;
   json?: boolean;
 }
 
@@ -23,6 +24,10 @@ export async function listTasks(options: ListOptions, services: AppServices) {
 
   if (options.tag) {
     filter.tag = options.tag;
+  }
+
+  if (options.search) {
+    filter.search = options.search;
   }
 
   if (options.project) {
