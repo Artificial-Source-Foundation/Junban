@@ -4,7 +4,7 @@ import type { Permission } from "./types.js";
  * Plugin API surface — the controlled interface that plugins interact with.
  * Access is filtered by the plugin's declared permissions.
  */
-export function createPluginAPI(pluginId: string, permissions: Permission[]) {
+export function createPluginAPI(_pluginId: string, permissions: Permission[]) {
   const hasPermission = (p: Permission) => permissions.includes(p);
 
   return {
@@ -25,7 +25,7 @@ export function createPluginAPI(pluginId: string, permissions: Permission[]) {
 
     commands: hasPermission("commands")
       ? {
-          register: (command: { id: string; name: string; callback: () => void; hotkey?: string }) => {
+          register: (_command: { id: string; name: string; callback: () => void; hotkey?: string }) => {
             // TODO: Register in command palette
           },
         }
@@ -33,33 +33,33 @@ export function createPluginAPI(pluginId: string, permissions: Permission[]) {
 
     ui: {
       addSidebarPanel: hasPermission("ui:panel")
-        ? (panel: { id: string; title: string; icon: string; component: unknown }) => {
+        ? (_panel: { id: string; title: string; icon: string; component: unknown }) => {
             // TODO: Register sidebar panel
           }
         : undefined,
       addView: hasPermission("ui:view")
-        ? (view: { id: string; name: string; icon: string; component: unknown }) => {
+        ? (_view: { id: string; name: string; icon: string; component: unknown }) => {
             // TODO: Register view
           }
         : undefined,
       addStatusBarItem: hasPermission("ui:status")
-        ? (item: { id: string; text: string; icon: string; onClick?: () => void }) => {
+        ? (_item: { id: string; text: string; icon: string; onClick?: () => void }) => {
             // TODO: Add status bar item
-            return { update: (data: { text?: string }) => {} };
+            return { update: (_data: { text?: string }) => {} };
           }
         : undefined,
     },
 
     storage: hasPermission("storage")
       ? {
-          get: async <T>(key: string): Promise<T | null> => {
+          get: async <T>(_key: string): Promise<T | null> => {
             // TODO: Read from plugin_settings storage
             return null;
           },
-          set: async (key: string, value: unknown): Promise<void> => {
+          set: async (_key: string, _value: unknown): Promise<void> => {
             // TODO: Write to plugin_settings storage
           },
-          delete: async (key: string): Promise<void> => {
+          delete: async (_key: string): Promise<void> => {
             // TODO: Delete from plugin_settings storage
           },
           keys: async (): Promise<string[]> => {
@@ -70,10 +70,10 @@ export function createPluginAPI(pluginId: string, permissions: Permission[]) {
       : undefined,
 
     events: {
-      on: (event: string, callback: (...args: unknown[]) => void) => {
+      on: (_event: string, _callback: (...args: unknown[]) => void) => {
         // TODO: Subscribe to event bus
       },
-      off: (event: string, callback: (...args: unknown[]) => void) => {
+      off: (_event: string, _callback: (...args: unknown[]) => void) => {
         // TODO: Unsubscribe from event bus
       },
     },

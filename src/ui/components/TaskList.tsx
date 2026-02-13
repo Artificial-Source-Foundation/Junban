@@ -1,4 +1,3 @@
-import React from "react";
 import type { Task } from "../../core/types.js";
 import { TaskItem } from "./TaskItem.js";
 

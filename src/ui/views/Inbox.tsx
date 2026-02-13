@@ -1,4 +1,3 @@
-import React from "react";
 import { TaskInput } from "../components/TaskInput.js";
 import { TaskList } from "../components/TaskList.js";
 import type { Task } from "../../core/types.js";

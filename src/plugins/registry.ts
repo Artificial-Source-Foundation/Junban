@@ -11,7 +11,7 @@ const RegistryEntry = z.object({
   minDocketVersion: z.string(),
 });
 
-const Registry = z.object({
+const RegistrySchema = z.object({
   version: z.number(),
   description: z.string(),
   lastUpdated: z.string(),
@@ -19,6 +19,7 @@ const Registry = z.object({
 });
 
 export type RegistryEntry = z.infer<typeof RegistryEntry>;
+export type Registry = z.infer<typeof RegistrySchema>;
 
 /**
  * Plugin registry client — fetches and parses the community plugin directory.
@@ -28,12 +29,13 @@ export class PluginRegistry {
 
   /** Load the registry from a local JSON file. */
   async loadLocal(): Promise<RegistryEntry[]> {
-    // TODO: Read and parse sources.json
+    // TODO: Read and parse this.registryPath
+    void this.registryPath;
     return [];
   }
 
   /** Fetch the registry from a remote URL. */
-  async fetchRemote(url: string): Promise<RegistryEntry[]> {
+  async fetchRemote(_url: string): Promise<RegistryEntry[]> {
     // TODO: Fetch, parse, validate
     return [];
   }

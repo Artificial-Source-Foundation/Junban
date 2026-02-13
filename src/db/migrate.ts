@@ -1,9 +1,21 @@
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import { getDb } from "./client.js";
-import { loadEnv } from "../config/env.js";
+import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const env = loadEnv();
-const db = getDb(env.DB_PATH);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-migrate(db, { migrationsFolder: "src/db/migrations" });
-console.log("Migrations applied successfully.");
+export function runMigrations(db: BetterSQLite3Database<Record<string, unknown>>) {
+  migrate(db, { migrationsFolder: path.resolve(__dirname, "migrations") });
+}
+
+// Standalone execution: pnpm db:migrate
+const isMain = process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
+if (isMain) {
+  const { loadEnv } = await import("../config/env.js");
+  const { getDb } = await import("./client.js");
+  const env = loadEnv();
+  const db = getDb(env.DB_PATH);
+  runMigrations(db);
+  console.log("Migrations applied successfully.");
+}

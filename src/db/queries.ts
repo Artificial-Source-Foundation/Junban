@@ -4,21 +4,75 @@ import * as schema from "./schema.js";
 
 export function createQueries(db: BetterSQLite3Database<typeof schema>) {
   return {
-    // Tasks
-    listTasks: () => db.select().from(schema.tasks),
-    getTask: (id: string) => db.select().from(schema.tasks).where(eq(schema.tasks.id, id)),
-    insertTask: (task: typeof schema.tasks.$inferInsert) => db.insert(schema.tasks).values(task),
+    // ── Tasks ────────────────────────────────────────────
+    listTasks: () => db.select().from(schema.tasks).all(),
+
+    getTask: (id: string) =>
+      db.select().from(schema.tasks).where(eq(schema.tasks.id, id)).all(),
+
+    insertTask: (task: typeof schema.tasks.$inferInsert) =>
+      db.insert(schema.tasks).values(task).run(),
+
     updateTask: (id: string, data: Partial<typeof schema.tasks.$inferInsert>) =>
-      db.update(schema.tasks).set(data).where(eq(schema.tasks.id, id)),
-    deleteTask: (id: string) => db.delete(schema.tasks).where(eq(schema.tasks.id, id)),
+      db.update(schema.tasks).set(data).where(eq(schema.tasks.id, id)).run(),
 
-    // Projects
-    listProjects: () => db.select().from(schema.projects),
+    deleteTask: (id: string) =>
+      db.delete(schema.tasks).where(eq(schema.tasks.id, id)).run(),
+
+    // ── Task Tags (junction) ─────────────────────────────
+    getTaskTags: (taskId: string) =>
+      db
+        .select()
+        .from(schema.taskTags)
+        .innerJoin(schema.tags, eq(schema.taskTags.tagId, schema.tags.id))
+        .where(eq(schema.taskTags.taskId, taskId))
+        .all(),
+
+    insertTaskTag: (taskId: string, tagId: string) =>
+      db.insert(schema.taskTags).values({ taskId, tagId }).run(),
+
+    deleteTaskTags: (taskId: string) =>
+      db
+        .delete(schema.taskTags)
+        .where(eq(schema.taskTags.taskId, taskId))
+        .run(),
+
+    // ── Projects ─────────────────────────────────────────
+    listProjects: () => db.select().from(schema.projects).all(),
+
+    getProject: (id: string) =>
+      db.select().from(schema.projects).where(eq(schema.projects.id, id)).all(),
+
+    getProjectByName: (name: string) =>
+      db
+        .select()
+        .from(schema.projects)
+        .where(eq(schema.projects.name, name))
+        .all(),
+
     insertProject: (project: typeof schema.projects.$inferInsert) =>
-      db.insert(schema.projects).values(project),
+      db.insert(schema.projects).values(project).run(),
 
-    // Tags
-    listTags: () => db.select().from(schema.tags),
-    insertTag: (tag: typeof schema.tags.$inferInsert) => db.insert(schema.tags).values(tag),
+    updateProject: (
+      id: string,
+      data: Partial<typeof schema.projects.$inferInsert>,
+    ) => db.update(schema.projects).set(data).where(eq(schema.projects.id, id)).run(),
+
+    deleteProject: (id: string) =>
+      db.delete(schema.projects).where(eq(schema.projects.id, id)).run(),
+
+    // ── Tags ─────────────────────────────────────────────
+    listTags: () => db.select().from(schema.tags).all(),
+
+    getTagByName: (name: string) =>
+      db.select().from(schema.tags).where(eq(schema.tags.name, name)).all(),
+
+    insertTag: (tag: typeof schema.tags.$inferInsert) =>
+      db.insert(schema.tags).values(tag).run(),
+
+    deleteTag: (id: string) =>
+      db.delete(schema.tags).where(eq(schema.tags.id, id)).run(),
   };
 }
+
+export type Queries = ReturnType<typeof createQueries>;

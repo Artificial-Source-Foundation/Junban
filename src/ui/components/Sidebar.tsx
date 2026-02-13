@@ -1,5 +1,3 @@
-import React from "react";
-
 interface SidebarProps {
   currentView: string;
   onNavigate: (view: string) => void;

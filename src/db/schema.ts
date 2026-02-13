@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core";
 
 export const tasks = sqliteTable("tasks", {
   id: text("id").primaryKey(),
@@ -9,7 +9,7 @@ export const tasks = sqliteTable("tasks", {
   dueDate: text("due_date"),
   dueTime: integer("due_time", { mode: "boolean" }).default(false),
   completedAt: text("completed_at"),
-  projectId: text("project_id").references(() => projects.id),
+  projectId: text("project_id").references(() => projects.id, { onDelete: "set null" }),
   recurrence: text("recurrence"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at").notNull(),
@@ -33,9 +33,11 @@ export const tags = sqliteTable("tags", {
 });
 
 export const taskTags = sqliteTable("task_tags", {
-  taskId: text("task_id").notNull().references(() => tasks.id),
-  tagId: text("tag_id").notNull().references(() => tags.id),
-});
+  taskId: text("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+  tagId: text("tag_id").notNull().references(() => tags.id, { onDelete: "cascade" }),
+}, (table) => [
+  primaryKey({ columns: [table.taskId, table.tagId] }),
+]);
 
 export const pluginSettings = sqliteTable("plugin_settings", {
   pluginId: text("plugin_id").primaryKey(),

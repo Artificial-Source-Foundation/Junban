@@ -1,6 +1,8 @@
 import { Command } from "commander";
+import { bootstrap } from "../bootstrap.js";
 
 const program = new Command();
+const services = bootstrap();
 
 program
   .name("docket")
@@ -12,7 +14,7 @@ program
   .description("Add a new task (supports natural language)")
   .action(async (description: string) => {
     const { addTask } = await import("./commands/add.js");
-    await addTask(description);
+    await addTask(description, services);
   });
 
 program
@@ -24,7 +26,7 @@ program
   .option("--json", "Output as JSON")
   .action(async (options) => {
     const { listTasks } = await import("./commands/list.js");
-    await listTasks(options);
+    await listTasks(options, services);
   });
 
 program
@@ -32,7 +34,7 @@ program
   .description("Mark a task as completed")
   .action(async (id: string) => {
     const { doneTask } = await import("./commands/done.js");
-    await doneTask(id);
+    await doneTask(id, services);
   });
 
 program
@@ -43,7 +45,7 @@ program
   .option("--due <date>", "New due date")
   .action(async (id: string, options) => {
     const { editTask } = await import("./commands/edit.js");
-    await editTask(id, options);
+    await editTask(id, options, services);
   });
 
 program
@@ -51,7 +53,7 @@ program
   .description("Delete a task")
   .action(async (id: string) => {
     const { deleteTask } = await import("./commands/delete.js");
-    await deleteTask(id);
+    await deleteTask(id, services);
   });
 
 program.parse();

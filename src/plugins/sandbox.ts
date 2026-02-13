@@ -17,7 +17,7 @@ export interface SandboxOptions {
   permissions: string[];
 }
 
-export function createSandbox(options: SandboxOptions) {
+export function createSandbox(_options: SandboxOptions) {
   // TODO: Implement sandboxed execution context
   // Options:
   // 1. Node.js vm module with restricted context
@@ -25,7 +25,7 @@ export function createSandbox(options: SandboxOptions) {
   // 3. iframe sandbox (for UI components)
 
   return {
-    execute: async (entryFile: string) => {
+    execute: async (_entryFile: string) => {
       // TODO: Load and execute plugin in sandbox
     },
     destroy: () => {
