@@ -20,9 +20,9 @@ All work items for ASF Docket, organized by area and prioritized within each sec
 | F-02 | Core infrastructure (logger, config, validation, IDs) | done | — | Initial commit |
 | F-03 | Database schema and migrations (Drizzle + SQLite) | done | — | Schema defined, migration runner ready |
 | F-04 | Vite + React entry point and dev server | done | — | index.html, vite.config.ts, main.tsx |
-| F-05 | CI/CD pipeline (GitHub Actions: lint, typecheck, test) | ready | — | Use Sentinel's ci.yml as template |
-| F-06 | ESLint config file | ready | — | Needs eslint.config.js for flat config |
-| F-07 | Prettier config file | ready | — | .prettierrc |
+| F-05 | CI/CD pipeline (GitHub Actions: lint, typecheck, test) | done | S7 | .github/workflows/ci.yml |
+| F-06 | ESLint config file | done | S7 | eslint.config.js (flat config) |
+| F-07 | Prettier config file | done | S7 | .prettierrc + .prettierignore |
 
 ## Core — Task CRUD
 
@@ -98,42 +98,42 @@ All work items for ASF Docket, organized by area and prioritized within each sec
 | PL-01 | Plugin manifest schema + validation | done | — | Zod schema, 13 tests |
 | PL-02 | Plugin settings manager | done | — | In-memory, 7 tests |
 | PL-03 | Plugin registry search | done | — | 10 tests |
-| PL-04 | Plugin loader (discover + validate manifests) | ready | S3 | |
-| PL-05 | Plugin lifecycle (load/unload, call onLoad/onUnload) | ready | S3 | |
-| PL-06 | Plugin sandbox (restricted execution context) | needs-design | S3 | vm module vs Worker |
-| PL-07 | Plugin API surface (task read/write, events) | ready | S3 | api.ts scaffolded |
-| PL-08 | Plugin UI extension: sidebar panels | ready | S4 | |
-| PL-09 | Plugin UI extension: custom views | ready | S4 | |
-| PL-10 | Plugin UI extension: status bar | ready | S4 | |
-| PL-11 | Plugin commands integration with command palette | ready | S4 | |
-| PL-12 | Plugin settings UI in Settings view | ready | S4 | |
-| PL-13 | Plugin store view (browse sources.json) | ready | S4 | |
+| PL-04 | Plugin loader (discover + validate manifests) | done | S3 | |
+| PL-05 | Plugin lifecycle (load/unload, call onLoad/onUnload) | done | S3 | |
+| PL-06 | Plugin sandbox (restricted execution context) | done | S3 | Sandboxed context with controlled API access |
+| PL-07 | Plugin API surface (task read/write, events) | done | S3 | |
+| PL-08 | Plugin UI extension: sidebar panels | done | S4 | |
+| PL-09 | Plugin UI extension: custom views | done | S4 | |
+| PL-10 | Plugin UI extension: status bar | done | S4 | |
+| PL-11 | Plugin commands integration with command palette | done | S4 | |
+| PL-12 | Plugin settings UI in Settings view | done | S4 | |
+| PL-13 | Plugin store view (browse sources.json) | done | S4 | |
 | PL-14 | Plugin install/uninstall from store | needs-design | — | Download + extract |
 | PL-15 | Plugin permission approval UX | needs-design | — | |
-| PL-16 | Event bus for task lifecycle hooks | ready | S3 | |
-| PL-17 | Plugin-specific isolated storage (persist to DB) | ready | S3 | settings.ts partial |
-| PL-18 | Built-in Pomodoro plugin (fully functional) | blocked | — | Blocked by PL-05 |
+| PL-16 | Event bus for task lifecycle hooks | done | S3 | |
+| PL-17 | Plugin-specific isolated storage (persist to DB) | done | S3 | SQLite-backed per-plugin storage |
+| PL-18 | Built-in Pomodoro plugin (fully functional) | done | S4 | Timer, pause/resume, configurable durations |
 
 ## AI Assistant
 
 | ID | Item | Status | Sprint | Notes |
 |----|------|--------|--------|-------|
-| A-01 | AI provider abstraction interface | ready | — | Common interface for all providers |
-| A-02 | OpenAI provider implementation | ready | — | GPT-4, GPT-3.5 via API key |
-| A-03 | Anthropic provider implementation | ready | — | Claude models via API key |
-| A-04 | OpenRouter provider implementation | ready | — | Multi-provider gateway |
-| A-05 | Ollama provider implementation | ready | — | Local models, zero data exposure |
-| A-06 | LM Studio provider implementation | ready | — | Local via OpenAI-compatible API |
-| A-07 | AI chat panel in sidebar | ready | — | Conversational UI component |
-| A-08 | Chat session management | ready | — | Conversation history, context window |
-| A-09 | AI tool definitions (task CRUD) | ready | — | Tools for create/read/update/complete/delete |
-| A-10 | Context injection (tasks, projects, schedule) | ready | — | Feed current state to AI |
-| A-11 | Natural language task creation via AI | ready | — | "I need to finish X by Friday" |
-| A-12 | AI follow-up questions | ready | — | "Which project should this go under?" |
-| A-13 | AI priority suggestions | ready | — | "You have 3 overdue tasks — reschedule?" |
-| A-14 | AI daily schedule suggestion | ready | — | "Here's a plan for your day" |
-| A-15 | Voice input (speech-to-text) | needs-design | — | Browser Speech API or Whisper |
-| A-16 | Provider settings UI | ready | — | Select provider, enter API keys |
+| A-01 | AI provider abstraction interface | done | S5 | Common interface for all providers |
+| A-02 | OpenAI provider implementation | done | S5 | GPT-4, GPT-3.5 via API key |
+| A-03 | Anthropic provider implementation | done | S5 | Claude models via API key |
+| A-04 | OpenRouter provider implementation | done | S5 | Multi-provider gateway |
+| A-05 | Ollama provider implementation | done | S5 | Local models, zero data exposure |
+| A-06 | LM Studio provider implementation | done | S5 | Local via OpenAI-compatible API |
+| A-07 | AI chat panel in sidebar | done | S5 | Conversational UI component |
+| A-08 | Chat session management | done | S5 | Conversation history, context window |
+| A-09 | AI tool definitions (task CRUD) | done | S5 | Tools for create/read/update/complete/delete |
+| A-10 | Context injection (tasks, projects, schedule) | done | S6 | Rich context in system message |
+| A-11 | Natural language task creation via AI | done | S5 | Via AI tool calling |
+| A-12 | AI follow-up questions | done | S6 | Enhanced system prompt |
+| A-13 | AI priority suggestions | done | S6 | Enhanced system prompt |
+| A-14 | AI daily schedule suggestion | done | S6 | Enhanced system prompt |
+| A-15 | Voice input (speech-to-text) | done | S6 | Browser Speech API |
+| A-16 | Provider settings UI | done | S5 | Select provider, enter API keys |
 | A-17 | Custom AI provider plugin support | blocked | — | Blocked by plugin system (PL-07) |
 | A-18 | AI reminders via integrations | idea | — | Discord bot, Google Calendar, etc. |
 
@@ -163,7 +163,7 @@ All work items for ASF Docket, organized by area and prioritized within each sec
 | T-07 | Integration tests: TaskService + SQLite | done | S1 | End-to-end CRUD |
 | T-08 | Integration tests: CLI commands | done | S2 | |
 | T-09 | Component tests: TaskInput, TaskList | done | S2 | |
-| T-10 | Plugin loader integration tests | ready | S3 | |
+| T-10 | Plugin loader integration tests | done | S3 | |
 
 ## Documentation
 

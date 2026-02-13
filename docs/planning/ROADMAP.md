@@ -41,21 +41,21 @@ Refinements to the core experience before plugins.
 
 The conversational AI that makes Docket feel like JARVIS for tasks.
 
-- [ ] AI provider abstraction interface
-- [ ] OpenAI provider implementation
-- [ ] Anthropic provider implementation
-- [ ] OpenRouter provider implementation
-- [ ] Ollama provider implementation (local, zero data exposure)
-- [ ] LM Studio provider implementation (local)
-- [ ] AI chat panel in sidebar
-- [ ] Chat session management (conversation history)
-- [ ] AI tool definitions (task CRUD, scheduling, reminders)
-- [ ] Context injection (tasks, projects, priorities, schedule)
-- [ ] Natural language task creation via AI ("I need to finish the report by Friday")
-- [ ] AI follow-up questions ("Which project should this go under?")
-- [ ] AI priority suggestions ("You have 3 overdue tasks — want me to reschedule?")
-- [ ] Voice input (speech-to-text → AI chat)
-- [ ] Provider settings UI (select provider, enter API keys)
+- [x] AI provider abstraction interface
+- [x] OpenAI provider implementation
+- [x] Anthropic provider implementation
+- [x] OpenRouter provider implementation
+- [x] Ollama provider implementation (local, zero data exposure)
+- [x] LM Studio provider implementation (local)
+- [x] AI chat panel in sidebar
+- [x] Chat session management (conversation history)
+- [x] AI tool definitions (task CRUD, scheduling, reminders)
+- [x] Context injection (tasks, projects, priorities, schedule)
+- [x] Natural language task creation via AI ("I need to finish the report by Friday")
+- [x] AI follow-up questions ("Which project should this go under?")
+- [x] AI priority suggestions ("You have 3 overdue tasks — want me to reschedule?")
+- [x] Voice input (speech-to-text → AI chat)
+- [x] Provider settings UI (select provider, enter API keys)
 - [ ] Custom AI provider plugin support (BYOM)
 
 ## v0.5 — Plugin System
@@ -65,17 +65,17 @@ The Obsidian-style plugin architecture.
 - [x] Plugin manifest schema and validation
 - [x] Plugin settings manager
 - [x] Plugin registry search
-- [ ] Plugin loader (discovery, validation, loading)
-- [ ] Plugin lifecycle management (load, unload, enable, disable)
-- [ ] Sandboxed plugin execution environment
-- [ ] Plugin API surface: task read/write, events, commands
-- [ ] Plugin UI extension points: sidebar panels, views, status bar
-- [ ] Plugin settings system (defined in manifest, managed by Docket)
-- [ ] Plugin-specific storage (isolated key-value store)
-- [ ] Community plugin registry (sources.json)
-- [ ] Plugin store view (browse, install, configure, remove)
-- [ ] Built-in example plugin (Pomodoro timer)
-- [ ] Plugin API documentation and examples
+- [x] Plugin loader (discovery, validation, loading)
+- [x] Plugin lifecycle management (load, unload, enable, disable)
+- [x] Sandboxed plugin execution environment
+- [x] Plugin API surface: task read/write, events, commands
+- [x] Plugin UI extension points: sidebar panels, views, status bar
+- [x] Plugin settings system (defined in manifest, managed by Docket)
+- [x] Plugin-specific storage (isolated key-value store)
+- [x] Community plugin registry (sources.json)
+- [x] Plugin store view (browse, install, configure, remove)
+- [x] Built-in example plugin (Pomodoro timer)
+- [x] Plugin API documentation and examples
 - [ ] Plugin permission model (approve on install)
 
 ## v0.7 — Markdown Storage
@@ -98,8 +98,8 @@ Production-quality task manager with a stable plugin API.
 - [ ] Auto-update mechanism
 - [ ] Performance optimization (large task lists, many plugins)
 - [ ] Accessibility audit (screen readers, keyboard-only use)
-- [ ] Comprehensive test suite (unit, component, integration)
-- [ ] CI/CD pipeline (lint, typecheck, test, build, release)
+- [x] Comprehensive test suite (unit, component, integration)
+- [x] CI/CD pipeline (lint, typecheck, test, build, release)
 - [ ] First batch of community plugins published
 
 ## v1.5 — Docket Sync

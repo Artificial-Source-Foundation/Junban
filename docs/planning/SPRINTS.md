@@ -164,7 +164,6 @@ These will be planned as we get closer. See [BACKLOG.md](BACKLOG.md) for all ite
 
 | Sprint | Theme | Key Items |
 |--------|-------|-----------|
-| S7 | CI/CD & Release | GitHub Actions, ESLint/Prettier config, Tauri packaging |
 | S8 | Markdown Storage | Storage abstraction, Markdown backend, file-based projects |
 | S9 | Data Portability | Export (JSON/MD/CSV), import (Todoist), migration tools |
 | S10 | Advanced UX | Drag-and-drop, bulk ops, undo/redo, shortcut customization |
@@ -297,3 +296,15 @@ These will be planned as we get closer. See [BACKLOG.md](BACKLOG.md) for all ite
 | AI-21 | Chat persistence + context tests | done |
 
 **Result**: 2 new files, 5 modified files. AI assistant now has live task context, persistent chat history, voice input, enhanced UX with tool call badges and suggestion chips. 333 passing tests.
+
+### Sprint 7 — "CI/CD & Release" (completed)
+
+**Goal**: Every push/PR runs automated lint, format check, typecheck, and tests via GitHub Actions. Code style is enforced consistently with ESLint 9 flat config and Prettier.
+
+| ID | Item | Status |
+|----|------|--------|
+| F-05 | CI/CD pipeline (GitHub Actions: lint, format, typecheck, test) | done |
+| F-06 | ESLint 9 flat config (TS + React hooks/refresh + Prettier) | done |
+| F-07 | Prettier config (.prettierrc + .prettierignore) | done |
+
+**Result**: 4 new files (eslint.config.js, .prettierrc, .prettierignore, .github/workflows/ci.yml), codebase-wide formatting normalization, lint violation fixes. 333 passing tests.
