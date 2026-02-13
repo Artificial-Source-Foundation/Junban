@@ -70,6 +70,9 @@ export function CommandPalette({ commands, isOpen, onClose }: CommandPaletteProp
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/50"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Command palette"
       onClick={onClose}
     >
       <div
@@ -84,12 +87,29 @@ export function CommandPalette({ commands, isOpen, onClose }: CommandPaletteProp
           placeholder="Type a command..."
           className="w-full px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-transparent focus:outline-none"
           autoFocus
+          role="combobox"
+          aria-expanded={filtered.length > 0}
+          aria-controls="command-palette-list"
+          aria-activedescendant={
+            filtered[selectedIndex] ? `cmd-${filtered[selectedIndex].id}` : undefined
+          }
         />
-        <ul className="max-h-64 overflow-auto py-1">
+        <ul
+          id="command-palette-list"
+          role="listbox"
+          aria-label="Commands"
+          className="max-h-64 overflow-auto py-1"
+        >
           {filtered.map((cmd, index) => (
-            <li key={cmd.id}>
+            <li
+              key={cmd.id}
+              id={`cmd-${cmd.id}`}
+              role="option"
+              aria-selected={index === selectedIndex}
+            >
               <button
                 onClick={() => handleSelect(cmd)}
+                tabIndex={-1}
                 className={`w-full text-left px-4 py-2 flex justify-between ${
                   index === selectedIndex
                     ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"

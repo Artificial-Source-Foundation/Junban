@@ -82,25 +82,25 @@ The Obsidian-style plugin architecture.
 
 Alternative storage backend for portability.
 
-- [ ] Markdown storage backend (YAML frontmatter + body)
-- [ ] Storage interface abstraction (SQLite and Markdown share API)
-- [ ] File-based project organization (one directory per project)
-- [ ] Storage mode switching in settings
-- [ ] Markdown import/export
-- [ ] Git-friendly file format (minimal diffs on updates)
+- [x] Markdown storage backend (YAML frontmatter + body)
+- [x] Storage interface abstraction (SQLite and Markdown share API)
+- [x] File-based project organization (one directory per project)
+- [x] Storage mode switching in settings
+- [x] Markdown import/export
+- [x] Git-friendly file format (minimal diffs on updates)
 
 ## v1.0 — Stable Release
 
 Production-quality task manager with a stable plugin API.
 
-- [ ] Stable Plugin API (v1 — breaking changes require major version)
+- [x] Stable Plugin API (v1 — breaking changes require major version)
 - [x] Tauri desktop app packaging (macOS, Windows, Linux)
-- [ ] Auto-update mechanism
-- [ ] Performance optimization (large task lists, many plugins)
-- [ ] Accessibility audit (screen readers, keyboard-only use)
+- [x] Auto-update mechanism
+- [x] Performance optimization (large task lists, many plugins)
+- [x] Accessibility audit (screen readers, keyboard-only use)
 - [x] Comprehensive test suite (unit, component, integration)
 - [x] CI/CD pipeline (lint, typecheck, test, build, release)
-- [ ] First batch of community plugins published
+- [x] First batch of community plugins published
 
 ## v1.5 — Docket Sync
 

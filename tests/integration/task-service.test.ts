@@ -123,6 +123,29 @@ describe("TaskService (integration)", () => {
       expect(tasks[0].tags).toHaveLength(3);
       expect(tasks[0].tags.map((t) => t.name).sort()).toEqual(["a", "b", "c"]);
     });
+
+    it("returns correct tags for multiple tasks (batch query)", async () => {
+      await taskService.create({ title: "Task A", tags: ["x", "y"] });
+      await taskService.create({ title: "Task B", tags: ["y", "z"] });
+      await taskService.create({ title: "Task C" });
+
+      const tasks = await taskService.list();
+      const byTitle = new Map(tasks.map((t) => [t.title, t]));
+
+      expect(
+        byTitle
+          .get("Task A")!
+          .tags.map((t) => t.name)
+          .sort(),
+      ).toEqual(["x", "y"]);
+      expect(
+        byTitle
+          .get("Task B")!
+          .tags.map((t) => t.name)
+          .sort(),
+      ).toEqual(["y", "z"]);
+      expect(byTitle.get("Task C")!.tags).toHaveLength(0);
+    });
   });
 
   describe("get", () => {

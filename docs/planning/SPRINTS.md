@@ -193,9 +193,7 @@ These will be planned as we get closer. See [BACKLOG.md](BACKLOG.md) for all ite
 
 | Sprint | Theme | Key Items |
 |--------|-------|-----------|
-| S11 | Markdown Storage | Storage abstraction, Markdown backend, file-based projects |
-| S12 | Hardening | Accessibility audit, performance profiling, error boundaries |
-| S13 | v1.0 Release | Stable API freeze, auto-updater, community plugins |
+| S14 | Docket Sync | Sync server, user accounts, E2E encryption |
 
 ---
 
@@ -380,3 +378,56 @@ These will be planned as we get closer. See [BACKLOG.md](BACKLOG.md) for all ite
 | PL-14 | Plugin install/uninstall from store (tar.gz download + extract) | done |
 
 **Result**: 3 new files, 10+ modified files. Import with preview + auto-detection, custom themes with grouped color pickers and live preview, plugin install/uninstall with search and loading states. 424 passing tests.
+
+### Sprint 11 — "Markdown Storage" (completed)
+
+**Goal**: Alternative storage backend for portability. IStorage interface abstraction, Markdown backend with YAML frontmatter, file-based project organization, storage mode switching, git-friendly format.
+
+| ID | Item | Status |
+|----|------|--------|
+| D-05 | Markdown storage backend (YAML frontmatter + body) | done |
+| D-06 | Storage interface abstraction (IStorage) | done |
+| — | File-based project organization (one directory per project) | done |
+| — | Storage mode switching (STORAGE_MODE env var) | done |
+| — | Git-friendly file format (sorted YAML keys, minimal diffs) | done |
+| — | Markdown backend integration tests | done |
+
+**Result**: IStorage interface abstracts SQLite and Markdown backends. MarkdownBackend stores tasks as `.md` files with YAML frontmatter in a directory tree. In-memory indexes for reads, disk writes on mutations. 528 passing tests.
+
+### Sprint 12 — "Hardening" (completed)
+
+**Goal**: Harden the app for v1.0 across three pillars: Error Handling, Performance, and Accessibility. React error boundaries, N+1 query elimination, ARIA attributes across all UI components.
+
+| ID | Item | Status |
+|----|------|--------|
+| H-01 | Expand error types (ValidationError, StorageError) | done |
+| H-02 | API layer res.ok checks (handleResponse/handleVoidResponse) | done |
+| H-03 | TaskContext mutation error handling (try/catch all 7 mutations) | done |
+| H-04 | Harden parseBody & API middleware (JSON parse + error responses) | done |
+| H-05 | Plugin loader try/catch (cleanup on failure) | done |
+| H-06 | Markdown backend fs error handling (StorageError wrapping) | done |
+| H-07 | React Error Boundary (class component with fallback) | done |
+| H-08 | Batch tag query — eliminate N+1 (listAllTaskTags) | done |
+| H-09 | React.memo on TaskItem/SortableTaskItem | done |
+| H-10 | Memoize TaskContext value (useMemo) | done |
+| H-11 | Debounce project refresh (tasks.length dependency) | done |
+| H-12–H-17 | Accessibility: Toast, Dialogs, Sidebar, TaskItem, Skip-link, Panels | done |
+
+**Result**: 3 new files, 20+ modified files. Full error handling chain from API to UI with React error boundaries. N+1 query eliminated (2 queries instead of 1+N). ARIA attributes across all interactive components. Skip-to-content link, screen reader support, keyboard navigation.
+
+### Sprint 13 — "v1.0 Release" (completed)
+
+**Goal**: Ship v1.0. Stable Plugin API with versioning and compatibility checks, Tauri auto-updater, GitHub Actions release workflow, version bump to 1.0.0, community plugin registry update.
+
+| ID | Item | Status |
+|----|------|--------|
+| PL-19 | Plugin API versioning (PLUGIN_API_VERSION, PLUGIN_API_STABILITY, meta object) | done |
+| PL-20 | Manifest targetApiVersion field + loader compatibility check | done |
+| F-13 | Tauri updater plugin setup (Cargo.toml, tauri.conf.json, lib.rs) | done |
+| F-14 | Update check UI in Settings (AboutSection with Tauri update check) | done |
+| F-15 | GitHub Actions release workflow (multi-platform build + publish) | done |
+| F-16 | Release preparation script (scripts/prepare-release.ts) | done |
+| DOC-13 | Plugin API documentation update (versioning & stability section) | done |
+| DOC-14 | Update ROADMAP, SPRINTS, BACKLOG for v1.0 | done |
+
+**Result**: 3 new files, 13+ modified files. Plugin API frozen at v1.0.0 (stable) with semver versioning and manifest targetApiVersion field. Tauri auto-updater configured. Multi-platform release workflow via GitHub Actions. Version bumped to 1.0.0 across all config files. 549+ passing tests.

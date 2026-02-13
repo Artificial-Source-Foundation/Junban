@@ -33,14 +33,18 @@ export function Sidebar({
   chatOpen,
 }: SidebarProps) {
   return (
-    <aside className="w-56 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col overflow-auto">
+    <aside
+      aria-label="Main navigation"
+      className="w-56 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col overflow-auto"
+    >
       <h2 className="text-lg font-bold mb-4">Docket</h2>
-      <nav className="flex-1">
+      <nav aria-label="Views" className="flex-1">
         <ul className="space-y-1">
           {NAV_ITEMS.map((item) => (
             <li key={item.id}>
               <button
                 onClick={() => onNavigate(item.id)}
+                aria-current={currentView === item.id ? "page" : undefined}
                 className={`w-full text-left px-3 py-2 rounded-md text-sm ${
                   currentView === item.id
                     ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium"
@@ -63,6 +67,11 @@ export function Sidebar({
                 <li key={project.id}>
                   <button
                     onClick={() => onNavigate("project", project.id)}
+                    aria-current={
+                      currentView === "project" && selectedProjectId === project.id
+                        ? "page"
+                        : undefined
+                    }
                     className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center gap-2 ${
                       currentView === "project" && selectedProjectId === project.id
                         ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium"
@@ -70,6 +79,7 @@ export function Sidebar({
                     }`}
                   >
                     <span
+                      aria-hidden="true"
                       className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                       style={{ backgroundColor: project.color }}
                     />
@@ -117,6 +127,11 @@ export function Sidebar({
                 <li key={view.id}>
                   <button
                     onClick={() => onNavigate("plugin-view", view.id)}
+                    aria-current={
+                      currentView === "plugin-view" && selectedPluginViewId === view.id
+                        ? "page"
+                        : undefined
+                    }
                     className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center gap-2 ${
                       currentView === "plugin-view" && selectedPluginViewId === view.id
                         ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium"
@@ -135,6 +150,8 @@ export function Sidebar({
       {onToggleChat && (
         <button
           onClick={onToggleChat}
+          aria-label={chatOpen ? "Close AI chat panel" : "Open AI chat panel"}
+          aria-pressed={chatOpen}
           className={`mx-3 mb-3 mt-2 px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${
             chatOpen
               ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium"

@@ -19,7 +19,7 @@ cat > plugins/my-plugin/manifest.json << 'EOF'
   "author": "Your Name",
   "description": "A brief description of what this plugin does",
   "main": "index.ts",
-  "minDocketVersion": "0.1.0",
+  "minDocketVersion": "1.0.0",
   "permissions": ["task:read", "commands"]
 }
 EOF
@@ -62,6 +62,7 @@ Every plugin must have a `manifest.json` in its root directory.
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `targetApiVersion` | string | Plugin API version this plugin targets (see [API Versioning](#api-versioning--stability)) |
 | `permissions` | string[] | Required permissions (see [Permissions](#permissions)) |
 | `settings` | SettingDef[] | Plugin settings schema (see [Settings](#settings-api)) |
 | `repository` | string | URL to source code |
@@ -79,7 +80,7 @@ Every plugin must have a `manifest.json` in its root directory.
   "author": "ASF",
   "description": "Pomodoro technique timer with task integration and statistics.",
   "main": "index.ts",
-  "minDocketVersion": "0.5.0",
+  "minDocketVersion": "1.0.0",
   "license": "MIT",
   "repository": "https://github.com/asf-org/docket-plugin-pomodoro",
   "keywords": ["pomodoro", "timer", "productivity"],
@@ -454,6 +455,7 @@ interface PluginManifest {
   description: string;
   main: string;
   minDocketVersion: string;
+  targetApiVersion?: string;
   permissions?: string[];
   settings?: SettingDefinition[];
   repository?: string;
@@ -472,6 +474,60 @@ type SettingDefinition =
   | { id: string; name: string; type: "boolean"; default: boolean; description?: string }
   | { id: string; name: string; type: "select"; default: string; description?: string; options: string[] };
 ```
+
+## API Versioning & Stability
+
+### Current Version
+
+- **API Version**: 1.0.0
+- **Stability**: Stable
+
+The Plugin API follows [semver](https://semver.org/):
+
+| Version Change | Meaning | Example |
+|----------------|---------|---------|
+| Major (2.0.0) | Breaking changes — plugins may need updates | Removing an API method, changing return types |
+| Minor (1.1.0) | Additive — new features, fully backward-compatible | Adding a new `this.app.tags.rename()` method |
+| Patch (1.0.1) | Bug fixes only — no API surface changes | Fixing an edge case in `this.app.tasks.list()` |
+
+### `targetApiVersion` Manifest Field
+
+Plugins can declare which API version they target:
+
+```json
+{
+  "id": "my-plugin",
+  "name": "My Plugin",
+  "version": "1.0.0",
+  "author": "You",
+  "description": "Example plugin",
+  "main": "index.ts",
+  "minDocketVersion": "1.0.0",
+  "targetApiVersion": "1.0.0"
+}
+```
+
+If a plugin targets a newer major version than the running Docket instance provides, a warning is logged and the plugin may not function correctly.
+
+### Runtime Introspection
+
+Plugins can check the API version at runtime via `this.app.meta`:
+
+```typescript
+async onLoad() {
+  console.log(`API version: ${this.app.meta.version}`);    // "1.0.0"
+  console.log(`Stability: ${this.app.meta.stability}`);      // "stable"
+}
+```
+
+### Stability Levels
+
+| Level | Meaning |
+|-------|---------|
+| `stable` | Breaking changes require a major version bump. Safe for production plugins. |
+| `experimental` | API may change between minor versions. Used for new features under development. |
+
+The current Plugin API is **stable** as of v1.0.0.
 
 ## Sandbox Restrictions
 

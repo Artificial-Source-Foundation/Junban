@@ -64,6 +64,10 @@ export class SQLiteBackend implements IStorage {
     return this.q.getTaskTags(taskId) as unknown as TaskTagJoin[];
   }
 
+  listAllTaskTags(): TaskTagJoin[] {
+    return this.q.listAllTaskTags() as unknown as TaskTagJoin[];
+  }
+
   insertTaskTag(taskId: string, tagId: string): MutationResult {
     return this.q.insertTaskTag(taskId, tagId);
   }

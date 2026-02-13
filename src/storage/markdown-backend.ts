@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
 import { parseTaskFile, serializeTaskFile, taskFilename, slugify } from "./markdown-utils.js";
+import { StorageError } from "../core/errors.js";
 import type {
   IStorage,
   TaskRow,
@@ -51,7 +52,11 @@ export class MarkdownBackend implements IStorage {
       path.join(this.basePath, "_chat"),
     ];
     for (const dir of dirs) {
-      fs.mkdirSync(dir, { recursive: true });
+      try {
+        fs.mkdirSync(dir, { recursive: true });
+      } catch (err) {
+        throw new StorageError(`create directory ${dir}`, err instanceof Error ? err : undefined);
+      }
     }
 
     // 1. Read _tags.yaml
@@ -93,7 +98,11 @@ export class MarkdownBackend implements IStorage {
     // Get tag names for frontmatter
     const tagNames = this.getTagNamesForTask(task.id);
     const content = serializeTaskFile(task, task.title, description, tagNames);
-    fs.writeFileSync(filePath, content, "utf-8");
+    try {
+      fs.writeFileSync(filePath, content, "utf-8");
+    } catch (err) {
+      throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
+    }
 
     this.taskIndex.set(task.id, { row: { ...task, description: null }, filePath, description });
     return OK;
@@ -133,8 +142,12 @@ export class MarkdownBackend implements IStorage {
     // Get tag names and rewrite file
     const tagNames = this.getTagNamesForTask(id);
     const content = serializeTaskFile(newRow, newRow.title, newDescription, tagNames);
-    fs.mkdirSync(path.dirname(newFilePath), { recursive: true });
-    fs.writeFileSync(newFilePath, content, "utf-8");
+    try {
+      fs.mkdirSync(path.dirname(newFilePath), { recursive: true });
+      fs.writeFileSync(newFilePath, content, "utf-8");
+    } catch (err) {
+      throw new StorageError(`write ${newFilePath}`, err instanceof Error ? err : undefined);
+    }
 
     this.taskIndex.set(id, { row: newRow, filePath: newFilePath, description: newDescription });
     return OK;
@@ -144,8 +157,12 @@ export class MarkdownBackend implements IStorage {
     const entry = this.taskIndex.get(id);
     if (!entry) return NOOP;
 
-    if (fs.existsSync(entry.filePath)) {
-      fs.unlinkSync(entry.filePath);
+    try {
+      if (fs.existsSync(entry.filePath)) {
+        fs.unlinkSync(entry.filePath);
+      }
+    } catch (err) {
+      throw new StorageError(`delete ${entry.filePath}`, err instanceof Error ? err : undefined);
     }
     this.taskIndex.delete(id);
     this.taskTagIndex.delete(id);
@@ -209,6 +226,17 @@ export class MarkdownBackend implements IStorage {
     return had ? OK : NOOP;
   }
 
+  listAllTaskTags(): TaskTagJoin[] {
+    const results: TaskTagJoin[] = [];
+    for (const [taskId, tagIds] of this.taskTagIndex) {
+      for (const tagId of tagIds) {
+        const tag = this.tagIndex.get(tagId);
+        if (tag) results.push({ task_tags: { taskId, tagId }, tags: tag });
+      }
+    }
+    return results;
+  }
+
   deleteManyTaskTags(taskIds: string[]): MutationResult {
     let changes = 0;
     for (const taskId of taskIds) {
@@ -238,7 +266,6 @@ export class MarkdownBackend implements IStorage {
   insertProject(project: ProjectRow): MutationResult {
     const dirName = slugify(project.name) || project.id;
     const dirPath = path.join(this.basePath, "projects", dirName);
-    fs.mkdirSync(dirPath, { recursive: true });
 
     const meta: Record<string, unknown> = {
       id: project.id,
@@ -248,7 +275,12 @@ export class MarkdownBackend implements IStorage {
       archived: project.archived,
       createdAt: project.createdAt,
     };
-    fs.writeFileSync(path.join(dirPath, "_project.yaml"), YAML.stringify(meta), "utf-8");
+    try {
+      fs.mkdirSync(dirPath, { recursive: true });
+      fs.writeFileSync(path.join(dirPath, "_project.yaml"), YAML.stringify(meta), "utf-8");
+    } catch (err) {
+      throw new StorageError(`write project ${dirPath}`, err instanceof Error ? err : undefined);
+    }
 
     this.projectIndex.set(project.id, { row: project, dirPath });
     return OK;
@@ -267,7 +299,14 @@ export class MarkdownBackend implements IStorage {
       archived: newRow.archived,
       createdAt: newRow.createdAt,
     };
-    fs.writeFileSync(path.join(entry.dirPath, "_project.yaml"), YAML.stringify(meta), "utf-8");
+    try {
+      fs.writeFileSync(path.join(entry.dirPath, "_project.yaml"), YAML.stringify(meta), "utf-8");
+    } catch (err) {
+      throw new StorageError(
+        `write project ${entry.dirPath}`,
+        err instanceof Error ? err : undefined,
+      );
+    }
 
     this.projectIndex.set(id, { row: newRow, dirPath: entry.dirPath });
     return OK;
@@ -285,8 +324,15 @@ export class MarkdownBackend implements IStorage {
     }
 
     // Remove project directory
-    if (fs.existsSync(entry.dirPath)) {
-      fs.rmSync(entry.dirPath, { recursive: true, force: true });
+    try {
+      if (fs.existsSync(entry.dirPath)) {
+        fs.rmSync(entry.dirPath, { recursive: true, force: true });
+      }
+    } catch (err) {
+      throw new StorageError(
+        `delete project ${entry.dirPath}`,
+        err instanceof Error ? err : undefined,
+      );
     }
     this.projectIndex.delete(id);
     return OK;
@@ -330,7 +376,11 @@ export class MarkdownBackend implements IStorage {
     this.pluginSettingsMap.set(pluginId, row);
 
     const filePath = path.join(this.basePath, "_plugins", `${pluginId}.yaml`);
-    fs.writeFileSync(filePath, YAML.stringify({ settings, updatedAt: now }), "utf-8");
+    try {
+      fs.writeFileSync(filePath, YAML.stringify({ settings, updatedAt: now }), "utf-8");
+    } catch (err) {
+      throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
+    }
   }
 
   // ── App Settings ──
@@ -374,8 +424,12 @@ export class MarkdownBackend implements IStorage {
     this.chatMessages.delete(sessionId);
 
     const filePath = path.join(this.basePath, "_chat", `${sessionId}.yaml`);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (err) {
+      throw new StorageError(`delete ${filePath}`, err instanceof Error ? err : undefined);
     }
     return had ? OK : NOOP;
   }
@@ -440,13 +494,21 @@ export class MarkdownBackend implements IStorage {
 
     const tagNames = this.getTagNamesForTask(taskId);
     const content = serializeTaskFile(entry.row, entry.row.title, entry.description, tagNames);
-    fs.writeFileSync(entry.filePath, content, "utf-8");
+    try {
+      fs.writeFileSync(entry.filePath, content, "utf-8");
+    } catch (err) {
+      throw new StorageError(`write ${entry.filePath}`, err instanceof Error ? err : undefined);
+    }
   }
 
   private persistTags(): void {
     const tags = Array.from(this.tagIndex.values()).sort((a, b) => a.name.localeCompare(b.name));
     const filePath = path.join(this.basePath, "_tags.yaml");
-    fs.writeFileSync(filePath, YAML.stringify(tags), "utf-8");
+    try {
+      fs.writeFileSync(filePath, YAML.stringify(tags), "utf-8");
+    } catch (err) {
+      throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
+    }
   }
 
   private persistAppSettings(): void {
@@ -457,7 +519,11 @@ export class MarkdownBackend implements IStorage {
       obj[key] = { value: row.value, updatedAt: row.updatedAt };
     }
     const filePath = path.join(this.basePath, "_settings.yaml");
-    fs.writeFileSync(filePath, YAML.stringify(obj), "utf-8");
+    try {
+      fs.writeFileSync(filePath, YAML.stringify(obj), "utf-8");
+    } catch (err) {
+      throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
+    }
   }
 
   private persistPluginPermissions(): void {
@@ -466,14 +532,22 @@ export class MarkdownBackend implements IStorage {
       obj[id] = perms;
     }
     const filePath = path.join(this.basePath, "_plugins", "permissions.yaml");
-    fs.writeFileSync(filePath, YAML.stringify(obj), "utf-8");
+    try {
+      fs.writeFileSync(filePath, YAML.stringify(obj), "utf-8");
+    } catch (err) {
+      throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
+    }
   }
 
   private persistChatSession(sessionId: string): void {
     const messages = this.chatMessages.get(sessionId);
     if (!messages) return;
     const filePath = path.join(this.basePath, "_chat", `${sessionId}.yaml`);
-    fs.writeFileSync(filePath, YAML.stringify(messages), "utf-8");
+    try {
+      fs.writeFileSync(filePath, YAML.stringify(messages), "utf-8");
+    } catch (err) {
+      throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
+    }
   }
 
   // ── Loading ──

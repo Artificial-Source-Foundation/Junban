@@ -1,3 +1,4 @@
+import React from "react";
 import type { Task } from "../../core/types.js";
 import { getPriority } from "../../core/priorities.js";
 
@@ -17,7 +18,7 @@ interface TaskItemProps {
   innerRef?: React.Ref<HTMLDivElement>;
 }
 
-export function TaskItem({
+export const TaskItem = React.memo(function TaskItem({
   task,
   onToggle,
   onSelect,
@@ -44,6 +45,15 @@ export function TaskItem({
     <div
       ref={innerRef}
       style={style}
+      role="button"
+      tabIndex={0}
+      aria-label={`Task: ${task.title}`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(task.id);
+        }
+      }}
       className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer ${
         isMultiSelected
           ? "bg-blue-100 dark:bg-blue-900/40 ring-1 ring-blue-400 dark:ring-blue-600"
@@ -56,6 +66,8 @@ export function TaskItem({
       {dragHandleProps && (
         <span
           {...dragHandleProps}
+          role="img"
+          aria-label="Drag to reorder"
           className="cursor-grab text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 select-none"
         >
           ⠿
@@ -78,6 +90,11 @@ export function TaskItem({
           e.stopPropagation();
           onToggle(task.id);
         }}
+        aria-label={
+          task.status === "completed"
+            ? "Mark task incomplete"
+            : `Complete task${priority ? ` (${priority.label})` : ""}`
+        }
         className={`w-5 h-5 rounded-full border-2 flex-shrink-0 ${
           task.status === "completed"
             ? "bg-green-500 border-green-500"
@@ -86,6 +103,7 @@ export function TaskItem({
               : "border-gray-300 dark:border-gray-600"
         }`}
       />
+      {priority && <span className="sr-only">{priority.label}</span>}
       <span className={task.status === "completed" ? "line-through text-gray-400" : ""}>
         {task.title}
       </span>
@@ -104,4 +122,4 @@ export function TaskItem({
       )}
     </div>
   );
-}
+});

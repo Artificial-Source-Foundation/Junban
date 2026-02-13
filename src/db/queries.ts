@@ -39,6 +39,13 @@ export function createQueries(db: BaseSQLiteDatabase<"sync", any, typeof schema>
         .where(eq(schema.taskTags.taskId, taskId))
         .all(),
 
+    listAllTaskTags: () =>
+      db
+        .select()
+        .from(schema.taskTags)
+        .innerJoin(schema.tags, eq(schema.taskTags.tagId, schema.tags.id))
+        .all(),
+
     insertTaskTag: (taskId: string, tagId: string) =>
       db.insert(schema.taskTags).values({ taskId, tagId }).run(),
 

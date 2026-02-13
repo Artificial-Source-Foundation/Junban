@@ -51,11 +51,16 @@ export function TaskDetailPanel({ task, onUpdate, onDelete, onClose }: TaskDetai
   };
 
   return (
-    <div className="w-96 border-l border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-900 overflow-auto">
+    <div
+      role="complementary"
+      aria-label="Task details"
+      className="w-96 border-l border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-900 overflow-auto"
+    >
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
         <span className="text-xs text-gray-400 font-mono">{task.id.slice(0, 8)}</span>
         <button
           onClick={onClose}
+          aria-label="Close task details"
           className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-lg"
         >
           &times;

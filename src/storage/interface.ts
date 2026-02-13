@@ -81,6 +81,7 @@ export interface IStorage {
 
   // ── Task-Tag Relations ──
   getTaskTags(taskId: string): TaskTagJoin[];
+  listAllTaskTags(): TaskTagJoin[];
   insertTaskTag(taskId: string, tagId: string): MutationResult;
   deleteTaskTags(taskId: string): MutationResult;
   deleteManyTaskTags(taskIds: string[]): MutationResult;

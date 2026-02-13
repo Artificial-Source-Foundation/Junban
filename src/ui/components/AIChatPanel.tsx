@@ -52,6 +52,7 @@ export function AIChatPanel({ onClose, onOpenSettings }: AIChatPanelProps) {
           <h3 className="font-semibold text-sm">AI Chat</h3>
           <button
             onClick={onClose}
+            aria-label="Close AI chat"
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-lg"
           >
             &times;
@@ -91,6 +92,7 @@ export function AIChatPanel({ onClose, onOpenSettings }: AIChatPanelProps) {
           </button>
           <button
             onClick={onClose}
+            aria-label="Close AI chat"
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-lg"
           >
             &times;

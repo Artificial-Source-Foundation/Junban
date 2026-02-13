@@ -150,6 +150,32 @@ describe("SQLiteBackend", () => {
       expect(storage.getTaskTags("task-1")).toHaveLength(0);
     });
 
+    it("listAllTaskTags returns all task-tag joins", () => {
+      storage.insertTask(makeTask({ id: "t1" }));
+      storage.insertTask(makeTask({ id: "t2" }));
+      storage.insertTag(makeTag({ id: "tag-1", name: "urgent" }));
+      storage.insertTag(makeTag({ id: "tag-2", name: "home" }));
+      storage.insertTaskTag("t1", "tag-1");
+      storage.insertTaskTag("t1", "tag-2");
+      storage.insertTaskTag("t2", "tag-1");
+
+      const all = storage.listAllTaskTags();
+      expect(all).toHaveLength(3);
+
+      const t1Tags = all.filter((j) => j.task_tags.taskId === "t1");
+      expect(t1Tags).toHaveLength(2);
+      expect(t1Tags.map((j) => j.tags.name).sort()).toEqual(["home", "urgent"]);
+
+      const t2Tags = all.filter((j) => j.task_tags.taskId === "t2");
+      expect(t2Tags).toHaveLength(1);
+      expect(t2Tags[0].tags.name).toBe("urgent");
+    });
+
+    it("listAllTaskTags returns empty array when no tags", () => {
+      storage.insertTask(makeTask());
+      expect(storage.listAllTaskTags()).toHaveLength(0);
+    });
+
     it("deleteManyTaskTags removes tags for multiple tasks", () => {
       storage.insertTask(makeTask({ id: "t1" }));
       storage.insertTask(makeTask({ id: "t2" }));

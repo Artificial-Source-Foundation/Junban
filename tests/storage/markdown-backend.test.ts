@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { MarkdownBackend } from "../../src/storage/markdown-backend.js";
+import { StorageError } from "../../src/core/errors.js";
 import type { TaskRow, ProjectRow, TagRow } from "../../src/storage/interface.js";
 
 const now = "2025-01-01T00:00:00.000Z";
@@ -214,6 +215,28 @@ describe("MarkdownBackend", () => {
 
       expect(content).toContain("tags:");
       expect(content).toContain("- urgent");
+    });
+
+    it("listAllTaskTags returns all task-tag joins", () => {
+      backend.insertTag(makeTag({ id: "tag-1", name: "urgent" }));
+      backend.insertTag(makeTag({ id: "tag-2", name: "home" }));
+      backend.insertTask(makeTask({ id: "t1", title: "Task 1" }));
+      backend.insertTask(makeTask({ id: "t2", title: "Task 2" }));
+      backend.insertTaskTag("t1", "tag-1");
+      backend.insertTaskTag("t1", "tag-2");
+      backend.insertTaskTag("t2", "tag-1");
+
+      const all = backend.listAllTaskTags();
+      expect(all).toHaveLength(3);
+
+      const t1Tags = all.filter((j) => j.task_tags.taskId === "t1");
+      expect(t1Tags).toHaveLength(2);
+      expect(t1Tags.map((j) => j.tags.name).sort()).toEqual(["home", "urgent"]);
+    });
+
+    it("listAllTaskTags returns empty array when no tags assigned", () => {
+      backend.insertTask(makeTask());
+      expect(backend.listAllTaskTags()).toHaveLength(0);
     });
 
     it("deleteTaskTags removes all tags and updates file", () => {
@@ -477,6 +500,24 @@ describe("MarkdownBackend", () => {
 
       expect(backend2.listChatMessages("s1")).toHaveLength(1);
       expect(backend2.listChatMessages("s1")[0].content).toBe("Hello");
+    });
+  });
+
+  describe("StorageError on fs failures", () => {
+    it("throws StorageError when writing to an inaccessible location", () => {
+      const badBackend = new MarkdownBackend("/nonexistent/path/docket");
+      expect(() => badBackend.initialize()).toThrow(StorageError);
+    });
+
+    it("StorageError contains operation description", () => {
+      const badBackend = new MarkdownBackend("/nonexistent/path/docket");
+      try {
+        badBackend.initialize();
+        expect.unreachable("should have thrown");
+      } catch (err) {
+        expect(err).toBeInstanceOf(StorageError);
+        expect((err as StorageError).message).toContain("create directory");
+      }
     });
   });
 

@@ -43,6 +43,7 @@ export const PluginManifest = z.object({
   description: z.string(),
   main: z.string(),
   minDocketVersion: z.string(),
+  targetApiVersion: z.string().optional(),
   permissions: z.array(z.string()).optional().default([]),
   settings: z.array(SettingDefinition).optional().default([]),
   repository: z.string().url().optional(),

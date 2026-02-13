@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import type { Task, CreateTaskInput, UpdateTaskInput } from "../../core/types.js";
 import { api } from "../api.js";
 
@@ -89,77 +96,135 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const createTask = useCallback(async (input: CreateTaskInput) => {
-    const task = await api.createTask(input);
-    dispatch({ type: "TASK_ADDED", task });
+    try {
+      const task = await api.createTask(input);
+      dispatch({ type: "TASK_ADDED", task });
+    } catch (err) {
+      dispatch({
+        type: "LOAD_ERROR",
+        error: `Failed to create task: ${err instanceof Error ? err.message : String(err)}`,
+      });
+    }
   }, []);
 
   const updateTask = useCallback(async (id: string, input: UpdateTaskInput) => {
-    const task = await api.updateTask(id, input);
-    dispatch({ type: "TASK_UPDATED", task });
+    try {
+      const task = await api.updateTask(id, input);
+      dispatch({ type: "TASK_UPDATED", task });
+    } catch (err) {
+      dispatch({
+        type: "LOAD_ERROR",
+        error: `Failed to update task: ${err instanceof Error ? err.message : String(err)}`,
+      });
+    }
   }, []);
 
   const completeTask = useCallback(
     async (id: string) => {
-      const task = await api.completeTask(id);
-      // If the task has recurrence, refresh to pick up the new occurrence
-      if (task.recurrence) {
-        await refreshTasks();
-      } else {
-        dispatch({ type: "TASK_UPDATED", task });
+      try {
+        const task = await api.completeTask(id);
+        // If the task has recurrence, refresh to pick up the new occurrence
+        if (task.recurrence) {
+          await refreshTasks();
+        } else {
+          dispatch({ type: "TASK_UPDATED", task });
+        }
+      } catch (err) {
+        dispatch({
+          type: "LOAD_ERROR",
+          error: `Failed to complete task: ${err instanceof Error ? err.message : String(err)}`,
+        });
       }
     },
     [refreshTasks],
   );
 
   const deleteTask = useCallback(async (id: string) => {
-    await api.deleteTask(id);
-    dispatch({ type: "TASK_REMOVED", id });
+    try {
+      await api.deleteTask(id);
+      dispatch({ type: "TASK_REMOVED", id });
+    } catch (err) {
+      dispatch({
+        type: "LOAD_ERROR",
+        error: `Failed to delete task: ${err instanceof Error ? err.message : String(err)}`,
+      });
+    }
   }, []);
 
   const completeManyTasks = useCallback(
     async (ids: string[]) => {
-      const tasks = await api.completeManyTasks(ids);
-      // If any had recurrence, refresh all
-      if (tasks.some((t) => t.recurrence)) {
-        await refreshTasks();
-      } else {
-        dispatch({ type: "TASKS_UPDATED", tasks });
+      try {
+        const tasks = await api.completeManyTasks(ids);
+        // If any had recurrence, refresh all
+        if (tasks.some((t) => t.recurrence)) {
+          await refreshTasks();
+        } else {
+          dispatch({ type: "TASKS_UPDATED", tasks });
+        }
+      } catch (err) {
+        dispatch({
+          type: "LOAD_ERROR",
+          error: `Failed to complete tasks: ${err instanceof Error ? err.message : String(err)}`,
+        });
       }
     },
     [refreshTasks],
   );
 
   const deleteManyTasks = useCallback(async (ids: string[]) => {
-    await api.deleteManyTasks(ids);
-    dispatch({ type: "TASKS_REMOVED", ids });
+    try {
+      await api.deleteManyTasks(ids);
+      dispatch({ type: "TASKS_REMOVED", ids });
+    } catch (err) {
+      dispatch({
+        type: "LOAD_ERROR",
+        error: `Failed to delete tasks: ${err instanceof Error ? err.message : String(err)}`,
+      });
+    }
   }, []);
 
   const updateManyTasks = useCallback(async (ids: string[], changes: UpdateTaskInput) => {
-    const tasks = await api.updateManyTasks(ids, changes);
-    dispatch({ type: "TASKS_UPDATED", tasks });
+    try {
+      const tasks = await api.updateManyTasks(ids, changes);
+      dispatch({ type: "TASKS_UPDATED", tasks });
+    } catch (err) {
+      dispatch({
+        type: "LOAD_ERROR",
+        error: `Failed to update tasks: ${err instanceof Error ? err.message : String(err)}`,
+      });
+    }
   }, []);
 
   useEffect(() => {
     refreshTasks();
   }, [refreshTasks]);
 
-  return (
-    <TaskContext.Provider
-      value={{
-        state,
-        createTask,
-        updateTask,
-        completeTask,
-        deleteTask,
-        completeManyTasks,
-        deleteManyTasks,
-        updateManyTasks,
-        refreshTasks,
-      }}
-    >
-      {children}
-    </TaskContext.Provider>
+  const contextValue = useMemo(
+    () => ({
+      state,
+      createTask,
+      updateTask,
+      completeTask,
+      deleteTask,
+      completeManyTasks,
+      deleteManyTasks,
+      updateManyTasks,
+      refreshTasks,
+    }),
+    [
+      state,
+      createTask,
+      updateTask,
+      completeTask,
+      deleteTask,
+      completeManyTasks,
+      deleteManyTasks,
+      updateManyTasks,
+      refreshTasks,
+    ],
   );
+
+  return <TaskContext.Provider value={contextValue}>{children}</TaskContext.Provider>;
 }
 
 export function useTaskContext() {

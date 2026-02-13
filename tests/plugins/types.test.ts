@@ -68,6 +68,20 @@ describe("PluginManifest schema", () => {
     expect(result.license).toBeUndefined();
     expect(result.dependencies).toBeUndefined();
   });
+
+  it("accepts optional targetApiVersion field", () => {
+    const result = PluginManifest.parse({
+      ...validManifest,
+      targetApiVersion: "1.0.0",
+    });
+    expect(result.targetApiVersion).toBe("1.0.0");
+  });
+
+  it("parses correctly without targetApiVersion", () => {
+    const result = PluginManifest.parse(validManifest);
+    expect(result.targetApiVersion).toBeUndefined();
+    expect(result.id).toBe("my-plugin");
+  });
 });
 
 describe("SettingDefinition schema", () => {

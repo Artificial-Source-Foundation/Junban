@@ -25,9 +25,16 @@ export function PermissionDialog({
   onCancel,
 }: PermissionDialogProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="perm-dialog-title"
+    >
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-        <h2 className="text-lg font-semibold mb-1">Plugin Permissions</h2>
+        <h2 id="perm-dialog-title" className="text-lg font-semibold mb-1">
+          Plugin Permissions
+        </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           <span className="font-medium text-gray-700 dark:text-gray-200">{pluginName}</span> is
           requesting the following permissions:

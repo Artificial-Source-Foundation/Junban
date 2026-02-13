@@ -166,7 +166,7 @@ Create `plugins/my-plugin/manifest.json`:
   "author": "Your Name",
   "description": "Does something cool",
   "main": "index.ts",
-  "minDocketVersion": "0.1.0",
+  "minDocketVersion": "1.0.0",
   "permissions": ["commands"]
 }
 ```

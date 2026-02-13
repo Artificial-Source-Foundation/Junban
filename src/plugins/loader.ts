@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PluginManifest, type Permission } from "./types.js";
-import { createPluginAPI } from "./api.js";
+import { createPluginAPI, PLUGIN_API_VERSION } from "./api.js";
 import { Plugin } from "./lifecycle.js";
 import type { TaskService } from "../core/tasks.js";
 import type { EventBus } from "../core/event-bus.js";
@@ -126,6 +126,17 @@ export class PluginLoader {
       ? requestedPermissions.filter((p) => approvedPermissions.includes(p))
       : requestedPermissions;
 
+    // Warn if plugin targets a newer API major version
+    if (loaded.manifest.targetApiVersion) {
+      const [pluginMajor] = loaded.manifest.targetApiVersion.split(".").map(Number);
+      const [currentMajor] = PLUGIN_API_VERSION.split(".").map(Number);
+      if (pluginMajor > currentMajor) {
+        logger.warn(
+          `Plugin "${pluginId}" targets API v${loaded.manifest.targetApiVersion} but current is v${PLUGIN_API_VERSION}. Some features may not work.`,
+        );
+      }
+    }
+
     // Load settings from DB
     await this.services.settingsManager.load(pluginId);
 
@@ -142,27 +153,39 @@ export class PluginLoader {
       aiProviderRegistry: this.services.aiProviderRegistry,
     });
 
-    // Dynamic import of the plugin entry file
-    const entryFile = path.join(loaded.path, loaded.manifest.main);
-    const module = await import(entryFile);
-    const PluginClass = module.default;
+    try {
+      // Dynamic import of the plugin entry file
+      const entryFile = path.join(loaded.path, loaded.manifest.main);
+      const module = await import(entryFile);
+      const PluginClass = module.default;
 
-    if (!PluginClass || typeof PluginClass !== "function") {
-      throw new Error(`Plugin "${pluginId}" does not have a default export class`);
+      if (!PluginClass || typeof PluginClass !== "function") {
+        throw new Error(`Plugin "${pluginId}" does not have a default export class`);
+      }
+
+      // Instantiate and wire up
+      const instance: Plugin = new PluginClass();
+      instance.app = api;
+      instance.settings = api.settings;
+
+      // Call onLoad
+      await instance.onLoad();
+
+      loaded.instance = instance;
+      loaded.enabled = true;
+      loaded.pendingApproval = false;
+      logger.info(`Loaded plugin: ${loaded.manifest.name}`);
+    } catch (err) {
+      // Clean up any commands/UI registered during failed load
+      this.services.commandRegistry.unregisterByPlugin(pluginId);
+      this.services.uiRegistry.removeByPlugin(pluginId);
+      this.services.aiProviderRegistry?.unregisterByPlugin(pluginId);
+      loaded.enabled = false;
+      logger.error(
+        `Failed to load plugin "${pluginId}": ${err instanceof Error ? err.message : err}`,
+      );
+      throw err;
     }
-
-    // Instantiate and wire up
-    const instance: Plugin = new PluginClass();
-    instance.app = api;
-    instance.settings = api.settings;
-
-    // Call onLoad
-    await instance.onLoad();
-
-    loaded.instance = instance;
-    loaded.enabled = true;
-    loaded.pendingApproval = false;
-    logger.info(`Loaded plugin: ${loaded.manifest.name}`);
   }
 
   /** Approve permissions and load a plugin. */

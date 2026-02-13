@@ -7,6 +7,12 @@ import type { CommandRegistry } from "./command-registry.js";
 import type { UIRegistry } from "./ui-registry.js";
 import type { AIProviderRegistry } from "../ai/provider-registry.js";
 
+/** Current Plugin API version (semver). */
+export const PLUGIN_API_VERSION = "1.0.0";
+
+/** API stability: "stable" means breaking changes require major version bump. */
+export const PLUGIN_API_STABILITY = "stable" as const;
+
 export interface PluginAPIOptions {
   pluginId: string;
   permissions: Permission[];
@@ -53,6 +59,11 @@ export function createPluginAPI(options: PluginAPIOptions) {
   };
 
   return {
+    meta: {
+      version: PLUGIN_API_VERSION,
+      stability: PLUGIN_API_STABILITY,
+    },
+
     tasks: {
       list: hasPermission("task:read")
         ? async () => taskService.list()

@@ -4,6 +4,33 @@ import type { ImportedTask, ImportResult } from "../core/import.js";
 
 const BASE = "/api";
 
+async function handleResponse<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    let message = `HTTP ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body.error) message = body.error;
+    } catch {
+      // Use status code message
+    }
+    throw new Error(message);
+  }
+  return res.json() as Promise<T>;
+}
+
+async function handleVoidResponse(res: Response): Promise<void> {
+  if (!res.ok) {
+    let message = `HTTP ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body.error) message = body.error;
+    } catch {
+      // Use status code message
+    }
+    throw new Error(message);
+  }
+}
+
 function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI__" in window;
 }
@@ -37,7 +64,7 @@ export const api = {
     if (params?.projectId) url.searchParams.set("projectId", params.projectId);
     if (params?.status) url.searchParams.set("status", params.status);
     const res = await fetch(url.toString());
-    return res.json();
+    return handleResponse<Task[]>(res);
   },
 
   async createTask(input: CreateTaskInput): Promise<Task> {
@@ -52,7 +79,7 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
     });
-    return res.json();
+    return handleResponse<Task>(res);
   },
 
   async completeTask(id: string): Promise<Task> {
@@ -65,7 +92,7 @@ export const api = {
     const res = await fetch(`${BASE}/tasks/${id}/complete`, {
       method: "POST",
     });
-    return res.json();
+    return handleResponse<Task>(res);
   },
 
   async updateTask(id: string, input: UpdateTaskInput): Promise<Task> {
@@ -80,7 +107,7 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
     });
-    return res.json();
+    return handleResponse<Task>(res);
   },
 
   async deleteTask(id: string): Promise<void> {
@@ -90,7 +117,7 @@ export const api = {
       svc.save();
       return;
     }
-    await fetch(`${BASE}/tasks/${id}`, { method: "DELETE" });
+    await handleVoidResponse(await fetch(`${BASE}/tasks/${id}`, { method: "DELETE" }));
   },
 
   async completeManyTasks(ids: string[]): Promise<Task[]> {
@@ -105,7 +132,7 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids }),
     });
-    return res.json();
+    return handleResponse<Task[]>(res);
   },
 
   async deleteManyTasks(ids: string[]): Promise<void> {
@@ -115,11 +142,13 @@ export const api = {
       svc.save();
       return;
     }
-    await fetch(`${BASE}/tasks/bulk/delete`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids }),
-    });
+    await handleVoidResponse(
+      await fetch(`${BASE}/tasks/bulk/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      }),
+    );
   },
 
   async updateManyTasks(ids: string[], changes: UpdateTaskInput): Promise<Task[]> {
@@ -134,7 +163,7 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids, changes }),
     });
-    return res.json();
+    return handleResponse<Task[]>(res);
   },
 
   async reorderTasks(orderedIds: string[]): Promise<void> {
@@ -144,11 +173,13 @@ export const api = {
       svc.save();
       return;
     }
-    await fetch(`${BASE}/tasks/reorder`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderedIds }),
-    });
+    await handleVoidResponse(
+      await fetch(`${BASE}/tasks/reorder`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds }),
+      }),
+    );
   },
 
   async importTasks(tasks: ImportedTask[]): Promise<ImportResult> {
@@ -197,7 +228,7 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tasks }),
     });
-    return res.json();
+    return handleResponse<ImportResult>(res);
   },
 
   async listProjects(): Promise<Project[]> {
@@ -206,7 +237,7 @@ export const api = {
       return svc.projectService.list();
     }
     const res = await fetch(`${BASE}/projects`);
-    return res.json();
+    return handleResponse<Project[]>(res);
   },
 
   // Plugin APIs
@@ -217,7 +248,7 @@ export const api = {
       return [];
     }
     const res = await fetch(`${BASE}/plugins`);
-    return res.json();
+    return handleResponse<PluginInfo[]>(res);
   },
 
   async getPluginSettings(pluginId: string): Promise<Record<string, unknown>> {
@@ -226,7 +257,7 @@ export const api = {
       return svc.settingsManager.getAll(pluginId);
     }
     const res = await fetch(`${BASE}/plugins/${pluginId}/settings`);
-    return res.json();
+    return handleResponse<Record<string, unknown>>(res);
   },
 
   async updatePluginSetting(pluginId: string, key: string, value: unknown): Promise<void> {
@@ -236,11 +267,13 @@ export const api = {
       svc.save();
       return;
     }
-    await fetch(`${BASE}/plugins/${pluginId}/settings`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key, value }),
-    });
+    await handleVoidResponse(
+      await fetch(`${BASE}/plugins/${pluginId}/settings`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, value }),
+      }),
+    );
   },
 
   async listPluginCommands(): Promise<PluginCommandInfo[]> {
@@ -253,7 +286,7 @@ export const api = {
       }));
     }
     const res = await fetch(`${BASE}/plugins/commands`);
-    return res.json();
+    return handleResponse<PluginCommandInfo[]>(res);
   },
 
   async executePluginCommand(id: string): Promise<void> {
@@ -262,9 +295,11 @@ export const api = {
       svc.commandRegistry.execute(id);
       return;
     }
-    await fetch(`${BASE}/plugins/commands/${encodeURIComponent(id)}`, {
-      method: "POST",
-    });
+    await handleVoidResponse(
+      await fetch(`${BASE}/plugins/commands/${encodeURIComponent(id)}`, {
+        method: "POST",
+      }),
+    );
   },
 
   async getStatusBarItems(): Promise<StatusBarItemInfo[]> {
@@ -277,7 +312,7 @@ export const api = {
       }));
     }
     const res = await fetch(`${BASE}/plugins/ui/status-bar`);
-    return res.json();
+    return handleResponse<StatusBarItemInfo[]>(res);
   },
 
   async getPluginPanels(): Promise<PanelInfo[]> {
@@ -291,7 +326,7 @@ export const api = {
       }));
     }
     const res = await fetch(`${BASE}/plugins/ui/panels`);
-    return res.json();
+    return handleResponse<PanelInfo[]>(res);
   },
 
   async getPluginViews(): Promise<ViewInfo[]> {
@@ -304,7 +339,7 @@ export const api = {
       }));
     }
     const res = await fetch(`${BASE}/plugins/ui/views`);
-    return res.json();
+    return handleResponse<ViewInfo[]>(res);
   },
 
   async getPluginViewContent(viewId: string): Promise<string> {
@@ -313,7 +348,7 @@ export const api = {
       return svc.uiRegistry.getViewContent(viewId) ?? "";
     }
     const res = await fetch(`${BASE}/plugins/ui/views/${encodeURIComponent(viewId)}/content`);
-    const data = await res.json();
+    const data = await handleResponse<{ content: string }>(res);
     return data.content;
   },
 
@@ -323,7 +358,7 @@ export const api = {
       return svc.storage.getPluginPermissions(pluginId);
     }
     const res = await fetch(`${BASE}/plugins/${pluginId}/permissions`);
-    const data = await res.json();
+    const data = await handleResponse<{ permissions: string[] | null }>(res);
     return data.permissions;
   },
 
@@ -332,11 +367,13 @@ export const api = {
       // Not yet supported in Tauri mode
       return;
     }
-    await fetch(`${BASE}/plugins/${pluginId}/permissions/approve`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ permissions }),
-    });
+    await handleVoidResponse(
+      await fetch(`${BASE}/plugins/${pluginId}/permissions/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ permissions }),
+      }),
+    );
   },
 
   async revokePluginPermissions(pluginId: string): Promise<void> {
@@ -344,9 +381,11 @@ export const api = {
       // Not yet supported in Tauri mode
       return;
     }
-    await fetch(`${BASE}/plugins/${pluginId}/permissions/revoke`, {
-      method: "POST",
-    });
+    await handleVoidResponse(
+      await fetch(`${BASE}/plugins/${pluginId}/permissions/revoke`, {
+        method: "POST",
+      }),
+    );
   },
 
   async getPluginStore(): Promise<{ plugins: StorePluginInfo[] }> {
@@ -355,7 +394,7 @@ export const api = {
       return { plugins: [] };
     }
     const res = await fetch(`${BASE}/plugins/store`);
-    return res.json();
+    return handleResponse<{ plugins: StorePluginInfo[] }>(res);
   },
 
   async installPlugin(pluginId: string, downloadUrl: string): Promise<void> {
@@ -367,7 +406,7 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pluginId, downloadUrl }),
     });
-    const data = await res.json();
+    const data = await handleResponse<{ success: boolean; error?: string }>(res);
     if (!data.success) {
       throw new Error(data.error ?? "Install failed");
     }
@@ -380,7 +419,7 @@ export const api = {
     const res = await fetch(`${BASE}/plugins/${pluginId}/uninstall`, {
       method: "POST",
     });
-    const data = await res.json();
+    const data = await handleResponse<{ success: boolean; error?: string }>(res);
     if (!data.success) {
       throw new Error(data.error ?? "Uninstall failed");
     }
@@ -437,7 +476,7 @@ export const api = {
       ];
     }
     const res = await fetch(`${BASE}/ai/providers`);
-    return res.json();
+    return handleResponse<AIProviderInfo[]>(res);
   },
 
   async getAIConfig(): Promise<AIConfigInfo> {
@@ -455,7 +494,7 @@ export const api = {
       };
     }
     const res = await fetch(`${BASE}/ai/config`);
-    return res.json();
+    return handleResponse<AIConfigInfo>(res);
   },
 
   async updateAIConfig(config: {
@@ -486,11 +525,13 @@ export const api = {
       svc.save();
       return;
     }
-    await fetch(`${BASE}/ai/config`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(config),
-    });
+    await handleVoidResponse(
+      await fetch(`${BASE}/ai/config`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
+      }),
+    );
   },
 
   async sendChatMessage(message: string): Promise<ReadableStream<Uint8Array> | null> {
@@ -626,7 +667,7 @@ export const api = {
     }
 
     const res = await fetch(`${BASE}/ai/messages`);
-    return res.json();
+    return handleResponse<AIChatMessage[]>(res);
   },
 
   async clearChat(): Promise<void> {
@@ -636,7 +677,7 @@ export const api = {
       svc.save();
       return;
     }
-    await fetch(`${BASE}/ai/clear`, { method: "POST" });
+    await handleVoidResponse(await fetch(`${BASE}/ai/clear`, { method: "POST" }));
   },
 
   async exportAllData(): Promise<{
@@ -680,7 +721,7 @@ export const api = {
       return { mode: "sqlite", path: "(embedded database)" };
     }
     const res = await fetch(`${BASE}/settings/storage`);
-    return res.json();
+    return handleResponse<{ mode: string; path: string }>(res);
   },
 
   async setAppSetting(key: string, value: string): Promise<void> {
@@ -690,11 +731,13 @@ export const api = {
       svc.save();
       return;
     }
-    await fetch(`${BASE}/settings/${key}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ value }),
-    });
+    await handleVoidResponse(
+      await fetch(`${BASE}/settings/${key}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ value }),
+      }),
+    );
   },
 };
 

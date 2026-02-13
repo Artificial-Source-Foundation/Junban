@@ -325,7 +325,7 @@ Every plugin has a `manifest.json`:
   "author": "Author Name",
   "description": "What this plugin does",
   "main": "index.js",
-  "minDocketVersion": "0.1.0",
+  "minDocketVersion": "1.0.0",
   "permissions": ["task:read", "task:write", "ui:panel", "commands"],
   "settings": [
     {

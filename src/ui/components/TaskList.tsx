@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import React, { useCallback } from "react";
 import {
   DndContext,
   closestCenter,
@@ -32,7 +32,7 @@ interface TaskListProps {
   onReorder?: (orderedIds: string[]) => void;
 }
 
-function SortableTaskItem({
+const SortableTaskItem = React.memo(function SortableTaskItem({
   task,
   onToggle,
   onSelect,
@@ -73,7 +73,7 @@ function SortableTaskItem({
       innerRef={setNodeRef}
     />
   );
-}
+});
 
 export function TaskList({
   tasks,
@@ -109,7 +109,7 @@ export function TaskList({
 
   if (tasks.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-400">
+      <div role="status" className="text-center py-8 text-gray-400">
         {emptyMessage ?? "No tasks yet. Add one above!"}
       </div>
     );
@@ -121,7 +121,7 @@ export function TaskList({
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
-        <div className="space-y-1">
+        <div role="list" aria-label="Tasks" className="space-y-1">
           {tasks.map((task) => (
             <SortableTaskItem
               key={task.id}

@@ -7,10 +7,17 @@ import type { ViteDevServer } from "vite";
 import type { IncomingMessage } from "node:http";
 
 function parseBody(req: IncomingMessage): Promise<Record<string, unknown>> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     let body = "";
     req.on("data", (chunk: Buffer) => (body += chunk));
-    req.on("end", () => resolve(body ? JSON.parse(body) : {}));
+    req.on("end", () => {
+      if (!body) return resolve({});
+      try {
+        resolve(JSON.parse(body));
+      } catch {
+        reject(new Error("Invalid JSON in request body"));
+      }
+    });
   });
 }
 
@@ -34,145 +41,194 @@ function apiPlugin() {
       server.middlewares.use(async (req, res, next) => {
         if (req.url !== "/api/tasks") return next();
 
-        const svc = await getServices();
+        try {
+          const svc = await getServices();
 
-        if (req.method === "GET") {
-          const url = new URL(req.url!, `http://${req.headers.host}`);
-          const filter: Record<string, string> = {};
-          const search = url.searchParams.get("search");
-          const projectId = url.searchParams.get("projectId");
-          const status = url.searchParams.get("status");
-          if (search) filter.search = search;
-          if (projectId) filter.projectId = projectId;
-          if (status) filter.status = status;
+          if (req.method === "GET") {
+            const url = new URL(req.url!, `http://${req.headers.host}`);
+            const filter: Record<string, string> = {};
+            const search = url.searchParams.get("search");
+            const projectId = url.searchParams.get("projectId");
+            const status = url.searchParams.get("status");
+            if (search) filter.search = search;
+            if (projectId) filter.projectId = projectId;
+            if (status) filter.status = status;
 
-          const tasks = await svc.taskService.list(
-            Object.keys(filter).length > 0 ? filter : undefined,
-          );
+            const tasks = await svc.taskService.list(
+              Object.keys(filter).length > 0 ? filter : undefined,
+            );
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(tasks));
+            return;
+          }
+
+          if (req.method === "POST") {
+            const body = await parseBody(req);
+            const task = await svc.taskService.create(body as any);
+            res.setHeader("Content-Type", "application/json");
+            res.statusCode = 201;
+            res.end(JSON.stringify(task));
+            return;
+          }
+
+          next();
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
           res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify(tasks));
-          return;
+          res.end(JSON.stringify({ error: message }));
         }
-
-        if (req.method === "POST") {
-          const body = await parseBody(req);
-          const task = await svc.taskService.create(body as any);
-          res.setHeader("Content-Type", "application/json");
-          res.statusCode = 201;
-          res.end(JSON.stringify(task));
-          return;
-        }
-
-        next();
       });
 
       // POST /api/tasks/bulk/complete
       server.middlewares.use(async (req, res, next) => {
         if (req.url !== "/api/tasks/bulk/complete" || req.method !== "POST") return next();
-        const svc = await getServices();
-        const body = await parseBody(req);
-        const { ids } = body as { ids: string[] };
-        const tasks = await svc.taskService.completeMany(ids);
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify(tasks));
+        try {
+          const svc = await getServices();
+          const body = await parseBody(req);
+          const { ids } = body as { ids: string[] };
+          const tasks = await svc.taskService.completeMany(ids);
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify(tasks));
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
+        }
       });
 
       // POST /api/tasks/bulk/delete
       server.middlewares.use(async (req, res, next) => {
         if (req.url !== "/api/tasks/bulk/delete" || req.method !== "POST") return next();
-        const svc = await getServices();
-        const body = await parseBody(req);
-        const { ids } = body as { ids: string[] };
-        await svc.taskService.deleteMany(ids);
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ ok: true }));
+        try {
+          const svc = await getServices();
+          const body = await parseBody(req);
+          const { ids } = body as { ids: string[] };
+          await svc.taskService.deleteMany(ids);
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ ok: true }));
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
+        }
       });
 
       // POST /api/tasks/bulk/update
       server.middlewares.use(async (req, res, next) => {
         if (req.url !== "/api/tasks/bulk/update" || req.method !== "POST") return next();
-        const svc = await getServices();
-        const body = await parseBody(req);
-        const { ids, changes } = body as { ids: string[]; changes: any };
-        const tasks = await svc.taskService.updateMany(ids, changes);
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify(tasks));
+        try {
+          const svc = await getServices();
+          const body = await parseBody(req);
+          const { ids, changes } = body as { ids: string[]; changes: any };
+          const tasks = await svc.taskService.updateMany(ids, changes);
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify(tasks));
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
+        }
       });
 
       // POST /api/tasks/reorder
       server.middlewares.use(async (req, res, next) => {
         if (req.url !== "/api/tasks/reorder" || req.method !== "POST") return next();
-        const svc = await getServices();
-        const body = await parseBody(req);
-        const { orderedIds } = body as { orderedIds: string[] };
-        await svc.taskService.reorder(orderedIds);
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ ok: true }));
+        try {
+          const svc = await getServices();
+          const body = await parseBody(req);
+          const { orderedIds } = body as { orderedIds: string[] };
+          await svc.taskService.reorder(orderedIds);
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ ok: true }));
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
+        }
       });
 
       // POST /api/tasks/import — import tasks from external formats
       server.middlewares.use(async (req, res, next) => {
         if (req.url !== "/api/tasks/import" || req.method !== "POST") return next();
-        const svc = await getServices();
-        const body = await parseBody(req);
-        const { tasks: importedTasks } = body as {
-          tasks: Array<{
-            title: string;
-            description: string | null;
-            status: "pending" | "completed";
-            priority: number | null;
-            dueDate: string | null;
-            dueTime: boolean;
-            projectName: string | null;
-            tagNames: string[];
-            recurrence: string | null;
-          }>;
-        };
+        try {
+          const svc = await getServices();
+          const body = await parseBody(req);
+          const { tasks: importedTasks } = body as {
+            tasks: Array<{
+              title: string;
+              description: string | null;
+              status: "pending" | "completed";
+              priority: number | null;
+              dueDate: string | null;
+              dueTime: boolean;
+              projectName: string | null;
+              tagNames: string[];
+              recurrence: string | null;
+            }>;
+          };
 
-        const errors: string[] = [];
-        let imported = 0;
+          const errors: string[] = [];
+          let imported = 0;
 
-        for (const t of importedTasks) {
-          try {
-            let projectId: string | undefined;
-            if (t.projectName) {
-              const project = await svc.projectService.getOrCreate(t.projectName);
-              projectId = project.id;
+          for (const t of importedTasks) {
+            try {
+              let projectId: string | undefined;
+              if (t.projectName) {
+                const project = await svc.projectService.getOrCreate(t.projectName);
+                projectId = project.id;
+              }
+
+              const task = await svc.taskService.create({
+                title: t.title,
+                description: t.description ?? undefined,
+                priority: t.priority,
+                dueDate: t.dueDate ?? undefined,
+                dueTime: t.dueTime,
+                projectId,
+                recurrence: t.recurrence ?? undefined,
+                tags: t.tagNames,
+              });
+
+              if (t.status === "completed") {
+                await svc.taskService.complete(task.id);
+              }
+
+              imported++;
+            } catch (err: any) {
+              errors.push(`Failed to import "${t.title}": ${err.message ?? "unknown error"}`);
             }
-
-            const task = await svc.taskService.create({
-              title: t.title,
-              description: t.description ?? undefined,
-              priority: t.priority,
-              dueDate: t.dueDate ?? undefined,
-              dueTime: t.dueTime,
-              projectId,
-              recurrence: t.recurrence ?? undefined,
-              tags: t.tagNames,
-            });
-
-            if (t.status === "completed") {
-              await svc.taskService.complete(task.id);
-            }
-
-            imported++;
-          } catch (err: any) {
-            errors.push(`Failed to import "${t.title}": ${err.message ?? "unknown error"}`);
           }
-        }
 
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ imported, errors }));
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ imported, errors }));
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
+        }
       });
 
       // GET /api/projects
       server.middlewares.use(async (req, res, next) => {
         if (req.url !== "/api/projects" || req.method !== "GET") return next();
 
-        const svc = await getServices();
-        const projects = await svc.projectService.list();
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify(projects));
+        try {
+          const svc = await getServices();
+          const projects = await svc.projectService.list();
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify(projects));
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
+        }
       });
 
       // Initialize plugins on first request
@@ -189,59 +245,73 @@ function apiPlugin() {
       server.middlewares.use(async (req, res, next) => {
         if (req.url !== "/api/plugins" || req.method !== "GET") return next();
 
-        const svc = await getServices();
-        await ensurePlugins();
-        const plugins = svc.pluginLoader.getAll().map((p) => ({
-          id: p.manifest.id,
-          name: p.manifest.name,
-          version: p.manifest.version,
-          author: p.manifest.author,
-          description: p.manifest.description,
-          enabled: p.enabled,
-          permissions: p.manifest.permissions,
-          settings: p.manifest.settings,
-        }));
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify(plugins));
+        try {
+          const svc = await getServices();
+          await ensurePlugins();
+          const plugins = svc.pluginLoader.getAll().map((p) => ({
+            id: p.manifest.id,
+            name: p.manifest.name,
+            version: p.manifest.version,
+            author: p.manifest.author,
+            description: p.manifest.description,
+            enabled: p.enabled,
+            permissions: p.manifest.permissions,
+            settings: p.manifest.settings,
+          }));
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify(plugins));
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
+        }
       });
 
       // Plugin permissions: GET, approve, revoke
       server.middlewares.use(async (req, res, next) => {
-        const approveMatch = req.url?.match(/^\/api\/plugins\/([^/]+)\/permissions\/approve$/);
-        if (approveMatch && req.method === "POST") {
-          const pluginId = approveMatch[1];
-          const svc = await getServices();
-          await ensurePlugins();
-          const body = await parseBody(req);
-          const { permissions } = body as { permissions: string[] };
-          await svc.pluginLoader.approveAndLoad(pluginId, permissions);
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ ok: true }));
-          return;
-        }
+        try {
+          const approveMatch = req.url?.match(/^\/api\/plugins\/([^/]+)\/permissions\/approve$/);
+          if (approveMatch && req.method === "POST") {
+            const pluginId = approveMatch[1];
+            const svc = await getServices();
+            await ensurePlugins();
+            const body = await parseBody(req);
+            const { permissions } = body as { permissions: string[] };
+            await svc.pluginLoader.approveAndLoad(pluginId, permissions);
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+            return;
+          }
 
-        const revokeMatch = req.url?.match(/^\/api\/plugins\/([^/]+)\/permissions\/revoke$/);
-        if (revokeMatch && req.method === "POST") {
-          const pluginId = revokeMatch[1];
-          const svc = await getServices();
-          await ensurePlugins();
-          await svc.pluginLoader.revokePermissions(pluginId);
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ ok: true }));
-          return;
-        }
+          const revokeMatch = req.url?.match(/^\/api\/plugins\/([^/]+)\/permissions\/revoke$/);
+          if (revokeMatch && req.method === "POST") {
+            const pluginId = revokeMatch[1];
+            const svc = await getServices();
+            await ensurePlugins();
+            await svc.pluginLoader.revokePermissions(pluginId);
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+            return;
+          }
 
-        const permMatch = req.url?.match(/^\/api\/plugins\/([^/]+)\/permissions$/);
-        if (permMatch && req.method === "GET") {
-          const pluginId = permMatch[1];
-          const svc = await getServices();
-          const permissions = svc.storage.getPluginPermissions(pluginId);
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ permissions }));
-          return;
-        }
+          const permMatch = req.url?.match(/^\/api\/plugins\/([^/]+)\/permissions$/);
+          if (permMatch && req.method === "GET") {
+            const pluginId = permMatch[1];
+            const svc = await getServices();
+            const permissions = svc.storage.getPluginPermissions(pluginId);
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ permissions }));
+            return;
+          }
 
-        next();
+          next();
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
+        }
       });
 
       // GET/PUT /api/plugins/:id/settings
@@ -249,54 +319,68 @@ function apiPlugin() {
         const match = req.url?.match(/^\/api\/plugins\/([^/]+)\/settings$/);
         if (!match) return next();
 
-        const pluginId = match[1];
-        const svc = await getServices();
-        await ensurePlugins();
+        try {
+          const pluginId = match[1];
+          const svc = await getServices();
+          await ensurePlugins();
 
-        if (req.method === "GET") {
-          const plugin = svc.pluginLoader.get(pluginId);
-          if (!plugin) {
-            res.statusCode = 404;
+          if (req.method === "GET") {
+            const plugin = svc.pluginLoader.get(pluginId);
+            if (!plugin) {
+              res.statusCode = 404;
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ error: "Plugin not found" }));
+              return;
+            }
+            const stored = svc.settingsManager.getAll(pluginId);
+            const definitions = plugin.manifest.settings ?? [];
+            const values: Record<string, unknown> = {};
+            for (const def of definitions) {
+              values[def.id] = def.id in stored ? stored[def.id] : def.default;
+            }
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ error: "Plugin not found" }));
+            res.end(JSON.stringify(values));
             return;
           }
-          const stored = svc.settingsManager.getAll(pluginId);
-          const definitions = plugin.manifest.settings ?? [];
-          const values: Record<string, unknown> = {};
-          for (const def of definitions) {
-            values[def.id] = def.id in stored ? stored[def.id] : def.default;
+
+          if (req.method === "PUT") {
+            const body = await parseBody(req);
+            const { key, value } = body as { key: string; value: unknown };
+            await svc.settingsManager.set(pluginId, key, value);
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+            return;
           }
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify(values));
-          return;
-        }
 
-        if (req.method === "PUT") {
-          const body = await parseBody(req);
-          const { key, value } = body as { key: string; value: unknown };
-          await svc.settingsManager.set(pluginId, key, value);
+          next();
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
           res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ ok: true }));
-          return;
+          res.end(JSON.stringify({ error: message }));
         }
-
-        next();
       });
 
       // GET /api/plugins/commands — list all registered commands
       server.middlewares.use(async (req, res, next) => {
         if (req.url !== "/api/plugins/commands" || req.method !== "GET") return next();
 
-        const svc = await getServices();
-        await ensurePlugins();
-        const commands = svc.commandRegistry.getAll().map((c) => ({
-          id: c.id,
-          name: c.name,
-          hotkey: c.hotkey,
-        }));
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify(commands));
+        try {
+          const svc = await getServices();
+          await ensurePlugins();
+          const commands = svc.commandRegistry.getAll().map((c) => ({
+            id: c.id,
+            name: c.name,
+            hotkey: c.hotkey,
+          }));
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify(commands));
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
+        }
       });
 
       // POST /api/plugins/commands/:id — execute a command
@@ -321,56 +405,79 @@ function apiPlugin() {
       server.middlewares.use(async (req, res, next) => {
         if (req.url !== "/api/plugins/ui/status-bar" || req.method !== "GET") return next();
 
-        const svc = await getServices();
-        await ensurePlugins();
-        const items = svc.uiRegistry.getStatusBarItems().map((item) => ({
-          id: item.id,
-          text: item.text,
-          icon: item.icon,
-        }));
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify(items));
+        try {
+          const svc = await getServices();
+          await ensurePlugins();
+          const items = svc.uiRegistry.getStatusBarItems().map((item) => ({
+            id: item.id,
+            text: item.text,
+            icon: item.icon,
+          }));
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify(items));
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
+        }
       });
 
       // GET /api/plugins/ui/panels
       server.middlewares.use(async (req, res, next) => {
         if (req.url !== "/api/plugins/ui/panels" || req.method !== "GET") return next();
 
-        const svc = await getServices();
-        await ensurePlugins();
-        const panels = svc.uiRegistry.getPanels().map((panel) => ({
-          id: panel.id,
-          title: panel.title,
-          icon: panel.icon,
-          content: svc.uiRegistry.getPanelContent(panel.id) ?? "",
-        }));
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify(panels));
+        try {
+          const svc = await getServices();
+          await ensurePlugins();
+          const panels = svc.uiRegistry.getPanels().map((panel) => ({
+            id: panel.id,
+            title: panel.title,
+            icon: panel.icon,
+            content: svc.uiRegistry.getPanelContent(panel.id) ?? "",
+          }));
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify(panels));
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
+        }
       });
 
       // GET /api/plugins/ui/views and GET /api/plugins/ui/views/:id/content
       server.middlewares.use(async (req, res, next) => {
         const contentMatch = req.url?.match(/^\/api\/plugins\/ui\/views\/([^/]+)\/content$/);
-        if (contentMatch && req.method === "GET") {
+        if (!contentMatch && (req.url !== "/api/plugins/ui/views" || req.method !== "GET"))
+          return next();
+
+        try {
+          if (contentMatch && req.method === "GET") {
+            const svc = await getServices();
+            await ensurePlugins();
+            const content =
+              svc.uiRegistry.getViewContent(decodeURIComponent(contentMatch[1])) ?? "";
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ content }));
+            return;
+          }
+
           const svc = await getServices();
           await ensurePlugins();
-          const content = svc.uiRegistry.getViewContent(decodeURIComponent(contentMatch[1])) ?? "";
+          const views = svc.uiRegistry.getViews().map((view) => ({
+            id: view.id,
+            name: view.name,
+            icon: view.icon,
+          }));
           res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ content }));
-          return;
+          res.end(JSON.stringify(views));
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
         }
-
-        if (req.url !== "/api/plugins/ui/views" || req.method !== "GET") return next();
-
-        const svc = await getServices();
-        await ensurePlugins();
-        const views = svc.uiRegistry.getViews().map((view) => ({
-          id: view.id,
-          name: view.name,
-          icon: view.icon,
-        }));
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify(views));
       });
 
       // GET /api/plugins/store — read sources.json
@@ -392,28 +499,35 @@ function apiPlugin() {
       server.middlewares.use(async (req, res, next) => {
         if (req.url !== "/api/plugins/install" || req.method !== "POST") return next();
 
-        const svc = await getServices();
-        await ensurePlugins();
-        const body = await parseBody(req);
-        const { pluginId, downloadUrl } = body as { pluginId: string; downloadUrl: string };
+        try {
+          const svc = await getServices();
+          await ensurePlugins();
+          const body = await parseBody(req);
+          const { pluginId, downloadUrl } = body as { pluginId: string; downloadUrl: string };
 
-        const { PluginInstaller } = await import("./src/plugins/installer.js");
-        const installer = new PluginInstaller(path.resolve(process.cwd(), "plugins"));
+          const { PluginInstaller } = await import("./src/plugins/installer.js");
+          const installer = new PluginInstaller(path.resolve(process.cwd(), "plugins"));
 
-        const result = await installer.install(pluginId, downloadUrl);
-        if (result.success) {
-          const discovered = await svc.pluginLoader.discoverOne(pluginId);
-          if (discovered) {
-            try {
-              await svc.pluginLoader.load(pluginId);
-            } catch {
-              // Plugin may need permission approval — that's fine
+          const result = await installer.install(pluginId, downloadUrl);
+          if (result.success) {
+            const discovered = await svc.pluginLoader.discoverOne(pluginId);
+            if (discovered) {
+              try {
+                await svc.pluginLoader.load(pluginId);
+              } catch {
+                // Plugin may need permission approval — that's fine
+              }
             }
           }
-        }
 
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify(result));
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify(result));
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
+        }
       });
 
       // POST /api/plugins/:id/uninstall — uninstall a plugin
@@ -421,28 +535,35 @@ function apiPlugin() {
         const match = req.url?.match(/^\/api\/plugins\/([^/]+)\/uninstall$/);
         if (!match || req.method !== "POST") return next();
 
-        const pluginId = match[1];
-        const svc = await getServices();
-        await ensurePlugins();
-
-        // Unload plugin if loaded
         try {
-          await svc.pluginLoader.unload(pluginId);
-        } catch {
-          // May not be loaded — that's fine
+          const pluginId = match[1];
+          const svc = await getServices();
+          await ensurePlugins();
+
+          // Unload plugin if loaded
+          try {
+            await svc.pluginLoader.unload(pluginId);
+          } catch {
+            // May not be loaded — that's fine
+          }
+
+          const { PluginInstaller } = await import("./src/plugins/installer.js");
+          const installer = new PluginInstaller(path.resolve(process.cwd(), "plugins"));
+
+          const result = await installer.uninstall(pluginId);
+          if (result.success) {
+            svc.storage.deletePluginPermissions(pluginId);
+            svc.pluginLoader.remove(pluginId);
+          }
+
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify(result));
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
         }
-
-        const { PluginInstaller } = await import("./src/plugins/installer.js");
-        const installer = new PluginInstaller(path.resolve(process.cwd(), "plugins"));
-
-        const result = await installer.uninstall(pluginId);
-        if (result.success) {
-          svc.storage.deletePluginPermissions(pluginId);
-          svc.pluginLoader.remove(pluginId);
-        }
-
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify(result));
       });
 
       // GET /api/settings/storage — storage mode info
@@ -464,25 +585,33 @@ function apiPlugin() {
       server.middlewares.use(async (req, res, next) => {
         const match = req.url?.match(/^\/api\/settings\/([^/]+)$/);
         if (!match) return next();
-        const key = decodeURIComponent(match[1]);
-        const svc = await getServices();
 
-        if (req.method === "GET") {
-          const row = svc.storage.getAppSetting(key);
+        try {
+          const key = decodeURIComponent(match[1]);
+          const svc = await getServices();
+
+          if (req.method === "GET") {
+            const row = svc.storage.getAppSetting(key);
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ value: row?.value ?? null }));
+            return;
+          }
+
+          if (req.method === "PUT") {
+            const body = await parseBody(req);
+            svc.storage.setAppSetting(key, body.value as string);
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+            return;
+          }
+
+          next();
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
           res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ value: row?.value ?? null }));
-          return;
+          res.end(JSON.stringify({ error: message }));
         }
-
-        if (req.method === "PUT") {
-          const body = await parseBody(req);
-          svc.storage.setAppSetting(key, body.value as string);
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ ok: true }));
-          return;
-        }
-
-        next();
       });
 
       // ── AI Endpoints ──────────────────────────────────

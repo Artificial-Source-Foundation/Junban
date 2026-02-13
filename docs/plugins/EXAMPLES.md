@@ -16,7 +16,7 @@ The simplest possible plugin — registers a command in the command palette.
   "author": "Your Name",
   "description": "A minimal example plugin that says hello.",
   "main": "index.ts",
-  "minDocketVersion": "0.1.0",
+  "minDocketVersion": "1.0.0",
   "permissions": ["commands"]
 }
 ```
@@ -66,7 +66,7 @@ A plugin that counts completed tasks today and shows the count in the status bar
   "author": "Your Name",
   "description": "Shows how many tasks you've completed today in the status bar.",
   "main": "index.ts",
-  "minDocketVersion": "0.1.0",
+  "minDocketVersion": "1.0.0",
   "permissions": ["task:read", "ui:status"]
 }
 ```
@@ -141,7 +141,7 @@ A full-featured Pomodoro timer plugin with configurable intervals, a sidebar pan
   "author": "ASF",
   "description": "Pomodoro technique timer with task integration and daily stats.",
   "main": "index.ts",
-  "minDocketVersion": "0.5.0",
+  "minDocketVersion": "1.0.0",
   "permissions": ["task:read", "ui:panel", "ui:status", "commands", "settings", "storage"],
   "settings": [
     {
@@ -373,7 +373,7 @@ A plugin that adds a full Kanban board view.
   "author": "ASF",
   "description": "Drag-and-drop Kanban board view for tasks.",
   "main": "index.ts",
-  "minDocketVersion": "0.5.0",
+  "minDocketVersion": "1.0.0",
   "permissions": ["task:read", "task:write", "ui:view", "commands", "settings"],
   "settings": [
     {
@@ -485,7 +485,7 @@ A more complete plugin that combines several API features: a sidebar panel, task
   "author": "ASF",
   "description": "Plan your day by ordering today's tasks and tracking progress.",
   "main": "index.ts",
-  "minDocketVersion": "0.5.0",
+  "minDocketVersion": "1.0.0",
   "permissions": ["task:read", "task:write", "ui:panel", "commands", "storage", "settings"],
   "settings": [
     {

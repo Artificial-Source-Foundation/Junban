@@ -168,7 +168,7 @@ To add your plugin to the community registry:
   "version": "1.0.0",
   "repository": "https://github.com/you/docket-plugin-name",
   "tags": ["relevant", "tags"],
-  "minDocketVersion": "0.5.0"
+  "minDocketVersion": "1.0.0"
 }
 ```
 

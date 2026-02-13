@@ -28,6 +28,10 @@ All work items for ASF Docket, organized by area and prioritized within each sec
 | F-10 | Browser-compatible bootstrap (bootstrap-web.ts) | done | S8 | Service wiring for WebView |
 | F-11 | isTauri() API branching in frontend | done | S8 | Direct service calls in Tauri mode |
 | F-12 | Vite build config for Tauri production | done | S8 | Conditional apiPlugin, externals |
+| F-13 | Tauri updater plugin setup | done | S13 | tauri-plugin-updater in Cargo.toml + lib.rs |
+| F-14 | Update check UI in Settings | done | S13 | AboutSection with version + Tauri update check |
+| F-15 | GitHub Actions release workflow | done | S13 | Multi-platform build + draft → publish |
+| F-16 | Release preparation script | done | S13 | scripts/prepare-release.ts + release scripts |
 
 ## Core — Task CRUD
 
@@ -118,6 +122,8 @@ All work items for ASF Docket, organized by area and prioritized within each sec
 | PL-16 | Event bus for task lifecycle hooks | done | S3 | |
 | PL-17 | Plugin-specific isolated storage (persist to DB) | done | S3 | SQLite-backed per-plugin storage |
 | PL-18 | Built-in Pomodoro plugin (fully functional) | done | S4 | Timer, pause/resume, configurable durations |
+| PL-19 | Plugin API versioning (version constants + meta object) | done | S13 | PLUGIN_API_VERSION, PLUGIN_API_STABILITY |
+| PL-20 | Manifest targetApiVersion + loader compatibility check | done | S13 | Warns on major version mismatch |
 
 ## AI Assistant
 
@@ -150,8 +156,8 @@ All work items for ASF Docket, organized by area and prioritized within each sec
 | D-02 | Drizzle migration runner | done | — | migrate.ts |
 | D-03 | Generate initial migration from schema | done | S1 | `pnpm db:generate` |
 | D-04 | CRUD query helpers (tasks, projects, tags, task_tags) | done | S1 | queries.ts partial |
-| D-05 | Markdown storage backend | needs-design | — | v0.7 milestone |
-| D-06 | Storage interface abstraction | needs-design | — | v0.7 milestone |
+| D-05 | Markdown storage backend | done | S11 | IStorage + MarkdownBackend with YAML frontmatter |
+| D-06 | Storage interface abstraction | done | S11 | SQLite and Markdown share IStorage API |
 | D-07 | Data export (JSON, Markdown, CSV) | done | S9 | JSON + Markdown + CSV export |
 | D-08 | Data import (Todoist JSON, plain text) | done | S10 | Docket JSON, Todoist JSON, Markdown |
 | D-09 | Generalize DB layer (BaseSQLiteDatabase) | done | S8 | better-sqlite3 + sql.js share types |
@@ -173,6 +179,28 @@ All work items for ASF Docket, organized by area and prioritized within each sec
 | T-09 | Component tests: TaskInput, TaskList | done | S2 | |
 | T-10 | Plugin loader integration tests | done | S3 | |
 
+## Hardening & Quality
+
+| ID | Item | Status | Sprint | Notes |
+|----|------|--------|--------|-------|
+| H-01 | Expand error types (ValidationError, StorageError) | done | S12 | Core error class hierarchy |
+| H-02 | API layer res.ok checks | done | S12 | handleResponse/handleVoidResponse helpers |
+| H-03 | TaskContext mutation error handling | done | S12 | try/catch on all 7 mutations |
+| H-04 | Harden parseBody & API middleware | done | S12 | JSON parse error + middleware try/catch |
+| H-05 | Plugin loader try/catch | done | S12 | Cleanup on load failure |
+| H-06 | Markdown backend fs error handling | done | S12 | StorageError wrapping on all fs ops |
+| H-07 | React Error Boundary | done | S12 | Class component with fallback UI |
+| H-08 | Batch tag query (eliminate N+1) | done | S12 | listAllTaskTags() — 2 queries instead of 1+N |
+| H-09 | React.memo on TaskItem/SortableTaskItem | done | S12 | Prevent unnecessary re-renders |
+| H-10 | Memoize TaskContext value | done | S12 | useMemo on context provider value |
+| H-11 | Debounce project refresh | done | S12 | tasks.length dependency instead of tasks |
+| H-12 | Accessibility: Toast role="alert" | done | S12 | aria-live="assertive" |
+| H-13 | Accessibility: Dialog ARIA (CommandPalette, PermissionDialog) | done | S12 | role="dialog", aria-modal, combobox pattern |
+| H-14 | Accessibility: Sidebar ARIA | done | S12 | aria-current, aria-label, aria-hidden |
+| H-15 | Accessibility: TaskItem ARIA | done | S12 | role="button", tabIndex, keyboard nav, sr-only |
+| H-16 | Accessibility: Skip-to-content link | done | S12 | sr-only focus link in App.tsx |
+| H-17 | Accessibility: TaskDetailPanel + AIChatPanel ARIA | done | S12 | role="complementary", aria-labels |
+
 ## Documentation
 
 | ID | Item | Status | Sprint | Notes |
@@ -189,3 +217,5 @@ All work items for ASF Docket, organized by area and prioritized within each sec
 | DOC-10 | docs/development/SECURITY.md | done | — | |
 | DOC-11 | docs/planning/BACKLOG.md | done | — | This file |
 | DOC-12 | docs/planning/SPRINTS.md | done | — | Sprint tracking |
+| DOC-13 | Plugin API versioning docs | done | S13 | API Versioning & Stability section in API.md |
+| DOC-14 | v1.0 release planning docs update | done | S13 | ROADMAP, SPRINTS, BACKLOG updated |

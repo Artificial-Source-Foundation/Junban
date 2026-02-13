@@ -1,4 +1,5 @@
 import type { CreateTaskInput, UpdateTaskInput, Task, Tag } from "./types.js";
+import type { TagRow } from "../storage/interface.js";
 import type { IStorage } from "../storage/interface.js";
 import type { TagService } from "./tags.js";
 import type { TaskFilter } from "./filters.js";
@@ -78,12 +79,20 @@ export class TaskService {
   async list(filter?: TaskFilter): Promise<Task[]> {
     const rows = this.queries.listTasks();
 
-    // Hydrate each task with its tags
-    const tasks: Task[] = rows.map((row) => {
-      const tagRows = this.queries.getTaskTags(row.id);
-      const tags = tagRows.map((r) => r.tags);
-      return { ...row, dueTime: row.dueTime ?? false, tags };
-    });
+    // Single batch query — eliminates N+1
+    const allTagJoins = this.queries.listAllTaskTags();
+    const tagsByTaskId = new Map<string, TagRow[]>();
+    for (const join of allTagJoins) {
+      const taskId = join.task_tags.taskId;
+      if (!tagsByTaskId.has(taskId)) tagsByTaskId.set(taskId, []);
+      tagsByTaskId.get(taskId)!.push(join.tags);
+    }
+
+    const tasks: Task[] = rows.map((row) => ({
+      ...row,
+      dueTime: row.dueTime ?? false,
+      tags: tagsByTaskId.get(row.id) ?? [],
+    }));
 
     // Apply in-memory filtering (reuses existing filterTasks)
     let result = filter ? filterTasks(tasks, filter) : tasks;

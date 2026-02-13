@@ -230,6 +230,8 @@ export function Settings() {
 
       <DataSection />
 
+      <AboutSection />
+
       {permissionPlugin && (
         <PermissionDialog
           pluginName={permissionPlugin.name}
@@ -1023,6 +1025,88 @@ function PluginSettings({
         />
       ))}
     </div>
+  );
+}
+
+function AboutSection() {
+  const [updateStatus, setUpdateStatus] = useState<
+    "idle" | "checking" | "available" | "up-to-date" | "error"
+  >("idle");
+  const [updateVersion, setUpdateVersion] = useState("");
+  const isTauriApp = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+
+  const handleCheckUpdate = async () => {
+    setUpdateStatus("checking");
+    try {
+      const { check } = await import("@tauri-apps/plugin-updater");
+      const update = await check();
+      if (update) {
+        setUpdateStatus("available");
+        setUpdateVersion(update.version);
+      } else {
+        setUpdateStatus("up-to-date");
+      }
+    } catch {
+      setUpdateStatus("error");
+    }
+  };
+
+  const handleInstallUpdate = async () => {
+    try {
+      const { check } = await import("@tauri-apps/plugin-updater");
+      const update = await check();
+      if (update) {
+        await update.downloadAndInstall();
+        const { relaunch } = await import("@tauri-apps/plugin-process");
+        await relaunch();
+      }
+    } catch {
+      setUpdateStatus("error");
+    }
+  };
+
+  return (
+    <section className="mb-8">
+      <h2 className="text-lg font-semibold mb-3">About</h2>
+      <div className="space-y-2 max-w-md">
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          ASF Docket <span className="font-mono text-gray-500">v1.0.0</span>
+        </p>
+        <p className="text-xs text-gray-400">
+          Open-source, AI-native task manager with an Obsidian-style plugin system.
+        </p>
+        {isTauriApp && (
+          <div className="mt-3">
+            <button
+              onClick={handleCheckUpdate}
+              disabled={updateStatus === "checking"}
+              className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
+            >
+              {updateStatus === "checking" ? "Checking..." : "Check for Updates"}
+            </button>
+            {updateStatus === "available" && (
+              <div className="mt-2">
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  Update available: v{updateVersion}
+                </p>
+                <button
+                  onClick={handleInstallUpdate}
+                  className="mt-1 px-3 py-1.5 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  Install and Restart
+                </button>
+              </div>
+            )}
+            {updateStatus === "up-to-date" && (
+              <p className="mt-2 text-sm text-gray-500">You're up to date!</p>
+            )}
+            {updateStatus === "error" && (
+              <p className="mt-2 text-sm text-red-500">Update check failed.</p>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { ErrorBoundary } from "./components/ErrorBoundary.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { CommandPalette } from "./components/CommandPalette.js";
 import { StatusBar } from "./components/StatusBar.js";
@@ -75,10 +76,11 @@ function AppContent() {
     fetchProjects();
   }, [fetchProjects]);
 
-  // Re-fetch projects when tasks change (new project might have been created)
+  // Re-fetch projects when tasks are added/removed (new project might have been created)
+  const taskCount = state.tasks.length;
   useEffect(() => {
     fetchProjects();
-  }, [state.tasks, fetchProjects]);
+  }, [taskCount, fetchProjects]);
 
   const handleNavigate = (view: string, id?: string) => {
     if (view === "plugin-view") {
@@ -387,6 +389,12 @@ function AppContent() {
 
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-500 focus:text-white focus:rounded-lg focus:text-sm"
+      >
+        Skip to main content
+      </a>
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
           currentView={currentView}
@@ -399,7 +407,7 @@ function AppContent() {
           onToggleChat={() => setChatPanelOpen((o) => !o)}
           chatOpen={chatPanelOpen}
         />
-        <main className="flex-1 overflow-auto p-6">
+        <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto p-6">
           <BulkActionBar
             selectedCount={multiSelectedIds.size}
             onCompleteAll={handleBulkComplete}
@@ -412,9 +420,11 @@ function AppContent() {
           {state.loading ? (
             <p className="text-gray-500">Loading...</p>
           ) : state.error ? (
-            <p className="text-red-500">Error: {state.error}</p>
+            <p role="alert" className="text-red-500">
+              Error: {state.error}
+            </p>
           ) : (
-            renderView()
+            <ErrorBoundary>{renderView()}</ErrorBoundary>
           )}
         </main>
         {selectedTask && (
@@ -457,14 +467,16 @@ export { shortcutManager };
 
 export function App() {
   return (
-    <TaskProvider>
-      <PluginProvider>
-        <AIProvider>
-          <UndoProvider>
-            <AppContent />
-          </UndoProvider>
-        </AIProvider>
-      </PluginProvider>
-    </TaskProvider>
+    <ErrorBoundary>
+      <TaskProvider>
+        <PluginProvider>
+          <AIProvider>
+            <UndoProvider>
+              <AppContent />
+            </UndoProvider>
+          </AIProvider>
+        </PluginProvider>
+      </TaskProvider>
+    </ErrorBoundary>
   );
 }
