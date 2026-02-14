@@ -24,6 +24,8 @@ src/
 │   ├── priorities.ts        # Priority levels and sorting
 │   ├── recurrence.ts        # Recurring task logic
 │   ├── filters.ts           # Task filtering and search
+│   ├── templates.ts         # Reusable task templates with {{variable}} substitution
+│   ├── query-parser.ts      # Natural language query → TaskFilter parser
 │   └── types.ts             # Core type definitions (Zod + TS)
 ├── parser/                  # Natural language parsing
 │   ├── nlp.ts               # Date/time extraction (chrono-node)
@@ -51,7 +53,10 @@ src/
 │   │   ├── TaskList.tsx     # Task list container
 │   │   ├── TaskDetailPanel.tsx  # Slide-over task editor (w-96, auto-save on blur)
 │   │   ├── Sidebar.tsx      # Navigation + project list
-│   │   └── CommandPalette.tsx   # Ctrl+K command palette with arrow nav
+│   │   ├── CommandPalette.tsx   # Ctrl+K command palette with arrow nav
+│   │   ├── FocusMode.tsx    # Full-screen single-task focus overlay
+│   │   ├── QueryBar.tsx     # Natural language search/filter bar
+│   │   └── TemplateSelector.tsx  # Template picker modal with variable form
 │   ├── views/               # Main application views
 │   │   ├── Inbox.tsx        # Default inbox (pending, no project)
 │   │   ├── Today.tsx        # Tasks due today

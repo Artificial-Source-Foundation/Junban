@@ -140,18 +140,18 @@ Ideas for future development, roughly prioritized:
 - **WebDAV sync plugin** — generic sync for self-hosted setups
 - **AI auto-scheduling plugin** — auto-schedule tasks into calendar blocks
 - **AI daily planner plugin** — morning planning view with AI-suggested schedule
-- **Natural language queries** — "what's due this week?" "show urgent tasks in the Work project"
+- ~~**Natural language queries**~~ — ✅ Shipped in Sprint 16
 - **Calendar view plugin** — monthly/weekly view of tasks by due date
 - **Kanban board plugin** — drag-and-drop column-based task management
 - **Time tracking plugin** — track time spent on tasks with reports
 - **Habit tracker plugin** — recurring habit tracking with streaks
 - **Discord reminder plugin** — task reminders via Discord bot
 - **Google Calendar plugin** — two-way sync with Google Calendar
-- **Focus mode** — hide everything except the current task
+- ~~**Focus mode**~~ — ✅ Shipped in Sprint 15
 - **Team sync** — shared projects with conflict resolution
 - **Webhooks plugin** — trigger external services on task events
 - **Email-to-task plugin** — create tasks by forwarding emails
 - **Browser extension** — quick-add tasks from any webpage
 - **Widget support** — system tray / menu bar quick-add
-- **Templated tasks** — reusable task templates with variables
-- **Sub-tasks** — nested task hierarchy
+- ~~**Templated tasks**~~ — ✅ Shipped in Sprint 16
+- ~~**Sub-tasks**~~ — ✅ Shipped in Sprint 15

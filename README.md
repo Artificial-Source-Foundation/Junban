@@ -8,7 +8,6 @@ Think **Todoist's simplicity**, **Obsidian's extensibility**, and **JARVIS-level
 
 An [AI Strategic Forum (ASF)](https://github.com/asf-org) project. **Simple. Smart. Yours.**
 
-<!-- TODO: Add screenshot -->
 <!-- ![Docket Screenshot](docs/assets/screenshot.png) -->
 
 ## Why Docket?
@@ -29,6 +28,10 @@ Docket fills the gap: **a beautiful, minimal task manager where the plugin syste
 - **Bring your own model** — OpenAI, Anthropic, OpenRouter, Ollama, LM Studio — use any provider. Run local models for full privacy. Or build your own provider plugin.
 - **Voice input** — talk to Docket instead of typing. The AI parses your natural language into structured tasks.
 - **Natural language input** — type "buy milk tomorrow at 3pm p1 #groceries +shopping" and it just works
+- **Natural language search** — filter tasks by typing "due today p1 #urgent" or "overdue"
+- **Sub-tasks** — nested task hierarchy with indent/outdent, cascade completion, tree rendering
+- **Focus mode** — distraction-free, keyboard-driven mode for working through tasks one at a time
+- **Task templates** — reusable templates with `{{variable}}` substitution for repeatable workflows
 - **Plugin ecosystem** — Obsidian-style JS/TS plugins. Pomodoro, Kanban, calendar view, time tracking — if it doesn't exist, vibe-code it.
 - **Vibe-code your own plugins** — the plugin API is so simple and well-documented that you can ask Claude or ChatGPT to build a plugin for you. No coding experience required.
 - **Local-first** — your data lives on your machine. Zero network calls by default. No accounts, no tracking, no data harvesting.
