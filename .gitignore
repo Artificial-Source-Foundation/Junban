@@ -19,6 +19,11 @@ data/
 *.db-journal
 *.db-wal
 *.db-shm
+*.sqlite
+*.sqlite3
+
+# Markdown storage data
+tasks/
 
 # IDE
 .vscode/
