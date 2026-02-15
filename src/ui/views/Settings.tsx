@@ -26,7 +26,19 @@ import { THEME_VARIABLES, type CustomTheme } from "../../config/themes.js";
 import { generateId } from "../../utils/ids.js";
 import { shortcutManager } from "../App.js";
 
-type SettingsTab = "general" | "ai" | "plugins" | "templates" | "keyboard" | "data" | "about";
+export type SettingsTab =
+  | "general"
+  | "ai"
+  | "plugins"
+  | "templates"
+  | "keyboard"
+  | "data"
+  | "about";
+
+interface SettingsProps {
+  activeTab?: SettingsTab;
+  onActiveTabChange?: (tab: SettingsTab) => void;
+}
 
 const TABS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   { id: "general", label: "General", icon: <Palette className="w-4 h-4" /> },
@@ -38,8 +50,14 @@ const TABS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   { id: "about", label: "About", icon: <Info className="w-4 h-4" /> },
 ];
 
-export function Settings() {
-  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+const LM_STUDIO_MODEL_LINKS = [
+  { label: "liquid/lfm2.5-1.2b", url: "https://lmstudio.ai/models/liquid/lfm2.5-1.2b" },
+  { label: "liquid/lfm2-1.2b", url: "https://lmstudio.ai/models/liquid/lfm2-1.2b" },
+] as const;
+
+export function Settings({ activeTab: controlledActiveTab, onActiveTabChange }: SettingsProps) {
+  const [internalActiveTab, setInternalActiveTab] = useState<SettingsTab>("general");
+  const activeTab = controlledActiveTab ?? internalActiveTab;
   const [currentTheme, setCurrentTheme] = useState(themeManager.getCurrent());
   const [allThemes, setAllThemes] = useState(themeManager.listThemes());
   const { plugins, refreshPlugins } = usePluginContext();
@@ -148,6 +166,13 @@ export function Settings() {
     refreshPlugins();
   };
 
+  const handleTabChange = (tab: SettingsTab) => {
+    if (controlledActiveTab === undefined) {
+      setInternalActiveTab(tab);
+    }
+    onActiveTabChange?.(tab);
+  };
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6 flex items-center gap-2 text-on-surface">
@@ -160,7 +185,7 @@ export function Settings() {
         {TABS.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabChange(tab.id)}
             className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id
                 ? "border-accent text-accent"
@@ -185,6 +210,7 @@ export function Settings() {
                 onChange={(e) => handleThemeChange(e.target.value)}
                 className="px-3 py-2 text-sm border border-border rounded-lg bg-surface text-on-surface"
               >
+                <option value="system">System (auto)</option>
                 {allThemes.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name} ({t.type})
@@ -260,7 +286,15 @@ export function Settings() {
         <section className="mb-8">
           <h2 className="text-lg font-semibold mb-3 text-on-surface">Plugins</h2>
           {plugins.length === 0 ? (
-            <p className="text-on-surface-muted">No plugins installed.</p>
+            <>
+              <p className="text-on-surface-muted">No plugins installed.</p>
+              <a
+                href="#/plugin-store"
+                className="mt-2 inline-flex items-center text-sm font-medium text-accent hover:text-accent-hover"
+              >
+                Browse Plugin Store
+              </a>
+            </>
           ) : (
             <div className="space-y-3">
               {plugins.map((plugin) => (
@@ -432,6 +466,8 @@ function AIAssistantSettings() {
   }, [config, loaded]);
 
   const currentProvider = providers.find((p) => p.name === provider);
+  const suggestedModels = currentProvider?.suggestedModels ?? [];
+  const modelInputListId = provider ? `ai-model-suggestions-${provider}` : undefined;
 
   const handleProviderChange = async (newProvider: string) => {
     setProvider(newProvider);
@@ -509,8 +545,48 @@ function AIAssistantSettings() {
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 placeholder={currentProvider?.defaultModel ?? ""}
+                list={modelInputListId}
                 className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface text-on-surface"
               />
+              {suggestedModels.length > 0 && modelInputListId && (
+                <>
+                  <datalist id={modelInputListId}>
+                    {suggestedModels.map((suggestion) => (
+                      <option key={suggestion} value={suggestion} />
+                    ))}
+                  </datalist>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {suggestedModels.map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => setModel(suggestion)}
+                        className="px-2 py-1 text-xs rounded border border-border bg-surface-secondary text-on-surface-secondary hover:text-on-surface"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+              {provider === "lmstudio" && (
+                <p className="mt-2 text-xs text-on-surface-muted">
+                  Suggested models:{" "}
+                  {LM_STUDIO_MODEL_LINKS.map((modelLink, index) => (
+                    <span key={modelLink.label}>
+                      {index > 0 && " or "}
+                      <a
+                        href={modelLink.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-accent hover:text-accent-hover"
+                      >
+                        {modelLink.label}
+                      </a>
+                    </span>
+                  ))}
+                </p>
+              )}
             </div>
 
             {currentProvider?.showBaseUrl && (

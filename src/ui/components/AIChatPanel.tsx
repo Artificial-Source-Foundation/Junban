@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { X, Send, Mic, MicOff, Bot, Trash2, Settings } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import type { Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useAIContext } from "../context/AIContext.js";
 import type { AIChatMessage } from "../api.js";
 
@@ -148,7 +151,7 @@ export function AIChatPanel({ onClose, onOpenSettings }: AIChatPanelProps) {
 
       {/* Input */}
       <form onSubmit={handleSubmit} className="p-3 border-t border-border">
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <input
             ref={inputRef}
             type="text"
@@ -156,13 +159,13 @@ export function AIChatPanel({ onClose, onOpenSettings }: AIChatPanelProps) {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about your tasks..."
             disabled={isStreaming}
-            className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-surface text-on-surface placeholder-on-surface-muted focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50"
+            className="min-w-0 flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-surface text-on-surface placeholder-on-surface-muted focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50"
           />
           <VoiceButton onResult={handleVoiceResult} disabled={isStreaming} />
           <button
             type="submit"
             disabled={isStreaming || !input.trim()}
-            className="px-3 py-2 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="shrink-0 px-3 py-2 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Send size={16} />
           </button>
@@ -194,17 +197,64 @@ function MessageBubble({ message }: { message: AIChatMessage }) {
         )}
         {message.content && (
           <div
-            className={`px-3 py-2 rounded-lg text-sm whitespace-pre-wrap ${
+            className={`px-3 py-2 rounded-lg text-sm ${
               isUser ? "bg-accent text-white" : "bg-surface-tertiary text-on-surface"
             }`}
           >
-            {message.content}
+            {isUser ? (
+              <span className="whitespace-pre-wrap">{message.content}</span>
+            ) : (
+              <MarkdownMessage content={message.content} />
+            )}
           </div>
         )}
       </div>
     </div>
   );
 }
+
+function MarkdownMessage({ content }: { content: string }) {
+  return (
+    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+      {content}
+    </ReactMarkdown>
+  );
+}
+
+const markdownComponents: Components = {
+  p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
+  ol: ({ children }) => <ol className="mb-3 ml-5 list-decimal space-y-1 last:mb-0">{children}</ol>,
+  ul: ({ children }) => <ul className="mb-3 ml-5 list-disc space-y-1 last:mb-0">{children}</ul>,
+  li: ({ children }) => <li className="pl-1">{children}</li>,
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  em: ({ children }) => <em className="italic">{children}</em>,
+  code: ({ children, className, ...props }) => {
+    if (className) {
+      return (
+        <code {...props} className="block rounded-md bg-surface/70 px-2 py-1 font-mono text-xs">
+          {children}
+        </code>
+      );
+    }
+
+    return (
+      <code {...props} className="rounded bg-surface/70 px-1 py-0.5 font-mono text-xs">
+        {children}
+      </code>
+    );
+  },
+  a: ({ href, children, ...props }) => (
+    <a
+      {...props}
+      href={href}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="text-accent underline underline-offset-2"
+    >
+      {children}
+    </a>
+  ),
+};
 
 function ToolCallBadge({ name, args }: { name: string; args: string }) {
   let label = name.replace(/_/g, " ");
@@ -286,7 +336,7 @@ function VoiceButton({
       onClick={toggleListening}
       disabled={disabled}
       title={listening ? "Stop listening" : "Voice input"}
-      className={`px-2 py-2 text-sm rounded-lg border disabled:opacity-50 transition-colors ${
+      className={`shrink-0 px-2 py-2 text-sm rounded-lg border disabled:opacity-50 transition-colors ${
         listening
           ? "bg-error/10 border-error/30 text-error"
           : "border-border text-on-surface-muted hover:bg-surface-secondary"

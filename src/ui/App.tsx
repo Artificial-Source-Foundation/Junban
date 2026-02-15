@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { CommandPalette } from "./components/CommandPalette.js";
@@ -13,6 +13,7 @@ import { AIChatPanel } from "./components/AIChatPanel.js";
 import { FocusMode } from "./components/FocusMode.js";
 import { TemplateSelector } from "./components/TemplateSelector.js";
 import { Toast } from "./components/Toast.js";
+import { Focus } from "lucide-react";
 import { useKeyboardNavigation } from "./hooks/useKeyboardNavigation.js";
 import { useMultiSelect } from "./hooks/useMultiSelect.js";
 import { ShortcutManager } from "./shortcuts.js";
@@ -24,10 +25,12 @@ import { Project } from "./views/Project.js";
 import { Settings } from "./views/Settings.js";
 import { PluginStore } from "./views/PluginStore.js";
 import { PluginView } from "./views/PluginView.js";
+import type { SettingsTab } from "./views/Settings.js";
 import type { Project as ProjectType } from "../core/types.js";
 import { api } from "./api.js";
 
 const shortcutManager = new ShortcutManager();
+const AI_SIDEBAR_OPEN_SETTING_KEY = "ui_ai_sidebar_open";
 
 type View =
   | "inbox"
@@ -38,14 +41,241 @@ type View =
   | "plugin-store"
   | "plugin-view";
 
+interface RouteState {
+  view: View;
+  projectId: string | null;
+  pluginViewId: string | null;
+  inboxQuery: string;
+  settingsTab: SettingsTab;
+  pluginSearch: string;
+  focusModeOpen: boolean;
+}
+
+const DEFAULT_ROUTE_STATE: RouteState = {
+  view: "inbox",
+  projectId: null,
+  pluginViewId: null,
+  inboxQuery: "",
+  settingsTab: "general",
+  pluginSearch: "",
+  focusModeOpen: false,
+};
+
+const SIDEBAR_COLLAPSED_STORAGE_KEY = "docket.ui.sidebar.collapsed";
+const AI_CHAT_EXPANDED_STORAGE_KEY = "docket.ui.ai-chat.expanded";
+
+function decodePathSegment(segment: string | undefined): string | null {
+  if (!segment) return null;
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+function parseSettingsTab(tab: string | null): SettingsTab {
+  const validTabs: SettingsTab[] = [
+    "general",
+    "ai",
+    "plugins",
+    "templates",
+    "keyboard",
+    "data",
+    "about",
+  ];
+  if (tab && validTabs.includes(tab as SettingsTab)) {
+    return tab as SettingsTab;
+  }
+  return "general";
+}
+
+function parseRouteStateFromHash(hash: string): RouteState {
+  const hashValue = hash.startsWith("#") ? hash.slice(1) : hash;
+  const normalized = hashValue.startsWith("/") ? hashValue : "/inbox";
+  const [rawPath, rawQuery = ""] = normalized.split("?");
+  const pathSegments = rawPath.split("/").filter(Boolean);
+  const params = new URLSearchParams(rawQuery);
+  const route: RouteState = { ...DEFAULT_ROUTE_STATE };
+  const root = pathSegments[0] ?? "inbox";
+
+  switch (root) {
+    case "inbox":
+      route.view = "inbox";
+      route.inboxQuery = params.get("q") ?? "";
+      break;
+    case "today":
+      route.view = "today";
+      break;
+    case "upcoming":
+      route.view = "upcoming";
+      break;
+    case "project":
+      route.view = "project";
+      route.projectId = decodePathSegment(pathSegments[1]);
+      if (!route.projectId) route.view = "inbox";
+      break;
+    case "settings":
+      route.view = "settings";
+      route.settingsTab = parseSettingsTab(params.get("tab"));
+      break;
+    case "plugin-store":
+      route.view = "plugin-store";
+      route.pluginSearch = params.get("q") ?? "";
+      break;
+    case "plugin-view":
+      route.view = "plugin-view";
+      route.pluginViewId = decodePathSegment(pathSegments[1]);
+      if (!route.pluginViewId) route.view = "inbox";
+      break;
+    default:
+      route.view = "inbox";
+      break;
+  }
+
+  route.focusModeOpen = params.get("focus") === "1";
+  return route;
+}
+
+function buildHashFromRoute(route: RouteState): string {
+  const params = new URLSearchParams();
+
+  if (route.view === "inbox" && route.inboxQuery.trim()) {
+    params.set("q", route.inboxQuery);
+  }
+  if (route.view === "settings") {
+    params.set("tab", route.settingsTab);
+  }
+  if (route.view === "plugin-store" && route.pluginSearch.trim()) {
+    params.set("q", route.pluginSearch);
+  }
+  if (route.focusModeOpen) {
+    params.set("focus", "1");
+  }
+  let path = "/inbox";
+  switch (route.view) {
+    case "today":
+      path = "/today";
+      break;
+    case "upcoming":
+      path = "/upcoming";
+      break;
+    case "project":
+      path = route.projectId ? `/project/${encodeURIComponent(route.projectId)}` : "/inbox";
+      break;
+    case "settings":
+      path = "/settings";
+      break;
+    case "plugin-store":
+      path = "/plugin-store";
+      break;
+    case "plugin-view":
+      path = route.pluginViewId
+        ? `/plugin-view/${encodeURIComponent(route.pluginViewId)}`
+        : "/inbox";
+      break;
+    case "inbox":
+    default:
+      path = "/inbox";
+      break;
+  }
+
+  const query = params.toString();
+  return `#${path}${query ? `?${query}` : ""}`;
+}
+
+interface RightActionRailProps {
+  chatOpen: boolean;
+  onToggleChat: () => void;
+  onFocusMode: () => void;
+}
+
+function RailTooltip({ label }: { label: string }) {
+  return (
+    <span
+      role="tooltip"
+      className="pointer-events-none absolute right-full top-1/2 z-50 mr-2 -translate-y-1/2 whitespace-nowrap rounded-md border border-border bg-surface px-2 py-1 text-xs text-on-surface opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+    >
+      {label}
+    </span>
+  );
+}
+
+function RobotIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M9 3h6" />
+      <path d="M12 3v2" />
+      <rect x="4" y="7" width="16" height="11" rx="3" />
+      <circle cx="9" cy="12" r="1" />
+      <circle cx="15" cy="12" r="1" />
+      <path d="M9 16h6" />
+      <path d="M2 11v3" />
+      <path d="M22 11v3" />
+    </svg>
+  );
+}
+
+function RightActionRail({ chatOpen, onToggleChat, onFocusMode }: RightActionRailProps) {
+  return (
+    <aside
+      aria-label="Quick tools"
+      className="w-14 border-l border-border bg-surface-secondary flex flex-col items-center justify-start gap-3 pt-4"
+    >
+      <button
+        onClick={onToggleChat}
+        aria-label={chatOpen ? "Close AI chat" : "Open AI chat"}
+        aria-pressed={chatOpen}
+        className={`group relative w-11 h-11 rounded-lg border flex items-center justify-center transition-colors ${
+          chatOpen
+            ? "border-accent/50 bg-accent/10 text-accent"
+            : "border-transparent text-on-surface-secondary hover:text-on-surface hover:bg-surface-tertiary"
+        }`}
+      >
+        <RobotIcon className="w-5 h-5" />
+        <RailTooltip label="AI Chat" />
+      </button>
+
+      <button
+        onClick={onFocusMode}
+        aria-label="Enter focus mode"
+        className="group relative w-11 h-11 rounded-lg border border-transparent flex items-center justify-center text-on-surface-secondary hover:text-on-surface hover:bg-surface-tertiary transition-colors"
+      >
+        <Focus size={19} />
+        <RailTooltip label="Focus Mode" />
+      </button>
+    </aside>
+  );
+}
+
 function AppContent() {
   const [currentView, setCurrentView] = useState<View>("inbox");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedPluginViewId, setSelectedPluginViewId] = useState<string | null>(null);
+  const [inboxQueryText, setInboxQueryText] = useState("");
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>("general");
+  const [pluginStoreSearchQuery, setPluginStoreSearchQuery] = useState("");
+  const [routeReady, setRouteReady] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [chatPanelOpen, setChatPanelOpen] = useState(false);
+  const [chatPanelOpen, setChatPanelOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(AI_CHAT_EXPANDED_STORAGE_KEY) === "1";
+  });
+  const [chatPanelStateLoaded, setChatPanelStateLoaded] = useState(false);
   const [focusModeOpen, setFocusModeOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "1";
+  });
   const [templateSelectorOpen, setTemplateSelectorOpen] = useState(false);
   const [projects, setProjects] = useState<ProjectType[]>([]);
   const {
@@ -66,6 +296,7 @@ function AppContent() {
     views: pluginViews,
     executeCommand,
   } = usePluginContext();
+  const navigationKeyRef = useRef<string | null>(null);
 
   // Fetch projects on mount and after task changes
   const fetchProjects = useCallback(async () => {
@@ -81,23 +312,148 @@ function AppContent() {
     fetchProjects();
   }, [fetchProjects]);
 
+  // Restore AI chat sidebar open/closed state on startup.
+  useEffect(() => {
+    let mounted = true;
+    api
+      .getAppSetting(AI_SIDEBAR_OPEN_SETTING_KEY)
+      .then((value) => {
+        if (!mounted || value === null) {
+          return;
+        }
+        setChatPanelOpen(value === "1" || value.toLowerCase() === "true");
+      })
+      .catch(() => {
+        // Non-critical
+      })
+      .finally(() => {
+        if (mounted) {
+          setChatPanelStateLoaded(true);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Persist AI chat sidebar state after initial restore.
+  useEffect(() => {
+    if (!chatPanelStateLoaded) {
+      return;
+    }
+
+    api.setAppSetting(AI_SIDEBAR_OPEN_SETTING_KEY, chatPanelOpen ? "1" : "0").catch(() => {
+      // Non-critical
+    });
+  }, [chatPanelOpen, chatPanelStateLoaded]);
+
   // Re-fetch projects when tasks are added/removed (new project might have been created)
   const taskCount = state.tasks.length;
   useEffect(() => {
     fetchProjects();
   }, [taskCount, fetchProjects]);
 
-  const handleNavigate = (view: string, id?: string) => {
-    if (view === "plugin-view") {
-      setCurrentView("plugin-view");
-      setSelectedPluginViewId(id ?? null);
-    } else {
-      setCurrentView(view as View);
-      setSelectedProjectId(view === "project" ? (id ?? null) : null);
-      setSelectedPluginViewId(null);
+  const applyRouteState = useCallback((route: RouteState) => {
+    setCurrentView(route.view);
+    setSelectedProjectId(route.view === "project" ? route.projectId : null);
+    setSelectedPluginViewId(route.view === "plugin-view" ? route.pluginViewId : null);
+    setInboxQueryText(route.inboxQuery);
+    setSettingsTab(route.settingsTab);
+    setPluginStoreSearchQuery(route.pluginSearch);
+    setFocusModeOpen(route.focusModeOpen);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, sidebarCollapsed ? "1" : "0");
+  }, [sidebarCollapsed]);
+
+  useEffect(() => {
+    window.localStorage.setItem(AI_CHAT_EXPANDED_STORAGE_KEY, chatPanelOpen ? "1" : "0");
+  }, [chatPanelOpen]);
+
+  useEffect(() => {
+    const syncRouteFromLocation = () => {
+      const route = parseRouteStateFromHash(window.location.hash);
+      applyRouteState(route);
+      setSelectedTaskId(null);
+      navigationKeyRef.current = `${route.view}:${route.projectId ?? ""}:${route.pluginViewId ?? ""}`;
+    };
+
+    syncRouteFromLocation();
+    setRouteReady(true);
+
+    window.addEventListener("popstate", syncRouteFromLocation);
+    window.addEventListener("hashchange", syncRouteFromLocation);
+    return () => {
+      window.removeEventListener("popstate", syncRouteFromLocation);
+      window.removeEventListener("hashchange", syncRouteFromLocation);
+    };
+  }, [applyRouteState]);
+
+  useEffect(() => {
+    if (!routeReady) return;
+
+    const route: RouteState = {
+      view: currentView,
+      projectId: selectedProjectId,
+      pluginViewId: selectedPluginViewId,
+      inboxQuery: inboxQueryText,
+      settingsTab,
+      pluginSearch: pluginStoreSearchQuery,
+      focusModeOpen,
+    };
+
+    const nextHash = buildHashFromRoute(route);
+    const navigationKey = `${currentView}:${selectedProjectId ?? ""}:${selectedPluginViewId ?? ""}`;
+
+    if (window.location.hash === nextHash) {
+      navigationKeyRef.current = navigationKey;
+      return;
     }
-    setSelectedTaskId(null);
-  };
+
+    if (navigationKeyRef.current === navigationKey) {
+      window.history.replaceState(null, "", nextHash);
+    } else {
+      window.history.pushState(null, "", nextHash);
+    }
+    navigationKeyRef.current = navigationKey;
+  }, [
+    routeReady,
+    currentView,
+    selectedProjectId,
+    selectedPluginViewId,
+    inboxQueryText,
+    settingsTab,
+    pluginStoreSearchQuery,
+    focusModeOpen,
+  ]);
+
+  const handleNavigate = useCallback(
+    (view: string, id?: string) => {
+      const nextRoute: RouteState = {
+        view: view as View,
+        projectId: view === "project" ? (id ?? null) : null,
+        pluginViewId: view === "plugin-view" ? (id ?? null) : null,
+        inboxQuery: inboxQueryText,
+        settingsTab,
+        pluginSearch: pluginStoreSearchQuery,
+        focusModeOpen,
+      };
+
+      applyRouteState(nextRoute);
+      setSelectedTaskId(null);
+    },
+    [applyRouteState, inboxQueryText, settingsTab, pluginStoreSearchQuery, focusModeOpen],
+  );
+
+  const openSettingsTab = useCallback(
+    (tab: SettingsTab) => {
+      handleNavigate("settings");
+      setSettingsTab(tab);
+    },
+    [handleNavigate],
+  );
 
   const handleCreateTask = async (parsed: {
     title: string;
@@ -297,6 +653,41 @@ function AppContent() {
       { id: "nav-upcoming", name: "Go to Upcoming", callback: () => handleNavigate("upcoming") },
       { id: "nav-settings", name: "Go to Settings", callback: () => handleNavigate("settings") },
       {
+        id: "nav-settings-general",
+        name: "Go to Settings: General",
+        callback: () => openSettingsTab("general"),
+      },
+      {
+        id: "nav-settings-ai",
+        name: "Go to Settings: AI Assistant",
+        callback: () => openSettingsTab("ai"),
+      },
+      {
+        id: "nav-settings-plugins",
+        name: "Go to Settings: Plugins",
+        callback: () => openSettingsTab("plugins"),
+      },
+      {
+        id: "nav-settings-templates",
+        name: "Go to Settings: Templates",
+        callback: () => openSettingsTab("templates"),
+      },
+      {
+        id: "nav-settings-keyboard",
+        name: "Go to Settings: Keyboard",
+        callback: () => openSettingsTab("keyboard"),
+      },
+      {
+        id: "nav-settings-data",
+        name: "Go to Settings: Data",
+        callback: () => openSettingsTab("data"),
+      },
+      {
+        id: "nav-settings-about",
+        name: "Go to Settings: About",
+        callback: () => openSettingsTab("about"),
+      },
+      {
         id: "nav-plugin-store",
         name: "Go to Plugin Store",
         callback: () => handleNavigate("plugin-store"),
@@ -339,9 +730,60 @@ function AppContent() {
     }
 
     return cmds;
-  }, [projects, pluginCommands, executeCommand]);
+  }, [projects, pluginCommands, executeCommand, handleNavigate, openSettingsTab]);
 
   const selectedTask = selectedTaskId ? state.tasks.find((t) => t.id === selectedTaskId) : null;
+
+  const appTitle = useMemo(() => {
+    if (focusModeOpen) {
+      return "Focus Mode - Docket";
+    }
+
+    switch (currentView) {
+      case "inbox":
+        return "Inbox - Docket";
+      case "today":
+        return "Today - Docket";
+      case "upcoming":
+        return "Upcoming - Docket";
+      case "project": {
+        const project = projects.find((p) => p.id === selectedProjectId);
+        return project ? `${project.name} - Docket` : "Project - Docket";
+      }
+      case "settings": {
+        const tabLabelById: Record<SettingsTab, string> = {
+          general: "General",
+          ai: "AI Assistant",
+          plugins: "Plugins",
+          templates: "Templates",
+          keyboard: "Keyboard",
+          data: "Data",
+          about: "About",
+        };
+        return `${tabLabelById[settingsTab]} Settings - Docket`;
+      }
+      case "plugin-store":
+        return "Plugin Store - Docket";
+      case "plugin-view": {
+        const pluginView = pluginViews.find((view) => view.id === selectedPluginViewId);
+        return pluginView ? `${pluginView.name} - Docket` : "Custom View - Docket";
+      }
+      default:
+        return "Docket";
+    }
+  }, [
+    focusModeOpen,
+    currentView,
+    projects,
+    selectedProjectId,
+    settingsTab,
+    pluginViews,
+    selectedPluginViewId,
+  ]);
+
+  useEffect(() => {
+    document.title = appTitle;
+  }, [appTitle]);
 
   const renderView = () => {
     switch (currentView) {
@@ -356,12 +798,15 @@ function AppContent() {
             selectedTaskIds={multiSelectedIds}
             onMultiSelect={handleMultiSelect}
             onReorder={handleReorder}
+            queryText={inboxQueryText}
+            onQueryTextChange={setInboxQueryText}
           />
         );
       case "today":
         return (
           <Today
             tasks={state.tasks}
+            onCreateTask={handleCreateTask}
             onToggleTask={handleToggleTask}
             onSelectTask={handleSelectTask}
             selectedTaskId={selectedTaskId}
@@ -374,6 +819,7 @@ function AppContent() {
         return (
           <Upcoming
             tasks={state.tasks}
+            onCreateTask={handleCreateTask}
             onToggleTask={handleToggleTask}
             onSelectTask={handleSelectTask}
             selectedTaskId={selectedTaskId}
@@ -402,9 +848,14 @@ function AppContent() {
         );
       }
       case "settings":
-        return <Settings />;
+        return <Settings activeTab={settingsTab} onActiveTabChange={setSettingsTab} />;
       case "plugin-store":
-        return <PluginStore />;
+        return (
+          <PluginStore
+            searchQuery={pluginStoreSearchQuery}
+            onSearchQueryChange={setPluginStoreSearchQuery}
+          />
+        );
       case "plugin-view":
         return selectedPluginViewId ? (
           <PluginView viewId={selectedPluginViewId} />
@@ -433,9 +884,8 @@ function AppContent() {
           panels={panels}
           pluginViews={pluginViews}
           selectedPluginViewId={selectedPluginViewId}
-          onToggleChat={() => setChatPanelOpen((o) => !o)}
-          chatOpen={chatPanelOpen}
-          onFocusMode={() => setFocusModeOpen(true)}
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={() => setSidebarCollapsed((value) => !value)}
         />
         <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto p-6">
           <BulkActionBar
@@ -478,6 +928,11 @@ function AppContent() {
             }}
           />
         )}
+        <RightActionRail
+          chatOpen={chatPanelOpen}
+          onToggleChat={() => setChatPanelOpen((open) => !open)}
+          onFocusMode={() => setFocusModeOpen(true)}
+        />
       </div>
       {focusModeOpen && (
         <FocusMode

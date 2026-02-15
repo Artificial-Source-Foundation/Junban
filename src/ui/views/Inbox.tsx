@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Inbox as InboxIcon } from "lucide-react";
 import { TaskInput } from "../components/TaskInput.js";
 import { TaskList } from "../components/TaskList.js";
 import { QueryBar } from "../components/QueryBar.js";
 import { filterTasks } from "../../core/filters.js";
+import { parseQuery } from "../../core/query-parser.js";
 import type { ParsedQuery } from "../../core/query-parser.js";
 import type { Task } from "../../core/types.js";
 
@@ -26,6 +27,8 @@ interface InboxProps {
     event: { ctrlKey: boolean; metaKey: boolean; shiftKey: boolean },
   ) => void;
   onReorder?: (orderedIds: string[]) => void;
+  queryText?: string;
+  onQueryTextChange?: (value: string) => void;
 }
 
 export function Inbox({
@@ -37,14 +40,46 @@ export function Inbox({
   selectedTaskIds,
   onMultiSelect,
   onReorder,
+  queryText,
+  onQueryTextChange,
 }: InboxProps) {
   const [query, setQuery] = useState<ParsedQuery | null>(null);
+  const [inboxViewTimeMs] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    if (queryText === undefined) return;
+    if (!queryText.trim()) {
+      setQuery(null);
+      return;
+    }
+    setQuery(parseQuery(queryText));
+  }, [queryText]);
 
   const inboxTasks = useMemo(() => {
-    const base = tasks.filter((t) => t.status === "pending" && !t.projectId);
-    if (!query) return base;
+    const cutoffMs = inboxViewTimeMs - 14 * 24 * 60 * 60 * 1000;
+    const isRecentCompletedTask = (t: Task): boolean => {
+      if (t.status !== "completed") return false;
+      if (!t.completedAt) return true;
+      const completedAtMs = Date.parse(t.completedAt);
+      if (Number.isNaN(completedAtMs)) return true;
+      return completedAtMs >= cutoffMs;
+    };
+
+    if (!query) {
+      return tasks.filter(
+        (t) => !t.projectId && (t.status === "pending" || isRecentCompletedTask(t)),
+      );
+    }
+
+    const hasExplicitStatusFilter = Boolean(query.filter.status);
+    const base = tasks.filter((t) => {
+      if (t.projectId) return false;
+      if (hasExplicitStatusFilter) return true;
+      return t.status === "pending" || isRecentCompletedTask(t);
+    });
+
     return filterTasks(base, query.filter);
-  }, [tasks, query]);
+  }, [tasks, query, inboxViewTimeMs]);
 
   return (
     <div>
@@ -55,7 +90,7 @@ export function Inbox({
       </div>
       <TaskInput onSubmit={onCreateTask} />
       <div className="mb-3">
-        <QueryBar onQueryChange={setQuery} />
+        <QueryBar value={queryText} onValueChange={onQueryTextChange} onQueryChange={setQuery} />
       </div>
       <TaskList
         tasks={inboxTasks}
