@@ -210,6 +210,7 @@ export function Settings({ activeTab: controlledActiveTab, onActiveTabChange }: 
                 onChange={(e) => handleThemeChange(e.target.value)}
                 className="px-3 py-2 text-sm border border-border rounded-lg bg-surface text-on-surface"
               >
+                <option value="system">System (auto)</option>
                 {allThemes.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name} ({t.type})

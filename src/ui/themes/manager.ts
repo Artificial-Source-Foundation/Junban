@@ -8,11 +8,18 @@ const CUSTOM_THEME_PREFIX = "custom_theme:";
 /** Theme manager — handles loading, switching, and custom theme support. */
 export class ThemeManager {
   private currentTheme: string;
+  private systemThemeQuery: MediaQueryList;
   customThemes: CustomTheme[] = [];
 
   constructor() {
     const stored = localStorage.getItem(STORAGE_KEY);
-    this.currentTheme = stored ?? "light";
+    this.currentTheme = stored ?? "system";
+    this.systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    this.systemThemeQuery.addEventListener("change", () => {
+      if (this.currentTheme === "system") {
+        this.applyTheme();
+      }
+    });
     this.applyTheme();
   }
 
@@ -23,6 +30,14 @@ export class ThemeManager {
 
   /** Switch to a different theme by ID. */
   setTheme(themeId: string): void {
+    if (themeId === "system") {
+      this.currentTheme = "system";
+      localStorage.removeItem(STORAGE_KEY);
+      this.clearCustomCSS();
+      this.applyTheme();
+      return;
+    }
+
     // Check built-in themes first
     const builtIn = BUILT_IN_THEMES.find((t) => t.id === themeId);
     if (builtIn) {
@@ -47,7 +62,8 @@ export class ThemeManager {
 
   /** Toggle between light and dark themes. */
   toggle(): void {
-    this.setTheme(this.currentTheme === "dark" ? "light" : "dark");
+    const isDark = document.documentElement.classList.contains("dark");
+    this.setTheme(isDark ? "light" : "dark");
   }
 
   /** List all available themes (built-in + custom). */
@@ -126,9 +142,9 @@ export class ThemeManager {
     const ids = this.customThemes.map((t) => t.id);
     await api.setAppSetting(CUSTOM_THEMES_INDEX_KEY, JSON.stringify(ids));
 
-    // If the deleted theme was active, switch to light
+    // If the deleted theme was active, switch to system
     if (this.currentTheme === id) {
-      this.setTheme("light");
+      this.setTheme("system");
     }
   }
 
@@ -179,6 +195,15 @@ export class ThemeManager {
   }
 
   private applyTheme(): void {
+    if (this.currentTheme === "system") {
+      if (this.systemThemeQuery.matches) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+      return;
+    }
+
     const theme = BUILT_IN_THEMES.find((t) => t.id === this.currentTheme);
     if (!theme) return;
 
