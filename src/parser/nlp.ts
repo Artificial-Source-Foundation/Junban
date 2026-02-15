@@ -6,6 +6,10 @@ export interface ParsedDate {
   text: string; // The matched text that was parsed
 }
 
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 /**
  * Extract date/time from natural language input.
  * Uses chrono-node for parsing.
@@ -31,5 +35,16 @@ export function parseDate(input: string, referenceDate?: Date): ParsedDate | nul
 
 /** Remove the date/time portion from input text, returning the remaining string. */
 export function removeDateText(input: string, parsedText: string): string {
-  return input.replace(parsedText, "").replace(/\s+/g, " ").trim();
+  const escapedDateText = escapeRegExp(parsedText.trim());
+  const connectorDatePattern = new RegExp(`\\b(?:by|on|at|before)\\s+${escapedDateText}\\b`, "i");
+
+  let result = input.replace(connectorDatePattern, "");
+  if (result === input) {
+    result = input.replace(parsedText, "");
+  }
+
+  return result
+    .replace(/\s+/g, " ")
+    .replace(/\b(by|on|at|before)\s*$/i, "")
+    .trim();
 }

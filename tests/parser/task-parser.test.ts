@@ -37,6 +37,13 @@ describe("parseTask", () => {
     expect(result.dueTime).toBe(false);
   });
 
+  it("removes connector words before dates", () => {
+    const result = parseTask("Buy grocery by tomorrow");
+    expect(result.title).toBe("Buy grocery");
+    expect(result.dueDate).not.toBeNull();
+    expect(result.dueTime).toBe(false);
+  });
+
   it("extracts date with time", () => {
     const result = parseTask("meeting tomorrow at 3pm");
     expect(result.title).toBe("meeting");

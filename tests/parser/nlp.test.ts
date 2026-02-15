@@ -74,4 +74,12 @@ describe("removeDateText", () => {
   it("returns original text when date text not found", () => {
     expect(removeDateText("buy milk", "tomorrow")).toBe("buy milk");
   });
+
+  it("removes connectors with date text", () => {
+    expect(removeDateText("buy grocery by tomorrow", "tomorrow")).toBe("buy grocery");
+  });
+
+  it("removes dangling connectors after date text removal", () => {
+    expect(removeDateText("buy grocery by tomorrow", "by tomorrow")).toBe("buy grocery");
+  });
 });
