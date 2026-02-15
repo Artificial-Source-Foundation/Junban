@@ -38,6 +38,11 @@ const TABS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   { id: "about", label: "About", icon: <Info className="w-4 h-4" /> },
 ];
 
+const LM_STUDIO_MODEL_LINKS = [
+  { label: "liquid/lfm2.5-1.2b", url: "https://lmstudio.ai/models/liquid/lfm2.5-1.2b" },
+  { label: "liquid/lfm2-1.2b", url: "https://lmstudio.ai/models/liquid/lfm2-1.2b" },
+] as const;
+
 export function Settings() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
   const [currentTheme, setCurrentTheme] = useState(themeManager.getCurrent());
@@ -432,6 +437,8 @@ function AIAssistantSettings() {
   }, [config, loaded]);
 
   const currentProvider = providers.find((p) => p.name === provider);
+  const suggestedModels = currentProvider?.suggestedModels ?? [];
+  const modelInputListId = provider ? `ai-model-suggestions-${provider}` : undefined;
 
   const handleProviderChange = async (newProvider: string) => {
     setProvider(newProvider);
@@ -509,8 +516,48 @@ function AIAssistantSettings() {
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 placeholder={currentProvider?.defaultModel ?? ""}
+                list={modelInputListId}
                 className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface text-on-surface"
               />
+              {suggestedModels.length > 0 && modelInputListId && (
+                <>
+                  <datalist id={modelInputListId}>
+                    {suggestedModels.map((suggestion) => (
+                      <option key={suggestion} value={suggestion} />
+                    ))}
+                  </datalist>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {suggestedModels.map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => setModel(suggestion)}
+                        className="px-2 py-1 text-xs rounded border border-border bg-surface-secondary text-on-surface-secondary hover:text-on-surface"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+              {provider === "lmstudio" && (
+                <p className="mt-2 text-xs text-on-surface-muted">
+                  Suggested models:{" "}
+                  {LM_STUDIO_MODEL_LINKS.map((modelLink, index) => (
+                    <span key={modelLink.label}>
+                      {index > 0 && " or "}
+                      <a
+                        href={modelLink.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-accent hover:text-accent-hover"
+                      >
+                        {modelLink.label}
+                      </a>
+                    </span>
+                  ))}
+                </p>
+              )}
             </div>
 
             {currentProvider?.showBaseUrl && (

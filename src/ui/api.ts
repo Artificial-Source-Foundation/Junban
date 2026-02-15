@@ -581,6 +581,7 @@ export const api = {
           displayName: "LM Studio (local)",
           needsApiKey: false,
           defaultModel: "default",
+          suggestedModels: ["liquid/lfm2.5-1.2b", "liquid/lfm2-1.2b"],
           defaultBaseUrl: "http://localhost:1234/v1",
           showBaseUrl: true,
           pluginId: null,
@@ -932,6 +933,7 @@ export interface AIProviderInfo {
   displayName: string;
   needsApiKey: boolean;
   defaultModel: string;
+  suggestedModels?: string[];
   defaultBaseUrl?: string;
   showBaseUrl?: boolean;
   pluginId: string | null;
