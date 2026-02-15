@@ -286,7 +286,15 @@ export function Settings({ activeTab: controlledActiveTab, onActiveTabChange }: 
         <section className="mb-8">
           <h2 className="text-lg font-semibold mb-3 text-on-surface">Plugins</h2>
           {plugins.length === 0 ? (
-            <p className="text-on-surface-muted">No plugins installed.</p>
+            <>
+              <p className="text-on-surface-muted">No plugins installed.</p>
+              <a
+                href="#/plugin-store"
+                className="mt-2 inline-flex items-center text-sm font-medium text-accent hover:text-accent-hover"
+              >
+                Browse Plugin Store
+              </a>
+            </>
           ) : (
             <div className="space-y-3">
               {plugins.map((plugin) => (
