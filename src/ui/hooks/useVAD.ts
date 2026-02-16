@@ -9,6 +9,7 @@ interface UseVADProps {
   onSpeechStart?: () => void;
   onSpeechEnd?: (audio: Blob) => void;
   enabled: boolean;
+  deviceId?: string;
 }
 
 interface UseVADReturn {
@@ -19,7 +20,7 @@ interface UseVADReturn {
   isSupported: boolean;
 }
 
-export function useVAD({ onSpeechStart, onSpeechEnd, enabled }: UseVADProps): UseVADReturn {
+export function useVAD({ onSpeechStart, onSpeechEnd, enabled, deviceId }: UseVADProps): UseVADReturn {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
@@ -31,12 +32,15 @@ export function useVAD({ onSpeechStart, onSpeechEnd, enabled }: UseVADProps): Us
   onSpeechStartRef.current = onSpeechStart;
   onSpeechEndRef.current = onSpeechEnd;
 
+  const deviceIdRef = useRef(deviceId);
+  deviceIdRef.current = deviceId;
+
   const start = useCallback(async () => {
     if (vadRef.current) return;
 
     try {
       const { MicVAD } = await import("@ricky0123/vad-web");
-      const vad = await MicVAD.new({
+      const vadOptions: any = {
         onSpeechStart: () => {
           setIsSpeaking(true);
           onSpeechStartRef.current?.();
@@ -46,7 +50,13 @@ export function useVAD({ onSpeechStart, onSpeechEnd, enabled }: UseVADProps): Us
           const wavBlob = float32ToWav(audio, 16000);
           onSpeechEndRef.current?.(wavBlob);
         },
-      });
+      };
+      if (deviceIdRef.current) {
+        vadOptions.additionalAudioConstraints = {
+          deviceId: { exact: deviceIdRef.current },
+        };
+      }
+      const vad = await MicVAD.new(vadOptions);
 
       vadRef.current = vad;
       vad.start();

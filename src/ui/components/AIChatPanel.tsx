@@ -101,6 +101,7 @@ export function AIChatPanel({ onClose, onOpenSettings }: AIChatPanelProps) {
   useVAD({
     onSpeechEnd: handleVADSpeechEnd,
     enabled: voice.settings.voiceMode === "vad" && !isStreaming && !voice.isSpeaking,
+    deviceId: voice.settings.microphoneId || undefined,
   });
 
   // Voice conversation loop: TTS on new AI response
@@ -467,7 +468,7 @@ function VoiceButton({
       setListening(false);
     } else {
       // Use MediaRecorder for API-based STT
-      const recorder = createAudioRecorder();
+      const recorder = createAudioRecorder(voice.settings.microphoneId || undefined);
       recorderRef.current = recorder;
       try {
         await recorder.start();

@@ -3,6 +3,7 @@ import {
   Settings as SettingsIcon,
   Palette,
   Bot,
+  Mic,
   Puzzle,
   Keyboard,
   Database,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import { GeneralTab } from "./settings/GeneralTab.js";
 import { AITab } from "./settings/AITab.js";
+import { VoiceTab } from "./settings/VoiceTab.js";
 import { PluginsTab } from "./settings/PluginsTab.js";
 import { TemplatesTab } from "./settings/TemplatesTab.js";
 import { KeyboardTab } from "./settings/KeyboardTab.js";
@@ -28,6 +30,7 @@ interface SettingsProps {
 const TABS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   { id: "general", label: "General", icon: <Palette className="w-4 h-4" /> },
   { id: "ai", label: "AI Assistant", icon: <Bot className="w-4 h-4" /> },
+  { id: "voice", label: "Voice", icon: <Mic className="w-4 h-4" /> },
   { id: "plugins", label: "Plugins", icon: <Puzzle className="w-4 h-4" /> },
   { id: "templates", label: "Templates", icon: <FileText className="w-4 h-4" /> },
   { id: "keyboard", label: "Keyboard", icon: <Keyboard className="w-4 h-4" /> },
@@ -74,6 +77,7 @@ export function Settings({ activeTab: controlledActiveTab, onActiveTabChange }: 
       {/* Tab content */}
       {activeTab === "general" && <GeneralTab />}
       {activeTab === "ai" && <AITab />}
+      {activeTab === "voice" && <VoiceTab />}
       {activeTab === "plugins" && <PluginsTab />}
       {activeTab === "templates" && <TemplatesTab />}
       {activeTab === "keyboard" && <KeyboardTab />}

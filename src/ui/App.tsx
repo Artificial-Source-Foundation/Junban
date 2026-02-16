@@ -302,6 +302,7 @@ function AppContent() {
         const tabLabelById: Record<SettingsTab, string> = {
           general: "General",
           ai: "AI Assistant",
+          voice: "Voice",
           plugins: "Plugins",
           templates: "Templates",
           keyboard: "Keyboard",

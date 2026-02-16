@@ -52,7 +52,7 @@ function writeString(view: DataView, offset: number, str: string): void {
 }
 
 /** MediaRecorder wrapper for push-to-talk fallback. */
-export function createAudioRecorder(): {
+export function createAudioRecorder(deviceId?: string): {
   start: () => Promise<void>;
   stop: () => Promise<Blob>;
 } {
@@ -61,7 +61,10 @@ export function createAudioRecorder(): {
 
   return {
     async start() {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const audioConstraints: MediaTrackConstraints = deviceId
+        ? { deviceId: { exact: deviceId } }
+        : {};
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
       chunks = [];
       mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
       mediaRecorder.ondataavailable = (e) => {
@@ -87,6 +90,33 @@ export function createAudioRecorder(): {
       });
     },
   };
+}
+
+/** Microphone device info. */
+export interface MicrophoneInfo {
+  deviceId: string;
+  label: string;
+}
+
+/** Enumerate available audio input devices. Requests mic permission if needed. */
+export async function enumerateMicrophones(): Promise<MicrophoneInfo[]> {
+  if (typeof navigator === "undefined" || !navigator.mediaDevices?.enumerateDevices) {
+    return [];
+  }
+  // Request permission first — device labels are empty until granted
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((t) => t.stop());
+  } catch {
+    return [];
+  }
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  return devices
+    .filter((d) => d.kind === "audioinput")
+    .map((d, i) => ({
+      deviceId: d.deviceId,
+      label: d.label || `Microphone ${i + 1}`,
+    }));
 }
 
 /** Play an ArrayBuffer of audio data through the Web Audio API. Returns a promise that resolves when playback ends. */

@@ -28,6 +28,7 @@ export interface VoiceSettings {
   autoSend: boolean;
   ttsVoice: string;
   groqApiKey: string;
+  microphoneId: string;
 }
 
 const DEFAULT_SETTINGS: VoiceSettings = {
@@ -38,6 +39,7 @@ const DEFAULT_SETTINGS: VoiceSettings = {
   autoSend: true,
   ttsVoice: "",
   groqApiKey: "",
+  microphoneId: "",
 };
 
 const STORAGE_KEY = "docket-voice-settings";
