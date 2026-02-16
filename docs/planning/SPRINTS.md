@@ -189,11 +189,11 @@ Two-week sprint cycles. Each sprint has a clear goal and pulls items from the [B
 
 ## Future Sprints (Unscheduled)
 
-These will be planned as we get closer. See [BACKLOG.md](BACKLOG.md) for all items.
+See [BACKLOG.md](BACKLOG.md) for all items.
 
 | Sprint | Theme | Key Items |
 |--------|-------|-----------|
-| S17 | Saydo Sync | Sync server, user accounts, E2E encryption |
+| S24+ | Saydo Sync | Sync server, user accounts, E2E encryption |
 
 ---
 
@@ -443,7 +443,7 @@ These will be planned as we get closer. See [BACKLOG.md](BACKLOG.md) for all ite
 | — | Migrate TaskItem to tokens + priority stripe + tag pills | done |
 | — | Migrate TaskInput, TaskDetailPanel, TaskList, CommandPalette to tokens | done |
 | — | Migrate BulkActionBar, Toast, StatusBar, AIChatPanel, PermissionDialog to tokens | done |
-| U-20 | Split Settings into 6-tab layout (General, AI, Plugins, Keyboard, Data, About) | done |
+| U-20 | Split Settings into tabbed layout (initially 6 tabs, now 8 with Templates and Voice) | done |
 | — | Migrate all views (Inbox, Today, Upcoming, Project, PluginStore, PluginView) to tokens | done |
 | — | Migrate App.tsx layout to tokens | done |
 | — | Update ThemeEditor and THEME_VARIABLES for new token set | done |
@@ -491,3 +491,105 @@ These will be planned as we get closer. See [BACKLOG.md](BACKLOG.md) for all ite
 | — | Query parser unit tests (21 tests) | done |
 
 **Result**: TemplateService with full CRUD and `instantiate()` supporting `{{variable}}` substitution in title and description. TemplateSelector modal for quick task creation. Template management in Settings. Natural language query parser handles priority, status, tags, overdue, due dates (today/tomorrow/this week/next week + chrono-node). QueryBar with debounced filtering and suggestion dropdown. 610 passing tests.
+
+### Sprint 17 — "AI Error Handling" (completed)
+
+**Goal**: Make the AI assistant resilient. Proper error classification, retry logic, streaming timeouts, and graceful degradation when providers fail.
+
+| ID | Item | Status |
+|----|------|--------|
+| A-19 | AIError class + classifyProviderError for structured error handling | done |
+| A-22 | Streaming error recovery: withTimeout(), partial content preservation | done |
+| — | Error bubbles with retry button in chat UI | done |
+| — | Safety timeout for hung provider connections | done |
+
+**Result**: AI errors are now classified (auth, rate limit, network, model, unknown) with appropriate user messages and retry behavior. Streaming responses have timeout protection and preserve partial content on failure. ~620 passing tests.
+
+### Sprint 18 — "Dynamic Model Discovery" (completed)
+
+**Goal**: Fetch available models from provider APIs instead of hardcoding model lists. Dynamic dropdown in AI settings.
+
+| ID | Item | Status |
+|----|------|--------|
+| A-23 | Dynamic model discovery for all AI providers | done |
+| — | Fetch models from OpenAI, Anthropic, Ollama, LM Studio APIs | done |
+| — | Dynamic model dropdown in Settings > AI with Custom fallback | done |
+
+**Result**: AI settings now show available models fetched from the configured provider's API. Custom model ID fallback for providers that don't support model listing. ~630 passing tests.
+
+### Sprint 19 — "UI Redesign & Reminders" (completed)
+
+**Goal**: Task reminders with `remindAt` column, useReminders hook for polling, and UI refinements.
+
+| ID | Item | Status |
+|----|------|--------|
+| — | Add `remindAt` column to tasks schema (migration 0004) | done |
+| — | Update IStorage interface and both backends for reminders | done |
+| — | `useReminders` hook — polls `/api/tasks/reminders/due` every 30s | done |
+| — | Reminder UI in TaskDetailPanel and notification display | done |
+| — | Reminder integration tests (12 tests) | done |
+
+**Result**: Tasks can have reminders. Migration 0004_silky_karnak.sql adds remindAt column. Hook polls for due reminders and surfaces them to the user. 663 passing tests (643 + 12 reminders + 8 existing bump).
+
+### Sprint 20 — "Pluggable LLM Core" (completed)
+
+**Goal**: Refactor AI layer into a pluggable architecture. Extract LLMProviderPlugin, LLMExecutor, LLMPipeline, and ToolRegistry as first-class abstractions.
+
+| ID | Item | Status |
+|----|------|--------|
+| — | LLMProviderPlugin interface (replaces old AIProvider) | done |
+| — | LLMExecutor — runs tool calls against registry | done |
+| — | LLMPipeline — input → context → provider → tools → response | done |
+| — | ToolRegistry with createDefaultToolRegistry() | done |
+| — | Provider registry with createDefaultRegistry() | done |
+| — | src/ai/core/, src/ai/provider/, src/ai/tools/ directory structure | done |
+| — | Pipeline, registry, and tool tests (19 tests) | done |
+
+**Result**: AI layer refactored from monolithic to pluggable. Provider and tool registries support runtime extension via plugins. Pipeline orchestrates the full request lifecycle. 682 passing tests (663 + 19 new).
+
+### Sprint 21 — "Voice Integration" (completed)
+
+**Goal**: Full voice I/O system with STT/TTS provider abstraction, voice activity detection, and hands-free conversation mode.
+
+| ID | Item | Status |
+|----|------|--------|
+| A-20 | TTS provider abstraction (Browser Speech Synthesis, Groq PlayAI) | done |
+| A-21 | Bidirectional voice conversation mode (VAD + push-to-talk) | done |
+| — | STTProviderPlugin + TTSProviderPlugin interfaces | done |
+| — | VoiceProviderRegistry (mirrors LLM pattern) | done |
+| — | src/ai/voice/ — interface.ts, registry.ts, audio-utils.ts, provider.ts | done |
+| — | Voice adapters: browser-stt, browser-tts, groq-stt, groq-tts | done |
+| — | VAD via @ricky0123/vad-web, useVAD hook | done |
+| — | VoiceTab in Settings (microphone detection, provider selection) | done |
+| — | Voice tests (53 tests) | done |
+
+**Result**: Voice provider abstraction mirrors LLM pattern. STT and TTS each have browser and Groq cloud adapters. VAD enables hands-free mode. Voice settings in dedicated Settings tab. 735 passing tests (682 + 53 new).
+
+### Sprint 22 — "AI Intelligence Tools" (completed)
+
+**Goal**: Add analytical AI tools that go beyond CRUD — pattern analysis, workload assessment, smart organization, and energy-based recommendations.
+
+| ID | Item | Status |
+|----|------|--------|
+| — | analyze-patterns tool (task completion patterns, productivity trends) | done |
+| — | analyze-workload tool (capacity analysis, overload detection) | done |
+| — | smart-organize tool (auto-tagging, priority suggestions) | done |
+| — | energy-recommendations tool (focus time, energy-based scheduling) | done |
+| — | Register all in createDefaultToolRegistry() (10 tools total: 5 CRUD + 5 intelligence) | done |
+| — | Smart tool tests (37 tests) | done |
+
+**Result**: 5 new analytical tools in src/ai/tools/builtin/. AI can now analyze work patterns, assess workload, suggest organization, and recommend energy-optimal scheduling. 772 passing tests (735 + 37 new).
+
+### Sprint 23 — "Rebrand: Docket → Saydo" (completed)
+
+**Goal**: Rename the project from "ASF Docket" to "ASF Saydo" across the entire codebase.
+
+| ID | Item | Status |
+|----|------|--------|
+| — | Rename all code identifiers (docket → saydo, Docket → Saydo) | done |
+| — | Update DB filename (saydo.db), localStorage keys (saydo-*) | done |
+| — | Update CLI command (saydo), schemas (SaydoTagSchema, etc.) | done |
+| — | Update minDocketVersion → minSaydoVersion in plugin manifests | done |
+| — | Update all documentation | done |
+
+**Result**: Full rebrand complete. No functional changes — same test count (772 passing).

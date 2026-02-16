@@ -144,20 +144,41 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
   const speak = useCallback(
     async (text: string) => {
       if (!ttsProvider || !settings.ttsEnabled) return;
+
+      const isBrowserTTS = ttsProvider.id === "browser-tts";
+
       speechCancelledRef.current = false;
       setIsSpeaking(true);
+
       try {
-        // BrowserTTSProvider handles playback internally via synthesize()
+        // Strip markdown formatting for cleaner speech
+        const clean = text
+          .replace(/```[\s\S]*?```/g, "")  // remove code blocks
+          .replace(/`[^`]+`/g, "")          // remove inline code
+          .replace(/[#*_~>|[\]()-]/g, "")   // remove markdown punctuation
+          .replace(/\n{2,}/g, ". ")         // paragraph breaks → pauses
+          .replace(/\n/g, " ")              // single newlines → spaces
+          .trim();
+        if (!clean) {
+          setIsSpeaking(false);
+          return;
+        }
+
+        const maxLen = isBrowserTTS ? 5000 : 2000;
+        const truncated = clean.length > maxLen ? clean.slice(0, maxLen) + "..." : clean;
+
         if (ttsProvider instanceof BrowserTTSProvider) {
-          await ttsProvider.speakDirect(text, { voice: settings.ttsVoice || undefined });
+          await ttsProvider.speakDirect(truncated, { voice: settings.ttsVoice || undefined });
         } else {
-          const buffer = await ttsProvider.synthesize(text, {
+          const buffer = await ttsProvider.synthesize(truncated, {
             voice: settings.ttsVoice || undefined,
           });
           if (!speechCancelledRef.current && buffer.byteLength > 0) {
             await playAudioBuffer(buffer);
           }
         }
+      } catch {
+        // TTS failed — silently ignore to avoid crashing the app
       } finally {
         setIsSpeaking(false);
       }

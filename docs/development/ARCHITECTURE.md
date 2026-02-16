@@ -2,517 +2,422 @@
 
 ## Overview
 
-ASF Saydo is a modular TypeScript application with a clear separation between core logic, storage, UI, plugins, and CLI. Each layer is isolated, testable, and can be developed independently.
+Saydo is a modular TypeScript app with clear separation between core logic, storage, AI, UI, plugins, and CLI. Each layer is isolated and testable.
 
 ```
 src/
-├── main.ts                  # Entry point — wires everything together
-├── config/                  # Configuration & environment
+├── main.ts                  # Tauri/web entry point
+├── bootstrap.ts             # Desktop app initialization (branches on STORAGE_MODE)
+├── bootstrap-web.ts         # Web/Tauri WebView initialization (always SQLite via sql.js)
+│
+├── config/                  # Configuration
 │   ├── env.ts               # Zod-validated env vars
 │   ├── defaults.ts          # Default settings and constants
 │   └── themes.ts            # Built-in theme definitions
+│
 ├── db/                      # Database layer
-│   ├── schema.ts            # Drizzle schema definitions
-│   ├── client.ts            # SQLite connection
-│   ├── migrate.ts           # Migration runner
-│   ├── migrations/          # Generated SQL migrations
-│   └── queries.ts           # Query helpers (CRUD for tasks, projects, tags)
-├── core/                    # Core task management logic
-│   ├── tasks.ts             # Task CRUD operations
-│   ├── projects.ts          # Project management
-│   ├── tags.ts              # Tag system
+│   ├── schema.ts            # Drizzle schema (tasks, projects, tags, task_tags, templates, chat, plugin_settings)
+│   ├── client.ts            # better-sqlite3 connection (Node/desktop)
+│   ├── client-web.ts        # sql.js WASM connection (browser/Tauri WebView)
+│   ├── queries.ts           # Query helpers (CRUD)
+│   ├── migrate.ts           # Migration runner (Node)
+│   ├── migrate-web.ts       # Migration runner (WebView, bundled SQL)
+│   ├── persistence.ts       # Tauri FS persistence (load/save SQLite to AppData)
+│   └── migrations/          # SQL migrations (0001-0004)
+│
+├── storage/                 # Storage abstraction
+│   ├── interface.ts         # IStorage — common API for both backends
+│   ├── sqlite-backend.ts    # SQLite implementation (wraps queries.ts)
+│   ├── markdown-backend.ts  # Markdown YAML implementation (in-memory indexes, disk writes)
+│   └── markdown-utils.ts    # File utilities for Markdown backend
+│
+├── core/                    # Business logic (no I/O, takes IStorage)
+│   ├── tasks.ts             # TaskService — CRUD, subtasks, cascade complete
+│   ├── projects.ts          # ProjectService
+│   ├── tags.ts              # TagService
+│   ├── templates.ts         # TemplateService — {{variable}} substitution
 │   ├── priorities.ts        # Priority levels and sorting
 │   ├── recurrence.ts        # Recurring task logic
-│   ├── filters.ts           # Task filtering and search
-│   ├── templates.ts         # Reusable task templates with {{variable}} substitution
-│   ├── query-parser.ts      # Natural language query → TaskFilter parser
-│   └── types.ts             # Core type definitions (Zod + TS)
+│   ├── filters.ts           # Task filtering
+│   ├── query-parser.ts      # Natural language query → TaskFilter
+│   ├── actions.ts           # Bulk operations (multi-select)
+│   ├── export.ts            # Export to JSON/CSV/Markdown
+│   ├── import.ts            # Import from Todoist/Markdown/JSON
+│   ├── event-bus.ts         # Plugin lifecycle event dispatch
+│   ├── undo.ts              # Undo/redo stack
+│   ├── errors.ts            # NotFoundError, ValidationError, StorageError
+│   └── types.ts             # Zod schemas + TypeScript types
+│
 ├── parser/                  # Natural language parsing
 │   ├── nlp.ts               # Date/time extraction (chrono-node)
-│   ├── task-parser.ts       # Full task string parser
-│   └── grammar.ts           # Grammar rules for task-specific syntax
+│   ├── task-parser.ts       # Full task string parser ("buy milk p1 #groceries tomorrow")
+│   └── grammar.ts           # Grammar rules (priorities, tags, projects)
+│
+├── ai/                      # AI layer
+│   ├── provider.ts          # LLMProviderPlugin interface
+│   ├── types.ts             # ChatMessage, ToolCall, etc.
+│   ├── errors.ts            # AIError class, classifyProviderError
+│   ├── chat.ts              # Chat session management, streaming, persistence
+│   ├── model-discovery.ts   # Dynamic model fetching from provider APIs
+│   │
+│   ├── core/                # Pipeline and execution
+│   │   ├── pipeline.ts      # LLMPipeline — input → context → provider → tools → response
+│   │   ├── executor.ts      # LLMExecutor — runs tool calls
+│   │   ├── capabilities.ts  # Provider capability declarations
+│   │   └── middleware.ts     # Error handling, logging middleware
+│   │
+│   ├── provider/            # LLM provider implementations
+│   │   ├── registry.ts      # createDefaultRegistry() — provider factory
+│   │   └── adapters/        # 6 adapters: openai, anthropic, openrouter, ollama, lmstudio, openai-compat
+│   │
+│   ├── tools/               # AI tool system
+│   │   ├── registry.ts      # ToolRegistry + createDefaultToolRegistry()
+│   │   └── builtin/         # 10 tools total
+│   │       ├── task-crud.ts           # Create/read/update/complete/delete tasks
+│   │       ├── query-tasks.ts         # Search and filter tasks
+│   │       ├── analyze-patterns.ts    # Workload pattern analysis
+│   │       ├── analyze-workload.ts    # Task load and capacity analysis
+│   │       ├── smart-organize.ts      # Auto-tagging and prioritization
+│   │       └── energy-recommendations.ts  # Focus time and energy suggestions
+│   │
+│   └── voice/               # Voice I/O
+│       ├── interface.ts     # STTProviderPlugin, TTSProviderPlugin
+│       ├── registry.ts      # VoiceProviderRegistry
+│       ├── provider.ts      # Voice provider factory
+│       ├── audio-utils.ts   # WAV encoding, sample rate conversion
+│       └── adapters/        # STT: browser, groq, whisper-local | TTS: browser, groq, kokoro-local
+│
 ├── plugins/                 # Plugin system
-│   ├── loader.ts            # Plugin discovery and loading
-│   ├── lifecycle.ts         # Plugin lifecycle management
-│   ├── api.ts               # Plugin API surface
-│   ├── sandbox.ts           # Sandboxed execution environment
+│   ├── loader.ts            # Discovery, validation, loading
+│   ├── lifecycle.ts         # onLoad/onUnload hooks
+│   ├── api.ts               # Plugin API surface (filtered by permissions)
+│   ├── sandbox.ts           # Sandboxed execution context
 │   ├── registry.ts          # Community plugin registry client
+│   ├── installer.ts         # Install/uninstall from plugin store
 │   ├── settings.ts          # Per-plugin settings storage
-│   └── types.ts             # Plugin manifest and API types
+│   ├── command-registry.ts  # Command system (palette integration)
+│   ├── ui-registry.ts       # UI extension points (panels, views, status bar)
+│   └── types.ts             # Plugin manifest schema (Zod)
+│
 ├── ui/                      # React frontend
-│   ├── App.tsx              # Root component with routing, keyboard nav, command palette
-│   ├── main.tsx             # Entry point — renders App, initializes theme
-│   ├── api.ts               # HTTP client for Vite dev server API
-│   ├── context/
-│   │   └── TaskContext.tsx   # React context for task state (CRUD, refresh)
-│   ├── hooks/
-│   │   └── useKeyboardNavigation.ts  # j/k/Enter/Esc keyboard nav hook
-│   ├── components/          # Reusable UI components
-│   │   ├── TaskInput.tsx    # Natural language input with parser preview
-│   │   ├── TaskItem.tsx     # Single task row with selection highlight
-│   │   ├── TaskList.tsx     # Task list container
-│   │   ├── TaskDetailPanel.tsx  # Slide-over task editor (w-96, auto-save on blur)
-│   │   ├── Sidebar.tsx      # Navigation + project list
-│   │   ├── CommandPalette.tsx   # Ctrl+K command palette with arrow nav
-│   │   ├── FocusMode.tsx    # Full-screen single-task focus overlay
-│   │   ├── QueryBar.tsx     # Natural language search/filter bar
-│   │   └── TemplateSelector.tsx  # Template picker modal with variable form
-│   ├── views/               # Main application views
-│   │   ├── Inbox.tsx        # Default inbox (pending, no project)
+│   ├── App.tsx              # Root component — routing, layout, keyboard nav
+│   ├── main.tsx             # React entry point, theme init
+│   ├── index.css            # Global styles
+│   ├── shortcuts.ts         # Keyboard shortcut definitions
+│   │
+│   ├── api/                 # Frontend API layer
+│   │   ├── index.ts         # API entry point
+│   │   ├── helpers.ts       # handleResponse<T>, handleVoidResponse
+│   │   ├── tasks.ts         # /api/tasks/*
+│   │   ├── projects.ts      # /api/projects/*
+│   │   ├── templates.ts     # /api/templates/*
+│   │   ├── ai.ts            # /api/ai/*
+│   │   ├── plugins.ts       # /api/plugins/*
+│   │   └── settings.ts      # /api/settings/*
+│   │
+│   ├── context/             # React context
+│   │   └── UndoContext.tsx   # Undo/redo state
+│   │
+│   ├── hooks/               # Custom hooks
+│   │   ├── useKeyboardNavigation.ts
+│   │   ├── useMultiSelect.ts
+│   │   └── useVAD.ts        # Voice activity detection
+│   │
+│   ├── components/          # ~24 UI components
+│   │   ├── TaskInput.tsx         # NLP-driven task creation with inline preview
+│   │   ├── TaskItem.tsx          # Single task row (priority stripe, tag pills, indent)
+│   │   ├── TaskList.tsx          # Tree rendering with expand/collapse
+│   │   ├── TaskDetailPanel.tsx   # Slide-over editor (auto-save on blur)
+│   │   ├── TaskMetadataSidebar.tsx
+│   │   ├── SubtaskBlock.tsx      # Sub-task display
+│   │   ├── SubtaskSection.tsx    # Sub-task list within detail panel
+│   │   ├── InlineAddSubtask.tsx  # Inline sub-task creation
+│   │   ├── Sidebar.tsx           # Navigation + project list
+│   │   ├── CommandPalette.tsx    # Ctrl+K with arrow nav
+│   │   ├── FocusMode.tsx         # Full-screen overlay (Space/N/P/Esc)
+│   │   ├── QueryBar.tsx          # NL search with debounced filtering
+│   │   ├── AIChatPanel.tsx       # AI sidebar chat
+│   │   ├── BulkActionBar.tsx     # Multi-select toolbar
+│   │   ├── TemplateSelector.tsx  # Template picker modal
+│   │   ├── DatePicker.tsx
+│   │   ├── RecurrencePicker.tsx
+│   │   ├── TagsInput.tsx
+│   │   ├── RightActionRail.tsx
+│   │   ├── StatusBar.tsx         # Plugin-extensible status bar
+│   │   ├── PluginPanel.tsx
+│   │   ├── PermissionDialog.tsx  # Plugin permission approval
+│   │   ├── Toast.tsx
+│   │   └── ErrorBoundary.tsx
+│   │
+│   ├── views/               # Main views
+│   │   ├── Inbox.tsx        # All unscheduled tasks + QueryBar
 │   │   ├── Today.tsx        # Tasks due today
-│   │   ├── Upcoming.tsx     # Tasks with due dates, sorted
-│   │   ├── Project.tsx      # Single project filtered view
-│   │   └── Settings.tsx     # Theme toggle + placeholder sections
+│   │   ├── Upcoming.tsx     # Tasks grouped by due date
+│   │   ├── Project.tsx      # Single project view
+│   │   ├── Completed.tsx    # Historical view
+│   │   ├── TaskPage.tsx     # Single task page
+│   │   ├── FiltersLabels.tsx
+│   │   ├── PluginStore.tsx  # Browse/install community plugins
+│   │   ├── PluginView.tsx   # Plugin-provided custom views
+│   │   └── Settings.tsx     # 8-tab settings
+│   │       └── settings/    # Tab components
+│   │           ├── GeneralTab.tsx
+│   │           ├── AITab.tsx
+│   │           ├── VoiceTab.tsx
+│   │           ├── PluginsTab.tsx
+│   │           ├── TemplatesTab.tsx
+│   │           ├── KeyboardTab.tsx
+│   │           ├── DataTab.tsx
+│   │           └── AboutTab.tsx
+│   │
 │   └── themes/
-│       └── manager.ts       # ThemeManager singleton (localStorage persistence)
-├── ai/                      # AI assistant layer (future)
-│   ├── provider.ts          # Provider abstraction interface
-│   ├── providers/           # Provider implementations (OpenAI, Anthropic, Ollama, etc.)
-│   ├── chat.ts              # Chat session management
-│   ├── tools.ts             # AI tool definitions (task CRUD, scheduling)
-│   └── voice.ts             # Voice input processing
-├── cli/                     # CLI companion tool
-│   ├── index.ts             # Commander.js entry point
-│   ├── commands/            # CLI command handlers
+│       ├── manager.ts       # ThemeManager (localStorage persistence)
+│       ├── light.css        # Tailwind 4 @theme tokens
+│       └── dark.css         # Tailwind 4 @theme tokens
+│
+├── cli/                     # CLI companion
+│   ├── index.ts             # Commander.js entry (saydo add/list/done/edit/delete)
+│   ├── commands/            # Command handlers
 │   └── formatter.ts         # Terminal output formatting
-└── utils/                   # Shared utilities
+│
+└── utils/
     ├── logger.ts            # Structured logger
-    ├── ids.ts               # ID generation
-    └── dates.ts             # Date utilities
+    ├── ids.ts               # nanoid generation
+    ├── dates.ts             # Date utilities
+    └── tauri.ts             # isTauri() platform detection
 ```
 
-## Data Flow
+## Data flow
 
-### 1. Task Creation (UI)
+### Task creation
 
 ```
 User types: "buy milk tomorrow at 3pm p1 #groceries +shopping"
   │
   ▼
-TaskInput component
+TaskInput → Task Parser (chrono-node + grammar rules)
   │
   ▼
-Task Parser (src/parser/task-parser.ts)
-  ├─→ chrono-node extracts: "tomorrow at 3pm" → Date object
-  ├─→ Grammar rules extract: "p1" → priority 1
-  ├─→ Grammar rules extract: "#groceries" → tag "groceries"
-  ├─→ Grammar rules extract: "+shopping" → project "shopping"
-  └─→ Remaining text: "buy milk" → task title
+ParsedTask { title: "buy milk", dueDate: ..., priority: 1, tags: ["groceries"], project: "shopping" }
   │
   ▼
-ParsedTask {
-  title: "buy milk",
-  dueDate: 2025-01-15T15:00:00Z,
-  priority: 1,
-  tags: ["groceries"],
-  project: "shopping"
-}
+TaskService.create() → validate with Zod → generate ID → link project/tags
   │
   ▼
-Core Task Service (src/core/tasks.ts)
-  ├─→ Validate with Zod schema
-  ├─→ Generate task ID (nanoid)
-  ├─→ Create/link project if needed
-  ├─→ Create/link tags if needed
+IStorage (SQLite or Markdown backend)
   │
   ▼
-Storage Layer (src/db/queries.ts)
-  ├─→ INSERT into tasks table
-  ├─→ INSERT into task_tags junction
+EventBus → notify plugins (task:create)
   │
   ▼
-Plugin Hooks
-  └─→ Notify all plugins: onTaskCreate(task)
-  │
-  ▼
-UI Update
-  └─→ Re-render task list with new task
+UI re-renders task list
 ```
 
-### 2. Task Creation (CLI)
+Same flow from CLI: `saydo add "buy milk tomorrow p1 #groceries"` → Parser → TaskService → Storage.
+
+### AI chat
 
 ```
-$ saydo add "buy milk tomorrow at 3pm p1 #groceries +shopping"
+User types/speaks in AI panel
   │
   ▼
-Commander.js routes to add command (src/cli/commands/add.ts)
+(Voice: STT provider → text)
   │
   ▼
-Same flow: Parser → Core → Storage → Plugin Hooks
+LLMPipeline: inject context (task counts, overdue, projects) + tool definitions
   │
   ▼
-Terminal output: "Created: buy milk (due tomorrow 3:00 PM, P1)"
+LLM Provider (configured by user) → streaming response via SSE
+  │
+  ▼
+Tool execution (if tool calls): create/update/complete tasks, run queries
+  │
+  ▼
+Response in chat + task list updated
+  │
+  ▼
+(Voice: TTS provider → audio)
 ```
 
-### 3. Task Completion
+### Plugin loading
 
 ```
-User clicks checkbox / runs "saydo done <id>"
+App startup → Plugin Loader scans plugins/ → validate manifests (Zod)
   │
   ▼
-Core Task Service (src/core/tasks.ts)
-  ├─→ Mark task as completed (completedAt = now)
-  ├─→ If recurring: create next occurrence
+For each plugin: create sandbox → inject filtered API → call onLoad()
   │
   ▼
-Plugin Hooks
-  └─→ Notify all plugins: onTaskComplete(task)
-        ├─→ Pomodoro plugin: stop timer if running
-        ├─→ Time tracking plugin: record completion time
-        └─→ Habit tracker plugin: update streak
+Plugin registers commands, views, panels, event listeners
   │
   ▼
-UI Update / CLI Output
+Active — receives events, renders UI, responds to commands
 ```
 
-### 4. Plugin Loading
-
-```
-App startup / Plugin install
-  │
-  ▼
-Plugin Loader (src/plugins/loader.ts)
-  ├─→ Scan plugins/ directory
-  ├─→ Read manifest.json from each
-  ├─→ Validate manifest with Zod
-  ├─→ Check minSaydoVersion compatibility
-  │
-  ▼
-For each valid plugin:
-  │
-  ▼
-Sandbox Creation (src/plugins/sandbox.ts)
-  ├─→ Create isolated execution context
-  ├─→ Inject Plugin API (limited, controlled surface)
-  ├─→ Set resource limits (memory, CPU)
-  │
-  ▼
-Lifecycle (src/plugins/lifecycle.ts)
-  ├─→ Import plugin entry file
-  ├─→ Instantiate plugin class
-  ├─→ Call plugin.onLoad()
-  ├─→ Register plugin's commands, views, settings
-  │
-  ▼
-Plugin is active — receives events, renders UI, responds to commands
-```
-
-## Database Schema
+## Database schema
 
 ### Tables
 
-**tasks** — Core task data
+**tasks**
+
 | Column | Type | Notes |
-|--------|------|-------|
+|---|---|---|
 | id | TEXT (PK) | nanoid |
-| title | TEXT | Task title (required) |
-| description | TEXT | Optional longer description |
-| status | TEXT | "pending", "completed", "cancelled" |
-| priority | INTEGER | 1 (highest) to 4 (lowest), nullable |
+| title | TEXT | required |
+| description | TEXT | nullable |
+| status | TEXT | "pending" / "completed" / "cancelled" |
+| priority | INTEGER | 1-4, nullable |
 | dueDate | TEXT | ISO timestamp, nullable |
-| dueTime | INTEGER | 0/1 — whether due date has a specific time |
+| dueTime | INTEGER | 0/1 — whether due date has a time component |
 | completedAt | TEXT | ISO timestamp, nullable |
-| projectId | TEXT (FK) | Reference to projects, nullable |
-| recurrence | TEXT | Recurrence rule (RRULE-like), nullable |
-| sortOrder | INTEGER | Manual sort position within a view |
+| projectId | TEXT (FK) | → projects, nullable |
+| parentId | TEXT (FK) | → tasks (self-ref for subtasks), nullable |
+| recurrence | TEXT | RRULE-like, nullable |
+| remindAt | TEXT | ISO timestamp, nullable |
+| sortOrder | INTEGER | manual sort position |
 | createdAt | TEXT | ISO timestamp |
 | updatedAt | TEXT | ISO timestamp |
 
-**projects** — Task groupings
-| Column | Type | Notes |
-|--------|------|-------|
-| id | TEXT (PK) | nanoid |
-| name | TEXT | Project name (unique) |
-| color | TEXT | Hex color for UI |
-| icon | TEXT | Optional icon identifier |
-| sortOrder | INTEGER | Display order |
-| archived | INTEGER | 0/1 |
-| createdAt | TEXT | ISO timestamp |
+**projects** — id, name, color, icon, sortOrder, archived, createdAt
 
-**tags** — Labels for tasks
-| Column | Type | Notes |
-|--------|------|-------|
-| id | TEXT (PK) | nanoid |
-| name | TEXT | Tag name (unique, lowercase) |
-| color | TEXT | Hex color for UI |
+**tags** — id, name, color
 
-**task_tags** — Many-to-many junction
-| Column | Type | Notes |
-|--------|------|-------|
-| taskId | TEXT (FK) | Reference to tasks |
-| tagId | TEXT (FK) | Reference to tags |
-| (PK) | composite | (taskId, tagId) |
+**task_tags** — taskId + tagId (composite PK)
 
-**plugin_settings** — Per-plugin configuration
-| Column | Type | Notes |
-|--------|------|-------|
-| pluginId | TEXT (PK) | Plugin identifier |
-| settings | TEXT | JSON blob of plugin settings |
-| updatedAt | TEXT | ISO timestamp |
+**task_templates** — id, name, description, variables (JSON)
 
-**app_settings** — Global application settings
-| Column | Type | Notes |
-|--------|------|-------|
-| key | TEXT (PK) | Setting key |
-| value | TEXT | Setting value (JSON) |
-| updatedAt | TEXT | ISO timestamp |
+**chat_messages** — persisted AI conversation history
 
-### Markdown Storage Alternative
+**plugin_settings** — pluginId, settings (JSON), updatedAt
 
-When `STORAGE_MODE=markdown`, tasks are stored as `.md` files with YAML frontmatter:
+**app_settings** — key, value (JSON), updatedAt
+
+### Markdown storage
+
+When `STORAGE_MODE=markdown`, tasks are `.md` files with YAML frontmatter:
 
 ```markdown
 ---
+completedAt: null
+createdAt: "2025-01-14T10:00:00Z"
+dueDate: "2025-01-15T15:00:00Z"
 id: abc123
-status: pending
 priority: 1
-due: 2025-01-15T15:00:00Z
 project: shopping
+status: pending
 tags: [groceries]
-created: 2025-01-14T10:00:00Z
 ---
 
 # buy milk
 
-Optional longer description here.
+Optional description here.
 ```
 
-File structure:
-```
-tasks/
-├── inbox/           # Tasks with no project
-│   └── abc123.md
-├── shopping/        # Project directory
-│   └── def456.md
-└── .saydo/         # Metadata
-    ├── tags.json    # Tag definitions
-    └── plugins.json # Plugin settings
-```
+File structure: `tasks/inbox/`, `tasks/<project>/`, `tasks/.saydo/` for metadata. YAML keys sorted alphabetically for minimal git diffs.
 
-## Plugin System Design
+## Storage abstraction
 
-### Architecture
+Both backends implement `IStorage` (defined in `src/storage/interface.ts`):
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  Saydo Core                     │
-│                                                  │
-│  ┌──────────────────────────────────────────┐   │
-│  │            Plugin API Surface             │   │
-│  │                                           │   │
-│  │  Commands · Views · Settings · Events     │   │
-│  │  Task API · UI Slots · Storage Access     │   │
-│  └──────────────┬───────────────────────────┘   │
-│                 │                                │
-│  ┌──────────────┴───────────────────────────┐   │
-│  │             Sandbox Layer                 │   │
-│  │                                           │   │
-│  │  Restricted globals · Memory limits       │   │
-│  │  No filesystem · No network (by default)  │   │
-│  └──────────────┬───────────────────────────┘   │
-│                 │                                │
-│  ┌──────────────┴──────┬──────────────────┐     │
-│  │  Plugin A           │  Plugin B         │     │
-│  │  (Pomodoro)         │  (Kanban)         │     │
-│  └─────────────────────┴──────────────────┘     │
-└─────────────────────────────────────────────────┘
+IStorage
+├── Task CRUD (create, list, get, update, delete)
+├── Project CRUD
+├── Tag CRUD
+├── Template CRUD
+├── Chat history
+├── Plugin settings
+├── Reminders
+└── listAllTaskTags() — batch query to avoid N+1
 ```
 
-### Plugin Manifest
+Services (`TaskService`, `ProjectService`, etc.) accept `IStorage` and don't know which backend is active. `bootstrap.ts` picks the backend based on `STORAGE_MODE` env var. `bootstrap-web.ts` always uses SQLite (sql.js in browser).
 
-Every plugin has a `manifest.json`:
+## AI system
 
-```json
-{
-  "id": "my-plugin",
-  "name": "My Plugin",
-  "version": "1.0.0",
-  "author": "Author Name",
-  "description": "What this plugin does",
-  "main": "index.js",
-  "minSaydoVersion": "1.0.0",
-  "permissions": ["task:read", "task:write", "ui:panel", "commands"],
-  "settings": [
-    {
-      "id": "interval",
-      "name": "Timer Interval",
-      "type": "number",
-      "default": 25,
-      "description": "Pomodoro interval in minutes"
-    }
-  ]
-}
-```
+### Provider abstraction
 
-### Lifecycle Hooks
+All providers implement `LLMProviderPlugin`. Swapping models is one config change.
 
-| Hook | When | Use Case |
-|------|------|----------|
-| `onLoad()` | Plugin is activated | Register commands, UI, event listeners |
-| `onUnload()` | Plugin is deactivated | Clean up timers, listeners, UI |
-| `onTaskCreate(task)` | A task is created | Auto-tag, start timer, log |
-| `onTaskComplete(task)` | A task is completed | Stop timer, update stats, trigger next |
-| `onTaskUpdate(task, changes)` | A task is modified | React to priority/date changes |
-| `onTaskDelete(task)` | A task is deleted | Clean up related plugin data |
-| `onSettingsChange(settings)` | Plugin settings change | Re-configure plugin behavior |
+Supported: OpenAI, Anthropic, OpenRouter, Ollama, LM Studio, any OpenAI-compatible API. Custom providers via `ai:provider` plugin permission.
 
-### Permission Model
+### Tools
 
-Plugins declare permissions in their manifest. Users approve permissions on install.
+The AI has access to 10 structured tools:
 
-| Permission | Access |
-|------------|--------|
-| `task:read` | Read task data |
-| `task:write` | Create, update, delete tasks |
-| `ui:panel` | Add sidebar panels |
-| `ui:view` | Register custom views |
-| `ui:status` | Add status bar items |
-| `commands` | Register keyboard commands |
-| `settings` | Add settings tab |
-| `storage` | Access plugin-specific storage |
-| `network` | Make HTTP requests (requires explicit approval) |
+| Tool | Category |
+|---|---|
+| task-crud (create/read/update/complete/delete) | CRUD |
+| query-tasks (search, filter) | CRUD |
+| analyze-patterns | Intelligence |
+| analyze-workload | Intelligence |
+| smart-organize | Intelligence |
+| energy-recommendations | Intelligence |
 
-## AI Assistant Architecture
+Tools are registered in `ToolRegistry` (`createDefaultToolRegistry()`). Plugins can register additional tools.
 
-### Provider Abstraction
+### Voice
 
-All AI providers implement a common `AIProvider` interface. This allows swapping models with zero code changes — just update the config.
+Voice I/O mirrors the LLM provider pattern:
+
+- **STT**: `STTProviderPlugin` — Browser Speech API, Groq Whisper, local Whisper (@huggingface/transformers)
+- **TTS**: `TTSProviderPlugin` — Browser Speech Synthesis, Groq PlayAI, local Kokoro (kokoro-js)
+- **VAD**: Voice activity detection via `@ricky0123/vad-web` for hands-free mode
+
+Voice settings stored in localStorage (`saydo-voice-settings`).
+
+## Plugin system
 
 ```
-┌─────────────────────────────────────────────────┐
-│               AI Provider Interface              │
-│                                                  │
-│  chat(messages) → response                       │
-│  streamChat(messages) → AsyncIterable            │
-│  toolCall(messages, tools) → tool result          │
-│                                                  │
-├──────────┬──────────┬──────────┬────────────────┤
-│ OpenAI   │Anthropic │OpenRouter│  Ollama / LMS  │
-│ (cloud)  │ (cloud)  │ (cloud)  │  (local)       │
-└──────────┴──────────┴──────────┴────────────────┘
+┌──────────────────────────────────────┐
+│            Saydo Core                │
+│                                      │
+│  ┌────────────────────────────────┐  │
+│  │      Plugin API Surface        │  │
+│  │  Commands · Views · Settings   │  │
+│  │  Events · Task API · Storage   │  │
+│  └──────────────┬─────────────────┘  │
+│                 │                     │
+│  ┌──────────────┴─────────────────┐  │
+│  │       Sandbox Layer            │  │
+│  │  Restricted globals            │  │
+│  │  No fs, no process, no eval    │  │
+│  └──────────────┬─────────────────┘  │
+│                 │                     │
+│  ┌──────────┐ ┌┴─────────┐           │
+│  │ Plugin A │ │ Plugin B  │           │
+│  └──────────┘ └───────────┘           │
+└──────────────────────────────────────┘
 ```
 
-**Supported providers:**
-- **OpenAI** — GPT-4, GPT-3.5, etc. via API key
-- **Anthropic** — Claude models via API key
-- **OpenRouter** — Multi-provider gateway (access many models with one key)
-- **Ollama** — Local models, zero data exposure
-- **LM Studio** — Local models via OpenAI-compatible API
-- **Custom** — Users can build their own provider plugin
+Permissions: `task:read`, `task:write`, `ui:panel`, `ui:view`, `ui:status`, `commands`, `settings`, `storage`, `network`, `ai:provider`.
 
-### AI Chat Flow
+Plugins declare permissions in `manifest.json`. Users approve on install. Permissions enforced at the API layer — plugins get a proxy object with only what they're allowed to use.
 
-```
-User types/speaks in AI panel (sidebar)
-  │
-  ▼
-Voice input → Speech-to-text → Text
-  │
-  ▼
-Chat manager (src/ai/chat.ts)
-  ├─→ Inject context: current tasks, projects, priorities, schedule
-  ├─→ Include tool definitions (task CRUD, scheduling, reminders)
-  │
-  ▼
-AI Provider (configured by user)
-  ├─→ Model processes message with full context
-  ├─→ Returns text response and/or tool calls
-  │
-  ▼
-Tool execution (src/ai/tools.ts)
-  ├─→ Create/update/complete/delete tasks
-  ├─→ Assign priorities and projects
-  ├─→ Schedule tasks, set reminders
-  ├─→ Ask follow-up questions if unclear
-  │
-  ▼
-Response displayed in chat panel + task list updated
-```
+See [Plugin API](../plugins/API.md) for the full reference.
 
-### AI Tools
-
-The AI assistant has access to structured tools that map to core operations:
-
-| Tool | What It Does |
-|------|-------------|
-| `create_task` | Create a task with title, due date, priority, project, tags |
-| `list_tasks` | List tasks with filters (today, overdue, project, etc.) |
-| `complete_task` | Mark a task as done |
-| `update_task` | Edit task fields (title, priority, due date, project) |
-| `suggest_schedule` | Suggest a daily plan based on priorities and deadlines |
-| `set_reminder` | Create a reminder for a task |
-
-### Design Principles
-
-- **AI is optional**: The app works perfectly without any AI configured. No features are gated behind AI.
-- **User controls the model**: BYOM (Bring Your Own Model). Cloud or local — the user decides.
-- **Context, not magic**: The AI is good because it sees the user's full context (tasks, projects, history), not because of prompt tricks.
-- **Conversational**: Users talk to it like an assistant. It asks follow-up questions. It remembers the conversation.
-- **Privacy-first**: API keys go directly to the user's chosen provider. Saydo never proxies or stores AI traffic.
-
-## State Management
-
-### Data Flow
+## State management
 
 ```
 SQLite / Markdown (source of truth)
-        │
-        ▼
-Core Services (src/core/)
-  tasks.ts, projects.ts, tags.ts
-        │
-        ▼
-React Context (app-level state)
-  TaskContext, PluginContext, ThemeContext
-        │
-        ▼
-React Components (UI)
-  Read from context, dispatch actions through core services
+  ↓
+Core Services (TaskService, ProjectService, etc.)
+  ↓
+React Context (UndoContext, etc.)
+  ↓
+React Components
 ```
 
-**Principles:**
-- SQLite/Markdown is the single source of truth
-- Core services are the only layer that writes to storage
-- UI reads from context, writes through core services
-- Plugins interact through the Plugin API, never directly with storage
-- No global mutable state outside React context
+SQLite/Markdown is the single source of truth. Core services are the only layer that writes to storage. UI reads from context, writes through services. Plugins interact through the Plugin API, never directly with storage.
 
-### Why Not Redux/Zustand?
+No Redux or Zustand — React Context + core services handle the data flow for v1.
 
-For v1, the data flow is simple enough that React Context + core services handle it well. The app has one source of truth (SQLite) and a relatively flat state shape. Adding a state library would introduce complexity without clear benefit at this stage. If plugin interactions or multi-window state become complex, we'll revisit.
+## Key tech choices
 
-## Tech Choices & Justifications
-
-### Tauri (not Electron)
-
-- **Binary size**: ~5MB vs Electron's ~150MB
-- **Memory usage**: Uses system webview, not bundled Chromium
-- **Security**: Rust backend with fine-grained permission system
-- **Trade-off**: Less mature ecosystem, but improving rapidly. For a task manager (simple UI, no heavy web APIs), Tauri's constraints are a non-issue.
-
-### SQLite + Drizzle (not IndexedDB, not filesystem-only)
-
-- **SQLite**: Battle-tested, fast, supports complex queries (filters, sorts, full-text search)
-- **Drizzle**: Type-safe, SQL-close, tiny runtime. Generates migrations.
-- **Why not IndexedDB**: Limited query capabilities, browser-only, awkward API
-- **Why not filesystem-only**: Querying Markdown files doesn't scale. Markdown mode is for portability/interop, not performance.
-- Schema designed to be Postgres-compatible for future server-side use.
-
-### React + Tailwind (not Svelte, not plain CSS)
-
-- **React**: Largest ecosystem, most plugin authors will know it, excellent tooling
-- **Tailwind CSS**: Utility-first, fast prototyping, easy theming with CSS custom properties
-- **Trade-off**: React's bundle size is larger than Svelte, but Tauri's system webview means we're not shipping Chromium anyway.
-
-### chrono-node (for NLP)
-
-- Best-in-class natural language date parser for JavaScript
-- Supports relative dates ("tomorrow", "next Friday"), times ("at 3pm"), and casual language ("in 2 hours")
-- Locale support for international users
-- MIT licensed, actively maintained
-
-### Commander.js (for CLI)
-
-- Industry standard for Node.js CLIs
-- Excellent developer experience: auto-help, argument parsing, subcommands
-- CLI shares the same core logic as the UI — no duplication
+| Choice | Why |
+|---|---|
+| **Tauri** (not Electron) | ~5MB binary vs ~150MB. Uses system webview, not bundled Chromium. |
+| **SQLite + Drizzle** (not IndexedDB) | Fast queries, complex filters, type-safe. Schema is Postgres-compatible for future server use. |
+| **React + Tailwind** | Largest ecosystem (plugin authors know it), fast prototyping, easy theming. |
+| **chrono-node** | Best JS library for natural language date parsing. |
+| **Commander.js** | Industry standard for Node CLIs. CLI shares core logic with UI. |

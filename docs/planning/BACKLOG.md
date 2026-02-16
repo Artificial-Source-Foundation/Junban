@@ -88,10 +88,12 @@ All work items for ASF Saydo, organized by area and prioritized within each sect
 | U-17 | Undo/redo for task operations | done | S9 | UndoManager with Ctrl+Z/Ctrl+Shift+Z |
 | U-18 | Focus mode (full-screen overlay, keyboard-driven) | done | S15 | FocusMode.tsx, Space/N/P/Esc shortcuts |
 | U-19 | Design token system (@theme, semantic classes) | done | S14 | Tailwind 4 @theme, all components migrated |
-| U-20 | Settings tabbed layout | done | S14 | 7 tabs: General, AI, Plugins, Templates, Keyboard, Data, About |
+| U-20 | Settings tabbed layout | done | S14 | 8 tabs: General, AI, Voice, Plugins, Templates, Keyboard, Data, About |
 | U-21 | Lucide icons throughout | done | S14 | Sidebar, views, components |
 | U-22 | QueryBar with NL filtering | done | S16 | Debounced search, suggestions, filterTasks integration |
 | U-23 | TemplateSelector modal | done | S16 | Template picker with variable form |
+| U-24 | Reminder UI + useReminders hook | done | S19 | Polls /api/tasks/reminders/due every 30s |
+| U-25 | Voice settings tab in Settings | done | S21 | Microphone detection, provider selection, 8 tabs total |
 
 ## CLI
 
@@ -154,11 +156,16 @@ All work items for ASF Saydo, organized by area and prioritized within each sect
 | A-17 | Custom AI provider plugin support | done | S9 | BYOM via ai:provider permission |
 | A-18 | AI reminders via integrations | idea | — | Discord bot, Google Calendar, etc. |
 | A-19 | AI chat error handling & graceful degradation | done | S17 | AIError class, classifyProviderError, error bubbles with retry, safety timeout |
-| A-20 | AI voice output (text-to-speech for responses) | done | S21 | TTS provider abstraction (Browser Speech Synthesis, Groq PlayAI), voice settings UI |
-| A-21 | AI voice conversation mode (bidirectional) | done | S21 | VAD-based hands-free mode, push-to-talk, voice conversation loop (speak → STT → AI → TTS → repeat) |
+| A-20 | AI voice output (text-to-speech for responses) | done | S21 | TTS provider abstraction (Browser Speech Synthesis, Groq PlayAI) |
+| A-21 | AI voice conversation mode (bidirectional) | done | S21 | VAD-based hands-free mode, push-to-talk, voice loop |
+| A-27 | Voice provider abstraction (STTProviderPlugin, TTSProviderPlugin) | done | S21 | Mirrors LLM provider pattern |
+| A-28 | Voice adapters (browser-stt, browser-tts, groq-stt, groq-tts) | done | S21 | 4 cloud/browser adapters |
+| A-29 | VAD (Voice Activity Detection) via @ricky0123/vad-web | done | S21 | useVAD hook for hands-free mode |
 | A-22 | AI chat streaming error recovery | done | S17 | withTimeout(), partial content preservation, structured error events |
 | A-23 | Dynamic model discovery for all AI providers | done | S18 | Fetch available models from provider APIs, dynamic dropdown in Settings with Custom fallback |
 | A-24 | Local AI voice models (STT/TTS) | needs-design | — | Local speech-to-text and text-to-speech models for mobile & desktop (Whisper, Piper, etc.) |
+| A-25 | Pluggable LLM core (LLMPipeline, LLMExecutor, ToolRegistry) | done | S20 | Refactored AI layer into pipeline/executor/registry pattern |
+| A-26 | AI intelligence tools (analyze-patterns, workload, smart-organize, energy) | done | S22 | 5 analytical tools in src/ai/tools/builtin/ |
 
 ## Storage & Data
 
@@ -175,6 +182,7 @@ All work items for ASF Saydo, organized by area and prioritized within each sect
 | D-09 | Generalize DB layer (BaseSQLiteDatabase) | done | S8 | better-sqlite3 + sql.js share types |
 | D-10 | sql.js WebView client + bundled migrations | done | S8 | client-web.ts, migrate-web.ts |
 | D-11 | Tauri FS persistence (load/save SQLite) | done | S8 | persistence.ts via @tauri-apps/plugin-fs |
+| D-12 | Add remindAt column to tasks | done | S19 | Migration 0004_silky_karnak.sql |
 
 ## Testing
 
@@ -231,3 +239,4 @@ All work items for ASF Saydo, organized by area and prioritized within each sect
 | DOC-12 | docs/planning/SPRINTS.md | done | — | Sprint tracking |
 | DOC-13 | Plugin API versioning docs | done | S13 | API Versioning & Stability section in API.md |
 | DOC-14 | v1.0 release planning docs update | done | S13 | ROADMAP, SPRINTS, BACKLOG updated |
+| DOC-15 | Rebrand Docket → Saydo across all docs and code | done | S23 | All identifiers, DB files, localStorage keys updated |

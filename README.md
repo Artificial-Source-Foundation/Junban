@@ -1,73 +1,55 @@
 # ASF Saydo
 
-**Build the task manager you've always wanted.**
+An open-source task manager with AI and an Obsidian-style plugin system. Local-first, no accounts, no tracking.
 
-Saydo is an open-source, AI-native task manager with an Obsidian-style plugin system. It's local-first, privacy-respecting, and infinitely extensible — not through settings menus, but through plugins anyone can build. No coding experience? Ask Claude or ChatGPT to build a plugin for you. That's the idea.
-
-Think **Todoist's simplicity**, **Obsidian's extensibility**, and **JARVIS-level AI** — all in one open-source package.
-
-An [AI Strategic Forum (ASF)](https://github.com/asf-org) project. **Simple. Smart. Yours.**
+Built by the [AI Strategic Forum (ASF)](https://github.com/asf-org) community.
 
 <!-- ![Saydo Screenshot](docs/assets/screenshot.png) -->
 
-## Why Saydo?
+## What it does
 
-There's no good open-source task manager that's popular, extensible, *and* AI-native. The options today:
+Saydo is a desktop task manager built with Tauri and React. You type tasks in natural language, organize with projects and tags, and optionally talk to an AI assistant in the sidebar.
 
-- **Todoist / TickTick** — nice UI, but closed source, subscription-locked, and their AI integration is terrible. You can't run your own models. You can't extend anything.
-- **Obsidian Tasks** — great plugin ecosystem, but it's a notes app with tasks bolted on, not a task manager.
-- **Taskwarrior** — powerful, but let's be honest, it's for terminal nerds only.
-- **Self-hosted tools** (Vikunja, Planka) — exist, but no plugin ecosystem, no AI, no vibe-coding story.
+**The plugin system is the main idea.** It's simple enough that you can describe what you want to Claude or ChatGPT and get a working plugin back. No coding required.
 
-Saydo fills the gap: **a beautiful, minimal task manager where the plugin system is so simple that anyone — even non-developers — can ask an AI to build exactly the features they need.**
+### Features
 
-## Features
+- Natural language input — `buy milk tomorrow 3pm p1 #groceries +shopping` just works
+- AI sidebar — chat with your LLM of choice to create tasks, plan your day, get suggestions
+- Voice — speak instead of type, with browser, Groq, or local models (Whisper, Kokoro)
+- Plugins — TypeScript files in a folder. Commands, sidebar panels, views, task hooks, storage
+- Dual storage — SQLite (default) or Markdown files with YAML frontmatter
+- Sub-tasks, templates, recurring tasks, reminders
+- Focus mode — distraction-free, keyboard-driven
+- CLI companion — `saydo add`, `saydo list`, `saydo done`
+- Light/dark themes + custom CSS
+- 770+ tests
 
-- **Clean and fast** — minimal UI out of the box, no bloat, no configuration walls
-- **AI assistant** — a conversational AI that lives in your sidebar, understands your tasks, suggests priorities, auto-schedules your day, and sends reminders. Talk to it like JARVIS.
-- **Bring your own model** — OpenAI, Anthropic, OpenRouter, Ollama, LM Studio — use any provider. Run local models for full privacy. Or build your own provider plugin.
-- **Voice input** — talk to Saydo instead of typing. The AI parses your natural language into structured tasks.
-- **Natural language input** — type "buy milk tomorrow at 3pm p1 #groceries +shopping" and it just works
-- **Natural language search** — filter tasks by typing "due today p1 #urgent" or "overdue"
-- **Sub-tasks** — nested task hierarchy with indent/outdent, cascade completion, tree rendering
-- **Focus mode** — distraction-free, keyboard-driven mode for working through tasks one at a time
-- **Task templates** — reusable templates with `{{variable}}` substitution for repeatable workflows
-- **Plugin ecosystem** — Obsidian-style JS/TS plugins. Pomodoro, Kanban, calendar view, time tracking — if it doesn't exist, vibe-code it.
-- **Vibe-code your own plugins** — the plugin API is so simple and well-documented that you can ask Claude or ChatGPT to build a plugin for you. No coding experience required.
-- **Local-first** — your data lives on your machine. Zero network calls by default. No accounts, no tracking, no data harvesting.
-- **Keyboard-first** — full keyboard navigation for power users
-- **CLI companion** — manage tasks from the terminal
-- **Themes** — light/dark mode plus custom CSS. Design your own look.
-- **No vendor lock-in** — plain SQLite or Markdown files. Export anytime. MIT licensed.
-
-## Quick Start
+## Quick start
 
 ```bash
-# Clone and install
 git clone https://github.com/asf-org/saydo.git && cd saydo
 pnpm install
-
-# Configure
 cp .env.example .env
-
-# Set up database
-mkdir -p data
-pnpm db:migrate
-
-# Run
+mkdir -p data && pnpm db:migrate
 pnpm dev
 ```
 
-See [docs/development/SETUP_LOCAL.md](docs/development/SETUP_LOCAL.md) for the full guide.
+Open `http://localhost:5173`. Type a task. Press Enter.
 
-## The Plugin System
+For the desktop app (requires Rust + Tauri CLI):
 
-Saydo's plugin system is inspired by Obsidian and [Pi's extension model](https://github.com/badlogic/pi-mono). Plugins are TypeScript files you drop into a folder. No build step. No config. Auto-discovered on startup.
+```bash
+pnpm tauri:dev
+```
 
-The API is designed to be **vibe-code friendly** — simple enough that AI tools can generate working plugins on the first try.
+See [local setup guide](docs/development/SETUP_LOCAL.md) for details.
+
+## Plugins
+
+Plugins are TypeScript files you drop into `plugins/`. No build step.
 
 ```typescript
-// plugins/my-plugin/index.ts
 import { Plugin } from "@asf-saydo/plugin-api";
 
 export default class MyPlugin extends Plugin {
@@ -83,76 +65,51 @@ export default class MyPlugin extends Plugin {
 }
 ```
 
-**Want a Pomodoro timer?** Ask Claude to build one. **Need Kanban boards?** Vibe-code it. **Want to sync with Google Calendar?** There's a plugin for that — or you make one in 5 minutes.
+Plugins can register commands, add sidebar panels, add full-page views, hook into task events, and store data. The API is stable (v1.0.0, semver).
 
-See [docs/plugins/API.md](docs/plugins/API.md) for the full API reference and [docs/plugins/EXAMPLES.md](docs/plugins/EXAMPLES.md) for walkthroughs.
+Docs: [Plugin API](docs/plugins/API.md) / [Examples](docs/plugins/EXAMPLES.md)
 
-## The AI Assistant
+## AI assistant
 
-Saydo's AI isn't a gimmick bolted onto a settings menu. It's a **conversational assistant** that lives in your sidebar:
+The sidebar chat connects to your LLM provider. It sees your tasks, projects, and schedule, so it can give useful suggestions.
 
-- **Talk to it naturally**: "I need to finish the report by Friday and review the budget before the meeting tomorrow at 2pm"
-- **It understands context**: sees your projects, priorities, and schedule
-- **It asks follow-up questions**: "Which project should the report go under? Should I set a reminder?"
-- **It suggests priorities**: "You have 3 overdue tasks — want me to reschedule them?"
-- **It auto-schedules**: "Here's a suggested plan for your day based on deadlines and priorities"
-- **It reminds you**: via the app, Discord bots, Google Calendar — whatever you configure
+Supported providers: OpenAI, Anthropic, OpenRouter, Ollama, LM Studio — or write a custom provider plugin.
 
-And you choose the AI: OpenAI, Anthropic, OpenRouter, Ollama, LM Studio — or build your own provider plugin. Run fully local with Ollama for zero data exposure.
+Nothing AI-related runs unless you configure it. No keys are stored or proxied by Saydo.
 
-## Philosophy
+## Tech stack
 
-Saydo reflects [ASF values](docs/README.md) — **accuracy over speed**, **disclosure over persuasion**, **sources over vibes**:
+| | |
+|---|---|
+| Runtime | Node.js 22, TypeScript |
+| Desktop | Tauri v2 |
+| Frontend | React 19, Tailwind CSS 4 |
+| Database | SQLite (better-sqlite3 / sql.js) + Drizzle ORM |
+| AI | OpenAI, Anthropic, OpenRouter, Ollama, LM Studio |
+| Voice | Browser Speech API, Groq, Whisper, Kokoro |
+| CLI | Commander.js |
+| Tests | Vitest |
+| Build | Vite 6 |
 
-- **Local-first**: Your data, your machine, your rules. Zero network by default.
-- **Open source**: Fully transparent, MIT licensed, community-driven
-- **AI-native**: Not an afterthought — AI is a core part of the experience
-- **Extensible**: The app is a canvas, not a finished painting. You build what you need.
-- **No dark patterns**: No upsells, no tracking, no artificial limitations
-- **Honest business model**: Free forever. Optional paid sync hosting for cross-device access (like Obsidian Sync).
+## Status
 
-## Platform Roadmap
+v1.0 shipped. Desktop app works on Mac, Windows, Linux. Active development — voice and AI intelligence features are latest additions.
 
-| Phase | Platform | Status |
-|-------|----------|--------|
-| Now | Desktop (Tauri — Mac, Windows, Linux) | In Development |
-| Future | Mobile (native + PWA) | Planned (requires sync service) |
-| Future | Web app | Planned (requires sync service) |
+Next milestone: Saydo Sync (optional paid cross-device sync).
 
-## Documentation
+## Docs
 
-```
-docs/
-├── README.md                        # Vision, design principles, why Saydo exists
-├── development/                     # Developer guides
-│   ├── ARCHITECTURE.md              # Modules, data flow, tech decisions
-│   ├── SETUP_LOCAL.md               # Step-by-step local development
-│   ├── CONTRIBUTING.md              # How to contribute
-│   └── SECURITY.md                  # Threat model, plugin sandboxing
-├── plugins/                         # Plugin documentation
-│   ├── API.md                       # Plugin API reference
-│   └── EXAMPLES.md                  # Example plugin walkthroughs
-└── planning/                        # Project planning
-    ├── ROADMAP.md                   # Milestones and future plans
-    ├── BACKLOG.md                   # All work items, prioritized by area
-    └── SPRINTS.md                   # Sprint planning and tracking
-```
-
-## Tech Stack
-
-- **Runtime**: Node.js 22+ / TypeScript
-- **Desktop**: Tauri (lightweight, cross-platform)
-- **Frontend**: React + Tailwind CSS
-- **Database**: SQLite (better-sqlite3 + Drizzle ORM) or flat Markdown files
-- **AI**: Pluggable providers — OpenAI, Anthropic, OpenRouter, Ollama, LM Studio
-- **Plugins**: Custom loader with sandboxed execution
-- **CLI**: Commander.js
-- **Testing**: Vitest
-- **Build**: Vite
+- [Architecture](docs/development/ARCHITECTURE.md) — how the codebase is organized
+- [Local setup](docs/development/SETUP_LOCAL.md) — getting it running
+- [Contributing](docs/development/CONTRIBUTING.md) — how to help
+- [Security](docs/development/SECURITY.md) — threat model, plugin sandboxing
+- [Plugin API](docs/plugins/API.md) — building plugins
+- [Plugin examples](docs/plugins/EXAMPLES.md) — walkthroughs
+- [Roadmap](docs/planning/ROADMAP.md) — what's planned
 
 ## Contributing
 
-We welcome contributions! See [docs/development/CONTRIBUTING.md](docs/development/CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](docs/development/CONTRIBUTING.md). Run `pnpm check` before submitting PRs.
 
 ## License
 

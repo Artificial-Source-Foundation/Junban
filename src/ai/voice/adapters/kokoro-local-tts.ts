@@ -1,11 +1,11 @@
 /**
- * Local Kokoro TTS adapter using kokoro-js.
- * Runs Kokoro TTS models entirely in the browser via WASM.
+ * Local Kokoro TTS adapter using kokoro-js via Web Worker.
+ * Runs Kokoro TTS models in a dedicated worker thread to prevent UI freezes.
  * Model is downloaded and cached on first use (~160MB).
  */
 
 import type { TTSProviderPlugin, TTSOptions, Voice } from "../interface.js";
-import { float32ToWav } from "../audio-utils.js";
+import type { KokoroWorkerRequest, KokoroWorkerResponse } from "../workers/kokoro-worker-types.js";
 
 export type ModelStatus = "idle" | "loading" | "ready" | "error";
 
@@ -33,6 +33,8 @@ const KOKORO_VOICES: Voice[] = [
   { id: "bm_george", name: "George (British Male)" },
 ];
 
+let synthesisCounter = 0;
+
 export class KokoroLocalTTSProvider implements TTSProviderPlugin {
   readonly id = "kokoro-local";
   readonly name = "Kokoro (Local)";
@@ -43,8 +45,13 @@ export class KokoroLocalTTSProvider implements TTSProviderPlugin {
   progress = 0;
   onStatusChange?: (status: ModelStatus, progress: number) => void;
 
-  private ttsInstance: any = null;
+  private worker: Worker | null = null;
+  private modelLoaded = false;
   private loadPromise: Promise<void> | null = null;
+  private pendingSyntheses = new Map<string, {
+    resolve: (buf: ArrayBuffer) => void;
+    reject: (err: Error) => void;
+  }>();
 
   constructor(opts?: {
     modelId?: string;
@@ -54,7 +61,7 @@ export class KokoroLocalTTSProvider implements TTSProviderPlugin {
     this.onStatusChange = opts?.onStatusChange;
   }
 
-  /** Pre-load the model. Called automatically on first synthesize. */
+  /** Pre-load the model in the worker. Called automatically on first synthesize. */
   async preload(): Promise<void> {
     await this.ensureModel();
   }
@@ -63,15 +70,12 @@ export class KokoroLocalTTSProvider implements TTSProviderPlugin {
     await this.ensureModel();
 
     const voice = opts?.voice ?? "af_heart";
-    const result = await this.ttsInstance!.generate(text, { voice });
+    const id = `synth-${++synthesisCounter}`;
 
-    // kokoro-js returns { audio: Float32Array, sampling_rate: number }
-    const samples: Float32Array = result.audio ?? result.data;
-    const sampleRate: number = result.sampling_rate ?? result.samplingRate ?? 24000;
-
-    // Convert to WAV ArrayBuffer
-    const wavBlob = float32ToWav(samples, sampleRate);
-    return wavBlob.arrayBuffer();
+    return new Promise<ArrayBuffer>((resolve, reject) => {
+      this.pendingSyntheses.set(id, { resolve, reject });
+      this.postMessage({ type: "synthesize", id, text, voice });
+    });
   }
 
   async getVoices(): Promise<Voice[]> {
@@ -82,8 +86,108 @@ export class KokoroLocalTTSProvider implements TTSProviderPlugin {
     return typeof window !== "undefined" && typeof WebAssembly !== "undefined";
   }
 
+  /** Check if model files are already present in the browser's cache storage. */
+  async checkCached(): Promise<boolean> {
+    if (typeof caches === "undefined") return false;
+    try {
+      // Search all caches — transformers.js cache name may vary by version
+      const names = await caches.keys();
+      for (const name of names) {
+        const cache = await caches.open(name);
+        const keys = await cache.keys();
+        if (keys.some((req) => req.url.includes(this.modelId))) return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  private postMessage(msg: KokoroWorkerRequest): void {
+    this.worker!.postMessage(msg);
+  }
+
+  private createWorker(): Worker {
+    const worker = new Worker(
+      new URL("../workers/kokoro.worker.ts", import.meta.url),
+      { type: "module" },
+    );
+
+    worker.addEventListener("message", (e: MessageEvent<KokoroWorkerResponse>) => {
+      this.handleWorkerMessage(e.data);
+    });
+
+    worker.addEventListener("error", () => {
+      this.handleWorkerCrash();
+    });
+
+    return worker;
+  }
+
+  private handleWorkerMessage(msg: KokoroWorkerResponse): void {
+    switch (msg.type) {
+      case "load-progress":
+        this.progress = msg.progress;
+        this.onStatusChange?.("loading", msg.progress);
+        break;
+
+      case "load-complete":
+        this.modelLoaded = true;
+        this.status = "ready";
+        this.progress = 100;
+        this.onStatusChange?.("ready", 100);
+        break;
+
+      case "load-error":
+        this.status = "error";
+        this.terminateWorker();
+        this.onStatusChange?.("error", 0);
+        break;
+
+      case "synthesize-complete": {
+        const pending = this.pendingSyntheses.get(msg.id);
+        if (pending) {
+          this.pendingSyntheses.delete(msg.id);
+          pending.resolve(msg.buffer);
+        }
+        break;
+      }
+
+      case "synthesize-error": {
+        const pending = this.pendingSyntheses.get(msg.id);
+        if (pending) {
+          this.pendingSyntheses.delete(msg.id);
+          pending.reject(new Error(msg.error));
+        }
+        break;
+      }
+    }
+  }
+
+  private handleWorkerCrash(): void {
+    this.status = "error";
+    this.onStatusChange?.("error", 0);
+
+    // Reject all pending syntheses
+    for (const [id, { reject }] of this.pendingSyntheses) {
+      reject(new Error("Worker crashed"));
+      this.pendingSyntheses.delete(id);
+    }
+
+    this.terminateWorker();
+  }
+
+  private terminateWorker(): void {
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
+    }
+    this.modelLoaded = false;
+    this.loadPromise = null;
+  }
+
   private async ensureModel(): Promise<void> {
-    if (this.ttsInstance) return;
+    if (this.modelLoaded && this.worker) return;
     if (this.loadPromise) {
       await this.loadPromise;
       return;
@@ -92,30 +196,26 @@ export class KokoroLocalTTSProvider implements TTSProviderPlugin {
     await this.loadPromise;
   }
 
-  private async loadModel(): Promise<void> {
+  private loadModel(): Promise<void> {
     this.status = "loading";
     this.progress = 0;
     this.onStatusChange?.("loading", 0);
 
-    try {
-      const { KokoroTTS } = await import("kokoro-js");
-      this.ttsInstance = await KokoroTTS.from_pretrained(this.modelId, {
-        device: "wasm",
-        progress_callback: (event: any) => {
-          if (event.status === "progress" && typeof event.progress === "number") {
-            this.progress = Math.round(event.progress);
-            this.onStatusChange?.("loading", this.progress);
-          }
-        },
-      });
-      this.status = "ready";
-      this.progress = 100;
-      this.onStatusChange?.("ready", 100);
-    } catch (err) {
-      this.status = "error";
-      this.loadPromise = null;
-      this.onStatusChange?.("error", 0);
-      throw err;
-    }
+    const worker = this.worker = this.createWorker();
+
+    return new Promise<void>((resolve, reject) => {
+      const onMessage = (e: MessageEvent<KokoroWorkerResponse>) => {
+        if (e.data.type === "load-complete") {
+          worker.removeEventListener("message", onMessage);
+          resolve();
+        }
+        if (e.data.type === "load-error") {
+          worker.removeEventListener("message", onMessage);
+          reject(new Error(e.data.error));
+        }
+      };
+      worker.addEventListener("message", onMessage);
+      this.postMessage({ type: "load", modelId: this.modelId });
+    });
   }
 }

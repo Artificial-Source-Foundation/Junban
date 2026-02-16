@@ -3,7 +3,6 @@ import {
   X,
   Send,
   Mic,
-  MicOff,
   Bot,
   Trash2,
   Settings,
@@ -71,7 +70,7 @@ export function AIChatPanel({ onClose, onOpenSettings }: AIChatPanelProps) {
   };
 
   const voice = useVoiceContext();
-  const prevMessagesLenRef = useRef(messages.length);
+  const wasStreamingRef = useRef(false);
 
   const handleVoiceResult = useCallback(
     (transcript: string) => {
@@ -104,19 +103,22 @@ export function AIChatPanel({ onClose, onOpenSettings }: AIChatPanelProps) {
     deviceId: voice.settings.microphoneId || undefined,
   });
 
-  // Voice conversation loop: TTS on new AI response
+  // Voice conversation loop: TTS when AI finishes responding (streaming → done)
   useEffect(() => {
-    if (!voice.settings.ttsEnabled || voice.settings.voiceMode === "off") return;
-    const prevLen = prevMessagesLenRef.current;
-    prevMessagesLenRef.current = messages.length;
+    const wasStreaming = wasStreamingRef.current;
+    wasStreamingRef.current = isStreaming;
 
-    if (messages.length > prevLen && !isStreaming) {
-      const lastMsg = messages[messages.length - 1];
-      if (lastMsg?.role === "assistant" && lastMsg.content && !lastMsg.isError) {
-        voice.speak(lastMsg.content);
-      }
+    // Only trigger TTS when streaming just finished
+    if (!wasStreaming || isStreaming) return;
+    if (!voice.settings.ttsEnabled || voice.settings.voiceMode === "off") return;
+
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg?.role === "assistant" && lastMsg.content && !lastMsg.isError) {
+      voice.speak(lastMsg.content).catch(() => {
+        // TTS failed — silently ignore
+      });
     }
-  }, [messages, isStreaming, voice]);
+  }, [isStreaming, messages, voice]);
 
   if (!isConfigured) {
     return (
@@ -496,14 +498,14 @@ function VoiceButton({
 
   const icon = {
     idle: <Mic size={16} />,
-    listening: <MicOff size={16} className="animate-pulse" />,
+    listening: <Mic size={16} />,
     transcribing: <Loader2 size={16} className="animate-spin" />,
     speaking: <Volume2 size={16} className="animate-pulse" />,
   }[buttonState];
 
   const colorClass = {
     idle: "border-border text-on-surface-muted hover:bg-surface-secondary",
-    listening: "bg-error/10 border-error/30 text-error",
+    listening: "bg-error/20 border-error text-error animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.4)]",
     transcribing: "bg-accent/10 border-accent/30 text-accent",
     speaking: "bg-success/10 border-success/30 text-success",
   }[buttonState];

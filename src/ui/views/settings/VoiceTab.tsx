@@ -3,6 +3,7 @@ import { Mic, RefreshCw, AlertCircle, CheckCircle2, Download, Loader2 } from "lu
 import { useVoiceContext, type VoiceMode, type VoiceSettings } from "../../context/VoiceContext.js";
 import {
   enumerateMicrophones,
+  triggerMicPermissionPrompt,
   type MicrophoneInfo,
 } from "../../../ai/voice/audio-utils.js";
 import type { VoiceProviderRegistry } from "../../../ai/voice/registry.js";
@@ -186,7 +187,10 @@ function MicrophoneSection({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const [permissionState, setPermissionState] = useState<PermissionState | null>(null);
+  const [promptTimedOut, setPromptTimedOut] = useState(false);
 
+  // Enumerate devices (no permission request — assumes permission already granted)
   const refreshMicrophones = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -195,23 +199,41 @@ function MicrophoneSection({
       setMicrophones(mics);
       setPermissionGranted(mics.length > 0);
     } catch {
-      setError("Could not access microphones. Check browser permissions.");
+      setError("Could not access microphones.");
       setPermissionGranted(false);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Check if permission was previously granted (without prompting)
+  // Check and watch permission state (without prompting)
   useEffect(() => {
     if (typeof navigator === "undefined" || !navigator.permissions) return;
-    navigator.permissions.query({ name: "microphone" as PermissionName }).then((status) => {
+
+    const handleChange = (status: PermissionStatus) => {
+      setPermissionState(status.state);
       if (status.state === "granted") {
         refreshMicrophones();
       }
+    };
+
+    let permStatus: PermissionStatus | null = null;
+    navigator.permissions.query({ name: "microphone" as PermissionName }).then((status) => {
+      permStatus = status;
+      setPermissionState(status.state);
+      if (status.state === "granted") {
+        refreshMicrophones();
+      }
+      status.addEventListener("change", () => handleChange(status));
     }).catch(() => {
       // permissions.query not supported for microphone in some browsers
     });
+
+    return () => {
+      if (permStatus) {
+        permStatus.onchange = null;
+      }
+    };
   }, [refreshMicrophones]);
 
   // Listen for device changes (plug/unplug) — only when already granted
@@ -230,23 +252,89 @@ function MicrophoneSection({
     }
   }, [selectedId, microphones, onSelect]);
 
+  const handleRequestPermission = async () => {
+    setLoading(true);
+    setError(null);
+    setPromptTimedOut(false);
+
+    // Fire getUserMedia to trigger the browser permission dialog.
+    // This may hang on some systems (e.g. Linux + PipeWire) even after the user
+    // clicks Allow, so we use a timeout. The Permissions API change listener
+    // above will detect the grant independently and enumerate devices.
+    const ok = await triggerMicPermissionPrompt(8000);
+
+    if (ok) {
+      // getUserMedia resolved — permission granted and device opened successfully
+      await refreshMicrophones();
+    } else {
+      // Timed out or failed. Check if permission was actually granted
+      // (browser dialog might have worked but getUserMedia hung on device open).
+      try {
+        const status = await navigator.permissions.query({ name: "microphone" as PermissionName });
+        if (status.state === "granted") {
+          // Permission was granted but getUserMedia hung — enumerate directly
+          await refreshMicrophones();
+        } else {
+          setPromptTimedOut(true);
+          setLoading(false);
+        }
+      } catch {
+        setPromptTimedOut(true);
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <fieldset className="space-y-3">
       <legend className="text-sm font-semibold text-on-surface mb-2">Microphone</legend>
 
       {!permissionGranted && !loading && !error && (
-        <div className="space-y-2">
-          <p className="text-xs text-on-surface-muted">
-            Grant microphone access to enable voice input.
-          </p>
-          <button
-            type="button"
-            onClick={refreshMicrophones}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors"
-          >
-            <Mic size={14} />
-            Allow microphone access
-          </button>
+        <div className="space-y-3">
+          {promptTimedOut ? (
+            <div className="p-3 rounded-lg border border-warning/30 bg-warning/5 space-y-2">
+              <p className="text-xs text-on-surface">
+                The browser permission dialog didn't respond. This can happen on Linux with
+                PipeWire/PulseAudio.
+              </p>
+              <p className="text-xs text-on-surface-muted">
+                Try granting microphone access directly: click the lock/site icon in your browser's
+                address bar, find "Microphone", and set it to "Allow". The page will detect the
+                change automatically.
+              </p>
+              <button
+                type="button"
+                onClick={handleRequestPermission}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors"
+              >
+                <Mic size={14} />
+                Try again
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-on-surface-muted">
+                Grant microphone access to enable voice input.
+              </p>
+              <button
+                type="button"
+                onClick={handleRequestPermission}
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors"
+              >
+                <Mic size={14} />
+                Allow microphone access
+              </button>
+            </>
+          )}
+          {permissionState === "denied" && (
+            <p className="text-xs text-warning flex items-start gap-1.5">
+              <AlertCircle size={12} className="shrink-0 mt-0.5" />
+              <span>
+                Microphone access was denied. Click the lock/site icon in your browser's
+                address bar to reset the permission, then try again.
+              </span>
+            </p>
+          )}
         </div>
       )}
 
@@ -319,6 +407,7 @@ interface LocalModelInfo {
   status: ModelStatus;
   progress: number;
   preload: () => Promise<void>;
+  checkCached?: () => Promise<boolean>;
   onStatusChange?: ((status: ModelStatus, progress: number) => void) | undefined;
 }
 
@@ -333,6 +422,9 @@ function toLocalModelInfo(provider: any, type: "STT" | "TTS"): LocalModelInfo | 
       status: provider.status,
       progress: provider.progress,
       preload: () => provider.preload(),
+      checkCached: typeof provider.checkCached === "function"
+        ? () => provider.checkCached()
+        : undefined,
       get onStatusChange() { return provider.onStatusChange; },
       set onStatusChange(cb) { provider.onStatusChange = cb; },
     };
@@ -343,11 +435,30 @@ function toLocalModelInfo(provider: any, type: "STT" | "TTS"): LocalModelInfo | 
 function LocalModelsSection({ registry }: { registry: VoiceProviderRegistry }) {
   const [, forceUpdate] = useState(0);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [cachedIds, setCachedIds] = useState<Set<string>>(new Set());
 
   const localModels: LocalModelInfo[] = [
     ...registry.listSTT().map((p) => toLocalModelInfo(p, "STT")).filter((m): m is LocalModelInfo => m !== null),
     ...registry.listTTS().map((p) => toLocalModelInfo(p, "TTS")).filter((m): m is LocalModelInfo => m !== null),
   ];
+
+  // Check which models are already downloaded in browser cache (lightweight, no WASM loading)
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      const found = new Set<string>();
+      for (const model of localModels) {
+        if (!model.checkCached) continue;
+        try {
+          if (await model.checkCached()) found.add(model.id);
+        } catch { /* ignore */ }
+      }
+      if (!cancelled && found.size > 0) setCachedIds(found);
+    };
+    check();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (localModels.length === 0) return null;
 
@@ -377,65 +488,73 @@ function LocalModelsSection({ registry }: { registry: VoiceProviderRegistry }) {
       </p>
 
       <div className="space-y-3">
-        {localModels.map((model) => (
-          <div
-            key={model.id}
-            className="flex items-center justify-between p-3 rounded-lg border border-border bg-surface-secondary"
-          >
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-on-surface">{model.name}</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-tertiary text-on-surface-muted">
-                  {model.type}
-                </span>
-              </div>
-              <p className="text-xs text-on-surface-muted mt-0.5 truncate">{model.modelId}</p>
-
-              {/* Progress bar */}
-              {model.status === "loading" && (
-                <div className="mt-2">
-                  <div className="w-full h-1.5 bg-surface-tertiary rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-accent rounded-full transition-all duration-300"
-                      style={{ width: `${model.progress}%` }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-on-surface-muted mt-0.5">
-                    Downloading model... {model.progress}%
-                  </p>
+        {localModels.map((model) => {
+          const isCached = cachedIds.has(model.id);
+          return (
+            <div
+              key={model.id}
+              className="flex items-center justify-between p-3 rounded-lg border border-border bg-surface-secondary"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-on-surface">{model.name}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-tertiary text-on-surface-muted">
+                    {model.type}
+                  </span>
                 </div>
-              )}
-            </div>
+                <p className="text-xs text-on-surface-muted mt-0.5 truncate">{model.modelId}</p>
 
-            <div className="ml-3 shrink-0">
-              {model.status === "ready" ? (
-                <span className="flex items-center gap-1 text-xs text-success">
-                  <CheckCircle2 size={12} />
-                  Ready
-                </span>
-              ) : model.status === "loading" ? (
-                <Loader2 size={14} className="animate-spin text-accent" />
-              ) : model.status === "error" ? (
-                <button
-                  onClick={() => handlePreload(model)}
-                  className="flex items-center gap-1 text-xs text-error hover:text-on-surface transition-colors"
-                >
-                  <AlertCircle size={12} />
-                  Retry
-                </button>
-              ) : (
-                <button
-                  onClick={() => handlePreload(model)}
-                  disabled={loadingId !== null}
-                  className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover transition-colors disabled:opacity-50"
-                >
-                  <Download size={12} />
-                  Download
-                </button>
-              )}
+                {/* Progress bar */}
+                {model.status === "loading" && (
+                  <div className="mt-2">
+                    <div className="w-full h-1.5 bg-surface-tertiary rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-accent rounded-full transition-all duration-300"
+                        style={{ width: `${model.progress}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-on-surface-muted mt-0.5">
+                      {isCached ? "Loading model..." : "Downloading model..."} {model.progress}%
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="ml-3 shrink-0">
+                {model.status === "ready" ? (
+                  <span className="flex items-center gap-1 text-xs text-success">
+                    <CheckCircle2 size={12} />
+                    Ready
+                  </span>
+                ) : model.status === "loading" ? (
+                  <Loader2 size={14} className="animate-spin text-accent" />
+                ) : model.status === "error" ? (
+                  <button
+                    onClick={() => handlePreload(model)}
+                    className="flex items-center gap-1 text-xs text-error hover:text-on-surface transition-colors"
+                  >
+                    <AlertCircle size={12} />
+                    Retry
+                  </button>
+                ) : isCached ? (
+                  <span className="flex items-center gap-1 text-xs text-success">
+                    <CheckCircle2 size={12} />
+                    Downloaded
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => handlePreload(model)}
+                    disabled={loadingId !== null}
+                    className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover transition-colors disabled:opacity-50"
+                  >
+                    <Download size={12} />
+                    Download
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </fieldset>
   );

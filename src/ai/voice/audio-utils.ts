@@ -98,16 +98,9 @@ export interface MicrophoneInfo {
   label: string;
 }
 
-/** Enumerate available audio input devices. Requests mic permission if needed. */
+/** Enumerate available audio input devices (does NOT request permission). */
 export async function enumerateMicrophones(): Promise<MicrophoneInfo[]> {
   if (typeof navigator === "undefined" || !navigator.mediaDevices?.enumerateDevices) {
-    return [];
-  }
-  // Request permission first — device labels are empty until granted
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    stream.getTracks().forEach((t) => t.stop());
-  } catch {
     return [];
   }
   const devices = await navigator.mediaDevices.enumerateDevices();
@@ -117,6 +110,31 @@ export async function enumerateMicrophones(): Promise<MicrophoneInfo[]> {
       deviceId: d.deviceId,
       label: d.label || `Microphone ${i + 1}`,
     }));
+}
+
+/**
+ * Trigger the browser's microphone permission prompt via getUserMedia.
+ * Returns true if the stream was obtained, false on error.
+ * Aborts after `timeoutMs` if getUserMedia hangs (common on Linux with PipeWire).
+ */
+export async function triggerMicPermissionPrompt(timeoutMs = 8000): Promise<boolean> {
+  if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+    return false;
+  }
+  try {
+    const stream = await Promise.race([
+      navigator.mediaDevices.getUserMedia({ audio: true }),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs)),
+    ]);
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      return true;
+    }
+    // Timed out — getUserMedia hung (browser dialog unresponsive)
+    return false;
+  } catch {
+    return false;
+  }
 }
 
 /** Play an ArrayBuffer of audio data through the Web Audio API. Returns a promise that resolves when playback ends. */

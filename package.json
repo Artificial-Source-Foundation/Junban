@@ -33,6 +33,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@huggingface/transformers": "^3.8.1",
+    "@mintplex-labs/piper-tts-web": "^1.0.4",
     "@ricky0123/vad-web": "^0.0.30",
     "@tauri-apps/api": "^2.2.0",
     "@tauri-apps/plugin-fs": "^2.4.5",

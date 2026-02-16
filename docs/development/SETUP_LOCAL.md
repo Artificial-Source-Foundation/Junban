@@ -116,6 +116,8 @@ pnpm check           # Run lint + typecheck + test (all at once)
 pnpm db:generate     # Generate a new migration after schema change
 pnpm db:migrate      # Apply pending migrations
 pnpm cli             # Run CLI companion
+pnpm tauri:dev       # Run desktop app in dev mode (requires Rust)
+pnpm tauri:build     # Build desktop app binary (requires Rust)
 ```
 
 ## Building the Desktop App (Optional)
@@ -124,10 +126,10 @@ Requires Rust and Tauri CLI (see [Prerequisites](#prerequisites)).
 
 ```bash
 # Development
-cargo tauri dev
+pnpm tauri:dev
 
 # Build distributable
-cargo tauri build
+pnpm tauri:build
 ```
 
 Produces platform-specific installers in `src-tauri/target/release/bundle/`.

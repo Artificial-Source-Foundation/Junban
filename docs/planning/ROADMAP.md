@@ -39,24 +39,26 @@ Refinements to the core experience before plugins.
 
 ## v0.3 — AI Assistant
 
-The conversational AI that makes Saydo feel like JARVIS for tasks.
+The conversational AI layer.
 
 - [x] AI provider abstraction interface
-- [x] OpenAI provider implementation
-- [x] Anthropic provider implementation
-- [x] OpenRouter provider implementation
-- [x] Ollama provider implementation (local, zero data exposure)
-- [x] LM Studio provider implementation (local)
-- [x] AI chat panel in sidebar
-- [x] Chat session management (conversation history)
+- [x] OpenAI, Anthropic, OpenRouter, Ollama, LM Studio providers
+- [x] AI chat panel in sidebar with SSE streaming
+- [x] Chat session management and persistence
 - [x] AI tool definitions (task CRUD, scheduling, reminders)
 - [x] Context injection (tasks, projects, priorities, schedule)
-- [x] Natural language task creation via AI ("I need to finish the report by Friday")
-- [x] AI follow-up questions ("Which project should this go under?")
-- [x] AI priority suggestions ("You have 3 overdue tasks — want me to reschedule?")
+- [x] Natural language task creation via AI
+- [x] AI follow-up questions and priority suggestions
 - [x] Voice input (speech-to-text → AI chat)
+- [x] Voice output (text-to-speech for responses)
+- [x] Bidirectional voice mode (VAD + push-to-talk)
 - [x] Provider settings UI (select provider, enter API keys)
 - [x] Custom AI provider plugin support (BYOM)
+- [x] Dynamic model discovery (fetch from provider APIs)
+- [x] Error handling with retry, timeout, graceful degradation
+- [x] Pluggable LLM core (LLMPipeline, LLMExecutor, ToolRegistry)
+- [x] Intelligence tools (pattern analysis, workload, smart organize, energy recommendations)
+- [x] Voice provider abstraction (STT/TTS with browser, Groq, local adapters)
 
 ## v0.5 — Plugin System
 
@@ -133,25 +135,20 @@ Full browser-based client (requires Saydo Sync).
 
 ## Backlog
 
-Ideas for future development, roughly prioritized:
+Ideas for future development:
 
 - **CalDAV sync plugin** — sync tasks with Nextcloud, iCloud, Google Calendar
 - **Git sync plugin** — version-controlled task storage across devices (free alternative to Saydo Sync)
 - **WebDAV sync plugin** — generic sync for self-hosted setups
-- **AI auto-scheduling plugin** — auto-schedule tasks into calendar blocks
-- **AI daily planner plugin** — morning planning view with AI-suggested schedule
-- ~~**Natural language queries**~~ — ✅ Shipped in Sprint 16
 - **Calendar view plugin** — monthly/weekly view of tasks by due date
 - **Kanban board plugin** — drag-and-drop column-based task management
 - **Time tracking plugin** — track time spent on tasks with reports
 - **Habit tracker plugin** — recurring habit tracking with streaks
 - **Discord reminder plugin** — task reminders via Discord bot
 - **Google Calendar plugin** — two-way sync with Google Calendar
-- ~~**Focus mode**~~ — ✅ Shipped in Sprint 15
 - **Team sync** — shared projects with conflict resolution
 - **Webhooks plugin** — trigger external services on task events
 - **Email-to-task plugin** — create tasks by forwarding emails
 - **Browser extension** — quick-add tasks from any webpage
 - **Widget support** — system tray / menu bar quick-add
-- ~~**Templated tasks**~~ — ✅ Shipped in Sprint 16
-- ~~**Sub-tasks**~~ — ✅ Shipped in Sprint 15
+- **Local AI voice models** — local Whisper STT and Kokoro TTS (adapters written, testing in progress)

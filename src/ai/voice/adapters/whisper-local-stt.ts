@@ -51,6 +51,23 @@ export class WhisperLocalSTTProvider implements STTProviderPlugin {
     return typeof window !== "undefined" && typeof WebAssembly !== "undefined";
   }
 
+  /** Check if model files are already present in the browser's cache storage. */
+  async checkCached(): Promise<boolean> {
+    if (typeof caches === "undefined") return false;
+    try {
+      // Search all caches — transformers.js cache name may vary by version
+      const names = await caches.keys();
+      for (const name of names) {
+        const cache = await caches.open(name);
+        const keys = await cache.keys();
+        if (keys.some((req) => req.url.includes(this.modelId))) return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
   private async ensureModel(): Promise<void> {
     if (this.pipelineInstance) return;
     if (this.loadPromise) {
