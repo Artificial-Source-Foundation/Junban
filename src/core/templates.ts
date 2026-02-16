@@ -3,6 +3,9 @@ import type { IStorage, TemplateRow } from "../storage/interface.js";
 import type { TaskService } from "./tasks.js";
 import { generateId } from "../utils/ids.js";
 import { NotFoundError } from "./errors.js";
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger("templates");
 
 /**
  * TemplateService — manages reusable task templates with {{variable}} substitution.
@@ -32,6 +35,7 @@ export class TemplateService {
     };
 
     this.storage.insertTemplate(row);
+    logger.debug("Template created", { id, name: input.name });
 
     return this.rowToTemplate(row);
   }
@@ -69,6 +73,7 @@ export class TemplateService {
 
   async delete(id: string): Promise<boolean> {
     const result = this.storage.deleteTemplate(id);
+    if (result.changes > 0) logger.debug("Template deleted", { id });
     return result.changes > 0;
   }
 
@@ -97,6 +102,7 @@ export class TemplateService {
       }
     }
 
+    logger.debug("Template instantiated", { templateId });
     return this.taskService.create({
       title,
       description,

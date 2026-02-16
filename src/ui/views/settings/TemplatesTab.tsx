@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { api } from "../../api/index.js";
 import type { TaskTemplate, CreateTemplateInput } from "../../../core/types.js";
+import { createLogger } from "../../../utils/logger.js";
+
+const logger = createLogger("templates-tab");
 
 export function TemplatesTab() {
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
@@ -9,7 +12,7 @@ export function TemplatesTab() {
   const [creating, setCreating] = useState(false);
 
   const loadTemplates = useCallback(() => {
-    api.listTemplates().then(setTemplates).catch(console.error);
+    api.listTemplates().then(setTemplates).catch((err) => logger.error("Failed to load templates", { error: String(err) }));
   }, []);
 
   useEffect(() => {
@@ -163,7 +166,7 @@ function TemplateForm({
       }
       onSave();
     } catch (err) {
-      console.error("Failed to save template:", err);
+      logger.error("Failed to save template", { error: String(err) });
     } finally {
       setSaving(false);
     }

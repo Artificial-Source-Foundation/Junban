@@ -4,6 +4,9 @@
  */
 
 import type { ToolDefinition, ToolExecutor, ToolContext, RegisteredTool } from "./types.js";
+import { createLogger } from "../../utils/logger.js";
+
+const logger = createLogger("tool-registry");
 
 export class ToolRegistry {
   private tools = new Map<string, RegisteredTool>();
@@ -18,6 +21,7 @@ export class ToolRegistry {
       throw new Error(`Tool "${definition.name}" is already registered`);
     }
     this.tools.set(definition.name, { definition, executor, source });
+    logger.debug("Tool registered", { name: definition.name, source });
   }
 
   /** Unregister a tool by name. */
@@ -62,8 +66,10 @@ export class ToolRegistry {
   ): Promise<string> {
     const tool = this.tools.get(name);
     if (!tool) {
+      logger.warn("Unknown tool requested", { name });
       throw new Error(`Unknown tool: ${name}`);
     }
+    logger.debug("Executing tool", { name });
     return tool.executor(args, ctx);
   }
 }

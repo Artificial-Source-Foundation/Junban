@@ -4,6 +4,9 @@
  */
 
 import type { STTProviderPlugin, TTSProviderPlugin } from "./interface.js";
+import { createLogger } from "../../utils/logger.js";
+
+const logger = createLogger("voice-registry");
 
 export class VoiceProviderRegistry {
   private sttProviders = new Map<string, STTProviderPlugin>();
@@ -15,6 +18,7 @@ export class VoiceProviderRegistry {
       throw new Error(`STT provider "${plugin.id}" is already registered`);
     }
     this.sttProviders.set(plugin.id, plugin);
+    logger.debug("STT provider registered", { id: plugin.id, name: plugin.name });
   }
 
   /** Register a TTS provider. Throws if already registered. */
@@ -23,6 +27,7 @@ export class VoiceProviderRegistry {
       throw new Error(`TTS provider "${plugin.id}" is already registered`);
     }
     this.ttsProviders.set(plugin.id, plugin);
+    logger.debug("TTS provider registered", { id: plugin.id, name: plugin.name });
   }
 
   /** Unregister an STT provider by id. */

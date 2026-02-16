@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { X, FileText, Play } from "lucide-react";
 import { api } from "../api/index.js";
 import type { TaskTemplate, Task } from "../../core/types.js";
+import { createLogger } from "../../utils/logger.js";
+
+const logger = createLogger("template-selector");
 
 interface TemplateSelectorProps {
   open: boolean;
@@ -17,7 +20,7 @@ export function TemplateSelector({ open, onClose, onTaskCreated }: TemplateSelec
 
   useEffect(() => {
     if (open) {
-      api.listTemplates().then(setTemplates).catch(console.error);
+      api.listTemplates().then(setTemplates).catch((err) => logger.error("Failed to load templates", { error: String(err) }));
       setSelected(null);
       setVariables({});
     }
@@ -62,7 +65,7 @@ export function TemplateSelector({ open, onClose, onTaskCreated }: TemplateSelec
       onTaskCreated(task);
       onClose();
     } catch (err) {
-      console.error("Failed to instantiate template:", err);
+      logger.error("Failed to instantiate template", { error: String(err) });
     } finally {
       setLoading(false);
     }

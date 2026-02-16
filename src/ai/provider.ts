@@ -4,6 +4,9 @@
  */
 
 import { LLMProviderRegistry } from "./provider/registry.js";
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger("ai-provider");
 import { openaiPlugin } from "./provider/adapters/openai.js";
 import { anthropicPlugin } from "./provider/adapters/anthropic.js";
 import { openrouterPlugin } from "./provider/adapters/openrouter.js";
@@ -25,6 +28,7 @@ export function createDefaultRegistry(): LLMProviderRegistry {
   registry.register(openrouterPlugin);
   registry.register(ollamaPlugin);
   registry.register(lmstudioPlugin);
+  logger.info("LLM provider registry initialized", { providers: 5 });
   return registry;
 }
 
@@ -37,5 +41,6 @@ export function createDefaultToolRegistry(): ToolRegistry {
   registerAnalyzeWorkloadTool(registry);
   registerSmartOrganizeTools(registry);
   registerEnergyRecommendationsTool(registry);
+  logger.info("Tool registry initialized", { tools: registry.size });
   return registry;
 }

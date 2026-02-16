@@ -1,6 +1,9 @@
 import type { Project } from "./types.js";
 import type { IStorage } from "../storage/interface.js";
 import { generateId } from "../utils/ids.js";
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger("projects");
 
 /** Project service — manages task groupings. */
 export class ProjectService {
@@ -17,6 +20,7 @@ export class ProjectService {
       createdAt: new Date().toISOString(),
     };
     this.queries.insertProject(project);
+    logger.debug("Project created", { id: project.id, name });
     return project;
   }
 
@@ -42,11 +46,13 @@ export class ProjectService {
 
   async archive(id: string): Promise<boolean> {
     const result = this.queries.updateProject(id, { archived: true });
+    if (result.changes > 0) logger.debug("Project archived", { id });
     return result.changes > 0;
   }
 
   async delete(id: string): Promise<boolean> {
     const result = this.queries.deleteProject(id);
+    if (result.changes > 0) logger.debug("Project deleted", { id });
     return result.changes > 0;
   }
 }

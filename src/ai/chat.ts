@@ -7,6 +7,9 @@ import type { ChatMessage, StreamEvent, LLMRequest } from "./types.js";
 import type { IStorage } from "../storage/interface.js";
 import { generateId } from "../utils/ids.js";
 import { AIError, classifyProviderError, type StreamErrorData } from "./errors.js";
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger("chat");
 
 const STREAM_TIMEOUT_MS = 60_000;
 
@@ -60,9 +63,11 @@ export class ChatSession {
     this.model = options.model ?? "default";
     this.providerName = options.providerName ?? "unknown";
     this.messages.push(systemMessage);
+    logger.info("Chat session created", { sessionId: this.sessionId, provider: this.providerName, model: this.model });
   }
 
   addUserMessage(content: string): void {
+    logger.debug("User message added", { sessionId: this.sessionId, length: content.length });
     const msg: ChatMessage = { role: "user", content };
     this.messages.push(msg);
     this.persistMessage(msg);
@@ -137,6 +142,7 @@ export class ChatSession {
           this.persistMessage(partialMsg);
         }
         const aiError = classifyProviderError(err);
+        logger.error("Provider error", { sessionId: this.sessionId, category: aiError.category, retryable: aiError.retryable });
         const errorData: StreamErrorData = {
           message: aiError.message,
           category: aiError.category,
@@ -145,6 +151,10 @@ export class ChatSession {
         };
         yield { type: "error", data: JSON.stringify(errorData) };
         return;
+      }
+
+      if (toolCalls && toolCalls.length > 0) {
+        logger.debug("Tool calls received", { sessionId: this.sessionId, tools: toolCalls.map(tc => tc.name) });
       }
 
       if (!toolCalls || toolCalls.length === 0) {
@@ -175,6 +185,7 @@ export class ChatSession {
           this.persistMessage(toolMsg);
         } catch (err: unknown) {
           const errorMsg = err instanceof Error ? err.message : String(err);
+          logger.warn("Tool execution failed", { sessionId: this.sessionId, tool: tc.name, error: errorMsg });
           const errorResult = JSON.stringify({ error: errorMsg });
 
           yield { type: "tool_result", data: JSON.stringify({ tool: tc.name, error: errorMsg }) };
@@ -188,6 +199,7 @@ export class ChatSession {
       yield { type: "done", data: "" };
     }
 
+    logger.warn("Max tool iterations exceeded", { sessionId: this.sessionId });
     const tooManyError: StreamErrorData = {
       message: "Too many tool call iterations",
       category: "unknown",
@@ -225,6 +237,7 @@ export class ChatManager {
     },
   ): ChatSession {
     if (!this.session) {
+      logger.info("Creating chat session");
       const systemMessage = this.buildSystemMessage(services, options.contextBlock);
       this.session = new ChatSession(executor, services, systemMessage, options);
     }
@@ -236,6 +249,7 @@ export class ChatManager {
   }
 
   clearSession(queries?: IStorage): void {
+    logger.info("Chat session cleared", { sessionId: this.session?.sessionId });
     if (this.session && queries) {
       queries.deleteChatSession(this.session.sessionId);
     }
@@ -269,7 +283,10 @@ export class ChatManager {
     },
   ): ChatSession | null {
     const latest = queries.getLatestSessionId();
-    if (!latest) return null;
+    if (!latest) {
+      logger.debug("No previous session to restore");
+      return null;
+    }
 
     const rows = queries.listChatMessages(latest.sessionId);
     if (rows.length === 0) return null;
@@ -293,6 +310,7 @@ export class ChatManager {
     }
 
     this.session = session;
+    logger.info("Chat session restored", { sessionId: latest.sessionId, messageCount: rows.length });
     return session;
   }
 

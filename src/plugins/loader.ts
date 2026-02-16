@@ -13,7 +13,7 @@ import type { LLMProviderRegistry } from "../ai/provider/registry.js";
 import type { ToolRegistry } from "../ai/tools/registry.js";
 import { createLogger } from "../utils/logger.js";
 
-const logger = createLogger("info");
+const logger = createLogger("plugin-loader");
 
 export interface LoadedPlugin {
   manifest: PluginManifest;

@@ -1,5 +1,8 @@
 import type { SettingDefinition } from "./types.js";
 import type { IStorage } from "../storage/interface.js";
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger("plugin-settings");
 
 /**
  * Per-plugin settings manager.
@@ -33,6 +36,7 @@ export class PluginSettingsManager {
 
   /** Update a setting value for a plugin. */
   async set(pluginId: string, settingId: string, value: unknown): Promise<void> {
+    logger.debug("Saving plugin setting", { pluginId, settingId });
     const stored = this.cache.get(pluginId) ?? {};
     stored[settingId] = value;
     this.cache.set(pluginId, stored);
@@ -56,6 +60,7 @@ export class PluginSettingsManager {
 
   /** Load all settings for a plugin from the database. */
   async load(pluginId: string): Promise<Record<string, unknown>> {
+    logger.debug("Loading plugin settings", { pluginId });
     const row = this.queries.loadPluginSettings(pluginId);
     const settings: Record<string, unknown> = row ? JSON.parse(row.settings) : {};
     this.cache.set(pluginId, settings);

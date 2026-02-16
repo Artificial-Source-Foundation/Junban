@@ -1,6 +1,9 @@
 import type { Tag } from "./types.js";
 import type { IStorage } from "../storage/interface.js";
 import { generateId } from "../utils/ids.js";
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger("tags");
 
 /** Tag service — manages task labels. */
 export class TagService {
@@ -13,6 +16,7 @@ export class TagService {
       color: color ?? "#6b7280",
     };
     this.queries.insertTag(tag);
+    logger.debug("Tag created", { id: tag.id, name: tag.name });
     return tag;
   }
 
@@ -33,6 +37,7 @@ export class TagService {
 
   async delete(id: string): Promise<boolean> {
     const result = this.queries.deleteTag(id);
+    if (result.changes > 0) logger.debug("Tag deleted", { id });
     return result.changes > 0;
   }
 }

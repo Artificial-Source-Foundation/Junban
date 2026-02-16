@@ -1,4 +1,7 @@
 import { BUILT_IN_THEMES, type Theme } from "../../config/themes.js";
+import { createLogger } from "../../utils/logger.js";
+
+const logger = createLogger("theme");
 
 const STORAGE_KEY = "saydo-theme";
 
@@ -41,7 +44,7 @@ export class ThemeManager {
       return;
     }
 
-    console.warn(`Unknown theme: ${themeId}`);
+    logger.warn("Unknown theme requested", { themeId });
   }
 
   /** Toggle between light and dark themes. */

@@ -15,6 +15,9 @@ import { UIRegistry } from "./plugins/ui-registry.js";
 import { loadDbFile, saveDbFile } from "./db/persistence.js";
 import { SQLiteBackend } from "./storage/sqlite-backend.js";
 import type { IStorage } from "./storage/interface.js";
+import { createLogger } from "./utils/logger.js";
+
+const logger = createLogger("bootstrap-web");
 
 // Web/Tauri mode always uses SQLite (sql.js in browser has no filesystem access).
 // Markdown storage requires Node.js for file I/O.
@@ -44,9 +47,11 @@ function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T 
 }
 
 export async function bootstrapWeb(): Promise<WebAppServices> {
+  logger.info("Web bootstrap starting");
   const existingData = await loadDbFile();
   const { db, sqlite } = await createWebDb(existingData ?? undefined);
   runWebMigrations(sqlite);
+  logger.info("Web SQLite initialized", { hasExistingData: !!existingData });
 
   const storage: IStorage = new SQLiteBackend(db);
   const tagService = new TagService(storage);
@@ -64,7 +69,7 @@ export async function bootstrapWeb(): Promise<WebAppServices> {
   // Auto-save DB to Tauri FS after mutations (debounced)
   const save = debounce(() => {
     saveDbFile(sqlite.export()).catch((err) =>
-      console.error("[bootstrap-web] Failed to save DB:", err),
+      logger.error("Failed to save DB", { error: String(err) }),
     );
   }, 500);
 

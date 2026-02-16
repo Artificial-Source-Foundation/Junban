@@ -19,6 +19,9 @@ import { loadEnv } from "./config/env.js";
 import { SQLiteBackend } from "./storage/sqlite-backend.js";
 import { MarkdownBackend } from "./storage/markdown-backend.js";
 import type { IStorage } from "./storage/interface.js";
+import { createLogger } from "./utils/logger.js";
+
+const logger = createLogger("bootstrap");
 
 export interface AppServices {
   taskService: TaskService;
@@ -40,12 +43,15 @@ export function bootstrap(dbPath?: string): AppServices {
   const env = loadEnv();
   let storage: IStorage;
 
+  logger.info("Initializing storage", { mode: env.STORAGE_MODE });
+
   if (env.STORAGE_MODE === "markdown") {
     const mdPath = path.resolve(env.MARKDOWN_PATH);
     fs.mkdirSync(mdPath, { recursive: true });
     const backend = new MarkdownBackend(mdPath);
     backend.initialize();
     storage = backend;
+    logger.info("Markdown backend initialized", { path: mdPath });
   } else {
     const resolvedPath = dbPath ?? env.DB_PATH;
 
@@ -58,6 +64,7 @@ export function bootstrap(dbPath?: string): AppServices {
     const db = getDb(resolvedPath);
     runMigrations(db);
     storage = new SQLiteBackend(db);
+    logger.info("SQLite backend initialized", { path: resolvedPath });
   }
 
   const tagService = new TagService(storage);
@@ -73,6 +80,8 @@ export function bootstrap(dbPath?: string): AppServices {
   const chatManager = new ChatManager();
   const aiProviderRegistry = createDefaultRegistry();
   const toolRegistry = createDefaultToolRegistry();
+
+  logger.debug("Services created");
 
   const pluginDir = path.resolve(env.PLUGIN_DIR);
   const pluginLoader = new PluginLoader(pluginDir, {

@@ -1,4 +1,4 @@
-type LogLevel = "debug" | "info" | "warn" | "error";
+export type LogLevel = "debug" | "info" | "warn" | "error";
 
 const LOG_LEVELS: Record<LogLevel, number> = {
   debug: 0,
@@ -7,9 +7,16 @@ const LOG_LEVELS: Record<LogLevel, number> = {
   error: 3,
 };
 
-/** Simple structured logger. */
-export function createLogger(level: LogLevel = "info") {
-  const threshold = LOG_LEVELS[level];
+let defaultLevel: LogLevel = "info";
+
+/** Set the global default log level. Call once at startup. */
+export function setDefaultLogLevel(level: LogLevel): void {
+  defaultLevel = level;
+}
+
+/** Simple structured logger with module scope. */
+export function createLogger(module: string, level?: LogLevel) {
+  const threshold = LOG_LEVELS[level ?? defaultLevel];
 
   function log(logLevel: LogLevel, message: string, data?: Record<string, unknown>) {
     if (LOG_LEVELS[logLevel] < threshold) return;
@@ -17,6 +24,7 @@ export function createLogger(level: LogLevel = "info") {
     const entry = {
       level: logLevel,
       time: new Date().toISOString(),
+      module,
       msg: message,
       ...data,
     };
@@ -37,3 +45,5 @@ export function createLogger(level: LogLevel = "info") {
     error: (msg: string, data?: Record<string, unknown>) => log("error", msg, data),
   };
 }
+
+export type Logger = ReturnType<typeof createLogger>;

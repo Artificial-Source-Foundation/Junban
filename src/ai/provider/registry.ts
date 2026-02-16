@@ -7,6 +7,9 @@
 import type { LLMProviderPlugin, LLMExecutor } from "./interface.js";
 import type { LLMCapabilities, ModelDescriptor } from "../core/capabilities.js";
 import type { AIProviderConfig } from "../types.js";
+import { createLogger } from "../../utils/logger.js";
+
+const logger = createLogger("llm-registry");
 
 export interface ProviderRegistration {
   plugin: LLMProviderPlugin;
@@ -22,6 +25,7 @@ export class LLMProviderRegistry {
       throw new Error(`AI provider "${plugin.name}" is already registered`);
     }
     this.providers.set(plugin.name, { plugin, pluginId });
+    logger.debug("LLM provider registered", { name: plugin.name, pluginId });
   }
 
   /** Unregister a provider by name. */
@@ -57,8 +61,10 @@ export class LLMProviderRegistry {
   createExecutor(config: AIProviderConfig): LLMExecutor {
     const reg = this.providers.get(config.provider);
     if (!reg) {
+      logger.error("Unknown AI provider", { provider: config.provider });
       throw new Error(`Unknown AI provider: ${config.provider}`);
     }
+    logger.debug("Creating LLM executor", { provider: config.provider, model: config.model });
     if (reg.plugin.needsApiKey && !config.apiKey) {
       throw new Error(`${reg.plugin.displayName} requires an API key`);
     }
@@ -67,6 +73,7 @@ export class LLMProviderRegistry {
 
   /** Discover models for a provider. */
   async discoverModels(providerName: string, config: AIProviderConfig): Promise<ModelDescriptor[]> {
+    logger.debug("Discovering models", { provider: providerName });
     const reg = this.providers.get(providerName);
     if (!reg) return [];
     try {

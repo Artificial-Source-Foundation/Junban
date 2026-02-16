@@ -1,4 +1,7 @@
 import type { Task } from "./types.js";
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger("event-bus");
 
 /** Map of event names to their payload types. */
 export interface EventMap {
@@ -44,10 +47,9 @@ export class EventBus {
       try {
         callback(data);
       } catch (err) {
-        console.error(
-          `[EventBus] Error in listener for "${event}":`,
-          err instanceof Error ? err.message : err,
-        );
+        logger.error(`Listener error for "${event}"`, {
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }
   }

@@ -82,8 +82,7 @@ describe("EventBus", () => {
     expect(badListener).toHaveBeenCalled();
     expect(goodListener).toHaveBeenCalled();
     expect(errorSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Error in listener"),
-      "listener error",
+      expect.stringContaining("Listener error"),
     );
 
     errorSpy.mockRestore();

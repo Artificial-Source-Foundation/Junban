@@ -3,6 +3,9 @@ import path from "node:path";
 import YAML from "yaml";
 import { parseTaskFile, serializeTaskFile, taskFilename, slugify } from "./markdown-utils.js";
 import { StorageError } from "../core/errors.js";
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger("storage-md");
 import type {
   IStorage,
   TaskRow,
@@ -46,6 +49,7 @@ export class MarkdownBackend implements IStorage {
 
   /** Scan directory tree, parse all files, build in-memory indexes. */
   initialize(): void {
+    logger.info("Initializing markdown backend", { basePath: this.basePath });
     // Ensure base directories exist
     const dirs = [
       path.join(this.basePath, "inbox"),
@@ -81,6 +85,12 @@ export class MarkdownBackend implements IStorage {
 
     // 7. Read _templates.yaml
     this.loadTemplates();
+
+    logger.info("Markdown backend ready", {
+      tasks: this.taskIndex.size,
+      projects: this.projectIndex.size,
+      tags: this.tagIndex.size,
+    });
   }
 
   // ── Tasks ──

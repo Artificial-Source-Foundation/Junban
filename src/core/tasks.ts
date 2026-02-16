@@ -9,6 +9,9 @@ import { sortByPriority } from "./priorities.js";
 import { generateId } from "../utils/ids.js";
 import { NotFoundError } from "./errors.js";
 import { getNextOccurrence } from "./recurrence.js";
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger("tasks");
 
 /**
  * Task service — handles task CRUD operations.
@@ -75,6 +78,7 @@ export class TaskService {
       updatedAt: now,
     };
 
+    logger.debug("Task created", { id, title: input.title });
     this.eventBus?.emit("task:create", task);
 
     return task;
@@ -140,6 +144,7 @@ export class TaskService {
     }
 
     const updated = (await this.get(id))!;
+    logger.debug("Task updated", { id, fields: Object.keys(fields) });
     this.eventBus?.emit("task:update", { task: updated, changes: fields });
 
     return updated;
@@ -164,11 +169,14 @@ export class TaskService {
       }
     }
 
+    logger.debug("Task completed", { id });
+
     // Create next occurrence for recurring tasks
     if (existing.recurrence) {
       const fromDate = existing.dueDate ? new Date(existing.dueDate) : new Date();
       const nextDate = getNextOccurrence(existing.recurrence, fromDate);
       if (nextDate) {
+        logger.debug("Creating next recurrence", { originalId: id, nextDate: nextDate.toISOString() });
         // Propagate remindAt with preserved offset from dueDate
         let nextRemindAt: string | null = null;
         if (existing.remindAt && existing.dueDate) {
@@ -205,6 +213,7 @@ export class TaskService {
     const result = this.queries.deleteTask(id);
     const deleted = result.changes > 0;
     if (deleted && existing) {
+      logger.debug("Task deleted", { id });
       this.eventBus?.emit("task:delete", existing);
     }
     return deleted;
@@ -212,6 +221,7 @@ export class TaskService {
 
   /** Complete multiple tasks. Handles recurrence per-task. */
   async completeMany(ids: string[]): Promise<Task[]> {
+    logger.debug("Completing batch", { count: ids.length });
     const results: Task[] = [];
     for (const id of ids) {
       results.push(await this.complete(id));
@@ -221,6 +231,7 @@ export class TaskService {
 
   /** Delete multiple tasks in batch. */
   async deleteMany(ids: string[]): Promise<Task[]> {
+    logger.debug("Deleting batch", { count: ids.length });
     const snapshots: Task[] = [];
     for (const id of ids) {
       const task = await this.get(id);
@@ -238,6 +249,7 @@ export class TaskService {
 
   /** Update multiple tasks with the same changes. */
   async updateMany(ids: string[], changes: UpdateTaskInput): Promise<Task[]> {
+    logger.debug("Updating batch", { count: ids.length, fields: Object.keys(changes) });
     const { tags: tagNames, ...fields } = changes;
     const now = new Date().toISOString();
 

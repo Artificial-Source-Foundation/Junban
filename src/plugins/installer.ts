@@ -7,7 +7,7 @@ import * as tar from "tar";
 import { PluginManifest } from "./types.js";
 import { createLogger } from "../utils/logger.js";
 
-const logger = createLogger("info");
+const logger = createLogger("plugin-installer");
 
 export interface InstallResult {
   success: boolean;

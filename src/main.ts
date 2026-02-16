@@ -1,9 +1,10 @@
 import { loadEnv } from "./config/env.js";
-import { createLogger } from "./utils/logger.js";
+import { createLogger, setDefaultLogLevel } from "./utils/logger.js";
 import { bootstrap } from "./bootstrap.js";
 
 const env = loadEnv();
-const logger = createLogger(env.LOG_LEVEL);
+setDefaultLogLevel(env.LOG_LEVEL);
+const logger = createLogger("main");
 
 logger.info("ASF Saydo starting...");
 
