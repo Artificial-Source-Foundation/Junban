@@ -162,10 +162,13 @@ export function AITab() {
 
         {provider && (
           <>
-            {currentProvider?.needsApiKey && (
+            {(currentProvider?.needsApiKey || currentProvider?.optionalApiKey) && (
               <div>
                 <label className="block text-xs font-medium text-on-surface-secondary mb-1">
                   API Key
+                  {currentProvider?.optionalApiKey && !currentProvider?.needsApiKey && (
+                    <span className="font-normal text-on-surface-muted ml-1">(optional)</span>
+                  )}
                   {config?.hasApiKey && (
                     <span className="font-normal text-success ml-2">Saved</span>
                   )}
@@ -174,7 +177,7 @@ export function AITab() {
                   type="password"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={config?.hasApiKey ? "Enter new key to update" : "Enter API key"}
+                  placeholder={config?.hasApiKey ? "Enter new key to update" : currentProvider?.optionalApiKey ? "Enter API key for remote servers" : "Enter API key"}
                   className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface text-on-surface"
                 />
               </div>

@@ -45,11 +45,13 @@ export async function fetchAvailableModels(
 export async function loadLMStudioModel(
   modelKey: string,
   baseUrl: string,
+  apiKey?: string,
 ): Promise<string> {
   const registry = createDefaultRegistry();
   const config: AIProviderConfig = {
     provider: "lmstudio",
     baseUrl,
+    apiKey,
   };
   await registry.loadModel("lmstudio", modelKey, config);
   return modelKey;

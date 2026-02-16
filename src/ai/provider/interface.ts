@@ -16,6 +16,8 @@ export interface LLMProviderPlugin {
   readonly name: string;
   readonly displayName: string;
   readonly needsApiKey: boolean;
+  /** When true, shows the API key field in the UI but doesn't require it. */
+  readonly optionalApiKey?: boolean;
   readonly defaultModel: string;
   readonly defaultBaseUrl?: string;
   readonly showBaseUrl?: boolean;

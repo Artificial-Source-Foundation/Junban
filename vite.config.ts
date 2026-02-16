@@ -24,7 +24,7 @@ function parseBody(req: IncomingMessage): Promise<Record<string, unknown>> {
 
 function apiPlugin() {
   return {
-    name: "docket-api",
+    name: "saydo-api",
     configureServer(server: ViteDevServer) {
       // Lazy-load bootstrap to avoid issues with Vite's module resolution
       let services: Awaited<ReturnType<typeof import("./src/bootstrap.js").bootstrap>> | null =
@@ -735,6 +735,7 @@ function apiPlugin() {
           name: r.plugin.name,
           displayName: r.plugin.displayName,
           needsApiKey: r.plugin.needsApiKey,
+          optionalApiKey: r.plugin.optionalApiKey ?? false,
           defaultModel: r.plugin.defaultModel,
           defaultBaseUrl: r.plugin.defaultBaseUrl,
           showBaseUrl: r.plugin.showBaseUrl ?? false,
@@ -849,6 +850,7 @@ function apiPlugin() {
             baseUrl?: string;
           };
           const baseUrlSetting = svc.storage.getAppSetting("ai_base_url");
+          const apiKeySetting = svc.storage.getAppSetting("ai_api_key");
 
           if (providerName === "lmstudio") {
             const { loadLMStudioModel } = await import(
@@ -859,6 +861,7 @@ function apiPlugin() {
               (baseUrlOverride as string) ||
                 baseUrlSetting?.value ||
                 "http://localhost:1234/v1",
+              apiKeySetting?.value,
             );
           }
 

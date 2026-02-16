@@ -1,5 +1,6 @@
 /**
  * LM Studio provider — OpenAI-compatible with native API discovery + model loading.
+ * Supports optional API key auth for hosted/remote LM Studio servers.
  */
 
 import { createOpenAICompatPlugin } from "./openai-compat.js";
@@ -29,6 +30,12 @@ function getLMStudioHost(baseUrl: string): string {
   return baseUrl.replace(/\/v1\/?$/, "");
 }
 
+/** Build auth headers when an API key is provided. */
+function authHeaders(apiKey?: string): Record<string, string> {
+  if (!apiKey) return {};
+  return { Authorization: `Bearer ${apiKey}` };
+}
+
 /** LM Studio native API response shape (v0.4.0+) */
 interface LMStudioModel {
   type: string;
@@ -43,10 +50,13 @@ interface LMStudioModel {
 async function discoverLMStudioModels(config: AIProviderConfig): Promise<ModelDescriptor[]> {
   const baseUrl = config.baseUrl ?? "http://localhost:1234/v1";
   const host = getLMStudioHost(baseUrl);
+  const auth = authHeaders(config.apiKey);
 
   // Try LM Studio native API first (v0.4.0+)
   try {
-    const res = await fetchWithTimeout(`${host}/api/v1/models`);
+    const res = await fetchWithTimeout(`${host}/api/v1/models`, {
+      headers: { ...auth },
+    });
     if (res.ok) {
       const data = (await res.json()) as { models?: LMStudioModel[] };
       if (data.models && data.models.length > 0) {
@@ -65,7 +75,9 @@ async function discoverLMStudioModels(config: AIProviderConfig): Promise<ModelDe
   }
 
   // Fallback: OpenAI-compatible /v1/models (only loaded models)
-  const res = await fetchWithTimeout(`${host}/v1/models`);
+  const res = await fetchWithTimeout(`${host}/v1/models`, {
+    headers: { ...auth },
+  });
   if (!res.ok) return [];
   const data = (await res.json()) as { data?: { id: string }[] };
   return (data.data ?? []).map((m) => ({
@@ -79,11 +91,12 @@ async function discoverLMStudioModels(config: AIProviderConfig): Promise<ModelDe
 async function loadLMStudioModel(modelKey: string, config: AIProviderConfig): Promise<void> {
   const baseUrl = config.baseUrl ?? "http://localhost:1234/v1";
   const host = getLMStudioHost(baseUrl);
+  const auth = authHeaders(config.apiKey);
   const res = await fetchWithTimeout(
     `${host}/api/v1/models/load`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...auth },
       body: JSON.stringify({ model: modelKey }),
     },
     LOAD_TIMEOUT_MS,
@@ -96,8 +109,9 @@ async function loadLMStudioModel(modelKey: string, config: AIProviderConfig): Pr
 
 export const lmstudioPlugin: LLMProviderPlugin = createOpenAICompatPlugin({
   name: "lmstudio",
-  displayName: "LM Studio (local)",
+  displayName: "LM Studio",
   needsApiKey: false,
+  optionalApiKey: true,
   defaultModel: "default",
   defaultBaseUrl: "http://localhost:1234/v1",
   showBaseUrl: true,

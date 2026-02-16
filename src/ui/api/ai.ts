@@ -21,6 +21,7 @@ export interface AIProviderInfo {
   name: string;
   displayName: string;
   needsApiKey: boolean;
+  optionalApiKey?: boolean;
   defaultModel: string;
   suggestedModels?: string[];
   defaultBaseUrl?: string;
@@ -41,6 +42,7 @@ export async function listAIProviders(): Promise<AIProviderInfo[]> {
       name: r.plugin.name,
       displayName: r.plugin.displayName,
       needsApiKey: r.plugin.needsApiKey,
+      optionalApiKey: r.plugin.optionalApiKey ?? false,
       defaultModel: r.plugin.defaultModel,
       defaultBaseUrl: r.plugin.defaultBaseUrl,
       showBaseUrl: r.plugin.showBaseUrl ?? false,
@@ -73,9 +75,14 @@ export async function loadModel(providerName: string, modelKey: string, baseUrl?
   if (isTauri()) {
     const svc = await getServices();
     const baseUrlSetting = svc.storage.getAppSetting("ai_base_url");
+    const apiKeySetting = svc.storage.getAppSetting("ai_api_key");
     if (providerName === "lmstudio") {
       const { loadLMStudioModel } = await import("../../ai/model-discovery.js");
-      await loadLMStudioModel(modelKey, baseUrl || baseUrlSetting?.value || "http://localhost:1234/v1");
+      await loadLMStudioModel(
+        modelKey,
+        baseUrl || baseUrlSetting?.value || "http://localhost:1234/v1",
+        apiKeySetting?.value,
+      );
     }
     return;
   }

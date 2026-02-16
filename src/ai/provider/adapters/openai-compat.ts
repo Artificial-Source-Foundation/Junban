@@ -147,6 +147,8 @@ export interface OpenAICompatConfig {
   name: string;
   displayName: string;
   needsApiKey: boolean;
+  /** When true, shows API key field but doesn't require it (e.g., LM Studio remote). */
+  optionalApiKey?: boolean;
   defaultModel: string;
   defaultBaseUrl?: string;
   showBaseUrl?: boolean;
@@ -205,6 +207,7 @@ export function createOpenAICompatPlugin(cfg: OpenAICompatConfig): LLMProviderPl
     name: cfg.name,
     displayName: cfg.displayName,
     needsApiKey: cfg.needsApiKey,
+    optionalApiKey: cfg.optionalApiKey,
     defaultModel: cfg.defaultModel,
     defaultBaseUrl: cfg.defaultBaseUrl,
     showBaseUrl: cfg.showBaseUrl,
