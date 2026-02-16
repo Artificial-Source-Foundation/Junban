@@ -43,10 +43,10 @@ export function AboutTab() {
       <h2 className="text-lg font-semibold mb-3 text-on-surface">About</h2>
       <div className="space-y-4 max-w-md">
         <div className="flex items-center gap-3">
-          <img src="/images/logo-192.png" alt="Docket logo" className="w-12 h-12" />
+          <img src="/images/logo-192.png" alt="Saydo logo" className="w-12 h-12" />
           <div>
             <p className="text-sm font-semibold text-on-surface">
-              ASF Docket <span className="font-mono text-on-surface-muted font-normal">v1.0.0</span>
+              ASF Saydo <span className="font-mono text-on-surface-muted font-normal">v1.0.0</span>
             </p>
             <p className="text-xs text-on-surface-muted">
               Open-source, AI-native task manager with an Obsidian-style plugin system.

@@ -18,7 +18,7 @@ export interface ImportPreview {
   projects: string[];
   tags: string[];
   warnings: string[];
-  format: "docket-json" | "todoist-json" | "markdown";
+  format: "saydo-json" | "todoist-json" | "markdown";
 }
 
 export interface ImportResult {
@@ -33,7 +33,7 @@ export function detectFormat(content: string): ImportFormat {
   try {
     const parsed = JSON.parse(content);
     if (typeof parsed === "object" && parsed !== null) {
-      if ("tasks" in parsed && "version" in parsed) return "docket-json";
+      if ("tasks" in parsed && "version" in parsed) return "saydo-json";
       if ("items" in parsed) return "todoist-json";
     }
   } catch {
@@ -43,13 +43,13 @@ export function detectFormat(content: string): ImportFormat {
 }
 
 // Zod schema matching ExportData from export.ts
-const DocketTagSchema = z.object({
+const SaydoTagSchema = z.object({
   id: z.string(),
   name: z.string(),
   color: z.string(),
 });
 
-const DocketProjectSchema = z.object({
+const SaydoProjectSchema = z.object({
   id: z.string(),
   name: z.string(),
   color: z.string(),
@@ -59,7 +59,7 @@ const DocketProjectSchema = z.object({
   createdAt: z.string().optional(),
 });
 
-const DocketTaskSchema = z.object({
+const SaydoTaskSchema = z.object({
   id: z.string().optional(),
   title: z.string(),
   description: z.string().nullable().optional(),
@@ -70,41 +70,41 @@ const DocketTaskSchema = z.object({
   completedAt: z.string().nullable().optional(),
   projectId: z.string().nullable().optional(),
   recurrence: z.string().nullable().optional(),
-  tags: z.array(DocketTagSchema).optional(),
+  tags: z.array(SaydoTagSchema).optional(),
   sortOrder: z.number().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
 
-const DocketExportSchema = z.object({
-  tasks: z.array(DocketTaskSchema),
-  projects: z.array(DocketProjectSchema).optional(),
-  tags: z.array(DocketTagSchema).optional(),
+const SaydoExportSchema = z.object({
+  tasks: z.array(SaydoTaskSchema),
+  projects: z.array(SaydoProjectSchema).optional(),
+  tags: z.array(SaydoTagSchema).optional(),
   exportedAt: z.string().optional(),
   version: z.string(),
 });
 
-/** Parse a Docket JSON export file. */
-export function parseDocketJSON(json: string): ImportPreview {
+/** Parse a Saydo JSON export file. */
+export function parseSaydoJSON(json: string): ImportPreview {
   const warnings: string[] = [];
 
   let raw: unknown;
   try {
     raw = JSON.parse(json);
   } catch {
-    return { tasks: [], projects: [], tags: [], warnings: ["Invalid JSON"], format: "docket-json" };
+    return { tasks: [], projects: [], tags: [], warnings: ["Invalid JSON"], format: "saydo-json" };
   }
 
-  const result = DocketExportSchema.safeParse(raw);
+  const result = SaydoExportSchema.safeParse(raw);
   if (!result.success) {
     return {
       tasks: [],
       projects: [],
       tags: [],
       warnings: [
-        `Invalid Docket export format: ${result.error.issues[0]?.message ?? "unknown error"}`,
+        `Invalid Saydo export format: ${result.error.issues[0]?.message ?? "unknown error"}`,
       ],
-      format: "docket-json",
+      format: "saydo-json",
     };
   }
 
@@ -139,10 +139,10 @@ export function parseDocketJSON(json: string): ImportPreview {
   ];
   const tags = [...new Set(tasks.flatMap((t) => t.tagNames))];
 
-  return { tasks, projects, tags, warnings, format: "docket-json" };
+  return { tasks, projects, tags, warnings, format: "saydo-json" };
 }
 
-/** Map Todoist priority (4=urgent, 1=none) to Docket priority (1=urgent, 4=low). */
+/** Map Todoist priority (4=urgent, 1=none) to Saydo priority (1=urgent, 4=low). */
 function mapTodoistPriority(todoistPriority: number): number | null {
   const map: Record<number, number | null> = { 4: 1, 3: 2, 2: 3, 1: null };
   return map[todoistPriority] ?? null;
@@ -306,8 +306,8 @@ export function parseTextImport(text: string): ImportPreview {
 export function parseImport(content: string, format?: ImportFormat): ImportPreview {
   const detected = format ?? detectFormat(content);
   switch (detected) {
-    case "docket-json":
-      return parseDocketJSON(content);
+    case "saydo-json":
+      return parseSaydoJSON(content);
     case "todoist-json":
       return parseTodoistJSON(content);
     case "markdown":

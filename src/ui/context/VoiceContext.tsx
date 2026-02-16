@@ -42,7 +42,7 @@ const DEFAULT_SETTINGS: VoiceSettings = {
   microphoneId: "",
 };
 
-const STORAGE_KEY = "docket-voice-settings";
+const STORAGE_KEY = "saydo-voice-settings";
 
 function loadSettings(): VoiceSettings {
   if (typeof window === "undefined") return DEFAULT_SETTINGS;

@@ -1,6 +1,6 @@
 # Local Development Setup
 
-Step-by-step guide to get ASF Docket running on your machine.
+Step-by-step guide to get ASF Saydo running on your machine.
 
 ## Prerequisites
 
@@ -24,8 +24,8 @@ Rust and Tauri are only needed if you want to build the desktop app. The web UI 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/asf-org/docket.git
-cd docket
+git clone https://github.com/asf-org/saydo.git
+cd saydo
 ```
 
 ### 2. Install Dependencies
@@ -41,7 +41,7 @@ cp .env.example .env
 ```
 
 The defaults work out of the box. Edit `.env` if you want to change:
-- `DB_PATH` — where the SQLite database is stored (default: `./data/docket.db`)
+- `DB_PATH` — where the SQLite database is stored (default: `./data/saydo.db`)
 - `STORAGE_MODE` — `sqlite` (default) or `markdown`
 - `LOG_LEVEL` — `debug`, `info`, `warn`, `error`
 
@@ -166,14 +166,14 @@ Create `plugins/my-plugin/manifest.json`:
   "author": "Your Name",
   "description": "Does something cool",
   "main": "index.ts",
-  "minDocketVersion": "1.0.0",
+  "minSaydoVersion": "1.0.0",
   "permissions": ["commands"]
 }
 ```
 
 Create `plugins/my-plugin/index.ts`:
 ```typescript
-import { Plugin } from "@asf-docket/plugin-api";
+import { Plugin } from "@asf-saydo/plugin-api";
 
 export default class MyPlugin extends Plugin {
   async onLoad() {

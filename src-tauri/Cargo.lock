@@ -57,7 +57,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "asf-docket"
+name = "asf-saydo"
 version = "1.0.0"
 dependencies = [
  "serde",

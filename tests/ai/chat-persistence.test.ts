@@ -224,7 +224,7 @@ describe("Context Injection", () => {
 
     const msg = manager.buildSystemMessage({ taskService, projectService }, contextBlock);
     expect(msg.content).toContain("Total pending tasks: 5");
-    expect(msg.content).toContain("Docket's AI assistant");
+    expect(msg.content).toContain("Saydo's AI assistant");
   });
 
   it("system message includes date and time", () => {

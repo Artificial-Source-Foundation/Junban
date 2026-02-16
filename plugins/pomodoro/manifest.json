@@ -5,7 +5,7 @@
   "author": "ASF",
   "description": "Focus timer with configurable work/break intervals.",
   "main": "index.ts",
-  "minDocketVersion": "0.1.0",
+  "minSaydoVersion": "0.1.0",
   "permissions": ["task:read", "commands", "ui:status", "ui:panel", "storage"],
   "settings": [
     {

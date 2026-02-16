@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    asf_docket_lib::run()
+    asf_saydo_lib::run()
 }

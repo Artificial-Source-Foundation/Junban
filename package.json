@@ -1,7 +1,7 @@
 {
-  "name": "asf-docket",
+  "name": "asf-saydo",
   "version": "1.0.0",
-  "description": "ASF Docket — Open-source task management with an Obsidian-style plugin system",
+  "description": "ASF Saydo — Open-source task management with an Obsidian-style plugin system",
   "type": "module",
   "engines": {
     "node": ">=22.0.0"
@@ -32,6 +32,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@huggingface/transformers": "^3.8.1",
     "@ricky0123/vad-web": "^0.0.30",
     "@tauri-apps/api": "^2.2.0",
     "@tauri-apps/plugin-fs": "^2.4.5",
@@ -41,6 +42,7 @@
     "chrono-node": "^2.7.0",
     "commander": "^13.1.0",
     "drizzle-orm": "^0.45.1",
+    "kokoro-js": "^1.2.1",
     "lucide-react": "^0.564.0",
     "openai": "^6.21.0",
     "react": "^19.0.0",

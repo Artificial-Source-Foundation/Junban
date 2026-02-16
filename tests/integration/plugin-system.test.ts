@@ -11,7 +11,7 @@ import { createPluginAPI } from "../../src/plugins/api.js";
 import type { Permission } from "../../src/plugins/types.js";
 
 function createTempPluginDir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), "docket-plugins-"));
+  return fs.mkdtempSync(path.join(os.tmpdir(), "saydo-plugins-"));
 }
 
 function writePlugin(
@@ -33,7 +33,7 @@ const validManifest = {
   author: "Test",
   description: "A test plugin",
   main: "index.mjs",
-  minDocketVersion: "0.1.0",
+  minSaydoVersion: "0.1.0",
   permissions: ["task:read", "commands", "ui:status"],
 };
 

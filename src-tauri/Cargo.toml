@@ -1,12 +1,12 @@
 [package]
-name = "asf-docket"
+name = "asf-saydo"
 version = "1.0.0"
-description = "ASF Docket — Open-source task management with an Obsidian-style plugin system"
+description = "ASF Saydo — Open-source task management with an Obsidian-style plugin system"
 authors = ["ASF Community"]
 edition = "2021"
 
 [lib]
-name = "asf_docket_lib"
+name = "asf_saydo_lib"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [build-dependencies]

@@ -57,7 +57,7 @@ export interface StorePluginInfo {
   repository: string;
   downloadUrl?: string;
   tags: string[];
-  minDocketVersion: string;
+  minSaydoVersion: string;
 }
 
 export async function listPlugins(): Promise<PluginInfo[]> {

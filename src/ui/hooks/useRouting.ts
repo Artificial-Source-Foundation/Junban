@@ -7,7 +7,6 @@ export type View =
   | "upcoming"
   | "project"
   | "task"
-  | "settings"
   | "plugin-store"
   | "plugin-view"
   | "filters-labels"
@@ -19,7 +18,6 @@ interface RouteState {
   taskId: string | null;
   pluginViewId: string | null;
   inboxQuery: string;
-  settingsTab: SettingsTab;
   pluginSearch: string;
   focusModeOpen: boolean;
 }
@@ -30,7 +28,6 @@ const DEFAULT_ROUTE_STATE: RouteState = {
   taskId: null,
   pluginViewId: null,
   inboxQuery: "",
-  settingsTab: "general",
   pluginSearch: "",
   focusModeOpen: false,
 };
@@ -42,22 +39,6 @@ function decodePathSegment(segment: string | undefined): string | null {
   } catch {
     return segment;
   }
-}
-
-function parseSettingsTab(tab: string | null): SettingsTab {
-  const validTabs: SettingsTab[] = [
-    "general",
-    "ai",
-    "plugins",
-    "templates",
-    "keyboard",
-    "data",
-    "about",
-  ];
-  if (tab && validTabs.includes(tab as SettingsTab)) {
-    return tab as SettingsTab;
-  }
-  return "general";
 }
 
 function parseRouteStateFromHash(hash: string): RouteState {
@@ -91,8 +72,8 @@ function parseRouteStateFromHash(hash: string): RouteState {
       if (!route.taskId) route.view = "inbox";
       break;
     case "settings":
-      route.view = "settings";
-      route.settingsTab = parseSettingsTab(params.get("tab"));
+      // Settings is now a modal — redirect old settings URLs to inbox
+      route.view = "inbox";
       break;
     case "plugin-store":
       route.view = "plugin-store";
@@ -124,9 +105,6 @@ function buildHashFromRoute(route: RouteState): string {
   if (route.view === "inbox" && route.inboxQuery.trim()) {
     params.set("q", route.inboxQuery);
   }
-  if (route.view === "settings") {
-    params.set("tab", route.settingsTab);
-  }
   if (route.view === "plugin-store" && route.pluginSearch.trim()) {
     params.set("q", route.pluginSearch);
   }
@@ -146,9 +124,6 @@ function buildHashFromRoute(route: RouteState): string {
       break;
     case "task":
       path = route.taskId ? `/task/${encodeURIComponent(route.taskId)}` : "/inbox";
-      break;
-    case "settings":
-      path = "/settings";
       break;
     case "plugin-store":
       path = "/plugin-store";
@@ -192,7 +167,6 @@ export function useRouting() {
     setSelectedRouteTaskId(route.view === "task" ? route.taskId : null);
     setSelectedPluginViewId(route.view === "plugin-view" ? route.pluginViewId : null);
     setInboxQueryText(route.inboxQuery);
-    setSettingsTab(route.settingsTab);
     setPluginStoreSearchQuery(route.pluginSearch);
     setFocusModeOpen(route.focusModeOpen);
   }, []);
@@ -226,7 +200,6 @@ export function useRouting() {
       taskId: selectedRouteTaskId,
       pluginViewId: selectedPluginViewId,
       inboxQuery: inboxQueryText,
-      settingsTab,
       pluginSearch: pluginStoreSearchQuery,
       focusModeOpen,
     };
@@ -252,7 +225,6 @@ export function useRouting() {
     selectedRouteTaskId,
     selectedPluginViewId,
     inboxQueryText,
-    settingsTab,
     pluginStoreSearchQuery,
     focusModeOpen,
   ]);
@@ -265,22 +237,20 @@ export function useRouting() {
         taskId: view === "task" ? (id ?? null) : null,
         pluginViewId: view === "plugin-view" ? (id ?? null) : null,
         inboxQuery: inboxQueryText,
-        settingsTab,
         pluginSearch: pluginStoreSearchQuery,
         focusModeOpen,
       };
 
       applyRouteState(nextRoute);
     },
-    [applyRouteState, inboxQueryText, settingsTab, pluginStoreSearchQuery, focusModeOpen],
+    [applyRouteState, inboxQueryText, pluginStoreSearchQuery, focusModeOpen],
   );
 
   const openSettingsTab = useCallback(
     (tab: SettingsTab) => {
-      handleNavigate("settings");
       setSettingsTab(tab);
     },
-    [handleNavigate],
+    [],
   );
 
   return {

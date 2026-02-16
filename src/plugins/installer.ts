@@ -29,7 +29,7 @@ export class PluginInstaller {
       return { success: false, error: `Plugin "${pluginId}" is already installed` };
     }
 
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "docket-plugin-"));
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "saydo-plugin-"));
     const tempFile = path.join(tempDir, "plugin.tar.gz");
     const tempExtractDir = path.join(tempDir, "extracted");
 

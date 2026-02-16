@@ -15,7 +15,7 @@ describe("loadEnv", () => {
 
   it("returns defaults when no env vars set", () => {
     const env = loadEnv();
-    expect(env.DB_PATH).toBe("./data/docket.db");
+    expect(env.DB_PATH).toBe("./data/saydo.db");
     expect(env.STORAGE_MODE).toBe("sqlite");
     expect(env.MARKDOWN_PATH).toBe("./tasks/");
     expect(env.LOG_LEVEL).toBe("info");

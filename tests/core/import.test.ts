@@ -1,16 +1,16 @@
 import { describe, it, expect } from "vitest";
 import {
   detectFormat,
-  parseDocketJSON,
+  parseSaydoJSON,
   parseTodoistJSON,
   parseTextImport,
   parseImport,
 } from "../../src/core/import.js";
 
 describe("detectFormat", () => {
-  it("detects Docket JSON by tasks + version fields", () => {
+  it("detects Saydo JSON by tasks + version fields", () => {
     const content = JSON.stringify({ tasks: [], version: "1.0", exportedAt: "2025-01-01" });
-    expect(detectFormat(content)).toBe("docket-json");
+    expect(detectFormat(content)).toBe("saydo-json");
   });
 
   it("detects Todoist JSON by items field", () => {
@@ -31,8 +31,8 @@ describe("detectFormat", () => {
   });
 });
 
-describe("parseDocketJSON", () => {
-  it("parses a valid Docket export", () => {
+describe("parseSaydoJSON", () => {
+  it("parses a valid Saydo export", () => {
     const data = {
       tasks: [
         {
@@ -58,9 +58,9 @@ describe("parseDocketJSON", () => {
       version: "1.0",
     };
 
-    const preview = parseDocketJSON(JSON.stringify(data));
+    const preview = parseSaydoJSON(JSON.stringify(data));
 
-    expect(preview.format).toBe("docket-json");
+    expect(preview.format).toBe("saydo-json");
     expect(preview.tasks).toHaveLength(1);
     expect(preview.tasks[0].title).toBe("Buy groceries");
     expect(preview.tasks[0].description).toBe("Milk and eggs");
@@ -79,7 +79,7 @@ describe("parseDocketJSON", () => {
       version: "1.0",
     };
 
-    const preview = parseDocketJSON(JSON.stringify(data));
+    const preview = parseSaydoJSON(JSON.stringify(data));
 
     expect(preview.tasks).toHaveLength(1);
     expect(preview.tasks[0].title).toBe("Simple task");
@@ -96,24 +96,24 @@ describe("parseDocketJSON", () => {
       version: "1.0",
     };
 
-    const preview = parseDocketJSON(JSON.stringify(data));
+    const preview = parseSaydoJSON(JSON.stringify(data));
 
     expect(preview.warnings.length).toBeGreaterThan(0);
     expect(preview.warnings[0]).toContain("unknown project ID");
   });
 
   it("returns warnings for invalid JSON", () => {
-    const preview = parseDocketJSON("not json");
+    const preview = parseSaydoJSON("not json");
     expect(preview.tasks).toHaveLength(0);
     expect(preview.warnings).toHaveLength(1);
     expect(preview.warnings[0]).toContain("Invalid JSON");
   });
 
   it("returns warnings for invalid schema", () => {
-    const preview = parseDocketJSON(JSON.stringify({ notTasks: true }));
+    const preview = parseSaydoJSON(JSON.stringify({ notTasks: true }));
     expect(preview.tasks).toHaveLength(0);
     expect(preview.warnings).toHaveLength(1);
-    expect(preview.warnings[0]).toContain("Invalid Docket export format");
+    expect(preview.warnings[0]).toContain("Invalid Saydo export format");
   });
 
   it("maps completed status correctly", () => {
@@ -122,7 +122,7 @@ describe("parseDocketJSON", () => {
       version: "1.0",
     };
 
-    const preview = parseDocketJSON(JSON.stringify(data));
+    const preview = parseSaydoJSON(JSON.stringify(data));
     expect(preview.tasks[0].status).toBe("completed");
   });
 
@@ -132,7 +132,7 @@ describe("parseDocketJSON", () => {
       version: "1.0",
     };
 
-    const preview = parseDocketJSON(JSON.stringify(data));
+    const preview = parseSaydoJSON(JSON.stringify(data));
     expect(preview.tasks[0].status).toBe("pending");
   });
 });
@@ -153,9 +153,9 @@ describe("parseTodoistJSON", () => {
 
     expect(preview.format).toBe("todoist-json");
     expect(preview.tasks).toHaveLength(4);
-    expect(preview.tasks[0].priority).toBe(1); // Todoist 4 → Docket 1
-    expect(preview.tasks[1].priority).toBe(2); // Todoist 3 → Docket 2
-    expect(preview.tasks[2].priority).toBe(3); // Todoist 2 → Docket 3
+    expect(preview.tasks[0].priority).toBe(1); // Todoist 4 → Saydo 1
+    expect(preview.tasks[1].priority).toBe(2); // Todoist 3 → Saydo 2
+    expect(preview.tasks[2].priority).toBe(3); // Todoist 2 → Saydo 3
     expect(preview.tasks[3].priority).toBeNull(); // Todoist 1 → null
   });
 
@@ -301,10 +301,10 @@ describe("parseTextImport", () => {
 });
 
 describe("parseImport", () => {
-  it("auto-detects and parses Docket JSON", () => {
+  it("auto-detects and parses Saydo JSON", () => {
     const data = { tasks: [{ title: "Test" }], version: "1.0" };
     const preview = parseImport(JSON.stringify(data));
-    expect(preview.format).toBe("docket-json");
+    expect(preview.format).toBe("saydo-json");
     expect(preview.tasks).toHaveLength(1);
   });
 

@@ -84,15 +84,15 @@ function DataSection() {
           version: "1.0",
         };
         content = exportJSON(exportData);
-        filename = `docket-export-${new Date().toISOString().split("T")[0]}.json`;
+        filename = `saydo-export-${new Date().toISOString().split("T")[0]}.json`;
         mimeType = "application/json";
       } else if (format === "csv") {
         content = exportCSV(data.tasks);
-        filename = `docket-tasks-${new Date().toISOString().split("T")[0]}.csv`;
+        filename = `saydo-tasks-${new Date().toISOString().split("T")[0]}.csv`;
         mimeType = "text/csv";
       } else {
         content = exportMarkdown(data.tasks);
-        filename = `docket-tasks-${new Date().toISOString().split("T")[0]}.md`;
+        filename = `saydo-tasks-${new Date().toISOString().split("T")[0]}.md`;
         mimeType = "text/markdown";
       }
 
@@ -202,7 +202,7 @@ function DataSection() {
               />
             </label>
             <span className="ml-2 text-xs text-on-surface-muted">
-              Supports Docket JSON, Todoist JSON, and Markdown/text
+              Supports Saydo JSON, Todoist JSON, and Markdown/text
             </span>
             {importError && <p className="mt-2 text-xs text-error">{importError}</p>}
           </div>

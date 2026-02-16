@@ -34,6 +34,7 @@ function CollapsedTooltip({ visible, label }: { visible: boolean; label: string 
 interface SidebarProps {
   currentView: string;
   onNavigate: (view: string, id?: string) => void;
+  onOpenSettings?: () => void;
   projects: Project[];
   selectedProjectId: string | null;
   panels?: PanelInfo[];
@@ -65,12 +66,12 @@ const TASK_NAV_ITEMS: Array<{
 
 const WORKSPACE_NAV_ITEMS = [
   { id: "plugin-store", label: "Plugin Store", icon: Puzzle },
-  { id: "settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar({
   currentView,
   onNavigate,
+  onOpenSettings,
   projects,
   selectedProjectId,
   panels = [],
@@ -175,11 +176,11 @@ export function Sidebar({
         <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
           {!collapsed ? (
             <div className="flex items-center gap-2">
-              <img src="/images/logo-192.png" alt="Docket logo" className="w-7 h-7" />
-              <h2 className="text-lg font-bold text-on-surface tracking-tight">Docket</h2>
+              <img src="/images/logo-192.png" alt="Saydo logo" className="w-7 h-7" />
+              <h2 className="text-lg font-bold text-on-surface tracking-tight">Saydo</h2>
             </div>
           ) : (
-            <img src="/images/logo-192.png" alt="Docket logo" className="w-7 h-7" />
+            <img src="/images/logo-192.png" alt="Saydo logo" className="w-7 h-7" />
           )}
           {onToggleCollapsed && (
             <button
@@ -360,7 +361,23 @@ export function Sidebar({
               Workspace
             </h3>
           )}
-          <ul className="space-y-0.5">{renderNavItems(WORKSPACE_NAV_ITEMS)}</ul>
+          <ul className="space-y-0.5">
+            {renderNavItems(WORKSPACE_NAV_ITEMS)}
+            {onOpenSettings && (
+              <li>
+                <button
+                  onClick={onOpenSettings}
+                  className={`group relative w-full text-left px-3 py-2 rounded-md text-sm flex items-center transition-colors text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface ${
+                    collapsed ? "justify-center" : "gap-3"
+                  }`}
+                >
+                  <Settings size={18} strokeWidth={1.75} />
+                  {!collapsed && "Settings"}
+                  <CollapsedTooltip visible={collapsed} label="Settings" />
+                </button>
+              </li>
+            )}
+          </ul>
         </div>
       </nav>
     </aside>

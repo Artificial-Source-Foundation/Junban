@@ -1,6 +1,6 @@
 # Backlog
 
-All work items for ASF Docket, organized by area and prioritized within each section. Items are pulled from here into sprints.
+All work items for ASF Saydo, organized by area and prioritized within each section. Items are pulled from here into sprints.
 
 ## Status Key
 
@@ -98,11 +98,11 @@ All work items for ASF Docket, organized by area and prioritized within each sec
 | ID | Item | Status | Sprint | Notes |
 |----|------|--------|--------|-------|
 | L-01 | CLI entry point with Commander.js | done | — | Scaffolded |
-| L-02 | `docket add` — wire to TaskService | done | S1 | Depends on C-01 |
-| L-03 | `docket list` — wire to TaskService with filters | done | S1 | Depends on C-08 |
-| L-04 | `docket done` — wire to TaskService | done | S1 | Depends on C-05 |
-| L-05 | `docket edit` — wire to TaskService | done | S2 | Depends on C-06 |
-| L-06 | `docket delete` — wire to TaskService | done | S2 | Depends on C-07 |
+| L-02 | `saydo add` — wire to TaskService | done | S1 | Depends on C-01 |
+| L-03 | `saydo list` — wire to TaskService with filters | done | S1 | Depends on C-08 |
+| L-04 | `saydo done` — wire to TaskService | done | S1 | Depends on C-05 |
+| L-05 | `saydo edit` — wire to TaskService | done | S2 | Depends on C-06 |
+| L-06 | `saydo delete` — wire to TaskService | done | S2 | Depends on C-07 |
 | L-07 | JSON output format (`--json`) | done | S2 | |
 | L-08 | Interactive task picker (fuzzy find) | idea | — | |
 
@@ -171,7 +171,7 @@ All work items for ASF Docket, organized by area and prioritized within each sec
 | D-05 | Markdown storage backend | done | S11 | IStorage + MarkdownBackend with YAML frontmatter |
 | D-06 | Storage interface abstraction | done | S11 | SQLite and Markdown share IStorage API |
 | D-07 | Data export (JSON, Markdown, CSV) | done | S9 | JSON + Markdown + CSV export |
-| D-08 | Data import (Todoist JSON, plain text) | done | S10 | Docket JSON, Todoist JSON, Markdown |
+| D-08 | Data import (Todoist JSON, plain text) | done | S10 | Saydo JSON, Todoist JSON, Markdown |
 | D-09 | Generalize DB layer (BaseSQLiteDatabase) | done | S8 | better-sqlite3 + sql.js share types |
 | D-10 | sql.js WebView client + bundled migrations | done | S8 | client-web.ts, migrate-web.ts |
 | D-11 | Tauri FS persistence (load/save SQLite) | done | S8 | persistence.ts via @tauri-apps/plugin-fs |

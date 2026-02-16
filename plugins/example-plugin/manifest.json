@@ -3,9 +3,9 @@
   "name": "Example Plugin",
   "version": "1.0.0",
   "author": "ASF",
-  "description": "A minimal example plugin demonstrating the Docket Plugin API.",
+  "description": "A minimal example plugin demonstrating the Saydo Plugin API.",
   "main": "index.ts",
-  "minDocketVersion": "0.1.0",
+  "minSaydoVersion": "0.1.0",
   "license": "MIT",
   "permissions": ["task:read", "commands", "ui:status"],
   "settings": [

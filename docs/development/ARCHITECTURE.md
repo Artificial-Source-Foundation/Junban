@@ -2,7 +2,7 @@
 
 ## Overview
 
-ASF Docket is a modular TypeScript application with a clear separation between core logic, storage, UI, plugins, and CLI. Each layer is isolated, testable, and can be developed independently.
+ASF Saydo is a modular TypeScript application with a clear separation between core logic, storage, UI, plugins, and CLI. Each layer is isolated, testable, and can be developed independently.
 
 ```
 src/
@@ -132,7 +132,7 @@ UI Update
 ### 2. Task Creation (CLI)
 
 ```
-$ docket add "buy milk tomorrow at 3pm p1 #groceries +shopping"
+$ saydo add "buy milk tomorrow at 3pm p1 #groceries +shopping"
   │
   ▼
 Commander.js routes to add command (src/cli/commands/add.ts)
@@ -147,7 +147,7 @@ Terminal output: "Created: buy milk (due tomorrow 3:00 PM, P1)"
 ### 3. Task Completion
 
 ```
-User clicks checkbox / runs "docket done <id>"
+User clicks checkbox / runs "saydo done <id>"
   │
   ▼
 Core Task Service (src/core/tasks.ts)
@@ -175,7 +175,7 @@ Plugin Loader (src/plugins/loader.ts)
   ├─→ Scan plugins/ directory
   ├─→ Read manifest.json from each
   ├─→ Validate manifest with Zod
-  ├─→ Check minDocketVersion compatibility
+  ├─→ Check minSaydoVersion compatibility
   │
   ▼
 For each valid plugin:
@@ -284,7 +284,7 @@ tasks/
 │   └── abc123.md
 ├── shopping/        # Project directory
 │   └── def456.md
-└── .docket/         # Metadata
+└── .saydo/         # Metadata
     ├── tags.json    # Tag definitions
     └── plugins.json # Plugin settings
 ```
@@ -295,7 +295,7 @@ tasks/
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                  Docket Core                     │
+│                  Saydo Core                     │
 │                                                  │
 │  ┌──────────────────────────────────────────┐   │
 │  │            Plugin API Surface             │   │
@@ -330,7 +330,7 @@ Every plugin has a `manifest.json`:
   "author": "Author Name",
   "description": "What this plugin does",
   "main": "index.js",
-  "minDocketVersion": "1.0.0",
+  "minSaydoVersion": "1.0.0",
   "permissions": ["task:read", "task:write", "ui:panel", "commands"],
   "settings": [
     {
@@ -448,7 +448,7 @@ The AI assistant has access to structured tools that map to core operations:
 - **User controls the model**: BYOM (Bring Your Own Model). Cloud or local — the user decides.
 - **Context, not magic**: The AI is good because it sees the user's full context (tasks, projects, history), not because of prompt tricks.
 - **Conversational**: Users talk to it like an assistant. It asks follow-up questions. It remembers the conversation.
-- **Privacy-first**: API keys go directly to the user's chosen provider. Docket never proxies or stores AI traffic.
+- **Privacy-first**: API keys go directly to the user's chosen provider. Saydo never proxies or stores AI traffic.
 
 ## State Management
 

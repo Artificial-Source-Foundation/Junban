@@ -1,63 +1,63 @@
 {
   "$schema": "./plugin-registry.schema.json",
   "version": 1,
-  "description": "ASF Docket community plugin registry",
+  "description": "ASF Saydo community plugin registry",
   "lastUpdated": "2026-02-13",
   "plugins": [
     {
-      "id": "docket-pomodoro",
+      "id": "saydo-pomodoro",
       "name": "Pomodoro Timer",
       "description": "Built-in Pomodoro timer with configurable work/break intervals and task integration.",
       "author": "ASF",
       "version": "0.1.0",
-      "repository": "https://github.com/asf-org/docket-plugin-pomodoro",
-      "downloadUrl": "https://github.com/asf-org/docket-plugin-pomodoro/releases/latest/download/plugin.tar.gz",
+      "repository": "https://github.com/asf-org/saydo-plugin-pomodoro",
+      "downloadUrl": "https://github.com/asf-org/saydo-plugin-pomodoro/releases/latest/download/plugin.tar.gz",
       "tags": ["productivity", "timer"],
-      "minDocketVersion": "1.0.0"
+      "minSaydoVersion": "1.0.0"
     },
     {
-      "id": "docket-kanban",
+      "id": "saydo-kanban",
       "name": "Kanban Board",
       "description": "Kanban-style board view for tasks with drag-and-drop columns.",
       "author": "ASF",
       "version": "0.1.0",
-      "repository": "https://github.com/asf-org/docket-plugin-kanban",
-      "downloadUrl": "https://github.com/asf-org/docket-plugin-kanban/releases/latest/download/plugin.tar.gz",
+      "repository": "https://github.com/asf-org/saydo-plugin-kanban",
+      "downloadUrl": "https://github.com/asf-org/saydo-plugin-kanban/releases/latest/download/plugin.tar.gz",
       "tags": ["view", "kanban", "productivity"],
-      "minDocketVersion": "1.0.0"
+      "minSaydoVersion": "1.0.0"
     },
     {
-      "id": "docket-calendar",
+      "id": "saydo-calendar",
       "name": "Calendar View",
       "description": "Monthly/weekly calendar view showing tasks by due date.",
       "author": "ASF",
       "version": "0.1.0",
-      "repository": "https://github.com/asf-org/docket-plugin-calendar",
-      "downloadUrl": "https://github.com/asf-org/docket-plugin-calendar/releases/latest/download/plugin.tar.gz",
+      "repository": "https://github.com/asf-org/saydo-plugin-calendar",
+      "downloadUrl": "https://github.com/asf-org/saydo-plugin-calendar/releases/latest/download/plugin.tar.gz",
       "tags": ["view", "calendar"],
-      "minDocketVersion": "1.0.0"
+      "minSaydoVersion": "1.0.0"
     },
     {
-      "id": "docket-time-tracking",
+      "id": "saydo-time-tracking",
       "name": "Time Tracking",
       "description": "Track time spent on tasks with start/stop timer and daily reports.",
       "author": "ASF",
       "version": "0.1.0",
-      "repository": "https://github.com/asf-org/docket-plugin-time-tracking",
-      "downloadUrl": "https://github.com/asf-org/docket-plugin-time-tracking/releases/latest/download/plugin.tar.gz",
+      "repository": "https://github.com/asf-org/saydo-plugin-time-tracking",
+      "downloadUrl": "https://github.com/asf-org/saydo-plugin-time-tracking/releases/latest/download/plugin.tar.gz",
       "tags": ["productivity", "tracking"],
-      "minDocketVersion": "1.0.0"
+      "minSaydoVersion": "1.0.0"
     },
     {
-      "id": "docket-git-sync",
+      "id": "saydo-git-sync",
       "name": "Git Sync",
       "description": "Sync task data via Git for version control and multi-device access.",
       "author": "ASF",
       "version": "0.1.0",
-      "repository": "https://github.com/asf-org/docket-plugin-git-sync",
-      "downloadUrl": "https://github.com/asf-org/docket-plugin-git-sync/releases/latest/download/plugin.tar.gz",
+      "repository": "https://github.com/asf-org/saydo-plugin-git-sync",
+      "downloadUrl": "https://github.com/asf-org/saydo-plugin-git-sync/releases/latest/download/plugin.tar.gz",
       "tags": ["sync", "git"],
-      "minDocketVersion": "1.0.0"
+      "minSaydoVersion": "1.0.0"
     }
   ]
 }

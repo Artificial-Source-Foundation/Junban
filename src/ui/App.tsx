@@ -39,8 +39,8 @@ import type { Project as ProjectType } from "../core/types.js";
 import { api } from "./api/index.js";
 
 const AI_SIDEBAR_OPEN_SETTING_KEY = "ui_ai_sidebar_open";
-const SIDEBAR_COLLAPSED_STORAGE_KEY = "docket.ui.sidebar.collapsed";
-const AI_CHAT_EXPANDED_STORAGE_KEY = "docket.ui.ai-chat.expanded";
+const SIDEBAR_COLLAPSED_STORAGE_KEY = "saydo.ui.sidebar.collapsed";
+const AI_CHAT_EXPANDED_STORAGE_KEY = "saydo.ui.ai-chat.expanded";
 
 function AppContent() {
   // ── Routing ──
@@ -90,6 +90,7 @@ function AppContent() {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "1";
   });
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [templateSelectorOpen, setTemplateSelectorOpen] = useState(false);
   const [projects, setProjects] = useState<ProjectType[]>([]);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
@@ -249,7 +250,7 @@ function AppContent() {
   // ── Reminders ──
   const handleReminder = useCallback((task: { id: string; title: string }) => {
     if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-      new Notification("Docket Reminder", { body: task.title });
+      new Notification("Saydo Reminder", { body: task.title });
     }
   }, []);
 
@@ -258,10 +259,23 @@ function AppContent() {
   // ── Keyboard shortcuts ──
   useAppShortcuts(setCommandPaletteOpen, undo, redo);
 
+  // ── Settings modal helpers ──
+  const handleOpenSettings = useCallback(() => {
+    setSettingsOpen(true);
+  }, []);
+
+  const handleOpenSettingsTab = useCallback(
+    (tab: SettingsTab) => {
+      openSettingsTab(tab);
+      setSettingsOpen(true);
+    },
+    [openSettingsTab],
+  );
+
   // ── Command palette commands ──
   const commands = useAppCommands(
     handleNavigate,
-    openSettingsTab,
+    handleOpenSettingsTab,
     setChatPanelOpen,
     setFocusModeOpen,
     setTemplateSelectorOpen,
@@ -285,50 +299,37 @@ function AppContent() {
 
   // ── Document title ──
   const appTitle = useMemo(() => {
-    if (focusModeOpen) return "Focus Mode - Docket";
+    if (focusModeOpen) return "Focus Mode - Saydo";
 
     switch (currentView) {
       case "inbox":
-        return "Inbox - Docket";
+        return "Inbox - Saydo";
       case "today":
-        return "Today - Docket";
+        return "Today - Saydo";
       case "upcoming":
-        return "Upcoming - Docket";
+        return "Upcoming - Saydo";
       case "project": {
         const project = projects.find((p) => p.id === selectedProjectId);
-        return project ? `${project.name} - Docket` : "Project - Docket";
-      }
-      case "settings": {
-        const tabLabelById: Record<SettingsTab, string> = {
-          general: "General",
-          ai: "AI Assistant",
-          voice: "Voice",
-          plugins: "Plugins",
-          templates: "Templates",
-          keyboard: "Keyboard",
-          data: "Data",
-          about: "About",
-        };
-        return `${tabLabelById[settingsTab]} Settings - Docket`;
+        return project ? `${project.name} - Saydo` : "Project - Saydo";
       }
       case "plugin-store":
-        return "Plugin Store - Docket";
+        return "Plugin Store - Saydo";
       case "plugin-view": {
         const pluginView = pluginViews.find((view) => view.id === selectedPluginViewId);
-        return pluginView ? `${pluginView.name} - Docket` : "Custom View - Docket";
+        return pluginView ? `${pluginView.name} - Saydo` : "Custom View - Saydo";
       }
       case "task": {
         const t = selectedRouteTaskId ? state.tasks.find((tk) => tk.id === selectedRouteTaskId) : null;
-        return t ? `${t.title} - Docket` : "Task - Docket";
+        return t ? `${t.title} - Saydo` : "Task - Saydo";
       }
       case "filters-labels":
-        return "Filters & Labels - Docket";
+        return "Filters & Labels - Saydo";
       case "completed":
-        return "Completed - Docket";
+        return "Completed - Saydo";
       default:
-        return "Docket";
+        return "Saydo";
     }
-  }, [focusModeOpen, currentView, projects, selectedProjectId, selectedRouteTaskId, state.tasks, settingsTab, pluginViews, selectedPluginViewId]);
+  }, [focusModeOpen, currentView, projects, selectedProjectId, selectedRouteTaskId, state.tasks, pluginViews, selectedPluginViewId]);
 
   useEffect(() => {
     document.title = appTitle;
@@ -451,8 +452,6 @@ function AppContent() {
         );
       case "completed":
         return <Completed tasks={state.tasks} projects={projects} />;
-      case "settings":
-        return <Settings activeTab={settingsTab} onActiveTabChange={setSettingsTab} />;
       case "plugin-store":
         return (
           <PluginStore
@@ -483,6 +482,7 @@ function AppContent() {
         <Sidebar
           currentView={currentView}
           onNavigate={handleNavigate}
+          onOpenSettings={handleOpenSettings}
           projects={projects}
           selectedProjectId={selectedProjectId}
           panels={panels}
@@ -519,7 +519,7 @@ function AppContent() {
           <AIChatPanel
             onClose={() => setChatPanelOpen(false)}
             onOpenSettings={() => {
-              handleNavigate("settings");
+              setSettingsOpen(true);
               setChatPanelOpen(false);
             }}
           />
@@ -550,6 +550,13 @@ function AppContent() {
           hasNext={selectedTaskIdx >= 0 && selectedTaskIdx < visibleTasks.length - 1}
           projectName={selectedTaskProjectName}
           availableTags={availableTags}
+        />
+      )}
+      {settingsOpen && (
+        <Settings
+          activeTab={settingsTab}
+          onActiveTabChange={setSettingsTab}
+          onClose={() => setSettingsOpen(false)}
         />
       )}
       {focusModeOpen && (

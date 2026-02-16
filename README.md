@@ -1,16 +1,16 @@
-# ASF Docket
+# ASF Saydo
 
 **Build the task manager you've always wanted.**
 
-Docket is an open-source, AI-native task manager with an Obsidian-style plugin system. It's local-first, privacy-respecting, and infinitely extensible — not through settings menus, but through plugins anyone can build. No coding experience? Ask Claude or ChatGPT to build a plugin for you. That's the idea.
+Saydo is an open-source, AI-native task manager with an Obsidian-style plugin system. It's local-first, privacy-respecting, and infinitely extensible — not through settings menus, but through plugins anyone can build. No coding experience? Ask Claude or ChatGPT to build a plugin for you. That's the idea.
 
 Think **Todoist's simplicity**, **Obsidian's extensibility**, and **JARVIS-level AI** — all in one open-source package.
 
 An [AI Strategic Forum (ASF)](https://github.com/asf-org) project. **Simple. Smart. Yours.**
 
-<!-- ![Docket Screenshot](docs/assets/screenshot.png) -->
+<!-- ![Saydo Screenshot](docs/assets/screenshot.png) -->
 
-## Why Docket?
+## Why Saydo?
 
 There's no good open-source task manager that's popular, extensible, *and* AI-native. The options today:
 
@@ -19,14 +19,14 @@ There's no good open-source task manager that's popular, extensible, *and* AI-na
 - **Taskwarrior** — powerful, but let's be honest, it's for terminal nerds only.
 - **Self-hosted tools** (Vikunja, Planka) — exist, but no plugin ecosystem, no AI, no vibe-coding story.
 
-Docket fills the gap: **a beautiful, minimal task manager where the plugin system is so simple that anyone — even non-developers — can ask an AI to build exactly the features they need.**
+Saydo fills the gap: **a beautiful, minimal task manager where the plugin system is so simple that anyone — even non-developers — can ask an AI to build exactly the features they need.**
 
 ## Features
 
 - **Clean and fast** — minimal UI out of the box, no bloat, no configuration walls
 - **AI assistant** — a conversational AI that lives in your sidebar, understands your tasks, suggests priorities, auto-schedules your day, and sends reminders. Talk to it like JARVIS.
 - **Bring your own model** — OpenAI, Anthropic, OpenRouter, Ollama, LM Studio — use any provider. Run local models for full privacy. Or build your own provider plugin.
-- **Voice input** — talk to Docket instead of typing. The AI parses your natural language into structured tasks.
+- **Voice input** — talk to Saydo instead of typing. The AI parses your natural language into structured tasks.
 - **Natural language input** — type "buy milk tomorrow at 3pm p1 #groceries +shopping" and it just works
 - **Natural language search** — filter tasks by typing "due today p1 #urgent" or "overdue"
 - **Sub-tasks** — nested task hierarchy with indent/outdent, cascade completion, tree rendering
@@ -44,7 +44,7 @@ Docket fills the gap: **a beautiful, minimal task manager where the plugin syste
 
 ```bash
 # Clone and install
-git clone https://github.com/asf-org/docket.git && cd docket
+git clone https://github.com/asf-org/saydo.git && cd saydo
 pnpm install
 
 # Configure
@@ -62,13 +62,13 @@ See [docs/development/SETUP_LOCAL.md](docs/development/SETUP_LOCAL.md) for the f
 
 ## The Plugin System
 
-Docket's plugin system is inspired by Obsidian and [Pi's extension model](https://github.com/badlogic/pi-mono). Plugins are TypeScript files you drop into a folder. No build step. No config. Auto-discovered on startup.
+Saydo's plugin system is inspired by Obsidian and [Pi's extension model](https://github.com/badlogic/pi-mono). Plugins are TypeScript files you drop into a folder. No build step. No config. Auto-discovered on startup.
 
 The API is designed to be **vibe-code friendly** — simple enough that AI tools can generate working plugins on the first try.
 
 ```typescript
 // plugins/my-plugin/index.ts
-import { Plugin } from "@asf-docket/plugin-api";
+import { Plugin } from "@asf-saydo/plugin-api";
 
 export default class MyPlugin extends Plugin {
   async onLoad() {
@@ -89,7 +89,7 @@ See [docs/plugins/API.md](docs/plugins/API.md) for the full API reference and [d
 
 ## The AI Assistant
 
-Docket's AI isn't a gimmick bolted onto a settings menu. It's a **conversational assistant** that lives in your sidebar:
+Saydo's AI isn't a gimmick bolted onto a settings menu. It's a **conversational assistant** that lives in your sidebar:
 
 - **Talk to it naturally**: "I need to finish the report by Friday and review the budget before the meeting tomorrow at 2pm"
 - **It understands context**: sees your projects, priorities, and schedule
@@ -102,7 +102,7 @@ And you choose the AI: OpenAI, Anthropic, OpenRouter, Ollama, LM Studio — or b
 
 ## Philosophy
 
-Docket reflects [ASF values](docs/README.md) — **accuracy over speed**, **disclosure over persuasion**, **sources over vibes**:
+Saydo reflects [ASF values](docs/README.md) — **accuracy over speed**, **disclosure over persuasion**, **sources over vibes**:
 
 - **Local-first**: Your data, your machine, your rules. Zero network by default.
 - **Open source**: Fully transparent, MIT licensed, community-driven
@@ -123,7 +123,7 @@ Docket reflects [ASF values](docs/README.md) — **accuracy over speed**, **disc
 
 ```
 docs/
-├── README.md                        # Vision, design principles, why Docket exists
+├── README.md                        # Vision, design principles, why Saydo exists
 ├── development/                     # Developer guides
 │   ├── ARCHITECTURE.md              # Modules, data flow, tech decisions
 │   ├── SETUP_LOCAL.md               # Step-by-step local development

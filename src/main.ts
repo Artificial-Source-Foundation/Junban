@@ -5,7 +5,7 @@ import { bootstrap } from "./bootstrap.js";
 const env = loadEnv();
 const logger = createLogger(env.LOG_LEVEL);
 
-logger.info("ASF Docket starting...");
+logger.info("ASF Saydo starting...");
 
 const services = bootstrap();
 

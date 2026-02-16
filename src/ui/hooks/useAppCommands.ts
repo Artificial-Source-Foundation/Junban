@@ -29,7 +29,7 @@ export function useAppCommands(
         name: "Go to Completed",
         callback: () => handleNavigate("completed"),
       },
-      { id: "nav-settings", name: "Go to Settings", callback: () => handleNavigate("settings") },
+      { id: "nav-settings", name: "Go to Settings", callback: () => openSettingsTab("general") },
       {
         id: "nav-settings-general",
         name: "Go to Settings: General",

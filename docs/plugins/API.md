@@ -2,7 +2,7 @@
 
 ## Overview
 
-Docket's plugin system is inspired by Obsidian. Plugins are JS/TS packages that extend the app's functionality through a controlled API surface. Plugins can register commands, add UI panels and views, hook into task lifecycle events, and manage their own settings.
+Saydo's plugin system is inspired by Obsidian. Plugins are JS/TS packages that extend the app's functionality through a controlled API surface. Plugins can register commands, add UI panels and views, hook into task lifecycle events, and manage their own settings.
 
 ## Quick Start
 
@@ -19,14 +19,14 @@ cat > plugins/my-plugin/manifest.json << 'EOF'
   "author": "Your Name",
   "description": "A brief description of what this plugin does",
   "main": "index.ts",
-  "minDocketVersion": "1.0.0",
+  "minSaydoVersion": "1.0.0",
   "permissions": ["task:read", "commands"]
 }
 EOF
 
 # Create entry file
 cat > plugins/my-plugin/index.ts << 'EOF'
-import { Plugin } from "@asf-docket/plugin-api";
+import { Plugin } from "@asf-saydo/plugin-api";
 
 export default class MyPlugin extends Plugin {
   async onLoad() {
@@ -40,7 +40,7 @@ export default class MyPlugin extends Plugin {
 EOF
 ```
 
-Restart Docket (or toggle the plugin in Settings) to activate.
+Restart Saydo (or toggle the plugin in Settings) to activate.
 
 ## Plugin Manifest
 
@@ -56,7 +56,7 @@ Every plugin must have a `manifest.json` in its root directory.
 | `author` | string | Author name or organization |
 | `description` | string | Brief description (shown in plugin store) |
 | `main` | string | Entry file path relative to plugin directory |
-| `minDocketVersion` | string | Minimum Docket version required |
+| `minSaydoVersion` | string | Minimum Saydo version required |
 
 ### Optional Fields
 
@@ -80,9 +80,9 @@ Every plugin must have a `manifest.json` in its root directory.
   "author": "ASF",
   "description": "Pomodoro technique timer with task integration and statistics.",
   "main": "index.ts",
-  "minDocketVersion": "1.0.0",
+  "minSaydoVersion": "1.0.0",
   "license": "MIT",
-  "repository": "https://github.com/asf-org/docket-plugin-pomodoro",
+  "repository": "https://github.com/asf-org/saydo-plugin-pomodoro",
   "keywords": ["pomodoro", "timer", "productivity"],
   "permissions": ["task:read", "task:write", "ui:panel", "ui:status", "commands", "storage"],
   "settings": [
@@ -128,7 +128,7 @@ Every plugin must have a `manifest.json` in its root directory.
 All plugins extend the `Plugin` base class:
 
 ```typescript
-import { Plugin, type DocketAPI, type PluginManifest } from "@asf-docket/plugin-api";
+import { Plugin, type SaydoAPI, type PluginManifest } from "@asf-saydo/plugin-api";
 
 export default class MyPlugin extends Plugin {
   // Called when the plugin is activated
@@ -143,7 +143,7 @@ export default class MyPlugin extends Plugin {
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `this.app` | `DocketAPI` | Full Docket API access (filtered by permissions) |
+| `this.app` | `SaydoAPI` | Full Saydo API access (filtered by permissions) |
 | `this.manifest` | `PluginManifest` | This plugin's parsed manifest |
 | `this.settings` | `PluginSettings` | This plugin's settings (read/write) |
 
@@ -209,9 +209,9 @@ async onLoad() {
 | `plugin:settings:change` | `(settings: Record<string, unknown>)` | After this plugin's settings change |
 | `theme:change` | `(theme: string)` | After theme is switched |
 
-## Docket API
+## Saydo API
 
-The `this.app` object provides access to Docket functionality, filtered by the plugin's declared permissions.
+The `this.app` object provides access to Saydo functionality, filtered by the plugin's declared permissions.
 
 ### Task API (`task:read` + `task:write`)
 
@@ -345,7 +345,7 @@ const keys = await this.app.storage.keys();
 
 ### Settings API (`settings`)
 
-Settings are defined in `manifest.json` and managed by Docket. Plugins read their values:
+Settings are defined in `manifest.json` and managed by Saydo. Plugins read their values:
 
 ```typescript
 // Read a setting (returns the value or the default from manifest)
@@ -454,7 +454,7 @@ interface PluginManifest {
   author: string;
   description: string;
   main: string;
-  minDocketVersion: string;
+  minSaydoVersion: string;
   targetApiVersion?: string;
   permissions?: string[];
   settings?: SettingDefinition[];
@@ -502,12 +502,12 @@ Plugins can declare which API version they target:
   "author": "You",
   "description": "Example plugin",
   "main": "index.ts",
-  "minDocketVersion": "1.0.0",
+  "minSaydoVersion": "1.0.0",
   "targetApiVersion": "1.0.0"
 }
 ```
 
-If a plugin targets a newer major version than the running Docket instance provides, a warning is logged and the plugin may not function correctly.
+If a plugin targets a newer major version than the running Saydo instance provides, a warning is logged and the plugin may not function correctly.
 
 ### Runtime Introspection
 
@@ -535,7 +535,7 @@ Plugins run in a sandboxed environment with the following restrictions:
 
 | Feature | Access |
 |---------|--------|
-| Docket API | Yes (filtered by permissions) |
+| Saydo API | Yes (filtered by permissions) |
 | React rendering | Yes (within allocated UI slots) |
 | `setTimeout` / `setInterval` | Yes (auto-cleared on unload) |
 | `fetch` / HTTP requests | Only with `network` permission |

@@ -44,9 +44,9 @@ Two-week sprint cycles. Each sprint has a clear goal and pulls items from the [B
 | U-06 | Wire Inbox view to live data | M | done |
 | U-07 | Wire Today view to live data | S | done |
 | U-08 | Wire Upcoming view to live data | S | done |
-| L-02 | `docket add` — wire to TaskService | S | done |
-| L-03 | `docket list` — wire to TaskService | S | done |
-| L-04 | `docket done` — wire to TaskService | S | done |
+| L-02 | `saydo add` — wire to TaskService | S | done |
+| L-03 | `saydo list` — wire to TaskService | S | done |
+| L-04 | `saydo done` — wire to TaskService | S | done |
 | T-07 | Integration tests: TaskService + SQLite | M | done |
 
 **Capacity**: ~18 items (mostly S/M), fits a focused 2-week sprint.
@@ -79,8 +79,8 @@ Two-week sprint cycles. Each sprint has a clear goal and pulls items from the [B
 | U-14 | Command palette keybinding (Ctrl+K) | S | done |
 | U-15 | Light/dark theme switching | S | done |
 | P-06 | Parser inline preview (show parsed result as user types) | M | done |
-| L-05 | `docket edit` — wire to TaskService | S | done |
-| L-06 | `docket delete` — wire to TaskService | S | done |
+| L-05 | `saydo edit` — wire to TaskService | S | done |
+| L-06 | `saydo delete` — wire to TaskService | S | done |
 | L-07 | JSON output format (`--json`) | S | done |
 | T-08 | Integration tests: CLI commands | M | done |
 | T-09 | Component tests: TaskInput, TaskList | M | done |
@@ -118,7 +118,7 @@ Two-week sprint cycles. Each sprint has a clear goal and pulls items from the [B
 **Capacity**: ~7 items but heavier (L/XL), fits a 2-week sprint.
 
 **Definition of Done**:
-- [x] Drop a plugin folder into `plugins/` → Docket discovers it on startup
+- [x] Drop a plugin folder into `plugins/` → Saydo discovers it on startup
 - [x] Invalid manifests are rejected with clear error messages
 - [x] Plugin `onLoad()` and `onUnload()` are called correctly
 - [x] Plugins can register commands via the API
@@ -193,7 +193,7 @@ These will be planned as we get closer. See [BACKLOG.md](BACKLOG.md) for all ite
 
 | Sprint | Theme | Key Items |
 |--------|-------|-----------|
-| S17 | Docket Sync | Sync server, user accounts, E2E encryption |
+| S17 | Saydo Sync | Sync server, user accounts, E2E encryption |
 
 ---
 
@@ -369,11 +369,11 @@ These will be planned as we get closer. See [BACKLOG.md](BACKLOG.md) for all ite
 
 ### Sprint 10 — "Milestone Closure" (completed)
 
-**Goal**: Close v0.2 (Polish) and v0.5 (Plugin System) milestones. Data import from Docket JSON / Todoist JSON / Markdown, custom CSS themes with live editor, and plugin install/uninstall from store.
+**Goal**: Close v0.2 (Polish) and v0.5 (Plugin System) milestones. Data import from Saydo JSON / Todoist JSON / Markdown, custom CSS themes with live editor, and plugin install/uninstall from store.
 
 | ID | Item | Status |
 |----|------|--------|
-| D-08 | Data import (Docket JSON, Todoist JSON, Markdown) | done |
+| D-08 | Data import (Saydo JSON, Todoist JSON, Markdown) | done |
 | — | Custom CSS themes (18 CSS variables, inline editor, live preview) | done |
 | PL-14 | Plugin install/uninstall from store (tar.gz download + extract) | done |
 

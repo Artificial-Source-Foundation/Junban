@@ -5,8 +5,8 @@ const program = new Command();
 const services = bootstrap();
 
 program
-  .name("docket")
-  .description("ASF Docket — Task management from the terminal")
+  .name("saydo")
+  .description("ASF Saydo — Task management from the terminal")
   .version("0.1.0");
 
 program

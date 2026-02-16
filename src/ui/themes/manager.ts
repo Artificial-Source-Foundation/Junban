@@ -1,6 +1,6 @@
 import { BUILT_IN_THEMES, type Theme } from "../../config/themes.js";
 
-const STORAGE_KEY = "docket-theme";
+const STORAGE_KEY = "saydo-theme";
 
 /** Theme manager — handles loading and switching between built-in Light/Dark themes. */
 export class ThemeManager {

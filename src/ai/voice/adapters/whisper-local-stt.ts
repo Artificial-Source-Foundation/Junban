@@ -1,0 +1,115 @@
+/**
+ * Local Whisper STT adapter using @huggingface/transformers.
+ * Runs Whisper models entirely in the browser via WASM.
+ * Model is downloaded and cached on first use (~40MB for tiny.en quantized).
+ */
+
+import type { STTProviderPlugin, STTOptions } from "../interface.js";
+
+export type ModelStatus = "idle" | "loading" | "ready" | "error";
+
+export class WhisperLocalSTTProvider implements STTProviderPlugin {
+  readonly id = "whisper-local";
+  readonly name = "Whisper (Local)";
+  readonly needsApiKey = false;
+  readonly modelId: string;
+
+  status: ModelStatus = "idle";
+  progress = 0;
+  onStatusChange?: (status: ModelStatus, progress: number) => void;
+
+  private pipelineInstance: any = null;
+  private loadPromise: Promise<void> | null = null;
+
+  constructor(opts?: {
+    modelId?: string;
+    onStatusChange?: (status: ModelStatus, progress: number) => void;
+  }) {
+    this.modelId = opts?.modelId ?? "onnx-community/whisper-tiny.en";
+    this.onStatusChange = opts?.onStatusChange;
+  }
+
+  /** Pre-load the model. Called automatically on first transcribe. */
+  async preload(): Promise<void> {
+    await this.ensureModel();
+  }
+
+  async transcribe(audio: Blob, _opts?: STTOptions): Promise<string> {
+    await this.ensureModel();
+
+    // Decode audio blob to Float32Array at 16kHz (Whisper's expected sample rate)
+    const samples = await decodeAudioBlob(audio, 16000);
+
+    const result = await this.pipelineInstance!(samples, {
+      return_timestamps: false,
+    });
+
+    return (result?.text ?? "").trim();
+  }
+
+  async isAvailable(): Promise<boolean> {
+    return typeof window !== "undefined" && typeof WebAssembly !== "undefined";
+  }
+
+  private async ensureModel(): Promise<void> {
+    if (this.pipelineInstance) return;
+    if (this.loadPromise) {
+      await this.loadPromise;
+      return;
+    }
+    this.loadPromise = this.loadModel();
+    await this.loadPromise;
+  }
+
+  private async loadModel(): Promise<void> {
+    this.status = "loading";
+    this.progress = 0;
+    this.onStatusChange?.("loading", 0);
+
+    try {
+      const { pipeline } = await import("@huggingface/transformers");
+      this.pipelineInstance = await pipeline(
+        "automatic-speech-recognition",
+        this.modelId,
+        {
+          dtype: "q4",
+          device: "wasm",
+          progress_callback: (event: any) => {
+            if (event.status === "progress" && typeof event.progress === "number") {
+              this.progress = Math.round(event.progress);
+              this.onStatusChange?.("loading", this.progress);
+            }
+          },
+        },
+      );
+      this.status = "ready";
+      this.progress = 100;
+      this.onStatusChange?.("ready", 100);
+    } catch (err) {
+      this.status = "error";
+      this.loadPromise = null;
+      this.onStatusChange?.("error", 0);
+      throw err;
+    }
+  }
+}
+
+/** Decode an audio Blob to a mono Float32Array at the target sample rate. */
+async function decodeAudioBlob(blob: Blob, targetSampleRate: number): Promise<Float32Array> {
+  const arrayBuffer = await blob.arrayBuffer();
+  const audioCtx = new AudioContext();
+  try {
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    const duration = audioBuffer.duration;
+    const numSamples = Math.ceil(duration * targetSampleRate);
+    const offlineCtx = new OfflineAudioContext(1, numSamples, targetSampleRate);
+    const source = offlineCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(offlineCtx.destination);
+    source.start(0);
+    const rendered = await offlineCtx.startRendering();
+    return rendered.getChannelData(0);
+  } finally {
+    await audioCtx.close();
+  }
+}

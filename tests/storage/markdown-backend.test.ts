@@ -54,7 +54,7 @@ describe("MarkdownBackend", () => {
   let backend: MarkdownBackend;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "docket-md-test-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "saydo-md-test-"));
     backend = new MarkdownBackend(tmpDir);
     backend.initialize();
   });
@@ -505,12 +505,12 @@ describe("MarkdownBackend", () => {
 
   describe("StorageError on fs failures", () => {
     it("throws StorageError when writing to an inaccessible location", () => {
-      const badBackend = new MarkdownBackend("/nonexistent/path/docket");
+      const badBackend = new MarkdownBackend("/nonexistent/path/saydo");
       expect(() => badBackend.initialize()).toThrow(StorageError);
     });
 
     it("StorageError contains operation description", () => {
-      const badBackend = new MarkdownBackend("/nonexistent/path/docket");
+      const badBackend = new MarkdownBackend("/nonexistent/path/saydo");
       try {
         badBackend.initialize();
         expect.unreachable("should have thrown");

@@ -39,7 +39,7 @@ Refinements to the core experience before plugins.
 
 ## v0.3 — AI Assistant
 
-The conversational AI that makes Docket feel like JARVIS for tasks.
+The conversational AI that makes Saydo feel like JARVIS for tasks.
 
 - [x] AI provider abstraction interface
 - [x] OpenAI provider implementation
@@ -70,7 +70,7 @@ The Obsidian-style plugin architecture.
 - [x] Sandboxed plugin execution environment
 - [x] Plugin API surface: task read/write, events, commands
 - [x] Plugin UI extension points: sidebar panels, views, status bar
-- [x] Plugin settings system (defined in manifest, managed by Docket)
+- [x] Plugin settings system (defined in manifest, managed by Saydo)
 - [x] Plugin-specific storage (isolated key-value store)
 - [x] Community plugin registry (sources.json)
 - [x] Plugin store view (browse, install, configure, remove)
@@ -102,7 +102,7 @@ Production-quality task manager with a stable plugin API.
 - [x] CI/CD pipeline (lint, typecheck, test, build, release)
 - [x] First batch of community plugins published
 
-## v1.5 — Docket Sync
+## v1.5 — Saydo Sync
 
 Cross-device sync service (paid, optional — like Obsidian Sync).
 
@@ -115,7 +115,7 @@ Cross-device sync service (paid, optional — like Obsidian Sync).
 
 ## v2.0 — Mobile
 
-Native mobile apps + PWA (requires Docket Sync).
+Native mobile apps + PWA (requires Saydo Sync).
 
 - [ ] React Native iOS app
 - [ ] React Native Android app
@@ -125,7 +125,7 @@ Native mobile apps + PWA (requires Docket Sync).
 
 ## v3.0 — Web App
 
-Full browser-based client (requires Docket Sync).
+Full browser-based client (requires Saydo Sync).
 
 - [ ] Web client (React, same codebase where possible)
 - [ ] Collaborative features (shared projects, team sync)
@@ -136,7 +136,7 @@ Full browser-based client (requires Docket Sync).
 Ideas for future development, roughly prioritized:
 
 - **CalDAV sync plugin** — sync tasks with Nextcloud, iCloud, Google Calendar
-- **Git sync plugin** — version-controlled task storage across devices (free alternative to Docket Sync)
+- **Git sync plugin** — version-controlled task storage across devices (free alternative to Saydo Sync)
 - **WebDAV sync plugin** — generic sync for self-hosted setups
 - **AI auto-scheduling plugin** — auto-schedule tasks into calendar blocks
 - **AI daily planner plugin** — morning planning view with AI-suggested schedule

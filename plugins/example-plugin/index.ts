@@ -1,5 +1,5 @@
 /**
- * Example Plugin — demonstrates the Docket Plugin API.
+ * Example Plugin — demonstrates the Saydo Plugin API.
  *
  * This plugin:
  * - Registers a "Greet" command in the command palette

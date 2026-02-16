@@ -1,10 +1,10 @@
-# ASF Docket — Development Guide
+# ASF Saydo — Development Guide
 
 ## What Is This
 
 **Build the task manager you've always wanted.**
 
-ASF Docket is an open-source, AI-native task manager with an Obsidian-style plugin system. Built by the **AI Strategic Forum (ASF)** community. **Simple. Smart. Yours.**
+ASF Saydo is an open-source, AI-native task manager with an Obsidian-style plugin system. Built by the **AI Strategic Forum (ASF)** community. **Simple. Smart. Yours.**
 
 It's the task manager that doesn't exist yet — beautiful and simple out of the box, with a real AI assistant (not a gimmick), and a plugin system so simple that anyone can build features through AI-generated code. No coding experience required.
 
@@ -21,10 +21,10 @@ This is the second ASF project, alongside [ASF Sentinel](https://github.com/asf-
 ## Core Principles
 
 1. **Local-first, private by default** — data lives on the user's machine. Zero network calls by default. No accounts, no telemetry, no analytics.
-2. **AI-native, not AI-bolted-on** — the AI assistant is a core part of the experience: conversational sidebar, voice input, BYOM (Bring Your Own Model). But completely optional — Docket works perfectly without AI.
+2. **AI-native, not AI-bolted-on** — the AI assistant is a core part of the experience: conversational sidebar, voice input, BYOM (Bring Your Own Model). But completely optional — Saydo works perfectly without AI.
 3. **Vibe-code extensible** — the plugin API is designed so anyone can ask Claude or ChatGPT to build a plugin. If the API is too complicated for AI to generate correct code, it's too complicated.
 4. **Minimal by default, powerful when needed** — clean UI out of the box. The app is a canvas — plugins paint the picture.
-5. **Open source (MIT), honest business model** — free forever. Revenue from optional paid sync hosting (Docket Sync), not dark patterns.
+5. **Open source (MIT), honest business model** — free forever. Revenue from optional paid sync hosting (Saydo Sync), not dark patterns.
 6. **No vendor lock-in** — SQLite or Markdown files. Export anytime. Switching away should be trivial.
 
 ## Tech Stack
@@ -114,11 +114,11 @@ src/
 ├── cli/                     # CLI companion tool
 │   ├── index.ts             # CLI entry point (Commander.js)
 │   ├── commands/            # CLI command handlers
-│   │   ├── add.ts           # docket add "task description"
-│   │   ├── list.ts          # docket list [--today|--project=X]
-│   │   ├── done.ts          # docket done <id>
-│   │   ├── edit.ts          # docket edit <id> [fields]
-│   │   └── delete.ts        # docket delete <id>
+│   │   ├── add.ts           # saydo add "task description"
+│   │   ├── list.ts          # saydo list [--today|--project=X]
+│   │   ├── done.ts          # saydo done <id>
+│   │   ├── edit.ts          # saydo edit <id> [fields]
+│   │   └── delete.ts        # saydo delete <id>
 │   └── formatter.ts         # Terminal output formatting
 └── utils/                   # Shared utilities
     ├── logger.ts            # Structured logger
@@ -194,7 +194,7 @@ The AI assistant is a conversational interface that lives in the sidebar:
 Plugin Discovery → Manifest Validation → Sandbox Creation → Lifecycle Hooks
 ```
 - Plugins are directories in `plugins/` with a `manifest.json` and entry file
-- Manifests declare: id, name, version, author, description, minDocketVersion, permissions
+- Manifests declare: id, name, version, author, description, minSaydoVersion, permissions
 - Plugins run in a sandboxed context with access only to the Plugin API
 - Lifecycle: `onLoad()` → active → `onUnload()`. Plugins can also hook into task events.
 - Plugins can: register commands, add sidebar panels, add views, add settings tabs, listen to task events
@@ -281,7 +281,7 @@ Plugin Discovery → Manifest Validation → Sandbox Creation → Lifecycle Hook
 
 ```
 docs/
-├── README.md                        # Vision, design principles, why Docket exists
+├── README.md                        # Vision, design principles, why Saydo exists
 ├── development/                     # Developer guides
 │   ├── ARCHITECTURE.md              # Modules, data flow, tech decisions
 │   ├── SETUP_LOCAL.md               # Step-by-step local development

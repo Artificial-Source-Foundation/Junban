@@ -3,5 +3,5 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .run(tauri::generate_context!())
-        .expect("Failed to start ASF Docket. Please check your system configuration and try again.");
+        .expect("Failed to start ASF Saydo. Please check your system configuration and try again.");
 }

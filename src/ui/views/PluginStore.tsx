@@ -103,7 +103,7 @@ export function PluginStore({
         <Puzzle size={24} className="text-accent" />
         <h1 className="text-2xl font-bold text-on-surface">Plugin Store</h1>
       </div>
-      <p className="text-on-surface-muted mb-4 text-sm">Browse community plugins for Docket.</p>
+      <p className="text-on-surface-muted mb-4 text-sm">Browse community plugins for Saydo.</p>
 
       <div className="mb-6 relative">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-muted">

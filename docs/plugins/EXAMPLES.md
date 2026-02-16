@@ -1,6 +1,6 @@
 # Plugin Examples
 
-Step-by-step walkthroughs for building Docket plugins. Each example builds on the previous one, introducing more of the Plugin API.
+Step-by-step walkthroughs for building Saydo plugins. Each example builds on the previous one, introducing more of the Plugin API.
 
 ## Example 1: Hello World (Commands)
 
@@ -16,7 +16,7 @@ The simplest possible plugin — registers a command in the command palette.
   "author": "Your Name",
   "description": "A minimal example plugin that says hello.",
   "main": "index.ts",
-  "minDocketVersion": "1.0.0",
+  "minSaydoVersion": "1.0.0",
   "permissions": ["commands"]
 }
 ```
@@ -24,7 +24,7 @@ The simplest possible plugin — registers a command in the command palette.
 ### Entry File
 
 ```typescript
-import { Plugin } from "@asf-docket/plugin-api";
+import { Plugin } from "@asf-saydo/plugin-api";
 
 export default class HelloWorldPlugin extends Plugin {
   async onLoad() {
@@ -32,7 +32,7 @@ export default class HelloWorldPlugin extends Plugin {
       id: "hello-world:greet",
       name: "Say Hello",
       callback: () => {
-        alert("Hello from my first Docket plugin!");
+        alert("Hello from my first Saydo plugin!");
       },
     });
   }
@@ -66,7 +66,7 @@ A plugin that counts completed tasks today and shows the count in the status bar
   "author": "Your Name",
   "description": "Shows how many tasks you've completed today in the status bar.",
   "main": "index.ts",
-  "minDocketVersion": "1.0.0",
+  "minSaydoVersion": "1.0.0",
   "permissions": ["task:read", "ui:status"]
 }
 ```
@@ -74,7 +74,7 @@ A plugin that counts completed tasks today and shows the count in the status bar
 ### Entry File
 
 ```typescript
-import { Plugin, type Task } from "@asf-docket/plugin-api";
+import { Plugin, type Task } from "@asf-saydo/plugin-api";
 
 export default class TaskCounterPlugin extends Plugin {
   private count = 0;
@@ -141,7 +141,7 @@ A full-featured Pomodoro timer plugin with configurable intervals, a sidebar pan
   "author": "ASF",
   "description": "Pomodoro technique timer with task integration and daily stats.",
   "main": "index.ts",
-  "minDocketVersion": "1.0.0",
+  "minSaydoVersion": "1.0.0",
   "permissions": ["task:read", "ui:panel", "ui:status", "commands", "settings", "storage"],
   "settings": [
     {
@@ -176,7 +176,7 @@ A full-featured Pomodoro timer plugin with configurable intervals, a sidebar pan
 ### Entry File
 
 ```typescript
-import { Plugin } from "@asf-docket/plugin-api";
+import { Plugin } from "@asf-saydo/plugin-api";
 import { PomodoroPanel } from "./components/Panel";
 
 interface PomodoroStats {
@@ -316,7 +316,7 @@ export default class PomodoroPlugin extends Plugin {
 ```tsx
 // components/Panel.tsx
 import React, { useState, useEffect } from "react";
-import { usePlugin } from "@asf-docket/plugin-api/react";
+import { usePlugin } from "@asf-saydo/plugin-api/react";
 
 export function PomodoroPanel() {
   const plugin = usePlugin<PomodoroPlugin>();
@@ -373,7 +373,7 @@ A plugin that adds a full Kanban board view.
   "author": "ASF",
   "description": "Drag-and-drop Kanban board view for tasks.",
   "main": "index.ts",
-  "minDocketVersion": "1.0.0",
+  "minSaydoVersion": "1.0.0",
   "permissions": ["task:read", "task:write", "ui:view", "commands", "settings"],
   "settings": [
     {
@@ -390,7 +390,7 @@ A plugin that adds a full Kanban board view.
 ### Entry File
 
 ```typescript
-import { Plugin } from "@asf-docket/plugin-api";
+import { Plugin } from "@asf-saydo/plugin-api";
 import { KanbanView } from "./components/KanbanView";
 
 export default class KanbanPlugin extends Plugin {
@@ -421,7 +421,7 @@ export default class KanbanPlugin extends Plugin {
 ```tsx
 // components/KanbanView.tsx
 import React, { useState, useEffect } from "react";
-import { usePlugin, type Task } from "@asf-docket/plugin-api/react";
+import { usePlugin, type Task } from "@asf-saydo/plugin-api/react";
 
 export function KanbanView() {
   const plugin = usePlugin<KanbanPlugin>();
@@ -485,7 +485,7 @@ A more complete plugin that combines several API features: a sidebar panel, task
   "author": "ASF",
   "description": "Plan your day by ordering today's tasks and tracking progress.",
   "main": "index.ts",
-  "minDocketVersion": "1.0.0",
+  "minSaydoVersion": "1.0.0",
   "permissions": ["task:read", "task:write", "ui:panel", "commands", "storage", "settings"],
   "settings": [
     {
@@ -493,7 +493,7 @@ A more complete plugin that combines several API features: a sidebar panel, task
       "name": "Planning Reminder",
       "type": "boolean",
       "default": true,
-      "description": "Show a reminder to plan your day when Docket opens"
+      "description": "Show a reminder to plan your day when Saydo opens"
     },
     {
       "id": "dayStartHour",
@@ -511,7 +511,7 @@ A more complete plugin that combines several API features: a sidebar panel, task
 ### Entry File
 
 ```typescript
-import { Plugin, type Task } from "@asf-docket/plugin-api";
+import { Plugin, type Task } from "@asf-saydo/plugin-api";
 import { PlannerPanel } from "./components/PlannerPanel";
 
 interface DayPlan {

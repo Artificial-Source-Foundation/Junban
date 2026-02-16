@@ -1,4 +1,4 @@
-# ASF Docket — Vision & Design
+# ASF Saydo — Vision & Design
 
 ## What is ASF?
 
@@ -24,11 +24,11 @@ ASF focuses on:
 
 ASF builds open-source tools for the community. Not internal tools — tools anyone can use, extend, and own.
 
-## What is Docket?
+## What is Saydo?
 
 **Build the task manager you've always wanted.**
 
-Docket is an open-source, AI-native task manager with an Obsidian-style plugin system. It's the task manager that doesn't exist yet — one that's beautiful and simple out of the box, has a real AI assistant (not a gimmick), and lets anyone build their own features through plugins they can vibe-code without writing a line of code themselves.
+Saydo is an open-source, AI-native task manager with an Obsidian-style plugin system. It's the task manager that doesn't exist yet — one that's beautiful and simple out of the box, has a real AI assistant (not a gimmick), and lets anyone build their own features through plugins they can vibe-code without writing a line of code themselves.
 
 ### The Problem
 
@@ -43,24 +43,24 @@ There's no good open-source task manager that's popular, extensible, and AI-nati
 | **Taskwarrior** | Powerful, open source | Terminal-only, steep learning curve, no AI |
 | **Vikunja / Planka** | Self-hosted, open source | No plugin ecosystem, no AI, no vibe-coding story |
 
-**The gap:** No tool combines a clean, simple UX with real AI intelligence, an extensible plugin system, and full data ownership. Docket fills that gap.
+**The gap:** No tool combines a clean, simple UX with real AI intelligence, an extensible plugin system, and full data ownership. Saydo fills that gap.
 
 ### The Vision
 
 Imagine JARVIS, but for tasks:
 
-1. You open Docket. There's a clean, minimal inbox. A sidebar with an AI chat panel.
+1. You open Saydo. There's a clean, minimal inbox. A sidebar with an AI chat panel.
 2. You say: *"I need to finish the quarterly report by Friday, review the budget before tomorrow's 2pm meeting, and pick up groceries on the way home."*
 3. The AI creates three tasks with due dates, priorities, and projects. It asks: *"Should the report go under the Work project? Want a reminder an hour before the meeting?"*
 4. You check your Today view. The AI has suggested an order: *"I'd tackle the budget review first since it's due earliest. The report can wait until tomorrow morning."*
-5. You want a Pomodoro timer. You ask Claude: *"Build me a Docket plugin with a Pomodoro timer."* Claude generates a working plugin. You drop it in the `plugins/` folder. Done.
-6. Later, you check your tasks on your phone. Docket Sync (optional, paid) keeps everything in sync across devices. Or you use the free Git sync plugin.
+5. You want a Pomodoro timer. You ask Claude: *"Build me a Saydo plugin with a Pomodoro timer."* Claude generates a working plugin. You drop it in the `plugins/` folder. Done.
+6. Later, you check your tasks on your phone. Saydo Sync (optional, paid) keeps everything in sync across devices. Or you use the free Git sync plugin.
 
 That's the vision. **Simple when you need simple. Powerful when you need powerful. AI when you need AI. And yours — always.**
 
 ## Why It Exists
 
-Three frustrations sparked Docket:
+Three frustrations sparked Saydo:
 
 ### 1. There's no good open-source option
 
@@ -72,7 +72,7 @@ Todoist's AI feels like an afterthought — an old model with no agentic capabil
 
 ### 3. Users should be able to build their own features
 
-Most apps give you what they give you. If a feature doesn't exist, you submit a feature request and hope. Docket takes the Obsidian approach: the core is minimal, and everything else is a plugin. But we go further — the plugin API is so simple and well-documented that **you can ask Claude or ChatGPT to build a plugin for you**. No coding experience required. This is vibe-coding for productivity tools.
+Most apps give you what they give you. If a feature doesn't exist, you submit a feature request and hope. Saydo takes the Obsidian approach: the core is minimal, and everything else is a plugin. But we go further — the plugin API is so simple and well-documented that **you can ask Claude or ChatGPT to build a plugin for you**. No coding experience required. This is vibe-coding for productivity tools.
 
 ## How It Fits in the ASF Ecosystem
 
@@ -81,9 +81,9 @@ ASF builds practical open-source tools for the community:
 | Project | What It Does | Status |
 |---------|-------------|--------|
 | **[ASF Sentinel](https://github.com/asf-org/sentinel)** | Discord bot — AI news curation and server moderation | Active |
-| **ASF Docket** | Task manager — AI-native, plugin-driven, local-first | In Development |
+| **ASF Saydo** | Task manager — AI-native, plugin-driven, local-first | In Development |
 
-Sentinel handles **information flow** — surfacing AI news for the community. Docket handles **personal productivity** — helping individuals manage their work and build their own workflows.
+Sentinel handles **information flow** — surfacing AI news for the community. Saydo handles **personal productivity** — helping individuals manage their work and build their own workflows.
 
 Both projects share:
 - ASF values (accuracy, transparency, community ownership)
@@ -95,7 +95,7 @@ Both projects share:
 
 ### 1. Local-First, Private by Default
 
-Data lives on your machine. Docket makes **zero network calls** by default. No accounts, no telemetry, no analytics, no data harvesting. The app works fully offline.
+Data lives on your machine. Saydo makes **zero network calls** by default. No accounts, no telemetry, no analytics, no data harvesting. The app works fully offline.
 
 AI features require API keys to providers — but that's your choice, your keys, your data going to your provider. You can run fully local with Ollama for zero data exposure.
 
@@ -105,13 +105,13 @@ AI features require API keys to providers — but that's your choice, your keys,
 
 The AI assistant isn't a checkbox feature. It's a core part of the experience — a conversational interface that understands your tasks, your projects, your schedule. It lives in the sidebar, has voice input, and acts like a real assistant.
 
-But it's also **completely optional**. Docket works perfectly without any AI. You never see an AI feature unless you set up a provider.
+But it's also **completely optional**. Saydo works perfectly without any AI. You never see an AI feature unless you set up a provider.
 
 **Why:** AI should enhance, not gatekeep. The best AI integration is the one you don't notice until you need it.
 
 ### 3. Vibe-Code Extensible
 
-The plugin system is designed for a world where anyone can code — through AI. The API is intentionally simple, heavily documented, and tested against AI code generation. The bar for building a Docket plugin is: *"Can I describe what I want to Claude and get a working plugin back?"* If the answer is no, the API is too complicated.
+The plugin system is designed for a world where anyone can code — through AI. The API is intentionally simple, heavily documented, and tested against AI code generation. The bar for building a Saydo plugin is: *"Can I describe what I want to Claude and get a working plugin back?"* If the answer is no, the API is too complicated.
 
 Inspired by [Pi's extension model](https://github.com/badlogic/pi-mono) and Obsidian's plugin architecture.
 
@@ -133,7 +133,7 @@ Revenue comes from **optional paid sync hosting** (like Obsidian Sync) for users
 
 ### 6. No Vendor Lock-in
 
-Task data is stored in SQLite (standard, readable by any tool) or flat Markdown files (readable by humans). Export is always available in JSON, Markdown, or CSV. Switching away from Docket should be trivial.
+Task data is stored in SQLite (standard, readable by any tool) or flat Markdown files (readable by humans). Export is always available in JSON, Markdown, or CSV. Switching away from Saydo should be trivial.
 
 **Why:** Respect for users means not trapping them.
 
@@ -142,8 +142,8 @@ Task data is stored in SQLite (standard, readable by any tool) or flat Markdown 
 | Phase | Platform | How |
 |-------|----------|-----|
 | **v1** | Desktop (Mac, Windows, Linux) | Tauri — small binary, native performance |
-| **v2** | Mobile (iOS, Android) | Native apps + PWA, requires Docket Sync |
-| **v3** | Web | Browser app, requires Docket Sync |
+| **v2** | Mobile (iOS, Android) | Native apps + PWA, requires Saydo Sync |
+| **v3** | Web | Browser app, requires Saydo Sync |
 
 Desktop is the focus. Mobile and web come after the sync service is built. Users who want cross-device access before that can use the free Git sync plugin.
 
@@ -151,9 +151,9 @@ Desktop is the focus. Mobile and web come after the sync service is built. Users
 
 | Tier | Price | What You Get |
 |------|-------|-------------|
-| **Docket** | Free forever | Full app, all features, all plugins, local storage |
-| **Docket Sync** | Paid (TBD) | ASF-hosted sync for cross-device access (desktop, mobile, web) |
-| **Docket Enterprise** | Paid (future) | Team features, admin controls, SSO |
+| **Saydo** | Free forever | Full app, all features, all plugins, local storage |
+| **Saydo Sync** | Paid (TBD) | ASF-hosted sync for cross-device access (desktop, mobile, web) |
+| **Saydo Enterprise** | Paid (future) | Team features, admin controls, SSO |
 
 The core app will never be paywalled. Sync hosting is the only monetization path for the foreseeable future.
 
