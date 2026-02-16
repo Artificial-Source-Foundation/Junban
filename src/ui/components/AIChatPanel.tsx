@@ -39,10 +39,12 @@ export function AIChatPanel({ onClose, onOpenSettings }: AIChatPanelProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Focus input on mount
+  // Focus input on mount and after streaming ends
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    if (!isStreaming) {
+      inputRef.current?.focus();
+    }
+  }, [isStreaming]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,8 +175,7 @@ export function AIChatPanel({ onClose, onOpenSettings }: AIChatPanelProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about your tasks..."
-            disabled={isStreaming}
-            className="min-w-0 flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-surface text-on-surface placeholder-on-surface-muted focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50"
+            className="min-w-0 flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-surface text-on-surface placeholder-on-surface-muted focus:outline-none focus:ring-2 focus:ring-accent"
           />
           <VoiceButton onResult={handleVoiceResult} disabled={isStreaming} />
           <button
