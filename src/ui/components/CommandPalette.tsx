@@ -80,14 +80,14 @@ export function CommandPalette({ commands, isOpen, onClose }: CommandPaletteProp
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-8 md:pt-24 bg-black/50"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-8 md:pt-24 bg-black/50 animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-label="Command palette"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg mx-3 md:mx-0 bg-surface rounded-lg shadow-2xl overflow-hidden border border-border"
+        className="w-full max-w-lg mx-3 md:mx-0 bg-surface rounded-lg shadow-2xl overflow-hidden border border-border animate-drop-fade-in"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >

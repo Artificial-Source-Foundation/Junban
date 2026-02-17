@@ -149,14 +149,14 @@ export function TaskDetailPanel({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-label="Task details"
       onClick={onClose}
     >
       <div
-        className="bg-surface shadow-xl border border-border flex flex-col fixed bottom-0 left-0 right-0 h-[90vh] rounded-t-xl md:relative md:inset-auto md:rounded-lg md:w-full md:max-w-4xl md:h-[85vh] md:mx-4"
+        className="bg-surface shadow-xl border border-border flex flex-col fixed bottom-0 left-0 right-0 h-[90vh] rounded-t-xl md:relative md:inset-auto md:rounded-lg md:w-full md:max-w-4xl md:h-[85vh] md:mx-4 animate-slide-up-fade md:animate-scale-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header — Todoist style */}
@@ -210,7 +210,7 @@ export function TaskDetailPanel({
                 <MoreHorizontal size={16} />
               </button>
               {moreMenuOpen && (
-                <div className="absolute right-0 top-full mt-1 w-56 bg-surface rounded-lg shadow-xl border border-border z-50 py-1 text-sm">
+                <div className="absolute right-0 top-full mt-1 w-56 bg-surface rounded-lg shadow-xl border border-border z-50 py-1 text-sm animate-drop-fade-in">
                   <div className="px-3 py-2 text-xs text-on-surface-muted">
                     Added on {createdDateLabel} &middot; {createdTimeLabel}
                   </div>
