@@ -47,6 +47,7 @@ interface SidebarProps {
   onToggleCollapsed?: () => void;
   projectTaskCounts?: Map<string, number>;
   onAddTask?: () => void;
+  onSearch?: () => void;
   inboxCount?: number;
   todayCount?: number;
 }
@@ -84,6 +85,7 @@ export function Sidebar({
   onToggleCollapsed,
   projectTaskCounts,
   onAddTask,
+  onSearch,
   inboxCount,
   todayCount,
 }: SidebarProps) {
@@ -208,18 +210,18 @@ export function Sidebar({
         )}
 
         {/* Search button */}
-        {!collapsed && (
+        {onSearch && !collapsed && (
           <button
-            onClick={() => onNavigate("inbox")}
+            onClick={onSearch}
             className="mt-2 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-on-surface-muted hover:bg-surface-tertiary hover:text-on-surface transition-colors"
           >
             <Search size={16} />
             Search
           </button>
         )}
-        {collapsed && (
+        {onSearch && collapsed && (
           <button
-            onClick={() => onNavigate("inbox")}
+            onClick={onSearch}
             aria-label="Search"
             className="group relative mt-2 w-full flex items-center justify-center p-2 rounded-lg text-on-surface-muted hover:bg-surface-tertiary hover:text-on-surface transition-colors"
           >

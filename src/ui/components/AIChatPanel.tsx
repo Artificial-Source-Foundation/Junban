@@ -77,6 +77,7 @@ export function AIChatPanel({ onClose, onOpenSettings }: AIChatPanelProps) {
   const wasStreamingRef = useRef(false);
 
   const ttsAvailable = !!(voice.ttsProvider && voice.settings.ttsEnabled);
+  console.log("[VoiceCall:Panel] ttsAvailable:", ttsAvailable, "sttProvider:", voice.sttProvider?.id, "ttsProvider:", voice.ttsProvider?.id, "ttsEnabled:", voice.settings.ttsEnabled, "voiceMode:", voice.settings.voiceMode);
 
   const voiceCall = useVoiceCall({
     speak: voice.speak,
@@ -90,12 +91,19 @@ export function AIChatPanel({ onClose, onOpenSettings }: AIChatPanelProps) {
 
   const handleVoiceResult = useCallback(
     (transcript: string) => {
-      if (!transcript.trim()) return;
+      const cleaned = transcript.trim();
+      console.log("[VoiceCall:Panel] handleVoiceResult:", JSON.stringify(cleaned), "callActive:", voiceCall.isCallActive);
+      // Filter out empty or non-speech markers from STT
+      if (!cleaned || cleaned === "[BLANK_AUDIO]") {
+        console.log("[VoiceCall:Panel] filtered out empty/blank transcript");
+        return;
+      }
       // During voice call, always auto-send
       if (voiceCall.isCallActive || voice.settings.autoSend) {
-        sendMessage(transcript);
+        console.log("[VoiceCall:Panel] auto-sending transcript to AI");
+        sendMessage(cleaned);
       } else {
-        setInput((prev) => (prev ? prev + " " + transcript : transcript));
+        setInput((prev) => (prev ? prev + " " + cleaned : cleaned));
       }
     },
     [voice.settings.autoSend, sendMessage, voiceCall.isCallActive],
@@ -104,49 +112,78 @@ export function AIChatPanel({ onClose, onOpenSettings }: AIChatPanelProps) {
   // VAD integration — auto-detect speech and transcribe
   const handleVADSpeechEnd = useCallback(
     async (audio: Blob) => {
+      console.log("[VoiceCall:Panel] VAD speech ended, audio size:", audio.size);
       try {
         const transcript = await voice.transcribeAudio(audio);
+        console.log("[VoiceCall:Panel] VAD transcription result:", JSON.stringify(transcript));
         handleVoiceResult(transcript);
-      } catch {
-        // Transcription failed — silently ignore
+      } catch (err) {
+        console.warn("[VoiceCall:Panel] VAD transcription failed:", err);
       }
     },
     [voice, handleVoiceResult],
   );
 
-  // Browser STT can't transcribe audio blobs from VAD — use live recognition loop instead
-  const useBrowserSTTForCall = voiceCall.isCallActive && voice.sttProvider instanceof BrowserSTTProvider;
+  // Voice call listening: prefer user's STT provider with VAD, fall back to browser STT
+  const isNonBrowserSTT = voiceCall.isCallActive && !(voice.sttProvider instanceof BrowserSTTProvider);
+  const browserSTTAvailable = typeof window !== "undefined" &&
+    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
 
-  // VAD enabled when: normal VAD mode OR voice call listening (but NOT with browser STT)
+  // VAD enabled for: normal VAD mode outside calls, OR calls with API-based STT (Groq etc.)
   const vadEnabled =
     (voice.settings.voiceMode === "vad" && !isStreaming && !voice.isSpeaking && !voiceCall.isCallActive) ||
-    (voiceCall.vadEnabled && !useBrowserSTTForCall);
+    (voiceCall.vadEnabled && isNonBrowserSTT);
 
-  useVAD({
+  const vad = useVAD({
     onSpeechEnd: handleVADSpeechEnd,
     enabled: vadEnabled,
     deviceId: voice.settings.microphoneId || undefined,
   });
 
-  // Browser STT loop for voice call mode: use live recognition instead of VAD
+  // Fall back to browser STT loop if: using browser STT provider, OR VAD failed to load
+  const needBrowserSTTFallback = voiceCall.isCallActive && (
+    voice.sttProvider instanceof BrowserSTTProvider ||
+    (isNonBrowserSTT && !vad.isSupported)
+  );
+  const useBrowserSTTLoop = needBrowserSTTFallback && browserSTTAvailable;
+
+  console.log("[VoiceCall:Panel] vadEnabled:", vadEnabled, "vad.isListening:", vad.isListening, "vad.isSupported:", vad.isSupported, "useBrowserSTTLoop:", useBrowserSTTLoop, "isNonBrowserSTT:", isNonBrowserSTT, "callState:", voiceCall.callState);
+
+  // Browser STT recognition loop — used for Browser STT provider, or as fallback when VAD fails
+  const browserSTTRef = useRef<BrowserSTTProvider | null>(null);
+  if (!browserSTTRef.current && browserSTTAvailable) {
+    browserSTTRef.current = new BrowserSTTProvider();
+  }
+
   useEffect(() => {
-    if (!useBrowserSTTForCall || voiceCall.callState !== "listening") return;
-    const stt = voice.sttProvider as BrowserSTTProvider;
+    if (!useBrowserSTTLoop || voiceCall.callState !== "listening") {
+      if (voiceCall.isCallActive) {
+        console.log("[VoiceCall:Panel] Browser STT loop NOT starting — useBrowserSTTLoop:", useBrowserSTTLoop, "callState:", voiceCall.callState);
+      }
+      return;
+    }
+    const stt = browserSTTRef.current;
+    if (!stt) return;
     let cancelled = false;
+    console.log("[VoiceCall:Panel] Browser STT loop STARTING" + (isNonBrowserSTT ? " (VAD fallback)" : ""));
 
     const listen = async () => {
       while (!cancelled) {
         try {
           const transcript = await stt.startLiveRecognition();
           if (cancelled) break;
-          if (transcript.trim()) {
-            handleVoiceResult(transcript);
-            break; // State changes to processing; effect re-runs when back to listening
+          const cleaned = transcript.trim();
+          if (cleaned && cleaned !== "[BLANK_AUDIO]") {
+            console.log("[VoiceCall:Panel] Browser STT got:", JSON.stringify(cleaned));
+            handleVoiceResult(cleaned);
+            break;
           }
-          // Empty transcript — loop and try again
-        } catch {
+          // No speech detected — retry after brief pause
+          await new Promise((r) => setTimeout(r, 200));
+        } catch (err) {
+          console.warn("[VoiceCall:Panel] Browser STT error:", err);
           if (cancelled) break;
-          await new Promise((r) => setTimeout(r, 500));
+          await new Promise((r) => setTimeout(r, 1000));
         }
       }
     };
@@ -155,7 +192,7 @@ export function AIChatPanel({ onClose, onOpenSettings }: AIChatPanelProps) {
     return () => {
       cancelled = true;
     };
-  }, [useBrowserSTTForCall, voiceCall.callState, voice.sttProvider, handleVoiceResult]);
+  }, [useBrowserSTTLoop, voiceCall.callState, handleVoiceResult, voiceCall.isCallActive, isNonBrowserSTT]);
 
   // Voice conversation loop: TTS when AI finishes responding (streaming → done)
   // Skip when voice call is active — the hook handles TTS
@@ -474,6 +511,12 @@ const TOOL_META: Record<string, { emoji: string; verb: string }> = {
   delete_task: { emoji: "🗑️", verb: "Deleting" },
   list_tasks: { emoji: "📋", verb: "Checking tasks" },
   query_tasks: { emoji: "🔍", verb: "Searching tasks" },
+  list_tags: { emoji: "🏷️", verb: "Listing tags" },
+  add_tags_to_task: { emoji: "🏷️", verb: "Adding tags" },
+  remove_tags_from_task: { emoji: "🏷️", verb: "Removing tags" },
+  create_project: { emoji: "📁", verb: "Creating project" },
+  update_project: { emoji: "📁", verb: "Updating project" },
+  delete_project: { emoji: "📁", verb: "Deleting project" },
 };
 
 function ToolCallBadge({ name, args }: { name: string; args: string }) {

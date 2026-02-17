@@ -53,7 +53,8 @@ See the [local setup guide](docs/development/SETUP_LOCAL.md) for details.
 | **Focus mode** | Distraction-free, keyboard-driven |
 | **CLI companion** | `saydo add`, `saydo list`, `saydo done` from the terminal |
 | **Themes** | Light/dark + custom CSS |
-| **960+ tests** | Solid coverage across the entire codebase |
+| **Sound effects** | Satisfying audio feedback for task actions |
+| **1018+ tests** | Solid coverage across the entire codebase |
 
 ## Plugins
 
@@ -83,7 +84,7 @@ Docs: [Plugin API](docs/plugins/API.md) / [Examples](docs/plugins/EXAMPLES.md)
 
 The sidebar chat connects to your LLM provider. It sees your tasks, projects, and schedule — so it gives suggestions that are actually useful.
 
-**19 built-in tools**: task CRUD, project management, reminders, pattern analysis, workload detection, smart organization, and energy-based scheduling recommendations.
+**25 built-in tools**: task CRUD, project management, tag management, reminders, task breakdown, duplicate detection, overcommitment checks, pattern analysis, workload detection, smart organization, and energy-based scheduling recommendations.
 
 Supported providers: OpenAI, Anthropic, OpenRouter, Ollama, LM Studio — or write a custom provider plugin.
 
@@ -115,14 +116,14 @@ Voice activation with VAD (voice activity detection) — just start talking.
 | AI | OpenAI, Anthropic, OpenRouter, Ollama, LM Studio |
 | Voice | Browser, Groq, Inworld AI, Whisper, Kokoro, Piper |
 | CLI | Commander.js |
-| Tests | Vitest (960+) |
+| Tests | Vitest (1018+) |
 | Build | Vite 6 |
 
 ## Status
 
 v1.0 shipped. Desktop app works on Mac, Windows, Linux.
 
-Latest additions: Inworld AI TTS, AI intelligence tools (pattern analysis, workload detection, smart organization), project & reminder AI tools, contextual settings UX.
+Latest additions: voice call mode (hands-free AI conversation), global task search, tag management AI tools, sound effects, comprehensive settings, mobile-responsive UI.
 
 Next milestone: **Saydo Sync** — optional paid cross-device sync.
 

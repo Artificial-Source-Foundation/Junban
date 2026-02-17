@@ -72,12 +72,16 @@ src/
 │   │
 │   ├── tools/               # AI tool system
 │   │   ├── registry.ts      # ToolRegistry + createDefaultToolRegistry()
-│   │   └── builtin/         # 10 tools total
+│   │   └── builtin/         # 25 tools total
 │   │       ├── task-crud.ts           # Create/read/update/complete/delete tasks
 │   │       ├── query-tasks.ts         # Search and filter tasks
+│   │       ├── project-crud.ts        # Create/list/get/update/delete projects
+│   │       ├── reminder-tools.ts      # List/set/snooze/dismiss reminders
+│   │       ├── tag-crud.ts            # List/add/remove tags on tasks
+│   │       ├── task-breakdown.ts      # Break down task into subtasks
 │   │       ├── analyze-patterns.ts    # Workload pattern analysis
-│   │       ├── analyze-workload.ts    # Task load and capacity analysis
-│   │       ├── smart-organize.ts      # Auto-tagging and prioritization
+│   │       ├── analyze-workload.ts    # Task load, capacity, overcommitment
+│   │       ├── smart-organize.ts      # Auto-tagging, prioritization, duplicate detection
 │   │       └── energy-recommendations.ts  # Focus time and energy suggestions
 │   │
 │   └── voice/               # Voice I/O
@@ -116,14 +120,20 @@ src/
 │   │   └── settings.ts      # /api/settings/*
 │   │
 │   ├── context/             # React context
-│   │   └── UndoContext.tsx   # Undo/redo state
+│   │   ├── UndoContext.tsx   # Undo/redo state
+│   │   ├── AIContext.tsx     # AI chat state, streaming, voice call mode, data mutation tracking
+│   │   ├── VoiceContext.tsx  # Voice settings, STT/TTS providers, speak/cancel
+│   │   └── SettingsContext.tsx # General settings (accent color, density, date format, etc.)
 │   │
 │   ├── hooks/               # Custom hooks
 │   │   ├── useKeyboardNavigation.ts
 │   │   ├── useMultiSelect.ts
-│   │   └── useVAD.ts        # Voice activity detection
+│   │   ├── useVAD.ts        # Voice activity detection
+│   │   ├── useVoiceCall.ts  # Voice call state machine (idle→greeting→listening→processing→speaking)
+│   │   ├── useIsMobile.ts   # Mobile breakpoint detection
+│   │   └── useSoundEffect.ts # Sound effect playback tied to settings
 │   │
-│   ├── components/          # ~24 UI components
+│   ├── components/          # ~30 UI components
 │   │   ├── TaskInput.tsx         # NLP-driven task creation with inline preview
 │   │   ├── TaskItem.tsx          # Single task row (priority stripe, tag pills, indent)
 │   │   ├── TaskList.tsx          # Tree rendering with expand/collapse
@@ -132,13 +142,19 @@ src/
 │   │   ├── SubtaskBlock.tsx      # Sub-task display
 │   │   ├── SubtaskSection.tsx    # Sub-task list within detail panel
 │   │   ├── InlineAddSubtask.tsx  # Inline sub-task creation
-│   │   ├── Sidebar.tsx           # Navigation + project list
+│   │   ├── Sidebar.tsx           # Navigation + project list + search button
 │   │   ├── CommandPalette.tsx    # Ctrl+K with arrow nav
+│   │   ├── SearchModal.tsx       # Ctrl+F global task search with fuzzy matching
 │   │   ├── FocusMode.tsx         # Full-screen overlay (Space/N/P/Esc)
 │   │   ├── QueryBar.tsx          # NL search with debounced filtering
-│   │   ├── AIChatPanel.tsx       # AI sidebar chat
+│   │   ├── AIChatPanel.tsx       # AI sidebar chat + voice call UI
+│   │   ├── VoiceCallOverlay.tsx  # Voice call in-call UI (pulsing indicator, timer)
+│   │   ├── ConfirmDialog.tsx     # Styled confirmation dialog (replaces window.confirm)
 │   │   ├── BulkActionBar.tsx     # Multi-select toolbar
 │   │   ├── TemplateSelector.tsx  # Template picker modal
+│   │   ├── BottomNavBar.tsx      # Mobile bottom navigation
+│   │   ├── MobileDrawer.tsx      # Mobile slide-out drawer
+│   │   ├── FAB.tsx               # Mobile floating action button
 │   │   ├── DatePicker.tsx
 │   │   ├── RecurrencePicker.tsx
 │   │   ├── TagsInput.tsx
@@ -343,12 +359,18 @@ Supported: OpenAI, Anthropic, OpenRouter, Ollama, LM Studio, any OpenAI-compatib
 
 ### Tools
 
-The AI has access to 10 structured tools:
+The AI has access to 25 structured tools:
 
 | Tool | Category |
 |---|---|
-| task-crud (create/read/update/complete/delete) | CRUD |
-| query-tasks (search, filter) | CRUD |
+| task-crud (create/read/update/complete/delete) | Task CRUD |
+| query-tasks (search, filter) | Task CRUD |
+| project-crud (create/list/get/update/delete) | Project CRUD |
+| reminder-tools (list/set/snooze/dismiss) | Reminders |
+| tag-crud (list/add/remove tags) | Tag Management |
+| break_down_task | Productivity |
+| check_duplicates | Productivity |
+| check_overcommitment | Productivity |
 | analyze-patterns | Intelligence |
 | analyze-workload | Intelligence |
 | smart-organize | Intelligence |

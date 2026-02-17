@@ -9,9 +9,10 @@ import { RightActionRail } from "./components/RightActionRail.js";
 import { BottomNavBar } from "./components/BottomNavBar.js";
 import { MobileDrawer } from "./components/MobileDrawer.js";
 import { FAB } from "./components/FAB.js";
+import { SearchModal } from "./components/SearchModal.js";
 import { TaskProvider, useTaskContext } from "./context/TaskContext.js";
 import { PluginProvider, usePluginContext } from "./context/PluginContext.js";
-import { AIProvider } from "./context/AIContext.js";
+import { AIProvider, useAIContext } from "./context/AIContext.js";
 import { VoiceProvider, useVoiceContext } from "./context/VoiceContext.js";
 import { UndoProvider, useUndoContext } from "./context/UndoContext.js";
 import { SettingsProvider } from "./context/SettingsContext.js";
@@ -55,8 +56,6 @@ function AppContent() {
     selectedProjectId,
     selectedRouteTaskId,
     selectedPluginViewId,
-    inboxQueryText,
-    setInboxQueryText,
     settingsTab,
     setSettingsTab,
     pluginStoreSearchQuery,
@@ -104,6 +103,7 @@ function AppContent() {
   const [projects, setProjects] = useState<ProjectType[]>([]);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [addTaskTrigger, setAddTaskTrigger] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // ── Context hooks ──
   const { state, refreshTasks } = useTaskContext();
@@ -115,6 +115,7 @@ function AppContent() {
     executeCommand,
   } = usePluginContext();
   const voice = useVoiceContext();
+  const { dataMutationCount } = useAIContext();
 
   // ── Data fetching ──
   const fetchProjects = useCallback(async () => {
@@ -145,6 +146,14 @@ function AppContent() {
     fetchProjects();
     fetchTags();
   }, [taskCount, fetchProjects, fetchTags]);
+
+  // Refresh projects/tags when AI tools mutate them
+  useEffect(() => {
+    if (dataMutationCount > 0) {
+      fetchProjects();
+      fetchTags();
+    }
+  }, [dataMutationCount, fetchProjects, fetchTags]);
 
   // ── AI chat sidebar persistence ──
   useEffect(() => {
@@ -282,7 +291,7 @@ function AppContent() {
   useReminders({ onReminder: handleReminder, enabled: true });
 
   // ── Keyboard shortcuts ──
-  useAppShortcuts(setCommandPaletteOpen, undo, redo);
+  useAppShortcuts(setCommandPaletteOpen, undo, redo, setSearchOpen);
 
   // ── Settings modal helpers ──
   const handleOpenSettings = useCallback(() => {
@@ -376,8 +385,6 @@ function AppContent() {
             onReorder={handleReorder}
             onAddSubtask={handleAddSubtask}
             onUpdateDueDate={handleUpdateDueDate}
-            queryText={inboxQueryText}
-            onQueryTextChange={setInboxQueryText}
             autoFocusTrigger={addTaskTrigger}
           />
         );
@@ -469,8 +476,7 @@ function AppContent() {
         return (
           <FiltersLabels
             tasks={state.tasks}
-            onNavigateToFilter={(query) => {
-              setInboxQueryText(query);
+            onNavigateToFilter={() => {
               handleNavigate("inbox");
             }}
           />
@@ -519,6 +525,7 @@ function AppContent() {
             onToggleCollapsed={() => setSidebarCollapsed((value) => !value)}
             projectTaskCounts={projectTaskCounts}
             onAddTask={handleAddTask}
+            onSearch={() => setSearchOpen(true)}
             inboxCount={inboxTaskCount}
             todayCount={todayTaskCount}
           />
@@ -593,6 +600,10 @@ function AppContent() {
             setDrawerOpen(false);
             handleAddTask();
           }}
+          onSearch={() => {
+            setDrawerOpen(false);
+            setSearchOpen(true);
+          }}
           inboxCount={inboxTaskCount}
           todayCount={todayTaskCount}
         />
@@ -666,6 +677,13 @@ function AppContent() {
         commands={commands}
         isOpen={commandPaletteOpen}
         onClose={() => setCommandPaletteOpen(false)}
+      />
+      <SearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        tasks={state.tasks}
+        projects={projects}
+        onSelectTask={handleSelectTask}
       />
       {toast && (
         <Toast

@@ -22,6 +22,7 @@ import { registerEnergyRecommendationsTool } from "./tools/builtin/energy-recomm
 import { registerProjectCrudTools } from "./tools/builtin/project-crud.js";
 import { registerReminderTools } from "./tools/builtin/reminder-tools.js";
 import { registerTaskBreakdownTool } from "./tools/builtin/task-breakdown.js";
+import { registerTagCrudTools } from "./tools/builtin/tag-crud.js";
 
 /** Create a provider registry with all built-in providers. */
 export function createDefaultRegistry(): LLMProviderRegistry {
@@ -49,6 +50,7 @@ export function createDefaultToolRegistry(): ToolRegistry {
   registerCheckDuplicatesTool(registry);
   registerEnergyRecommendationsTool(registry);
   registerTaskBreakdownTool(registry);
+  registerTagCrudTools(registry);
   logger.info("Tool registry initialized", { tools: registry.size });
   return registry;
 }

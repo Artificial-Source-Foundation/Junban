@@ -641,3 +641,58 @@ See [BACKLOG.md](BACKLOG.md) for all items.
 | — | Settings tests (SettingsContext, GeneralTab, format-date) | done |
 
 **Result**: Inworld AI TTS with streaming NDJSON proxy, 4-model selection, and contextual API key input. Mobile-first responsive layout. Comprehensive settings with SettingsContext. 960 passing tests.
+
+### Sprint 27 — "Settings & AI Quick Wins" (completed)
+
+**Goal**: Comprehensive general settings with SettingsContext (accent color, density, date/time format, preferences) and three new AI productivity tools (task breakdown, duplicate detection, overcommitment check).
+
+| ID | Item | Status |
+|----|------|--------|
+| — | SettingsContext for general settings (8 keys, useGeneralSettings hook) | done |
+| — | GeneralTab with 4 sections (Appearance, Date & Time, Task Behavior, Notifications) | done |
+| — | Accent color via inline CSS variables on `<html>` | done |
+| — | Density modes (compact/comfortable) via CSS classes | done |
+| — | `formatTaskDate()` + `formatTaskTime()` in format-date.ts | done |
+| — | `start_view` wired into useRouting, `confirm_delete` wired into detail panels | done |
+| A-31 | break_down_task AI tool (subtask creation via parentId) | done |
+| A-40 | check_duplicates AI tool (Jaccard similarity on pending tasks) | done |
+| A-34 | check_overcommitment AI tool (single-date load check) | done |
+
+**Result**: SettingsContext provides reactive general settings across the app. GeneralTab offers comprehensive customization. 3 new AI productivity tools bring registry to 22 total. 960 passing tests (919 + 16 GeneralTab + 5 SettingsContext + 10 format-date + other).
+
+### Sprint 28 — "Sound Effects" (completed)
+
+**Goal**: Add satisfying sound effects for task actions using the Web Audio API.
+
+| ID | Item | Status |
+|----|------|--------|
+| — | Sound engine (`src/utils/sounds.ts`) with Web Audio API, lazy AudioContext | done |
+| — | 4 sound events: complete (ascending), create (triangle), delete (descending), reminder (chord) | done |
+| — | `useSoundEffect` hook reads SettingsContext, returns `play(event)` | done |
+| — | 6 new GeneralSettings keys: sound_enabled, sound_volume, per-event toggles | done |
+| — | SoundSettings component with master toggle, volume slider, per-event toggles + preview | done |
+| — | Wired into useTaskHandlers, useBulkActions, App.tsx reminder | done |
+
+**Result**: Web Audio API synthesized sounds for task lifecycle events. Settings UI for volume and per-event control. 988 passing tests (968 + 12 sounds + 8 useSoundEffect).
+
+### Sprint 29 — "Voice Call, Search & Tag Tools" (completed)
+
+**Goal**: AI voice call mode for continuous hands-free conversation, global task search modal, and tag management AI tools.
+
+| ID | Item | Status |
+|----|------|--------|
+| A-46 | Voice call mode — useVoiceCall hook (idle→greeting→listening→processing→speaking loop) | done |
+| A-38 | VoiceCallOverlay component (pulsing indicator, timer, end call button) | done |
+| — | Voice call system prompt in gatherContext() for conversational style | done |
+| — | Browser STT loop with fallback when VAD unavailable | done |
+| — | "[BLANK_AUDIO]" filtering in handleVoiceResult | done |
+| — | SearchModal component (Ctrl+F, fuzzy task search with keyboard nav) | done |
+| — | Sidebar search button wired to SearchModal | done |
+| — | 3 tag CRUD tools: list_tags, add_tags_to_task, remove_tags_from_task | done |
+| — | ToolContext.tagService for tag tool access | done |
+| — | DATA_MUTATING_TOOLS tracking for instant project/tag UI refresh | done |
+| — | ConfirmDialog component replacing native window.confirm() | done |
+| — | Entrance animations for modals, toast, command palette, FAB | done |
+| — | Tag + project tool badges in AIChatPanel TOOL_META | done |
+
+**Result**: Full voice call mode with state machine, greeting TTS, VAD-based listening, and auto-speak responses. Global search modal. 3 tag CRUD AI tools bring registry to 25 total. Instant UI refresh on project/tag mutations. 1018 passing tests (988 + 15 useVoiceCall + 6 VoiceCallOverlay + 9 tag tools).

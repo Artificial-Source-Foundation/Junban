@@ -55,6 +55,14 @@ export function useVoiceCall({
 
   const isCallActive = callState !== "idle";
 
+  // Debug helper — log state transitions
+  const setCallStateDebug = useCallback((next: CallState, reason: string) => {
+    setCallState((prev) => {
+      console.log(`[VoiceCall] ${prev} → ${next} (${reason})`);
+      return next;
+    });
+  }, []);
+
   // ── Call duration timer ──
   useEffect(() => {
     if (isCallActive) {
@@ -85,12 +93,16 @@ export function useVoiceCall({
     const wasSpeaking = wasSpeakingRef.current;
     wasSpeakingRef.current = isSpeaking;
 
+    if (isCallActive) {
+      console.log(`[VoiceCall] isSpeaking: ${wasSpeaking} → ${isSpeaking}, callState: ${callState}`);
+    }
+
     if (wasSpeaking && !isSpeaking) {
       if (callState === "greeting" || callState === "speaking") {
-        setCallState("listening");
+        setCallStateDebug("listening", `TTS finished (was ${callState})`);
       }
     }
-  }, [isSpeaking, callState]);
+  }, [isSpeaking, callState, isCallActive, setCallStateDebug]);
 
   // ── Processing → speaking transition ──
   // When AI finishes streaming, speak the last assistant message
@@ -98,44 +110,58 @@ export function useVoiceCall({
     const wasStreaming = wasStreamingRef.current;
     wasStreamingRef.current = isStreaming;
 
+    if (isCallActive) {
+      console.log(`[VoiceCall] isStreaming: ${wasStreaming} → ${isStreaming}, callState: ${callState}`);
+    }
+
     if (callState === "processing" && wasStreaming && !isStreaming) {
       const lastMsg = messages[messages.length - 1];
+      console.log(`[VoiceCall] AI done streaming. Last msg:`, {
+        role: lastMsg?.role,
+        hasContent: !!lastMsg?.content,
+        contentLength: lastMsg?.content?.length,
+        isError: lastMsg?.isError,
+        ttsAvailable,
+      });
       if (lastMsg?.role === "assistant" && lastMsg.content && !lastMsg.isError && ttsAvailable) {
-        setCallState("speaking");
-        speak(lastMsg.content).catch(() => {
-          // TTS failed, go back to listening
-          setCallState("listening");
+        setCallStateDebug("speaking", "AI response ready, speaking via TTS");
+        speak(lastMsg.content).catch((err) => {
+          console.warn("[VoiceCall] TTS failed during speaking:", err);
+          setCallStateDebug("listening", "TTS failed, back to listening");
         });
       } else {
-        // No content to speak or TTS unavailable, go back to listening
-        setCallState("listening");
+        setCallStateDebug("listening", "no content to speak or TTS unavailable");
       }
     }
-  }, [isStreaming, callState, messages, speak, ttsAvailable]);
+  }, [isStreaming, callState, messages, speak, ttsAvailable, isCallActive, setCallStateDebug]);
 
   // ── Start call ──
   const startCall = useCallback(() => {
     if (isCallActive) return;
+    console.log("[VoiceCall] startCall() — ttsAvailable:", ttsAvailable);
     setVoiceCallMode(true);
-    setCallState("greeting");
+    setCallStateDebug("greeting", "call started");
 
     if (ttsAvailable) {
-      speak(GREETING).catch(() => {
-        // If TTS fails, skip greeting and go straight to listening
-        setCallState("listening");
+      speak(GREETING).then(() => {
+        console.log("[VoiceCall] greeting speak() resolved");
+      }).catch((err) => {
+        console.warn("[VoiceCall] greeting TTS failed:", err);
+        setCallStateDebug("listening", "greeting TTS failed");
       });
     } else {
-      // No TTS, go straight to listening
-      setCallState("listening");
+      console.log("[VoiceCall] no TTS, skipping greeting");
+      setCallStateDebug("listening", "no TTS available");
     }
-  }, [isCallActive, speak, ttsAvailable, setVoiceCallMode]);
+  }, [isCallActive, speak, ttsAvailable, setVoiceCallMode, setCallStateDebug]);
 
   // ── End call ──
   const endCall = useCallback(() => {
+    console.log("[VoiceCall] endCall()");
     cancelSpeech();
-    setCallState("idle");
+    setCallStateDebug("idle", "call ended");
     setVoiceCallMode(false);
-  }, [cancelSpeech, setVoiceCallMode]);
+  }, [cancelSpeech, setVoiceCallMode, setCallStateDebug]);
 
   // ── Handle speech input during call ──
   // This is controlled externally: when VAD detects speech and STT transcribes,
@@ -143,9 +169,9 @@ export function useVoiceCall({
   // We detect isStreaming going true while in "listening" to move to "processing".
   useEffect(() => {
     if (callState === "listening" && isStreaming) {
-      setCallState("processing");
+      setCallStateDebug("processing", "isStreaming went true while listening");
     }
-  }, [isStreaming, callState]);
+  }, [isStreaming, callState, setCallStateDebug]);
 
   // ── Interruption: user speaks while AI is speaking ──
   // This is handled by the VAD enabled state — if we allow VAD during speaking,

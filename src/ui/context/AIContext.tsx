@@ -31,6 +31,8 @@ interface AIContextValue extends AIState {
   retryLastMessage: () => void;
   voiceCallActive: boolean;
   setVoiceCallMode: (active: boolean) => void;
+  /** Increments when AI tools mutate projects/tags — watch this to refresh data */
+  dataMutationCount: number;
 }
 
 const AIContext = createContext<AIContextValue | null>(null);
@@ -64,11 +66,20 @@ const TASK_MUTATING_TOOLS = new Set([
   "delete_task",
 ]);
 
+const DATA_MUTATING_TOOLS = new Set([
+  "create_project",
+  "update_project",
+  "delete_project",
+  "add_tags_to_task",
+  "remove_tags_from_task",
+]);
+
 export function AIProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<AIConfigInfo | null>(null);
   const [messages, setMessages] = useState<AIChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [voiceCallActive, setVoiceCallActive] = useState(false);
+  const [dataMutationCount, setDataMutationCount] = useState(0);
   const voiceCallActiveRef = useRef(false);
   const lastUserMessageRef = useRef<string>("");
   const { refreshTasks } = useTaskContext();
@@ -113,6 +124,7 @@ export function AIProvider({ children }: { children: ReactNode }) {
     setMessages((prev) => [...prev, { role: "user", content: text }]);
     setIsStreaming(true);
     let hadTaskMutation = false;
+    let hadDataMutation = false;
 
     try {
       const stream = await api.sendChatMessage(text, { voiceCall: voiceCallActiveRef.current });
@@ -186,11 +198,14 @@ export function AIProvider({ children }: { children: ReactNode }) {
                   // Skip malformed tool call data
                 }
               } else if (event.type === "tool_result") {
-                // Track task mutations for refresh
+                // Track mutations for refresh
                 try {
                   const result = JSON.parse(event.data);
                   if (TASK_MUTATING_TOOLS.has(result.tool)) {
                     hadTaskMutation = true;
+                  }
+                  if (DATA_MUTATING_TOOLS.has(result.tool)) {
+                    hadDataMutation = true;
                   }
                 } catch {
                   // Skip malformed tool result
@@ -199,6 +214,9 @@ export function AIProvider({ children }: { children: ReactNode }) {
                 // Refresh task list after tool round completes
                 if (hadTaskMutation) {
                   refreshTasks();
+                }
+                if (hadDataMutation) {
+                  setDataMutationCount((c) => c + 1);
                 }
                 // Finalize current round — next tokens will start a new message
                 assistantContent = "";
@@ -242,6 +260,9 @@ export function AIProvider({ children }: { children: ReactNode }) {
       // Safety-net refresh after stream ends to catch any missed mutations
       if (hadTaskMutation) {
         refreshTasks();
+      }
+      if (hadDataMutation) {
+        setDataMutationCount((c) => c + 1);
       }
     }
   }, [refreshTasks]);
@@ -304,6 +325,7 @@ export function AIProvider({ children }: { children: ReactNode }) {
         retryLastMessage,
         voiceCallActive,
         setVoiceCallMode,
+        dataMutationCount,
       }}
     >
       {children}

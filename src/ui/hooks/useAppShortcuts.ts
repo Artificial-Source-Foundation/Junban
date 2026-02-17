@@ -7,6 +7,7 @@ export function useAppShortcuts(
   setCommandPaletteOpen: React.Dispatch<React.SetStateAction<boolean>>,
   undo: () => void,
   redo: () => void,
+  setSearchOpen?: React.Dispatch<React.SetStateAction<boolean>>,
 ) {
   useEffect(() => {
     shortcutManager.register({
@@ -33,6 +34,14 @@ export function useAppShortcuts(
       defaultKey: "ctrl+shift+z",
       callback: () => redo(),
     });
+    if (setSearchOpen) {
+      shortcutManager.register({
+        id: "search",
+        description: "Search Tasks",
+        defaultKey: "ctrl+f",
+        callback: () => setSearchOpen((open) => !open),
+      });
+    }
 
     // Load custom bindings from settings
     api.getAppSetting("keyboard_shortcuts").then((val) => {
@@ -50,5 +59,5 @@ export function useAppShortcuts(
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo, setCommandPaletteOpen]);
+  }, [undo, redo, setCommandPaletteOpen, setSearchOpen]);
 }

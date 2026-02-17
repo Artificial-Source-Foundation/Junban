@@ -36,21 +36,43 @@ export class BrowserSTTProvider implements STTProviderPlugin {
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.lang = opts?.language ?? "en-US";
+      // Increase max silence before the API auto-stops (Chrome default is very short)
+      // Not all browsers support this but it doesn't hurt to set it
+      try { (recognition as any).maxAlternatives = 1; } catch { /* ignore */ }
+
+      let resolved = false;
 
       recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
+        if (resolved) return;
+        resolved = true;
+        const transcript = event.results[0]?.[0]?.transcript ?? "";
+        console.log("[BrowserSTT] onresult:", JSON.stringify(transcript));
+        recognition.stop();
         resolve(transcript);
       };
 
       recognition.onerror = (event: any) => {
-        reject(new Error(`Speech recognition error: ${event.error}`));
+        if (resolved) return;
+        const errorType = event.error;
+        console.log("[BrowserSTT] onerror:", errorType);
+        // "no-speech" is normal — user just hasn't spoken yet
+        if (errorType === "no-speech" || errorType === "aborted") {
+          resolved = true;
+          resolve("");
+          return;
+        }
+        resolved = true;
+        reject(new Error(`Speech recognition error: ${errorType}`));
       };
 
       recognition.onend = () => {
-        // If onresult hasn't fired, resolve with empty string
+        if (resolved) return;
+        console.log("[BrowserSTT] onend (no result)");
+        resolved = true;
         resolve("");
       };
 
+      console.log("[BrowserSTT] recognition.start()");
       recognition.start();
     });
   }

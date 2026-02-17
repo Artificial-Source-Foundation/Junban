@@ -393,6 +393,11 @@ ${contextBlock ? contextBlock + "\n" : ""}## Task Tools
 - **snooze_reminder**: Push forward by N minutes (15, 30, 60, 1440).
 - **dismiss_reminder**: Clear without completing.
 
+## Tag/Label Tools
+- **list_tags**: List all existing tags/labels with their colors.
+- **add_tags_to_task**: Add tags to a task without removing existing ones. Creates new tags if needed.
+- **remove_tags_from_task**: Remove specific tags from a task, keeping others intact.
+
 ## Analytical Tools
 - **analyze_completion_patterns**: Habits, productivity patterns, recurring task detection.
 - **analyze_workload**: Weekly load distribution, overloaded days.

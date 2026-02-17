@@ -33,7 +33,7 @@ describe("Default tool registry includes smart tools", () => {
     expect(names).toContain("break_down_task");
     expect(names).toContain("check_duplicates");
     expect(names).toContain("check_overcommitment");
-    expect(registry.size).toBe(22);
+    expect(registry.size).toBe(25);
   });
 });
 

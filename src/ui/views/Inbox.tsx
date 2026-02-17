@@ -1,11 +1,7 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Inbox as InboxIcon } from "lucide-react";
 import { TaskInput } from "../components/TaskInput.js";
 import { TaskList } from "../components/TaskList.js";
-import { QueryBar } from "../components/QueryBar.js";
-import { filterTasks } from "../../core/filters.js";
-import { parseQuery } from "../../core/query-parser.js";
-import type { ParsedQuery } from "../../core/query-parser.js";
 import type { Task } from "../../core/types.js";
 
 interface InboxProps {
@@ -29,8 +25,6 @@ interface InboxProps {
   onReorder?: (orderedIds: string[]) => void;
   onAddSubtask?: (parentId: string, title: string) => void;
   onUpdateDueDate?: (taskId: string, dueDate: string | null) => void;
-  queryText?: string;
-  onQueryTextChange?: (value: string) => void;
   autoFocusTrigger?: number;
 }
 
@@ -45,21 +39,9 @@ export function Inbox({
   onReorder,
   onAddSubtask,
   onUpdateDueDate,
-  queryText,
-  onQueryTextChange,
   autoFocusTrigger,
 }: InboxProps) {
-  const [query, setQuery] = useState<ParsedQuery | null>(null);
   const [inboxViewTimeMs] = useState<number>(() => Date.now());
-
-  useEffect(() => {
-    if (queryText === undefined) return;
-    if (!queryText.trim()) {
-      setQuery(null);
-      return;
-    }
-    setQuery(parseQuery(queryText));
-  }, [queryText]);
 
   const inboxTasks = useMemo(() => {
     const cutoffMs = inboxViewTimeMs - 14 * 24 * 60 * 60 * 1000;
@@ -71,21 +53,10 @@ export function Inbox({
       return completedAtMs >= cutoffMs;
     };
 
-    if (!query) {
-      return tasks.filter(
-        (t) => !t.projectId && (t.status === "pending" || isRecentCompletedTask(t)),
-      );
-    }
-
-    const hasExplicitStatusFilter = Boolean(query.filter.status);
-    const base = tasks.filter((t) => {
-      if (t.projectId) return false;
-      if (hasExplicitStatusFilter) return true;
-      return t.status === "pending" || isRecentCompletedTask(t);
-    });
-
-    return filterTasks(base, query.filter);
-  }, [tasks, query, inboxViewTimeMs]);
+    return tasks.filter(
+      (t) => !t.projectId && (t.status === "pending" || isRecentCompletedTask(t)),
+    );
+  }, [tasks, inboxViewTimeMs]);
 
   return (
     <div>
@@ -95,17 +66,12 @@ export function Inbox({
         <span className="text-sm text-on-surface-muted">{inboxTasks.length} tasks</span>
       </div>
       <TaskInput onSubmit={onCreateTask} autoFocusTrigger={autoFocusTrigger} />
-      <div className="mb-3">
-        <QueryBar value={queryText} onValueChange={onQueryTextChange} onQueryChange={setQuery} />
-      </div>
       <TaskList
         tasks={inboxTasks}
         onToggle={onToggleTask}
         onSelect={onSelectTask}
         selectedTaskId={selectedTaskId}
-        emptyMessage={
-          query ? "No tasks match your query." : "Your inbox is empty. Add a task above!"
-        }
+        emptyMessage="Your inbox is empty. Add a task above!"
         selectedTaskIds={selectedTaskIds}
         onMultiSelect={onMultiSelect}
         onReorder={onReorder}

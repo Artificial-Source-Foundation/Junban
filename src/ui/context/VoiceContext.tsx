@@ -164,12 +164,17 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
 
   const speak = useCallback(
     async (text: string) => {
-      if (!ttsProvider || !settings.ttsEnabled) return;
+      console.log("[VoiceCall:TTS] speak() called — provider:", ttsProvider?.id, "enabled:", settings.ttsEnabled, "textLen:", text.length);
+      if (!ttsProvider || !settings.ttsEnabled) {
+        console.log("[VoiceCall:TTS] speak() SKIPPED — no provider or TTS disabled");
+        return;
+      }
 
       const isBrowserTTS = ttsProvider.id === "browser-tts";
 
       speechCancelledRef.current = false;
       setIsSpeaking(true);
+      console.log("[VoiceCall:TTS] setIsSpeaking(true)");
 
       try {
         // Strip markdown formatting for cleaner speech
@@ -181,12 +186,14 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
           .replace(/\n/g, " ")              // single newlines → spaces
           .trim();
         if (!clean) {
+          console.log("[VoiceCall:TTS] speak() SKIPPED — cleaned text is empty");
           setIsSpeaking(false);
           return;
         }
 
         const maxLen = isBrowserTTS ? 5000 : 2000;
         const truncated = clean.length > maxLen ? clean.slice(0, maxLen) + "..." : clean;
+        console.log("[VoiceCall:TTS] speaking:", truncated.slice(0, 80) + (truncated.length > 80 ? "..." : ""));
 
         if (ttsProvider instanceof BrowserTTSProvider) {
           await ttsProvider.speakDirect(truncated, { voice: settings.ttsVoice || undefined });
@@ -199,9 +206,11 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
             await playAudioBuffer(buffer);
           }
         }
+        console.log("[VoiceCall:TTS] speak() completed successfully");
       } catch (err) {
-        console.warn("[TTS] Speech synthesis failed:", err);
+        console.warn("[VoiceCall:TTS] Speech synthesis failed:", err);
       } finally {
+        console.log("[VoiceCall:TTS] setIsSpeaking(false)");
         setIsSpeaking(false);
       }
     },

@@ -185,6 +185,7 @@ export async function sendChatMessage(message: string, options?: { voiceCall?: b
       const toolServices = {
         taskService: svc.taskService,
         projectService: svc.projectService,
+        tagService: svc.tagService,
       };
 
       const isLocalProvider = providerSetting.value === "ollama" || providerSetting.value === "lmstudio";
@@ -264,7 +265,7 @@ export async function getChatMessages(): Promise<AIChatMessage[]> {
 
           session = svc.chatManager.restoreSession(
             executor,
-            { taskService: svc.taskService, projectService: svc.projectService },
+            { taskService: svc.taskService, projectService: svc.projectService, tagService: svc.tagService },
             svc.storage,
             {
               toolRegistry: svc.toolRegistry,

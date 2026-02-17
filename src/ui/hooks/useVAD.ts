@@ -39,13 +39,16 @@ export function useVAD({ onSpeechStart, onSpeechEnd, enabled, deviceId }: UseVAD
     if (vadRef.current) return;
 
     try {
+      console.log("[VAD] Loading @ricky0123/vad-web...");
       const { MicVAD } = await import("@ricky0123/vad-web");
       const vadOptions: any = {
         onSpeechStart: () => {
+          console.log("[VAD] Speech started");
           setIsSpeaking(true);
           onSpeechStartRef.current?.();
         },
         onSpeechEnd: (audio: Float32Array) => {
+          console.log("[VAD] Speech ended, audio samples:", audio.length);
           setIsSpeaking(false);
           const wavBlob = float32ToWav(audio, 16000);
           onSpeechEndRef.current?.(wavBlob);
@@ -61,7 +64,9 @@ export function useVAD({ onSpeechStart, onSpeechEnd, enabled, deviceId }: UseVAD
       vadRef.current = vad;
       vad.start();
       setIsListening(true);
-    } catch {
+      console.log("[VAD] Started successfully");
+    } catch (err) {
+      console.warn("[VAD] Failed to initialize:", err);
       setIsSupported(false);
     }
   }, []);
