@@ -18,8 +18,14 @@ describe("BUILT_IN_THEMES", () => {
     expect(dark?.type).toBe("dark");
   });
 
-  it("has exactly 2 built-in themes", () => {
-    expect(BUILT_IN_THEMES).toHaveLength(2);
+  it("has exactly 3 built-in themes", () => {
+    expect(BUILT_IN_THEMES).toHaveLength(3);
+  });
+
+  it("nord theme has type dark", () => {
+    const nord = BUILT_IN_THEMES.find((t) => t.id === "nord");
+    expect(nord?.type).toBe("dark");
+    expect(nord?.name).toBe("Nord");
   });
 
   it("all themes have required fields", () => {

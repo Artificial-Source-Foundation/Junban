@@ -5,6 +5,7 @@ import type { Task, Project } from "../../core/types.js";
 interface CompletedProps {
   tasks: Task[];
   projects: Project[];
+  onSelectTask?: (id: string) => void;
 }
 
 function formatGroupDate(dateStr: string): string {
@@ -24,7 +25,7 @@ function formatTime(isoStr: string): string {
   });
 }
 
-export function Completed({ tasks, projects }: CompletedProps) {
+export function Completed({ tasks, projects, onSelectTask }: CompletedProps) {
   const [filterProjectId, setFilterProjectId] = useState<string | null>(null);
 
   const projectMap = useMemo(() => {
@@ -107,7 +108,20 @@ export function Completed({ tasks, projects }: CompletedProps) {
                   return (
                     <div
                       key={task.id}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-secondary transition-colors"
+                      role={onSelectTask ? "button" : undefined}
+                      tabIndex={onSelectTask ? 0 : undefined}
+                      onClick={onSelectTask ? () => onSelectTask(task.id) : undefined}
+                      onKeyDown={onSelectTask ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onSelectTask(task.id);
+                        }
+                      } : undefined}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                        onSelectTask
+                          ? "cursor-pointer hover:bg-surface-secondary hover:ring-1 hover:ring-accent/30"
+                          : "hover:bg-surface-secondary"
+                      }`}
                     >
                       <CheckCircle2 size={18} className="text-success flex-shrink-0" />
                       <span className="flex-1 text-sm text-on-surface-muted line-through">

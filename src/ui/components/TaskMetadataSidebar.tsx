@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Calendar, Tag, Bell, Repeat, Trash2, X } from "lucide-react";
+import { Calendar, Tag, Bell, Repeat, Trash2, X, Circle, CheckCircle2, XCircle } from "lucide-react";
 import type { Task, UpdateTaskInput } from "../../core/types.js";
 import { DatePicker } from "./DatePicker.js";
 import { TagsInput } from "./TagsInput.js";
@@ -30,11 +30,9 @@ export function TaskMetadataSidebar({
   const { settings } = useGeneralSettings();
   const currentRemindAt = (task as any).remindAt ?? null;
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showRemindAtPicker, setShowRemindAtPicker] = useState(false);
   const [showRecurrencePicker, setShowRecurrencePicker] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [remindAtInput, setRemindAtInput] = useState(
-    currentRemindAt ? currentRemindAt.slice(0, 16) : "",
-  );
 
   // Build tag name → color lookup for colored chips
   const tagColors: Record<string, string> = {};
@@ -48,9 +46,8 @@ export function TaskMetadataSidebar({
   if (task.id !== trackedTaskId) {
     setTrackedTaskId(task.id);
     setShowDatePicker(false);
+    setShowRemindAtPicker(false);
     setShowRecurrencePicker(false);
-    const remind = (task as any).remindAt ?? null;
-    setRemindAtInput(remind ? remind.slice(0, 16) : "");
   }
 
   const handlePriorityClick = (priority: number) => {
@@ -85,21 +82,62 @@ export function TaskMetadataSidebar({
     [task.id, onUpdate],
   );
 
-  const handleRemindAtBlur = () => {
-    const currentVal = currentRemindAt ? currentRemindAt.slice(0, 16) : "";
-    if (remindAtInput === currentVal) return;
+  const handleRemindAtChange = useCallback(
+    (date: string | null) => {
+      onUpdate(task.id, { remindAt: date ? new Date(date).toISOString() : null } as any);
+      setShowRemindAtPicker(false);
+    },
+    [task.id, onUpdate],
+  );
 
-    if (!remindAtInput) {
-      onUpdate(task.id, { remindAt: null } as any);
-      return;
+  const handleStatusChange = (newStatus: "pending" | "completed" | "cancelled") => {
+    if (newStatus === task.status) return;
+    const updates: Record<string, unknown> = { status: newStatus };
+    if (newStatus === "pending") {
+      updates.completedAt = null;
+    } else if (newStatus === "completed" && !task.completedAt) {
+      updates.completedAt = new Date().toISOString();
     }
-
-    const isoString = new Date(remindAtInput).toISOString();
-    onUpdate(task.id, { remindAt: isoString } as any);
+    onUpdate(task.id, updates as UpdateTaskInput);
   };
+
+  const STATUS_OPTIONS = [
+    { value: "pending" as const, label: "Pending", icon: Circle, color: "text-on-surface-muted" },
+    { value: "completed" as const, label: "Completed", icon: CheckCircle2, color: "text-success" },
+    { value: "cancelled" as const, label: "Cancelled", icon: XCircle, color: "text-error" },
+  ];
 
   return (
     <div className="w-full border-t md:w-64 md:border-t-0 md:border-l border-border overflow-auto p-4 md:p-5 space-y-5 flex-shrink-0">
+      {/* Status */}
+      <div>
+        <label className="text-xs font-medium text-on-surface-muted uppercase tracking-wider">
+          Status
+        </label>
+        <div className="flex gap-1.5 mt-1.5">
+          {STATUS_OPTIONS.map((opt) => {
+            const Icon = opt.icon;
+            const isActive = task.status === opt.value;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => handleStatusChange(opt.value)}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                  isActive
+                    ? `bg-surface-tertiary ${opt.color} ring-1 ring-current/20`
+                    : "bg-surface-tertiary text-on-surface-muted hover:text-on-surface-secondary"
+                }`}
+              >
+                <Icon size={12} />
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="border-t border-border" />
+
       {/* Due Date */}
       <div className="relative">
         <label className="text-xs font-medium text-on-surface-muted uppercase tracking-wider flex items-center gap-1.5">
@@ -175,31 +213,35 @@ export function TaskMetadataSidebar({
       <div className="border-t border-border" />
 
       {/* Reminder */}
-      <div>
+      <div className="relative">
         <label className="text-xs font-medium text-on-surface-muted uppercase tracking-wider flex items-center gap-1.5">
           <Bell size={12} /> Reminder
         </label>
-        <div className="mt-1.5 relative">
-          <input
-            type="datetime-local"
-            value={remindAtInput}
-            onChange={(e) => setRemindAtInput(e.target.value)}
-            onBlur={handleRemindAtBlur}
-            className="w-full px-2 py-1.5 text-xs bg-surface-secondary border border-border rounded-md text-on-surface focus:outline-none focus:ring-1 focus:ring-accent"
+        <button
+          onClick={() => setShowRemindAtPicker((prev) => !prev)}
+          className="mt-1.5 w-full px-2 py-1.5 text-sm text-left rounded-md text-on-surface hover:bg-surface-tertiary transition-colors"
+        >
+          {currentRemindAt
+            ? new Date(currentRemindAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+            : <span className="text-on-surface-muted">No reminder</span>}
+        </button>
+        {currentRemindAt && (
+          <button
+            onClick={() => handleRemindAtChange(null)}
+            className="absolute top-0 right-0 text-on-surface-muted hover:text-on-surface transition-colors p-0.5"
+            title="Clear reminder"
+          >
+            <X size={12} />
+          </button>
+        )}
+        {showRemindAtPicker && (
+          <DatePicker
+            value={currentRemindAt}
+            onChange={handleRemindAtChange}
+            showTime={true}
+            onClose={() => setShowRemindAtPicker(false)}
           />
-          {remindAtInput && (
-            <button
-              onClick={() => {
-                setRemindAtInput("");
-                onUpdate(task.id, { remindAt: null } as any);
-              }}
-              className="absolute top-0 right-0 -mt-5 text-on-surface-muted hover:text-on-surface transition-colors p-0.5"
-              title="Clear reminder"
-            >
-              <X size={12} />
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Recurrence */}

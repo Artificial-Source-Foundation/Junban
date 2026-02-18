@@ -137,25 +137,56 @@ export async function triggerMicPermissionPrompt(timeoutMs = 8000): Promise<bool
   }
 }
 
-/** Play an ArrayBuffer of audio data through the Web Audio API. Returns a promise that resolves when playback ends. */
-export function playAudioBuffer(buffer: ArrayBuffer): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const audioCtx = new AudioContext();
+/** Cancellable audio playback handle. */
+export interface AudioPlayback {
+  promise: Promise<void>;
+  cancel: () => void;
+}
+
+/** Play an ArrayBuffer of audio data through the Web Audio API. Returns a cancellable playback handle. */
+export function playAudioBuffer(buffer: ArrayBuffer): AudioPlayback {
+  let source: AudioBufferSourceNode | null = null;
+  let audioCtx: AudioContext | null = null;
+  let cancelled = false;
+
+  const promise = new Promise<void>((resolve, reject) => {
+    audioCtx = new AudioContext();
     audioCtx
       .decodeAudioData(buffer.slice(0))
       .then((audioBuffer) => {
-        const source = audioCtx.createBufferSource();
+        if (cancelled) {
+          audioCtx?.close();
+          resolve();
+          return;
+        }
+        source = audioCtx!.createBufferSource();
         source.buffer = audioBuffer;
-        source.connect(audioCtx.destination);
+        source.connect(audioCtx!.destination);
         source.onended = () => {
-          audioCtx.close();
+          audioCtx?.close();
           resolve();
         };
         source.start(0);
       })
       .catch((err) => {
-        audioCtx.close();
+        audioCtx?.close();
         reject(err);
       });
   });
+
+  const cancel = () => {
+    cancelled = true;
+    try {
+      source?.stop();
+    } catch {
+      // already stopped
+    }
+    try {
+      audioCtx?.close();
+    } catch {
+      // already closed
+    }
+  };
+
+  return { promise, cancel };
 }

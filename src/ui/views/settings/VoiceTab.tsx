@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Mic, RefreshCw, AlertCircle, CheckCircle2, Download, Loader2 } from "lucide-react";
+import { Mic, RefreshCw, AlertCircle, CheckCircle2, Download, Loader2, Play } from "lucide-react";
 import { useVoiceContext, type VoiceMode, type VoiceSettings } from "../../context/VoiceContext.js";
 import {
   enumerateMicrophones,
@@ -10,7 +10,8 @@ import type { VoiceProviderRegistry } from "../../../ai/voice/registry.js";
 import type { ModelStatus } from "../../../ai/voice/adapters/whisper-local-stt.js";
 
 export function VoiceTab() {
-  const { settings, updateSettings, registry, ttsVoices, ttsModels } = useVoiceContext();
+  const voice = useVoiceContext();
+  const { settings, updateSettings, registry, ttsVoices, ttsModels } = voice;
 
   const sttProviders = registry.listSTT();
   const ttsProviders = registry.listTTS();
@@ -115,18 +116,30 @@ export function VoiceTab() {
               <label className="block text-xs font-medium text-on-surface-secondary mb-1">
                 Voice
               </label>
-              <select
-                value={settings.ttsVoice}
-                onChange={(e) => updateSettings({ ttsVoice: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface text-on-surface"
-              >
-                <option value="">Default</option>
-                {ttsVoices.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2">
+                <select
+                  value={settings.ttsVoice}
+                  onChange={(e) => updateSettings({ ttsVoice: e.target.value })}
+                  className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-surface text-on-surface"
+                >
+                  <option value="">Default</option>
+                  {ttsVoices.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => voice.speak("Hello, this is a voice preview.")}
+                  disabled={!settings.ttsEnabled || voice.isSpeaking}
+                  title="Preview voice"
+                  className="shrink-0 flex items-center gap-1 px-3 py-2 text-sm border border-border rounded-lg bg-surface text-on-surface hover:bg-surface-secondary transition-colors disabled:opacity-50"
+                >
+                  <Play size={14} />
+                  Preview
+                </button>
+              </div>
             </div>
           )}
 

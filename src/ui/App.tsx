@@ -262,6 +262,11 @@ function AppContent() {
     clearSelection,
   } = useMultiSelect(visibleTasks.map((t) => t.id));
 
+  // ── Clear multi-selection on navigation ──
+  useEffect(() => {
+    clearSelection();
+  }, [currentView, selectedProjectId, selectedPluginViewId, clearSelection]);
+
   // ── Bulk actions ──
   const {
     handleBulkComplete,
@@ -482,7 +487,7 @@ function AppContent() {
           />
         );
       case "completed":
-        return <Completed tasks={state.tasks} projects={projects} />;
+        return <Completed tasks={state.tasks} projects={projects} onSelectTask={handleSelectTask} />;
       case "plugin-store":
         return (
           <PluginStore

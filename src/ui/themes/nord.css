@@ -1,0 +1,22 @@
+/* ASF Saydo — Nord Theme (overrides dark theme tokens with Nord palette) */
+
+.nord {
+  --color-surface: #2E3440;
+  --color-surface-secondary: #3B4252;
+  --color-surface-tertiary: #434C5E;
+  --color-on-surface: #ECEFF4;
+  --color-on-surface-secondary: #D8DEE9;
+  --color-on-surface-muted: #4C566A;
+  --color-border: rgba(216, 222, 233, 0.1);
+  --color-accent: #88C0D0;
+  --color-accent-hover: #81A1C1;
+  --color-success: #A3BE8C;
+  --color-warning: #EBCB8B;
+  --color-error: #BF616A;
+  --color-priority-1: #BF616A;
+  --color-priority-2: #EBCB8B;
+  --color-priority-3: #B48EAD;
+  --color-priority-4: #4C566A;
+  --color-glass: rgba(46, 52, 64, 0.7);
+  --color-glass-border: rgba(216, 222, 233, 0.06);
+}

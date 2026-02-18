@@ -59,6 +59,9 @@ export class ThemeManager {
   }
 
   private applyTheme(): void {
+    // Always remove variant classes first (e.g. "nord")
+    document.documentElement.classList.remove("nord");
+
     if (this.currentTheme === "system") {
       if (this.systemThemeQuery.matches) {
         document.documentElement.classList.add("dark");
@@ -75,6 +78,11 @@ export class ThemeManager {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
+    }
+
+    // Add variant class for themes that override the base dark/light tokens
+    if (theme.id !== "light" && theme.id !== "dark") {
+      document.documentElement.classList.add(theme.id);
     }
   }
 }

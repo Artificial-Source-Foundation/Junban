@@ -97,8 +97,9 @@ export function Today({
 
       <TaskInput
         onSubmit={onCreateTask}
-        placeholder='Add a task for today... (e.g., "buy milk today p1")'
+        placeholder='Add a task for today... (e.g., "buy milk p1")'
         autoFocusTrigger={autoFocusTrigger}
+        defaultDueDate={new Date(today + "T00:00:00")}
       />
 
       {/* Overdue Section */}

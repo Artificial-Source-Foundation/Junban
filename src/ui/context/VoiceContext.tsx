@@ -16,7 +16,7 @@ import { VoiceProviderRegistry } from "../../ai/voice/registry.js";
 import { createDefaultVoiceRegistry } from "../../ai/voice/provider.js";
 import type { STTProviderPlugin, TTSProviderPlugin, TTSModel, Voice } from "../../ai/voice/interface.js";
 import { BrowserTTSProvider } from "../../ai/voice/adapters/browser-tts.js";
-import { playAudioBuffer } from "../../ai/voice/audio-utils.js";
+import { playAudioBuffer, type AudioPlayback } from "../../ai/voice/audio-utils.js";
 
 export type VoiceMode = "off" | "push-to-talk" | "vad";
 
@@ -95,6 +95,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
   const [ttsVoices, setTTSVoices] = useState<Voice[]>([]);
   const [ttsModels, setTTSModels] = useState<TTSModel[]>([]);
   const speechCancelledRef = useRef(false);
+  const playbackCancelRef = useRef<(() => void) | null>(null);
 
   // Build registry whenever API keys change
   const [registry, setRegistry] = useState<VoiceProviderRegistry>(() =>
@@ -172,6 +173,9 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
 
       const isBrowserTTS = ttsProvider.id === "browser-tts";
 
+      // Cancel any in-progress playback before starting new speech
+      playbackCancelRef.current?.();
+      playbackCancelRef.current = null;
       speechCancelledRef.current = false;
       setIsSpeaking(true);
       console.log("[VoiceCall:TTS] setIsSpeaking(true)");
@@ -203,7 +207,10 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
             model: settings.ttsModel || undefined,
           });
           if (!speechCancelledRef.current && buffer.byteLength > 0) {
-            await playAudioBuffer(buffer);
+            const playback = playAudioBuffer(buffer);
+            playbackCancelRef.current = playback.cancel;
+            await playback.promise;
+            playbackCancelRef.current = null;
           }
         }
         console.log("[VoiceCall:TTS] speak() completed successfully");
@@ -219,6 +226,8 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
 
   const cancelSpeech = useCallback(() => {
     speechCancelledRef.current = true;
+    playbackCancelRef.current?.();
+    playbackCancelRef.current = null;
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }

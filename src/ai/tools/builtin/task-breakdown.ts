@@ -55,6 +55,7 @@ export function registerTaskBreakdownTool(registry: ToolRegistry): void {
       for (const title of subtaskTitles) {
         const task = await ctx.taskService.create({
           title,
+          dueTime: false,
           parentId: taskId,
           tags: copyFields ? parent.tags.map((t) => t.name) : [],
           ...(copyFields

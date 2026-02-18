@@ -23,6 +23,7 @@ export function useTaskHandlers(selectedProjectId: string | null) {
     dueTime: boolean;
     recurrence?: string | null;
   }) => {
+    if (!parsed.title.trim()) return;
     await createTask({
       title: parsed.title,
       priority: parsed.priority,

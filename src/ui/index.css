@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./themes/light.css";
 @import "./themes/dark.css";
+@import "./themes/nord.css";
 
 @theme {
   --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;

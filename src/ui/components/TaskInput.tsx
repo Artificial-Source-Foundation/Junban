@@ -10,9 +10,10 @@ interface TaskInputProps {
   onSubmit: (input: ReturnType<typeof parseTask>) => void;
   placeholder?: string;
   autoFocusTrigger?: number;
+  defaultDueDate?: Date;
 }
 
-export function TaskInput({ onSubmit, placeholder, autoFocusTrigger }: TaskInputProps) {
+export function TaskInput({ onSubmit, placeholder, autoFocusTrigger, defaultDueDate }: TaskInputProps) {
   const [value, setValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const { settings } = useGeneralSettings();
@@ -36,6 +37,10 @@ export function TaskInput({ onSubmit, placeholder, autoFocusTrigger }: TaskInput
     // Apply default priority from settings if user didn't specify one
     if (parsed.priority === null && settings.default_priority !== "none") {
       parsed.priority = PRIORITY_MAP[settings.default_priority] ?? null;
+    }
+    // Apply default due date if parser found none
+    if (parsed.dueDate === null && defaultDueDate) {
+      parsed.dueDate = defaultDueDate;
     }
     onSubmit(parsed);
     setValue("");

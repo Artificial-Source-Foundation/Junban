@@ -9,4 +9,5 @@ export interface Theme {
 export const BUILT_IN_THEMES: Theme[] = [
   { id: "light", name: "Light", type: "light" },
   { id: "dark", name: "Dark", type: "dark" },
+  { id: "nord", name: "Nord", type: "dark" },
 ];
