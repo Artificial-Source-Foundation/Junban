@@ -567,7 +567,7 @@ function AppContent() {
             onOpenProjectModal={() => setProjectModalOpen(true)}
           />
         </div>
-        <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto p-3 md:p-6">
+        <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto p-3 md:p-6 flex flex-col">
           <BulkActionBar
             selectedCount={multiSelectedIds.size}
             onCompleteAll={handleBulkComplete}
@@ -585,7 +585,7 @@ function AppContent() {
             </p>
           ) : (
             <ErrorBoundary>
-              <div key={`${currentView}-${selectedProjectId ?? ""}-${selectedPluginViewId ?? ""}`} className="animate-fade-in">
+              <div key={`${currentView}-${selectedProjectId ?? ""}-${selectedPluginViewId ?? ""}`} className="animate-fade-in flex-1 flex flex-col">
                 {(currentView === "project" || currentView === "task") && (
                   <Breadcrumb
                     items={(() => {

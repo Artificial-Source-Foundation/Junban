@@ -1,6 +1,5 @@
-import { useMemo, useCallback } from "react";
-import { CalendarRange, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useCallback, useState } from "react";
+import { CalendarRange, ChevronLeft, ChevronRight, Circle, CheckCircle2 } from "lucide-react";
 import { toDateKey } from "../../utils/format-date.js";
 import type { Task, Project } from "../../core/types.js";
 
@@ -15,7 +14,7 @@ interface CalendarProps {
 function getWeekDays(startDate: Date): Date[] {
   const days: Date[] = [];
   const start = new Date(startDate);
-  start.setDate(start.getDate() - start.getDay()); // Start from Sunday
+  start.setDate(start.getDate() - start.getDay());
   for (let i = 0; i < 7; i++) {
     const day = new Date(start);
     day.setDate(start.getDate() + i);
@@ -24,14 +23,17 @@ function getWeekDays(startDate: Date): Date[] {
   return days;
 }
 
-function formatDayHeader(date: Date): string {
-  return date.toLocaleDateString("en-US", { weekday: "short", day: "numeric" });
-}
+const PRIORITY_COLORS: Record<number, string> = {
+  1: "border-l-red-500",
+  2: "border-l-amber-500",
+  3: "border-l-accent",
+};
 
 export function Calendar({
   tasks,
   projects,
   onSelectTask,
+  onToggleTask,
 }: CalendarProps) {
   const [weekOffset, setWeekOffset] = useState(0);
 
@@ -67,6 +69,12 @@ export function Calendar({
     return map;
   }, [tasks, weekDays]);
 
+  const totalTasksThisWeek = useMemo(() => {
+    let count = 0;
+    for (const arr of tasksByDay.values()) count += arr.length;
+    return count;
+  }, [tasksByDay]);
+
   const handlePrevWeek = useCallback(() => setWeekOffset((o) => o - 1), []);
   const handleNextWeek = useCallback(() => setWeekOffset((o) => o + 1), []);
   const handleToday = useCallback(() => setWeekOffset(0), []);
@@ -76,48 +84,89 @@ export function Calendar({
     const last = weekDays[6];
     const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
     if (first.getFullYear() !== last.getFullYear()) {
-      return `${first.toLocaleDateString("en-US", { ...opts, year: "numeric" })} - ${last.toLocaleDateString("en-US", { ...opts, year: "numeric" })}`;
+      return `${first.toLocaleDateString("en-US", { ...opts, year: "numeric" })} – ${last.toLocaleDateString("en-US", { ...opts, year: "numeric" })}`;
     }
     if (first.getMonth() !== last.getMonth()) {
-      return `${first.toLocaleDateString("en-US", opts)} - ${last.toLocaleDateString("en-US", opts)}`;
+      return `${first.toLocaleDateString("en-US", opts)} – ${last.toLocaleDateString("en-US", opts)}`;
     }
-    return `${first.toLocaleDateString("en-US", { month: "long" })} ${first.getDate()} - ${last.getDate()}, ${first.getFullYear()}`;
+    return `${first.toLocaleDateString("en-US", { month: "long" })} ${first.getDate()}–${last.getDate()}, ${first.getFullYear()}`;
   }, [weekDays]);
 
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-4">
-        <CalendarRange size={24} className="text-accent" />
-        <h1 className="text-xl md:text-2xl font-bold text-on-surface">Calendar</h1>
+    <div className="flex flex-col h-full -m-3 md:-m-6">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-border bg-surface shrink-0">
+        <div className="flex items-center gap-3">
+          <CalendarRange size={22} className="text-accent" />
+          <h1 className="text-lg font-semibold text-on-surface">{weekLabel}</h1>
+          {totalTasksThisWeek > 0 && (
+            <span className="text-xs text-on-surface-muted bg-surface-secondary px-2 py-0.5 rounded-full">
+              {totalTasksThisWeek} task{totalTasksThisWeek !== 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handlePrevWeek}
+            aria-label="Previous week"
+            className="p-1.5 rounded-lg hover:bg-surface-secondary transition-colors text-on-surface-muted hover:text-on-surface"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            onClick={handleToday}
+            className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
+              weekOffset === 0
+                ? "bg-accent/10 text-accent"
+                : "hover:bg-surface-secondary text-on-surface-muted hover:text-on-surface"
+            }`}
+          >
+            Today
+          </button>
+          <button
+            onClick={handleNextWeek}
+            aria-label="Next week"
+            className="p-1.5 rounded-lg hover:bg-surface-secondary transition-colors text-on-surface-muted hover:text-on-surface"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
       </div>
 
-      {/* Week navigation */}
-      <div className="flex items-center gap-2 mb-4">
-        <button
-          onClick={handlePrevWeek}
-          aria-label="Previous week"
-          className="p-1.5 rounded-lg hover:bg-surface-secondary transition-colors text-on-surface-muted hover:text-on-surface"
-        >
-          <ChevronLeft size={18} />
-        </button>
-        <button
-          onClick={handleToday}
-          className="px-3 py-1 text-sm font-medium rounded-lg hover:bg-surface-secondary transition-colors text-on-surface-muted hover:text-on-surface"
-        >
-          Today
-        </button>
-        <button
-          onClick={handleNextWeek}
-          aria-label="Next week"
-          className="p-1.5 rounded-lg hover:bg-surface-secondary transition-colors text-on-surface-muted hover:text-on-surface"
-        >
-          <ChevronRight size={18} />
-        </button>
-        <span className="text-sm font-medium text-on-surface ml-2">{weekLabel}</span>
+      {/* Day headers */}
+      <div className="grid grid-cols-7 border-b border-border bg-surface shrink-0">
+        {weekDays.map((day) => {
+          const key = toDateKey(day);
+          const isToday = key === today;
+          const weekday = day.toLocaleDateString("en-US", { weekday: "short" });
+          const dayNum = day.getDate();
+
+          return (
+            <div
+              key={key}
+              className={`flex flex-col items-center py-2.5 ${
+                isToday ? "bg-accent/5" : ""
+              }`}
+            >
+              <span className={`text-[10px] uppercase tracking-wider font-medium ${
+                isToday ? "text-accent" : "text-on-surface-muted"
+              }`}>
+                {weekday}
+              </span>
+              <span className={`text-lg font-semibold mt-0.5 w-8 h-8 flex items-center justify-center rounded-full ${
+                isToday
+                  ? "bg-accent text-white"
+                  : "text-on-surface"
+              }`}>
+                {dayNum}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Week grid */}
-      <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden border border-border">
+      {/* Week grid — fills remaining space */}
+      <div className="grid grid-cols-7 flex-1 min-h-0 overflow-auto">
         {weekDays.map((day) => {
           const key = toDateKey(day);
           const dayTasks = tasksByDay.get(key) ?? [];
@@ -126,38 +175,68 @@ export function Calendar({
           return (
             <div
               key={key}
-              className={`min-h-[120px] p-2 bg-surface ${isToday ? "bg-accent/5" : ""}`}
+              className={`border-r border-border last:border-r-0 p-1.5 overflow-y-auto ${
+                isToday ? "bg-accent/[0.03]" : ""
+              }`}
             >
-              <div
-                className={`text-xs font-medium mb-1.5 ${
-                  isToday ? "text-accent font-semibold" : "text-on-surface-muted"
-                }`}
-              >
-                {formatDayHeader(day)}
-              </div>
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 {dayTasks.map((task) => {
                   const project = task.projectId ? projectMap.get(task.projectId) : null;
+                  const isCompleted = task.status === "completed";
+                  const priorityBorder = !isCompleted && task.priority
+                    ? PRIORITY_COLORS[task.priority] ?? "border-l-transparent"
+                    : "border-l-transparent";
+
                   return (
-                    <button
+                    <div
                       key={task.id}
-                      onClick={() => onSelectTask(task.id)}
-                      className={`w-full text-left text-xs px-1.5 py-1 rounded transition-colors truncate ${
-                        task.status === "completed"
-                          ? "line-through text-on-surface-muted"
-                          : task.priority && task.priority <= 2
-                            ? "bg-error/10 text-on-surface hover:bg-error/20"
-                            : "bg-surface-secondary text-on-surface hover:bg-surface-tertiary"
+                      className={`group relative rounded-md border-l-2 ${priorityBorder} transition-all ${
+                        isCompleted
+                          ? "opacity-50"
+                          : "hover:shadow-sm"
                       }`}
                     >
-                      <span className="truncate">{task.title}</span>
-                      {project && (
-                        <span
-                          className="ml-1 inline-block w-1.5 h-1.5 rounded-full"
-                          style={{ backgroundColor: project.color }}
-                        />
-                      )}
-                    </button>
+                      <button
+                        onClick={() => onSelectTask(task.id)}
+                        className={`w-full text-left text-[11px] leading-tight px-1.5 py-1.5 rounded-r-md transition-colors ${
+                          isCompleted
+                            ? "bg-surface-secondary/50"
+                            : "bg-surface-secondary hover:bg-surface-tertiary"
+                        }`}
+                      >
+                        <div className="flex items-start gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onToggleTask(task.id);
+                            }}
+                            className="shrink-0 mt-px text-on-surface-muted hover:text-accent transition-colors"
+                          >
+                            {isCompleted ? (
+                              <CheckCircle2 size={12} className="text-accent" />
+                            ) : (
+                              <Circle size={12} />
+                            )}
+                          </button>
+                          <span className={`line-clamp-2 ${
+                            isCompleted ? "line-through text-on-surface-muted" : "text-on-surface"
+                          }`}>
+                            {task.title}
+                          </span>
+                        </div>
+                        {project && (
+                          <div className="flex items-center gap-1 mt-0.5 ml-4">
+                            <span
+                              className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                              style={{ backgroundColor: project.color }}
+                            />
+                            <span className="text-[10px] text-on-surface-muted truncate">
+                              {project.name}
+                            </span>
+                          </div>
+                        )}
+                      </button>
+                    </div>
                   );
                 })}
               </div>
