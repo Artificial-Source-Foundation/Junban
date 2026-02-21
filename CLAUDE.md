@@ -279,16 +279,38 @@ Plugin Discovery → Manifest Validation → Sandbox Creation → Lifecycle Hook
 
 ## Documentation
 
+See [AGENTS.md](AGENTS.md) for a quick-start guide on navigating the codebase with AI assistance.
+
 ```
 docs/
 ├── README.md                        # Vision, design principles, why Saydo exists
+├── frontend/                        # File-by-file frontend reference
+│   ├── FILES.md                     # Master index of all 82 UI files
+│   ├── COMPONENTS.md                # 26 components: props, deps, usage
+│   ├── VIEWS.md                     # 10 views + 11 settings tabs
+│   ├── CONTEXT.md                   # 6 React contexts with state/functions
+│   ├── HOOKS.md                     # 12 custom hooks with params/returns
+│   ├── THEMES.md                    # Theme system, CSS tokens, adding themes
+│   ├── SHORTCUTS.md                 # ShortcutManager, all keybindings
+│   └── API_LAYER.md                 # 8 API modules, REST endpoints
+├── backend/                         # File-by-file backend reference
+│   ├── FILES.md                     # Master index of all 85 non-UI files
+│   ├── CORE.md                      # Task/project/tag services, events, undo
+│   ├── DATABASE.md                  # 8 tables, storage abstraction, migrations
+│   ├── PARSER.md                    # NLP pipeline, grammar rules, examples
+│   ├── AI.md                        # 29 files: providers, pipeline, 25 tools
+│   ├── VOICE.md                     # 14 files: STT/TTS adapters, audio utils
+│   ├── CLI.md                       # 5 CLI commands with usage examples
+│   ├── PLUGINS.md                   # 10 files: loader, sandbox, API, registry
+│   └── UTILS.md                     # Utilities + config modules
 ├── development/                     # Developer guides
-│   ├── ARCHITECTURE.md              # Modules, data flow, tech decisions
+│   ├── ARCHITECTURE.md              # High-level system design & data flow
 │   ├── SETUP_LOCAL.md               # Step-by-step local development
 │   ├── CONTRIBUTING.md              # How to contribute
-│   └── SECURITY.md                  # Threat model, plugin sandboxing
+│   ├── SECURITY.md                  # Threat model, plugin sandboxing
+│   └── UX_REFERENCES.md            # Design inspiration & UX patterns
 ├── plugins/                         # Plugin documentation
-│   ├── API.md                       # Plugin API reference
+│   ├── API.md                       # Plugin API reference (for authors)
 │   └── EXAMPLES.md                  # Example plugin walkthroughs
 └── planning/                        # Project planning
     ├── ROADMAP.md                   # Milestones and future plans

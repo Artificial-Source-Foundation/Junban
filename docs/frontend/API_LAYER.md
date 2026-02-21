@@ -1,0 +1,264 @@
+# Frontend API Layer Reference
+
+> Every file in `src/ui/api/` -- the bridge between the UI and backend services.
+
+---
+
+## Architecture Overview
+
+The API layer provides a unified interface for the React frontend to interact with backend services. Every function supports two execution modes:
+
+1. **Server mode** (default) -- makes HTTP `fetch` calls to the Express REST API at `/api/*`
+2. **Tauri mode** -- calls backend services directly in-process via lazy-loaded `bootstrapWeb` services
+
+The mode is determined by `isTauri()` from `utils/tauri.js`, which checks for the Tauri runtime. This dual-mode architecture allows the same React code to run both as a web app (with a server) and as a desktop app (with embedded services).
+
+```
+src/ui/api/
+  index.ts       -- Barrel export combining all modules into a single `api` object
+  helpers.ts     -- Shared utilities (isTauri, BASE URL, response handlers, service loader)
+  tasks.ts       -- Task CRUD, bulk operations, tree operations, import
+  projects.ts    -- Project CRUD, tag listing
+  templates.ts   -- Template CRUD and instantiation
+  plugins.ts     -- Plugin management, commands, UI registry, store
+  ai.ts          -- AI provider config, chat messaging with SSE, model discovery
+  settings.ts    -- App settings, storage info, data export
+```
+
+---
+
+## index.ts
+
+- **Path:** `src/ui/api/index.ts` (27 lines)
+- **Purpose:** Barrel file that imports all API modules and re-exports them as a single `api` object plus type re-exports.
+- **Key Exports:**
+  - `api` -- unified API object with all functions spread from submodules
+  - Type re-exports: `PluginInfo`, `SettingDefinitionInfo`, `PluginCommandInfo`, `StatusBarItemInfo`, `PanelInfo`, `ViewInfo`, `StorePluginInfo`, `AIConfigInfo`, `AIChatMessage`, `AIProviderInfo`, `ModelDiscoveryInfo`
+- **Used By:** Every component that needs to call the backend
+
+---
+
+## helpers.ts
+
+- **Path:** `src/ui/api/helpers.ts` (44 lines)
+- **Purpose:** Shared utilities for all API modules.
+- **Key Exports:**
+  - `isTauri` -- re-exported from `utils/tauri.js`
+  - `BASE: string` -- base URL for REST API (`"/api"`)
+  - `handleResponse<T>(res: Response): Promise<T>` -- parses JSON response, throws on HTTP error
+  - `handleVoidResponse(res: Response): Promise<void>` -- checks for HTTP error without parsing body
+  - `getServices(): Promise<WebServices>` -- lazy-loads and caches the Tauri in-process services
+  - `WebServices` type -- the return type of `bootstrapWeb()`
+- **Notes:** `getServices()` lazily imports `bootstrapWeb` from `../../bootstrap-web.js` and caches the result. This deferred loading ensures the heavy WASM/SQLite initialization only happens when needed.
+
+---
+
+## tasks.ts
+
+- **Path:** `src/ui/api/tasks.ts` (236 lines)
+- **Purpose:** Task CRUD operations, bulk operations, tree/subtask operations, reminders, and import.
+- **Key Exports:**
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `listTasks` | `(params?: { search?, projectId?, status? }) => Promise<Task[]>` | List all tasks with optional filters |
+| `createTask` | `(input: CreateTaskInput) => Promise<Task>` | Create a new task |
+| `completeTask` | `(id) => Promise<Task>` | Mark task as completed |
+| `updateTask` | `(id, input: UpdateTaskInput) => Promise<Task>` | Update task fields |
+| `deleteTask` | `(id) => Promise<void>` | Delete a task |
+| `completeManyTasks` | `(ids) => Promise<Task[]>` | Bulk complete |
+| `deleteManyTasks` | `(ids) => Promise<void>` | Bulk delete |
+| `updateManyTasks` | `(ids, changes) => Promise<Task[]>` | Bulk update |
+| `fetchDueReminders` | `() => Promise<Task[]>` | Get tasks with due reminders |
+| `listTaskTree` | `() => Promise<Task[]>` | Get flat task tree with hierarchy |
+| `getChildren` | `(parentId) => Promise<Task[]>` | Get subtasks of a parent |
+| `indentTask` | `(id) => Promise<Task>` | Make task a subtask of the previous sibling |
+| `outdentTask` | `(id) => Promise<Task>` | Move subtask up one level |
+| `reorderTasks` | `(orderedIds) => Promise<void>` | Set manual task ordering |
+| `importTasks` | `(tasks: ImportedTask[]) => Promise<ImportResult>` | Import tasks from external source |
+
+- **REST Endpoints (server mode):**
+  - `GET /api/tasks` (with query params)
+  - `POST /api/tasks`
+  - `POST /api/tasks/:id/complete`
+  - `PATCH /api/tasks/:id`
+  - `DELETE /api/tasks/:id`
+  - `POST /api/tasks/bulk/complete`
+  - `POST /api/tasks/bulk/delete`
+  - `POST /api/tasks/bulk/update`
+  - `GET /api/tasks/reminders/due`
+  - `GET /api/tasks/tree`
+  - `GET /api/tasks/:id/children`
+  - `POST /api/tasks/:id/indent`
+  - `POST /api/tasks/:id/outdent`
+  - `POST /api/tasks/reorder`
+  - `POST /api/tasks/import`
+
+---
+
+## projects.ts
+
+- **Path:** `src/ui/api/projects.ts` (72 lines)
+- **Purpose:** Project CRUD and tag listing.
+- **Key Exports:**
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `listTags` | `() => Promise<{ id, name, color }[]>` | List all tags |
+| `listProjects` | `() => Promise<Project[]>` | List all projects |
+| `createProject` | `(name, color?, icon?) => Promise<Project>` | Create a project |
+| `updateProject` | `(id, data) => Promise<Project \| null>` | Update project fields |
+| `deleteProject` | `(id) => Promise<void>` | Delete a project |
+
+- **REST Endpoints (server mode):**
+  - `GET /api/tags`
+  - `GET /api/projects`
+  - `POST /api/projects`
+  - `PATCH /api/projects/:id`
+  - `DELETE /api/projects/:id`
+- **Notes:** In Tauri mode, `createProject` handles icon as a two-step operation (create then update with icon).
+
+---
+
+## templates.ts
+
+- **Path:** `src/ui/api/templates.ts` (77 lines)
+- **Purpose:** Task template CRUD and instantiation.
+- **Key Exports:**
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `listTemplates` | `() => Promise<TaskTemplate[]>` | List all templates |
+| `createTemplate` | `(input: CreateTemplateInput) => Promise<TaskTemplate>` | Create a template |
+| `updateTemplate` | `(id, input: UpdateTemplateInput) => Promise<TaskTemplate>` | Update a template |
+| `deleteTemplate` | `(id) => Promise<void>` | Delete a template |
+| `instantiateTemplate` | `(id, variables?) => Promise<Task>` | Create a task from a template |
+
+- **REST Endpoints (server mode):**
+  - `GET /api/templates`
+  - `POST /api/templates`
+  - `PATCH /api/templates/:id`
+  - `DELETE /api/templates/:id`
+  - `POST /api/templates/:id/instantiate`
+- **Notes:** `instantiateTemplate` accepts optional `variables` map for `{{variable}}` interpolation in template title/description.
+
+---
+
+## plugins.ts
+
+- **Path:** `src/ui/api/plugins.ts` (265 lines)
+- **Purpose:** Plugin management including lifecycle, settings, commands, UI components, permissions, and the plugin store.
+- **Key Exports:**
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `listPlugins` | `() => Promise<PluginInfo[]>` | List installed plugins |
+| `getPluginSettings` | `(pluginId) => Promise<Record<string, unknown>>` | Get plugin settings |
+| `updatePluginSetting` | `(pluginId, key, value) => Promise<void>` | Update a plugin setting |
+| `listPluginCommands` | `() => Promise<PluginCommandInfo[]>` | List registered commands |
+| `executePluginCommand` | `(id) => Promise<void>` | Execute a command by ID |
+| `getStatusBarItems` | `() => Promise<StatusBarItemInfo[]>` | Get status bar items |
+| `getPluginPanels` | `() => Promise<PanelInfo[]>` | Get sidebar panels |
+| `getPluginViews` | `() => Promise<ViewInfo[]>` | Get custom views |
+| `getPluginViewContent` | `(viewId) => Promise<string>` | Get view HTML content |
+| `getPluginPermissions` | `(pluginId) => Promise<string[] \| null>` | Get approved permissions |
+| `approvePluginPermissions` | `(pluginId, permissions) => Promise<void>` | Approve permissions |
+| `revokePluginPermissions` | `(pluginId) => Promise<void>` | Revoke permissions |
+| `getPluginStore` | `() => Promise<{ plugins: StorePluginInfo[] }>` | Fetch store index |
+| `installPlugin` | `(pluginId, downloadUrl) => Promise<void>` | Install from store |
+| `uninstallPlugin` | `(pluginId) => Promise<void>` | Uninstall a plugin |
+| `togglePlugin` | `(pluginId) => Promise<void>` | Enable/disable a plugin |
+
+- **Key Interfaces:**
+
+```typescript
+interface PluginInfo {
+  id: string; name: string; version: string; author: string;
+  description: string; enabled: boolean; permissions: string[];
+  settings: SettingDefinitionInfo[]; builtin: boolean;
+}
+
+interface PluginCommandInfo { id: string; name: string; hotkey?: string; }
+interface StatusBarItemInfo { id: string; text: string; icon: string; }
+interface PanelInfo { id: string; title: string; icon: string; content: string; }
+interface ViewInfo { id: string; name: string; icon: string; }
+
+interface StorePluginInfo {
+  id: string; name: string; description: string; author: string;
+  version: string; repository: string; downloadUrl?: string;
+  tags: string[]; minSaydoVersion: string;
+}
+```
+
+- **Notes:** In Tauri mode, plugin listing returns empty (plugins deferred). Install/uninstall throw errors in Tauri mode. Permission approval/revocation not yet supported in Tauri mode.
+
+---
+
+## ai.ts
+
+- **Path:** `src/ui/api/ai.ts` (343 lines)
+- **Purpose:** AI provider configuration, chat messaging with SSE streaming, model discovery, and model lifecycle management.
+- **Key Exports:**
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `listAIProviders` | `() => Promise<AIProviderInfo[]>` | List available AI providers |
+| `fetchModels` | `(providerName, baseUrl?) => Promise<ModelDiscoveryInfo[]>` | Discover available models |
+| `loadModel` | `(providerName, modelKey, baseUrl?) => Promise<void>` | Load a model (LM Studio) |
+| `unloadModel` | `(providerName, modelKey, baseUrl?) => Promise<void>` | Unload a model |
+| `getAIConfig` | `() => Promise<AIConfigInfo>` | Get current AI config |
+| `updateAIConfig` | `(config) => Promise<void>` | Update AI config |
+| `sendChatMessage` | `(message, options?) => Promise<ReadableStream \| null>` | Send chat message, returns SSE stream |
+| `getChatMessages` | `() => Promise<AIChatMessage[]>` | Get chat history |
+| `clearChat` | `() => Promise<void>` | Clear chat session |
+
+- **Key Interfaces:**
+
+```typescript
+interface AIConfigInfo {
+  provider: string | null; model: string | null;
+  baseUrl: string | null; hasApiKey: boolean;
+}
+
+interface AIChatMessage {
+  role: "user" | "assistant" | "tool";
+  content: string;
+  toolCallId?: string;
+  toolCalls?: { id: string; name: string; arguments: string }[];
+  toolResults?: { toolName: string; data: string }[];
+  isError?: boolean; errorCategory?: string; retryable?: boolean;
+}
+
+interface AIProviderInfo {
+  name: string; displayName: string; needsApiKey: boolean;
+  optionalApiKey?: boolean; defaultModel: string;
+  suggestedModels?: string[]; defaultBaseUrl?: string;
+  showBaseUrl?: boolean; pluginId: string | null;
+}
+
+interface ModelDiscoveryInfo { id: string; label: string; loaded: boolean; }
+```
+
+- **SSE Stream Format:** `sendChatMessage` returns a `ReadableStream<Uint8Array>`. In Tauri mode, this is constructed in-process by iterating over the chat session's async generator. Each SSE event is `data: {JSON}\n\n` with types: `delta`, `tool_call`, `tool_result`, `done`, `error`.
+- **Notes:** In Tauri mode, `sendChatMessage` builds the entire AI pipeline in-process: loads provider, gathers context (compact mode for local providers), creates/restores session, and streams events. The `voiceCall` option in `sendChatMessage` passes a flag to the context gatherer for voice-optimized prompts.
+
+---
+
+## settings.ts
+
+- **Path:** `src/ui/api/settings.ts` (64 lines)
+- **Purpose:** App settings persistence, storage info, and data export.
+- **Key Exports:**
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `exportAllData` | `() => Promise<{ tasks, projects, tags }>` | Export all data |
+| `getAppSetting` | `(key) => Promise<string \| null>` | Get a single setting |
+| `getStorageInfo` | `() => Promise<{ mode, path }>` | Get storage backend info |
+| `setAppSetting` | `(key, value) => Promise<void>` | Set a single setting |
+
+- **REST Endpoints (server mode):**
+  - `GET /api/settings/:key`
+  - `PUT /api/settings/:key`
+  - `GET /api/settings/storage`
+- **Notes:** In Tauri mode, `getStorageInfo` always returns `{ mode: "sqlite", path: "(embedded database)" }`. Settings are key-value pairs stored in the app_settings table. Used for keyboard shortcuts, notification preferences, AI config, and general settings.

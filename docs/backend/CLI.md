@@ -1,0 +1,192 @@
+# CLI Module Documentation
+
+The `src/cli/` directory implements the Saydo CLI companion tool. It uses Commander.js for command registration and shares the same core services as the UI through the `bootstrap()` function.
+
+---
+
+## Architecture
+
+The CLI bootstraps the full application services (database, storage, task/project/tag services) and then dispatches to command handlers via Commander.js. Each command handler is lazily imported for fast startup.
+
+```
+CLI Entry (index.ts)
+  |-> bootstrap() -- initializes storage + services
+  |-> Commander.js parses argv
+  |-> Dispatches to command handler
+  |-> Handler uses services (taskService, projectService, etc.)
+```
+
+---
+
+## Files
+
+### `index.ts`
+**Path:** `src/cli/index.ts`
+**Lines:** 62
+**Purpose:** CLI entry point. Registers all commands with Commander.js and bootstraps the application services. Each command handler is dynamically imported to minimize startup time.
+
+**Key Exports:** None (side-effect: parses process.argv and executes commands)
+
+**Key Dependencies:** `commander`, `bootstrap()` from `src/bootstrap.ts`
+
+**Used By:** Invoked directly via `pnpm cli`
+
+**Registered Commands:**
+- `saydo add <description>` -- add a new task
+- `saydo list` -- list tasks with filters
+- `saydo done <id>` -- complete a task
+- `saydo edit <id>` -- edit a task
+- `saydo delete <id>` -- delete a task
+
+---
+
+### `commands/add.ts`
+**Path:** `src/cli/commands/add.ts`
+**Lines:** 39
+**Purpose:** Handles the `add` command. Parses the natural language description through `parseTask()`, resolves the project (getOrCreate), creates the task, and prints a confirmation.
+
+**Key Exports:** `addTask(description: string, services: AppServices, options?: AddOptions)`
+
+**Key Dependencies:** `parseTask` from `src/parser/task-parser.ts`, `AppServices` from `src/bootstrap.ts`
+
+**Usage:**
+```bash
+saydo add "buy milk tomorrow p1 #groceries"
+# Output: Created: buy milk P1 #groceries due 2/21/2026 [abc12345]
+
+saydo add "deploy to production" --json
+# Output: { "id": "...", "title": "deploy to production", ... }
+```
+
+**Options:**
+- `--json` -- output the created task as JSON
+
+---
+
+### `commands/list.ts`
+**Path:** `src/cli/commands/list.ts`
+**Lines:** 71
+**Purpose:** Handles the `list` command. Builds a `TaskFilter` from CLI options (today, project, tag, search) and displays matching pending tasks.
+
+**Key Exports:** `listTasks(options: ListOptions, services: AppServices)`
+
+**Key Dependencies:** `TaskFilter`, `Task` types, `AppServices`
+
+**Usage:**
+```bash
+saydo list
+# Lists all pending tasks
+
+saydo list --today
+# Lists tasks due today
+
+saydo list --project work
+# Lists tasks in the "work" project
+
+saydo list --tag urgent
+# Lists tasks tagged "urgent"
+
+saydo list --search "deploy"
+# Searches tasks by title/description
+
+saydo list --json
+# Output as JSON array
+```
+
+**Options:**
+- `--today` -- filter to tasks due today
+- `--project <name>` -- filter by project name
+- `--tag <name>` -- filter by tag name
+- `--search <query>` -- full-text search in title/description
+- `--json` -- output as JSON
+
+---
+
+### `commands/done.ts`
+**Path:** `src/cli/commands/done.ts`
+**Lines:** 24
+**Purpose:** Handles the `done` command. Marks a task as completed by ID. Handles `NotFoundError` gracefully.
+
+**Key Exports:** `doneTask(id: string, services: AppServices, options?: DoneOptions)`
+
+**Key Dependencies:** `AppServices`, `NotFoundError`
+
+**Usage:**
+```bash
+saydo done abc12345
+# Output: Completed: buy milk [abc12345]
+
+saydo done abc12345 --json
+# Output: { "id": "...", "status": "completed", ... }
+```
+
+**Options:**
+- `--json` -- output the completed task as JSON
+
+---
+
+### `commands/edit.ts`
+**Path:** `src/cli/commands/edit.ts`
+**Lines:** 52
+**Purpose:** Handles the `edit` command. Updates task fields by ID. Due dates are parsed through the NLP module. Requires at least one update option.
+
+**Key Exports:** `editTask(id: string, options: EditOptions, services: AppServices)`
+
+**Key Dependencies:** `UpdateTaskInput`, `NotFoundError`, `parseDate` from `src/parser/nlp.ts`
+
+**Usage:**
+```bash
+saydo edit abc12345 --title "buy organic milk"
+# Output: Updated: buy organic milk [abc12345]
+
+saydo edit abc12345 --priority 2
+# Sets priority to P2
+
+saydo edit abc12345 --due "next friday"
+# NLP-parsed due date
+
+saydo edit abc12345 --description "From the farmer's market"
+```
+
+**Options:**
+- `--title <title>` -- new title
+- `--priority <p>` -- new priority (1-4)
+- `--due <date>` -- new due date (natural language supported)
+- `--description <desc>` -- new description
+- `--json` -- output as JSON
+
+---
+
+### `commands/delete.ts`
+**Path:** `src/cli/commands/delete.ts`
+**Lines:** 21
+**Purpose:** Handles the `delete` command. Permanently removes a task by ID.
+
+**Key Exports:** `deleteTask(id: string, services: AppServices, options?: DeleteOptions)`
+
+**Key Dependencies:** `AppServices`
+
+**Usage:**
+```bash
+saydo delete abc12345
+# Output: Deleted: buy milk [abc12345]
+
+saydo delete abc12345 --json
+# Output: { "deleted": true, "id": "...", "title": "buy milk" }
+```
+
+**Options:**
+- `--json` -- output as JSON
+
+---
+
+### `formatter.ts`
+**Path:** `src/cli/formatter.ts`
+**Lines:** 27
+**Purpose:** Terminal output formatting for parsed tasks. Formats a `ParsedTask` into a human-readable summary with due date, priority, tags, and project.
+
+**Key Exports:** `formatTaskSummary(task: ParsedTask): string`
+
+**Key Dependencies:** `ParsedTask` from `src/parser/task-parser.ts`
+
+**Used By:** Currently available but not directly referenced by command handlers (they format inline).
