@@ -326,21 +326,103 @@ function apiPlugin() {
         }
       });
 
-      // GET /api/projects
+      // GET/POST /api/projects
       server.middlewares.use(async (req, res, next) => {
-        if (req.url !== "/api/projects" || req.method !== "GET") return next();
+        if (req.url !== "/api/projects") return next();
 
         try {
           const svc = await getServices();
-          const projects = await svc.projectService.list();
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify(projects));
+
+          if (req.method === "GET") {
+            const projects = await svc.projectService.list();
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(projects));
+            return;
+          }
+
+          if (req.method === "POST") {
+            const body = await parseBody(req);
+            const name = body.name as string;
+            if (!name) {
+              res.statusCode = 400;
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ error: "name is required" }));
+              return;
+            }
+            const project = await svc.projectService.create(name, {
+              color: (body.color as string) || undefined,
+              parentId: (body.parentId as string) || null,
+              isFavorite: (body.isFavorite as boolean) || false,
+              viewStyle: (body.viewStyle as "list" | "board" | "calendar") || "list",
+            });
+            if (body.icon) {
+              const updated = await svc.projectService.update(project.id, {
+                icon: body.icon as string,
+              });
+              res.setHeader("Content-Type", "application/json");
+              res.statusCode = 201;
+              res.end(JSON.stringify(updated ?? project));
+              return;
+            }
+            res.setHeader("Content-Type", "application/json");
+            res.statusCode = 201;
+            res.end(JSON.stringify(project));
+            return;
+          }
+
+          next();
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : "Internal server error";
           res.statusCode = 500;
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ error: message }));
         }
+      });
+
+      // PATCH/DELETE /api/projects/:id
+      server.middlewares.use(async (req, res, next) => {
+        const match = req.url?.match(/^\/api\/projects\/([^/]+)$/);
+        if (!match) return next();
+
+        const id = decodeURIComponent(match[1]);
+        const svc = await getServices();
+
+        if (req.method === "PATCH") {
+          try {
+            const body = await parseBody(req);
+            const project = await svc.projectService.update(id, body as any);
+            if (!project) {
+              res.statusCode = 404;
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ error: "Project not found" }));
+              return;
+            }
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(project));
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Internal server error";
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: message }));
+          }
+          return;
+        }
+
+        if (req.method === "DELETE") {
+          try {
+            await svc.projectService.delete(id);
+            res.statusCode = 204;
+            res.end();
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Internal server error";
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: message }));
+          }
+          return;
+        }
+
+        next();
       });
 
       // Initialize plugins on first request
@@ -369,6 +451,8 @@ function apiPlugin() {
             enabled: p.enabled,
             permissions: p.manifest.permissions,
             settings: p.manifest.settings,
+            builtin: p.builtin ?? false,
+            icon: p.manifest.icon,
           }));
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify(plugins));
@@ -652,6 +736,15 @@ function apiPlugin() {
           const svc = await getServices();
           await ensurePlugins();
 
+          // Reject uninstall for built-in plugins
+          const plugin = svc.pluginLoader.get(pluginId);
+          if (plugin?.builtin) {
+            res.statusCode = 400;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ success: false, error: "Cannot uninstall built-in extensions" }));
+            return;
+          }
+
           // Unload plugin if loaded
           try {
             await svc.pluginLoader.unload(pluginId);
@@ -673,6 +766,44 @@ function apiPlugin() {
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : "Internal server error";
           res.statusCode = message.includes("Invalid JSON") ? 400 : 500;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: message }));
+        }
+      });
+
+      // POST /api/plugins/:id/toggle — activate/deactivate a built-in extension
+      server.middlewares.use(async (req, res, next) => {
+        const match = req.url?.match(/^\/api\/plugins\/([^/]+)\/toggle$/);
+        if (!match || req.method !== "POST") return next();
+
+        try {
+          const pluginId = match[1];
+          const svc = await getServices();
+          await ensurePlugins();
+
+          const plugin = svc.pluginLoader.get(pluginId);
+          if (!plugin) {
+            res.statusCode = 404;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: "Plugin not found" }));
+            return;
+          }
+
+          if (plugin.enabled) {
+            // Deactivate: unload and remove stored permissions
+            await svc.pluginLoader.unload(pluginId);
+            svc.storage.deletePluginPermissions(pluginId);
+          } else {
+            // Activate: approve all permissions and load
+            const permissions = (plugin.manifest.permissions ?? []) as string[];
+            await svc.pluginLoader.approveAndLoad(pluginId, permissions);
+          }
+
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ ok: true, enabled: plugin.enabled }));
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Internal server error";
+          res.statusCode = 500;
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ error: message }));
         }

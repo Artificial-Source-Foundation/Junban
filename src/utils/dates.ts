@@ -1,6 +1,8 @@
+import { toDateKey } from "./format-date.js";
+
 /** Check if a date string represents today. */
 export function isToday(dateStr: string): boolean {
-  const today = new Date().toISOString().split("T")[0];
+  const today = toDateKey(new Date());
   return dateStr.startsWith(today);
 }
 

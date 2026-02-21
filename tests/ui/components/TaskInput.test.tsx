@@ -4,6 +4,11 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 // Mock lucide-react
 vi.mock("lucide-react", () => ({
   Plus: (props: any) => <svg data-testid="plus-icon" {...props} />,
+  Flag: (props: any) => <svg data-testid="flag-icon" {...props} />,
+  Hash: (props: any) => <svg data-testid="hash-icon" {...props} />,
+  Calendar: (props: any) => <svg data-testid="calendar-icon" {...props} />,
+  FolderOpen: (props: any) => <svg data-testid="folder-icon" {...props} />,
+  Repeat: (props: any) => <svg data-testid="repeat-icon" {...props} />,
 }));
 
 // Mock task parser — use vi.fn() so we can change behavior per test

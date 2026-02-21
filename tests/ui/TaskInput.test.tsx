@@ -54,7 +54,7 @@ describe("TaskInput", () => {
 
     expect(screen.getByText("buy milk")).toBeInTheDocument();
     expect(screen.getByText("P2")).toBeInTheDocument();
-    expect(screen.getByText("#food")).toBeInTheDocument();
+    expect(screen.getByText("food")).toBeInTheDocument();
   });
 
   it("uses custom placeholder", () => {

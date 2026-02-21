@@ -1,12 +1,14 @@
 import React, { useCallback, useState } from "react";
 import {
   DndContext,
+  DragOverlay,
   closestCenter,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -19,6 +21,7 @@ import { ClipboardList } from "lucide-react";
 import type { Task } from "../../core/types.js";
 import { TaskItem } from "./TaskItem.js";
 import { InlineAddSubtask } from "./InlineAddSubtask.js";
+import { EmptyState } from "./EmptyState.js";
 
 interface ChildStats {
   children: Task[];
@@ -131,14 +134,20 @@ export function TaskList({
   onUpdateDueDate,
 }: TaskListProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveDragId(event.active.id as string);
+  }, []);
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
+      setActiveDragId(null);
       const { active, over } = event;
       if (!over || active.id === over.id || !onReorder) return;
 
@@ -154,6 +163,10 @@ export function TaskList({
     [tasks, onReorder],
   );
 
+  const handleDragCancel = useCallback(() => {
+    setActiveDragId(null);
+  }, []);
+
   const handleToggleExpand = useCallback((id: string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
@@ -165,13 +178,10 @@ export function TaskList({
 
   if (tasks.length === 0) {
     return (
-      <div
-        role="status"
-        className="flex flex-col items-center justify-center py-12 text-on-surface-muted"
-      >
-        <ClipboardList size={40} strokeWidth={1.25} className="mb-3 opacity-50" />
-        <p className="text-sm">{emptyMessage ?? "No tasks yet. Add one above!"}</p>
-      </div>
+      <EmptyState
+        icon={<ClipboardList size={40} strokeWidth={1.25} />}
+        title={emptyMessage ?? "No tasks yet. Add one above!"}
+      />
     );
   }
 
@@ -203,8 +213,16 @@ export function TaskList({
   const isMultiSelectActive = selectedTaskIds && selectedTaskIds.size > 0;
   const taskIds = visibleTasks.filter((v) => !v.showAddSubtask).map((v) => v.task.id);
 
+  const activeDragTask = activeDragId ? tasks.find((t) => t.id === activeDragId) : null;
+
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
       <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
         <div role="list" aria-label="Tasks" className="space-y-0">
           {visibleTasks.map((entry) => {
@@ -242,6 +260,18 @@ export function TaskList({
           })}
         </div>
       </SortableContext>
+      <DragOverlay>
+        {activeDragTask ? (
+          <div className="opacity-80 shadow-lg rounded-lg rotate-1 bg-surface border border-accent/30">
+            <TaskItem
+              task={activeDragTask}
+              onToggle={() => {}}
+              onSelect={() => {}}
+              isSelected={false}
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }

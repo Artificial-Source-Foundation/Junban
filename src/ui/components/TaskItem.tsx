@@ -43,6 +43,7 @@ interface TaskItemProps {
   expanded?: boolean;
   onToggleExpand?: (id: string) => void;
   onUpdateDueDate?: (taskId: string, dueDate: string | null) => void;
+  onContextMenu?: (taskId: string, position: { x: number; y: number }) => void;
 }
 
 export const TaskItem = React.memo(function TaskItem({
@@ -62,6 +63,7 @@ export const TaskItem = React.memo(function TaskItem({
   expanded,
   onToggleExpand,
   onUpdateDueDate,
+  onContextMenu,
 }: TaskItemProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const priority = task.priority ? getPriority(task.priority) : null;
@@ -80,7 +82,7 @@ export const TaskItem = React.memo(function TaskItem({
   const indentPadding = depth > 0 ? { paddingLeft: `${depth * 1.5 + 0.75}rem` } : undefined;
 
   const hasMetadataLine =
-    task.tags.length > 0 || task.dueDate || task.recurrence || (task as any).remindAt;
+    task.tags.length > 0 || task.dueDate || task.recurrence || task.remindAt;
 
   // Priority-based circle colors
   const priorityColorClass = task.priority
@@ -113,6 +115,12 @@ export const TaskItem = React.memo(function TaskItem({
               : "hover:bg-surface-secondary"
       } ${task.status !== "completed" && task.priority && PRIORITY_ROW_STYLES[task.priority] ? PRIORITY_ROW_STYLES[task.priority].border : ""}`}
       onClick={handleClick}
+      onContextMenu={(e) => {
+        if (onContextMenu) {
+          e.preventDefault();
+          onContextMenu(task.id, { x: e.clientX, y: e.clientY });
+        }
+      }}
     >
       {/* Vertical connector line for nested tasks */}
       {depth > 0 && (
@@ -240,7 +248,7 @@ export const TaskItem = React.memo(function TaskItem({
                 {new Date(task.dueDate).toLocaleDateString()}
               </span>
             )}
-            {(task as any).remindAt && <Bell size={12} className="text-warning flex-shrink-0" />}
+            {task.remindAt && <Bell size={12} className="text-warning flex-shrink-0" />}
             {task.recurrence && (
               <span className="text-xs flex items-center gap-0.5 text-on-surface-muted flex-shrink-0">
                 <Repeat size={11} />

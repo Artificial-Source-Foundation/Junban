@@ -1,4 +1,5 @@
-import { useEffect, useCallback, type ReactNode } from "react";
+import { useEffect, useCallback, useRef, type ReactNode } from "react";
+import { useFocusTrap } from "../hooks/useFocusTrap.js";
 
 interface MobileDrawerProps {
   open: boolean;
@@ -7,6 +8,11 @@ interface MobileDrawerProps {
 }
 
 export function MobileDrawer({ open, onClose, children }: MobileDrawerProps) {
+  const drawerRef = useRef<HTMLElement>(null);
+
+  // Focus trap
+  useFocusTrap(drawerRef, open);
+
   // Close on Escape
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -41,6 +47,7 @@ export function MobileDrawer({ open, onClose, children }: MobileDrawerProps) {
       />
       {/* Drawer panel */}
       <aside
+        ref={drawerRef}
         className={`absolute top-0 left-0 bottom-0 w-[280px] max-w-[85vw] bg-surface-secondary shadow-xl transition-transform duration-300 ease-out ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}

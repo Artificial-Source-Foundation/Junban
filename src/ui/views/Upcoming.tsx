@@ -1,8 +1,11 @@
-import { useState, useMemo } from "react";
-import { Clock, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
+import { useMemo, useCallback } from "react";
+import { Clock } from "lucide-react";
 import { parseTask } from "../../parser/task-parser.js";
+import { toDateKey } from "../../utils/format-date.js";
 import { TaskInput } from "../components/TaskInput.js";
 import { TaskList } from "../components/TaskList.js";
+import { OverdueSection } from "../components/OverdueSection.js";
+import { EmptyState } from "../components/EmptyState.js";
 import type { Task, Project } from "../../core/types.js";
 
 interface UpcomingProps {
@@ -55,9 +58,7 @@ export function Upcoming({
   onUpdateDueDate,
   autoFocusTrigger,
 }: UpcomingProps) {
-  const [overdueExpanded, setOverdueExpanded] = useState(true);
-
-  const today = new Date().toISOString().split("T")[0];
+  const today = toDateKey(new Date());
 
   const projectMap = useMemo(() => {
     const map = new Map<string, Project>();
@@ -108,12 +109,12 @@ export function Upcoming({
 
   const totalCount = overdueTasks.length + upcomingTasks.length;
 
-  const handleReschedule = async () => {
+  const handleReschedule = useCallback(async () => {
     const todayISO = new Date().toISOString();
     for (const task of overdueTasks) {
       await onUpdateTask(task.id, { dueDate: todayISO });
     }
-  };
+  }, [overdueTasks, onUpdateTask]);
 
   return (
     <div>
@@ -129,89 +130,25 @@ export function Upcoming({
         autoFocusTrigger={autoFocusTrigger}
       />
 
-      {/* Overdue Section */}
-      {overdueTasks.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <button
-              onClick={() => setOverdueExpanded(!overdueExpanded)}
-              className="flex items-center gap-1 text-sm font-semibold text-error hover:text-error/80 transition-colors"
-            >
-              {overdueExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              <AlertTriangle size={14} />
-              Overdue
-            </button>
-            <span className="text-xs text-error font-medium">{overdueTasks.length}</span>
-            <button
-              onClick={handleReschedule}
-              className="ml-auto text-xs text-accent hover:text-accent/80 font-medium transition-colors"
-            >
-              Reschedule
-            </button>
-          </div>
-          {overdueExpanded && (
-            <div className="space-y-0.5">
-              {overdueTasks.map((task) => {
-                const project = task.projectId ? projectMap.get(task.projectId) : null;
-                return (
-                  <div
-                    key={task.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => onSelectTask(task.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onSelectTask(task.id);
-                      }
-                    }}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
-                      selectedTaskId === task.id
-                        ? "bg-accent/5 ring-1 ring-accent/50"
-                        : "hover:bg-surface-secondary"
-                    }`}
-                  >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleTask(task.id);
-                      }}
-                      aria-label="Complete task"
-                      className="w-5 h-5 rounded-full border-2 border-error flex-shrink-0 transition-colors"
-                    />
-                    <span className="flex-1 text-sm text-on-surface">{task.title}</span>
-                    {project && (
-                      <span className="flex items-center gap-1.5 text-xs text-on-surface-muted flex-shrink-0">
-                        <span
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: project.color }}
-                        />
-                        {project.name}
-                      </span>
-                    )}
-                    <span className="text-xs text-error font-medium flex-shrink-0">
-                      {new Date(task.dueDate!).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+      <OverdueSection
+        tasks={overdueTasks}
+        projects={projectMap}
+        onSelectTask={onSelectTask}
+        onToggleTask={onToggleTask}
+        onReschedule={handleReschedule}
+        selectedTaskId={selectedTaskId}
+      />
 
       {/* Month header */}
       <h2 className="text-lg font-semibold text-on-surface mb-4">{formatMonthHeader()}</h2>
 
       {/* Date-grouped sections */}
       {dateGroups.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-on-surface-muted">
-          <Clock size={40} strokeWidth={1.25} className="mb-3 opacity-50" />
-          <p className="text-sm">No upcoming tasks with due dates.</p>
-        </div>
+        <EmptyState
+          icon={<Clock size={40} strokeWidth={1.25} />}
+          title="No upcoming tasks"
+          description="Tasks with due dates will appear here."
+        />
       ) : (
         <div className="space-y-6">
           {dateGroups.map((group) => (

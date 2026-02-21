@@ -9,6 +9,8 @@ export interface PluginInfo {
   enabled: boolean;
   permissions: string[];
   settings: SettingDefinitionInfo[];
+  builtin: boolean;
+  icon?: string;
 }
 
 export interface SettingDefinitionInfo {
@@ -58,6 +60,9 @@ export interface StorePluginInfo {
   downloadUrl?: string;
   tags: string[];
   minSaydoVersion: string;
+  icon?: string;
+  downloads?: number;
+  longDescription?: string;
 }
 
 export async function listPlugins(): Promise<PluginInfo[]> {
@@ -248,4 +253,16 @@ export async function uninstallPlugin(pluginId: string): Promise<void> {
   if (!data.success) {
     throw new Error(data.error ?? "Uninstall failed");
   }
+}
+
+export async function togglePlugin(pluginId: string): Promise<void> {
+  if (isTauri()) {
+    // Not yet supported in Tauri mode
+    return;
+  }
+  await handleVoidResponse(
+    await fetch(`${BASE}/plugins/${pluginId}/toggle`, {
+      method: "POST",
+    }),
+  );
 }

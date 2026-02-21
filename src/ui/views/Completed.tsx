@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { CheckCircle2 } from "lucide-react";
 import type { Task, Project } from "../../core/types.js";
+import { EmptyState } from "../components/EmptyState.js";
 
 interface CompletedProps {
   tasks: Task[];
@@ -91,10 +92,11 @@ export function Completed({ tasks, projects, onSelectTask }: CompletedProps) {
       </div>
 
       {completedTasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-on-surface-muted">
-          <CheckCircle2 size={40} strokeWidth={1.25} className="mb-3 opacity-50" />
-          <p className="text-sm">No completed tasks yet.</p>
-        </div>
+        <EmptyState
+          icon={<CheckCircle2 size={40} strokeWidth={1.25} />}
+          title="No completed tasks yet"
+          description="Completed tasks will appear here."
+        />
       ) : (
         <div className="space-y-6">
           {grouped.map((group) => (

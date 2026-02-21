@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Flag, Hash, Calendar, FolderOpen, Repeat } from "lucide-react";
 import { parseTask } from "../../parser/task-parser.js";
 import { formatRecurrenceLabel } from "./RecurrencePicker.js";
 import { useGeneralSettings } from "../context/SettingsContext.js";
@@ -67,22 +67,35 @@ export function TaskInput({
         />
       </div>
       {preview && (
-        <div className="flex flex-wrap gap-2 mt-1.5 px-1 text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 mt-1.5 px-1 text-xs">
           <span className="text-on-surface-secondary">{preview.title}</span>
           {preview.priority && (
-            <span className="text-warning font-medium">P{preview.priority}</span>
+            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md font-medium bg-priority-${preview.priority}/15 text-priority-${preview.priority}`}>
+              <Flag size={10} />
+              P{preview.priority}
+            </span>
           )}
           {preview.dueDate && (
-            <span className="text-accent">{preview.dueDate.toLocaleDateString()}</span>
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-accent/15 text-accent">
+              <Calendar size={10} />
+              {preview.dueDate.toLocaleDateString()}
+            </span>
           )}
           {preview.tags.map((tag) => (
-            <span key={tag} className="text-purple-500">
-              #{tag}
+            <span key={tag} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-purple-500/15 text-purple-500">
+              <Hash size={10} />
+              {tag}
             </span>
           ))}
-          {preview.project && <span className="text-success">+{preview.project}</span>}
+          {preview.project && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-success/15 text-success">
+              <FolderOpen size={10} />
+              {preview.project}
+            </span>
+          )}
           {preview.recurrence && (
-            <span className="text-teal-500 font-medium">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-teal-500/15 text-teal-500 font-medium">
+              <Repeat size={10} />
               {formatRecurrenceLabel(preview.recurrence)}
             </span>
           )}

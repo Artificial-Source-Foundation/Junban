@@ -19,10 +19,17 @@ export async function listProjects(): Promise<Project[]> {
   return handleResponse<Project[]>(res);
 }
 
-export async function createProject(name: string, color?: string, icon?: string): Promise<Project> {
+export async function createProject(
+  name: string,
+  color?: string,
+  icon?: string,
+  parentId?: string | null,
+  isFavorite?: boolean,
+  viewStyle?: "list" | "board" | "calendar",
+): Promise<Project> {
   if (isTauri()) {
     const svc = await getServices();
-    const project = await svc.projectService.create(name, color);
+    const project = await svc.projectService.create(name, { color, parentId, isFavorite, viewStyle });
     if (icon) {
       const updated = await svc.projectService.update(project.id, { icon });
       svc.save();
@@ -34,14 +41,14 @@ export async function createProject(name: string, color?: string, icon?: string)
   const res = await fetch(`${BASE}/projects`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, color, icon }),
+    body: JSON.stringify({ name, color, icon, parentId, isFavorite, viewStyle }),
   });
   return handleResponse<Project>(res);
 }
 
 export async function updateProject(
   id: string,
-  data: Partial<Pick<Project, "name" | "color" | "icon" | "archived">>,
+  data: Partial<Pick<Project, "name" | "color" | "icon" | "archived" | "parentId" | "isFavorite" | "viewStyle">>,
 ): Promise<Project | null> {
   if (isTauri()) {
     const svc = await getServices();

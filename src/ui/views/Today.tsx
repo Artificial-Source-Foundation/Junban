@@ -1,8 +1,11 @@
-import { useState, useMemo } from "react";
-import { CalendarDays, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
+import { useMemo, useCallback } from "react";
+import { CalendarDays } from "lucide-react";
 import { parseTask } from "../../parser/task-parser.js";
+import { toDateKey } from "../../utils/format-date.js";
 import { TaskInput } from "../components/TaskInput.js";
 import { TaskList } from "../components/TaskList.js";
+import { OverdueSection } from "../components/OverdueSection.js";
+import { CompletionRing } from "../components/CompletionRing.js";
 import type { Task, Project } from "../../core/types.js";
 
 interface TodayProps {
@@ -48,9 +51,7 @@ export function Today({
   onUpdateDueDate,
   autoFocusTrigger,
 }: TodayProps) {
-  const [overdueExpanded, setOverdueExpanded] = useState(true);
-
-  const today = new Date().toISOString().split("T")[0];
+  const today = toDateKey(new Date());
 
   const projectMap = useMemo(() => {
     const map = new Map<string, Project>();
@@ -69,14 +70,20 @@ export function Today({
     [tasks, today],
   );
 
-  const totalCount = overdueTasks.length + todayTasks.length;
+  const todayCompletedCount = useMemo(
+    () => tasks.filter((t) => t.status === "completed" && t.completedAt?.startsWith(today)).length,
+    [tasks, today],
+  );
 
-  const handleReschedule = async () => {
+  const totalCount = overdueTasks.length + todayTasks.length;
+  const ringTotal = todayCompletedCount + todayTasks.length;
+
+  const handleReschedule = useCallback(async () => {
     const todayISO = new Date().toISOString();
     for (const task of overdueTasks) {
       await onUpdateTask(task.id, { dueDate: todayISO });
     }
-  };
+  }, [overdueTasks, onUpdateTask]);
 
   return (
     <div>
@@ -91,7 +98,10 @@ export function Today({
           })}
         </span>
       </div>
-      <p className="text-sm text-on-surface-muted mb-4 md:mb-6">{totalCount} tasks</p>
+      <div className="flex items-center gap-3 mb-4 md:mb-6">
+        <p className="text-sm text-on-surface-muted">{totalCount} tasks</p>
+        {ringTotal > 0 && <CompletionRing completed={todayCompletedCount} total={ringTotal} />}
+      </div>
 
       <TaskInput
         onSubmit={onCreateTask}
@@ -100,79 +110,14 @@ export function Today({
         defaultDueDate={new Date(today + "T00:00:00")}
       />
 
-      {/* Overdue Section */}
-      {overdueTasks.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <button
-              onClick={() => setOverdueExpanded(!overdueExpanded)}
-              className="flex items-center gap-1 text-sm font-semibold text-error hover:text-error/80 transition-colors"
-            >
-              {overdueExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              <AlertTriangle size={14} />
-              Overdue
-            </button>
-            <span className="text-xs text-error font-medium">{overdueTasks.length}</span>
-            <button
-              onClick={handleReschedule}
-              className="ml-auto text-xs text-accent hover:text-accent/80 font-medium transition-colors"
-            >
-              Reschedule
-            </button>
-          </div>
-          {overdueExpanded && (
-            <div className="space-y-0.5">
-              {overdueTasks.map((task) => {
-                const project = task.projectId ? projectMap.get(task.projectId) : null;
-                return (
-                  <div
-                    key={task.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => onSelectTask(task.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onSelectTask(task.id);
-                      }
-                    }}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
-                      selectedTaskId === task.id
-                        ? "bg-accent/5 ring-1 ring-accent/50"
-                        : "hover:bg-surface-secondary"
-                    }`}
-                  >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleTask(task.id);
-                      }}
-                      aria-label="Complete task"
-                      className="w-5 h-5 rounded-full border-2 border-error flex-shrink-0 transition-colors"
-                    />
-                    <span className="flex-1 text-sm text-on-surface">{task.title}</span>
-                    {project && (
-                      <span className="flex items-center gap-1.5 text-xs text-on-surface-muted flex-shrink-0">
-                        <span
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: project.color }}
-                        />
-                        {project.name}
-                      </span>
-                    )}
-                    <span className="text-xs text-error font-medium flex-shrink-0">
-                      {new Date(task.dueDate!).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+      <OverdueSection
+        tasks={overdueTasks}
+        projects={projectMap}
+        onSelectTask={onSelectTask}
+        onToggleTask={onToggleTask}
+        onReschedule={handleReschedule}
+        selectedTaskId={selectedTaskId}
+      />
 
       {/* Today Section */}
       <div>

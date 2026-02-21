@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import PomodoroPlugin from "../../plugins/pomodoro/index.js";
+import PomodoroPlugin from "../../src/plugins/builtin/pomodoro/index.js";
 import type { PluginAPI, PluginSettingsAccessor } from "../../src/plugins/api.js";
 
 function createMockAPI() {

@@ -8,6 +8,8 @@ export function useAppShortcuts(
   undo: () => void,
   redo: () => void,
   setSearchOpen?: React.Dispatch<React.SetStateAction<boolean>>,
+  setFocusModeOpen?: React.Dispatch<React.SetStateAction<boolean>>,
+  setQuickAddOpen?: React.Dispatch<React.SetStateAction<boolean>>,
 ) {
   useEffect(() => {
     shortcutManager.register({
@@ -42,6 +44,28 @@ export function useAppShortcuts(
         callback: () => setSearchOpen((open) => !open),
       });
     }
+    if (setFocusModeOpen) {
+      shortcutManager.register({
+        id: "focus-mode",
+        description: "Enter Focus Mode",
+        defaultKey: "ctrl+shift+f",
+        callback: () => setFocusModeOpen(true),
+      });
+    }
+    if (setQuickAddOpen) {
+      shortcutManager.register({
+        id: "quick-add",
+        description: "Quick Add Task",
+        defaultKey: "q",
+        callback: () => setQuickAddOpen(true),
+      });
+      shortcutManager.register({
+        id: "quick-add-ctrl",
+        description: "Quick Add Task",
+        defaultKey: "ctrl+n",
+        callback: () => setQuickAddOpen(true),
+      });
+    }
 
     // Load custom bindings from settings
     api.getAppSetting("keyboard_shortcuts").then((val) => {
@@ -59,5 +83,5 @@ export function useAppShortcuts(
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo, setCommandPaletteOpen, setSearchOpen]);
+  }, [undo, redo, setCommandPaletteOpen, setSearchOpen, setFocusModeOpen, setQuickAddOpen]);
 }

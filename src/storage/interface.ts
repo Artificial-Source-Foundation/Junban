@@ -23,6 +23,9 @@ export interface ProjectRow {
   name: string;
   color: string;
   icon: string | null;
+  parentId: string | null;
+  isFavorite: boolean;
+  viewStyle: "list" | "board" | "calendar";
   sortOrder: number;
   archived: boolean;
   createdAt: string;

@@ -38,7 +38,7 @@ export function TaskMetadataSidebar({
   availableTags = [],
 }: TaskMetadataSidebarProps) {
   const { settings } = useGeneralSettings();
-  const currentRemindAt = (task as any).remindAt ?? null;
+  const currentRemindAt = task.remindAt ?? null;
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showRemindAtPicker, setShowRemindAtPicker] = useState(false);
   const [showRecurrencePicker, setShowRecurrencePicker] = useState(false);
@@ -86,7 +86,7 @@ export function TaskMetadataSidebar({
 
   const handleRecurrenceChange = useCallback(
     (recurrence: string | null) => {
-      onUpdate(task.id, { recurrence } as any);
+      onUpdate(task.id, { recurrence });
       setShowRecurrencePicker(false);
     },
     [task.id, onUpdate],
@@ -94,7 +94,7 @@ export function TaskMetadataSidebar({
 
   const handleRemindAtChange = useCallback(
     (date: string | null) => {
-      onUpdate(task.id, { remindAt: date ? new Date(date).toISOString() : null } as any);
+      onUpdate(task.id, { remindAt: date ? new Date(date).toISOString() : null });
       setShowRemindAtPicker(false);
     },
     [task.id, onUpdate],

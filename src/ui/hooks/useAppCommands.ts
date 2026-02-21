@@ -7,12 +7,12 @@ import type { PluginCommandInfo } from "../api/index.js";
 export function useAppCommands(
   handleNavigate: (view: string, id?: string) => void,
   openSettingsTab: (tab: SettingsTab) => void,
-  setChatPanelOpen: React.Dispatch<React.SetStateAction<boolean>>,
   setFocusModeOpen: React.Dispatch<React.SetStateAction<boolean>>,
   setTemplateSelectorOpen: React.Dispatch<React.SetStateAction<boolean>>,
   projects: Project[],
   pluginCommands: PluginCommandInfo[],
   executeCommand: (id: string) => void,
+  setQuickAddOpen?: React.Dispatch<React.SetStateAction<boolean>>,
 ) {
   return useMemo(() => {
     const cmds = [
@@ -72,8 +72,8 @@ export function useAppCommands(
       },
       {
         id: "nav-plugin-store",
-        name: "Go to Plugin Store",
-        callback: () => handleNavigate("plugin-store"),
+        name: "Go to Plugins",
+        callback: () => openSettingsTab("plugins"),
       },
       { id: "theme-toggle", name: "Toggle Dark Mode", callback: () => themeManager.toggle() },
       {
@@ -86,8 +86,11 @@ export function useAppCommands(
         name: "Switch to Dark Theme",
         callback: () => themeManager.setTheme("dark"),
       },
-      { id: "ai-chat-toggle", name: "Toggle AI Chat", callback: () => setChatPanelOpen((o) => !o) },
+      { id: "ai-chat-toggle", name: "Toggle AI Chat", callback: () => handleNavigate("ai-chat") },
       { id: "focus-mode", name: "Enter Focus Mode", callback: () => setFocusModeOpen(true) },
+      ...(setQuickAddOpen
+        ? [{ id: "quick-add-task", name: "Quick Add Task", callback: () => setQuickAddOpen(true) }]
+        : []),
       {
         id: "create-from-template",
         name: "Create Task from Template",
@@ -119,8 +122,8 @@ export function useAppCommands(
     executeCommand,
     handleNavigate,
     openSettingsTab,
-    setChatPanelOpen,
     setFocusModeOpen,
     setTemplateSelectorOpen,
+    setQuickAddOpen,
   ]);
 }

@@ -103,6 +103,7 @@ All work items for ASF Saydo, organized by area and prioritized within each sect
 | U-32 | Auto-set today's date when adding task on Today page | done | S30 | Tasks on Today page default to today's due date. GH #28 |
 | U-33 | View completed task details | done | S30 | Completed tasks clickable to view details. GH #29 |
 | U-34 | Fix task creation error | done | S30 | Empty title guard in useTaskHandlers. GH #30 |
+| U-35 | Design proper SVG logo | ready | — | Current placeholder needs redesign. Use specialized design app for final logo. |
 
 ## CLI
 

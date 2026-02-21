@@ -11,7 +11,7 @@ export interface GeneralSettings {
   time_format: "12h" | "24h";
   default_priority: "none" | "p1" | "p2" | "p3" | "p4";
   confirm_delete: "true" | "false";
-  start_view: "inbox" | "today" | "upcoming";
+  start_view: "inbox" | "today" | "upcoming" | "ai-chat";
   sound_enabled: "true" | "false";
   sound_volume: string;
   sound_complete: "true" | "false";
@@ -166,7 +166,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   return (
     <SettingsContext.Provider value={{ settings, loaded, updateSetting }}>
-      {children}
+      <div className={loaded ? "opacity-100" : "opacity-0"}>{children}</div>
     </SettingsContext.Provider>
   );
 }

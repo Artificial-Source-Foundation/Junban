@@ -1,4 +1,4 @@
-import { Plugin } from "../../src/plugins/lifecycle.js";
+import { Plugin } from "../../lifecycle.js";
 
 type TimerState = "idle" | "running" | "paused" | "break";
 type Phase = "work" | "break" | "longBreak";

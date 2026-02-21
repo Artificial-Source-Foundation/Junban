@@ -23,6 +23,7 @@ interface UndoContextValue {
   canRedo: boolean;
   toast: ToastInfo | null;
   dismissToast: () => void;
+  showToast: (message: string, action?: { label: string; onClick: () => void }) => void;
 }
 
 const UndoContext = createContext<UndoContextValue | null>(null);
@@ -42,6 +43,17 @@ export function UndoProvider({ children }: { children: ReactNode }) {
   }, [undoManager]);
 
   const dismissToast = useCallback(() => setToast(null), []);
+
+  const showToast = useCallback(
+    (message: string, action?: { label: string; onClick: () => void }) => {
+      setToast({
+        message,
+        actionLabel: action?.label,
+        onAction: action?.onClick,
+      });
+    },
+    [],
+  );
 
   const undo = useCallback(async () => {
     const action = await undoManager.undo();
@@ -67,8 +79,8 @@ export function UndoProvider({ children }: { children: ReactNode }) {
   }, [undoManager]);
 
   const value = useMemo(
-    () => ({ undoManager, undo, redo, canUndo, canRedo, toast, dismissToast }),
-    [undoManager, undo, redo, canUndo, canRedo, toast, dismissToast],
+    () => ({ undoManager, undo, redo, canUndo, canRedo, toast, dismissToast, showToast }),
+    [undoManager, undo, redo, canUndo, canRedo, toast, dismissToast, showToast],
   );
 
   return <UndoContext.Provider value={value}>{children}</UndoContext.Provider>;

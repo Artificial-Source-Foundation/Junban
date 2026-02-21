@@ -21,6 +21,7 @@ export interface LoadedPlugin {
   enabled: boolean;
   instance?: Plugin;
   pendingApproval?: boolean;
+  builtin?: boolean;
 }
 
 export interface PluginServices {
@@ -43,6 +44,7 @@ export class PluginLoader {
   constructor(
     private pluginDir: string,
     private services: PluginServices,
+    private builtinDir?: string,
   ) {}
 
   /** Scan the plugins directory and validate all manifests. */
@@ -98,6 +100,59 @@ export class PluginLoader {
     return discovered;
   }
 
+  /** Scan the built-in extensions directory and validate all manifests. */
+  async discoverBuiltin(): Promise<LoadedPlugin[]> {
+    if (!this.builtinDir || !fs.existsSync(this.builtinDir)) {
+      return [];
+    }
+
+    logger.info(`Scanning for built-in extensions in ${this.builtinDir}`);
+
+    const entries = fs.readdirSync(this.builtinDir, { withFileTypes: true });
+    const discovered: LoadedPlugin[] = [];
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+
+      const pluginPath = path.join(this.builtinDir, entry.name);
+      const manifestPath = path.join(pluginPath, "manifest.json");
+
+      if (!fs.existsSync(manifestPath)) {
+        logger.warn(`No manifest.json in built-in ${entry.name}, skipping`);
+        continue;
+      }
+
+      try {
+        const raw = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+        const result = PluginManifest.safeParse(raw);
+
+        if (!result.success) {
+          logger.warn(`Invalid manifest in built-in ${entry.name}: ${result.error.message}`);
+          continue;
+        }
+
+        const manifest = result.data;
+        const loaded: LoadedPlugin = {
+          manifest,
+          path: pluginPath,
+          enabled: false,
+          builtin: true,
+        };
+
+        this.plugins.set(manifest.id, loaded);
+        discovered.push(loaded);
+        logger.info(`Discovered built-in extension: ${manifest.name} v${manifest.version}`);
+      } catch (err) {
+        logger.warn(
+          `Failed to read manifest in built-in ${entry.name}: ${err instanceof Error ? err.message : err}`,
+        );
+      }
+    }
+
+    logger.info(`Discovered ${discovered.length} built-in extension(s)`);
+    return discovered;
+  }
+
   /** Load and activate a plugin by ID. */
   async load(pluginId: string): Promise<void> {
     const loaded = this.plugins.get(pluginId);
@@ -116,11 +171,18 @@ export class PluginLoader {
     const approvedPermissions = this.services.queries.getPluginPermissions(pluginId);
     const requestedPermissions = (loaded.manifest.permissions ?? []) as Permission[];
 
-    if (requestedPermissions.length > 0 && approvedPermissions === null) {
-      // Never approved — mark as pending and skip loading
-      loaded.pendingApproval = true;
-      logger.info(`Plugin "${pluginId}" requires permission approval, skipping load`);
-      return;
+    if (approvedPermissions === null) {
+      if (loaded.builtin) {
+        // Built-in extensions stay inactive until explicitly activated by the user
+        logger.info(`Built-in extension "${pluginId}" not activated, skipping load`);
+        return;
+      }
+      if (requestedPermissions.length > 0) {
+        // Community plugin never approved — mark as pending and skip loading
+        loaded.pendingApproval = true;
+        logger.info(`Plugin "${pluginId}" requires permission approval, skipping load`);
+        return;
+      }
     }
 
     // Compute effective permissions: intersection of requested and approved
@@ -244,6 +306,7 @@ export class PluginLoader {
 
   /** Discover and load all valid plugins. */
   async loadAll(): Promise<void> {
+    await this.discoverBuiltin();
     await this.discover();
 
     for (const [pluginId, loaded] of this.plugins) {
@@ -314,6 +377,10 @@ export class PluginLoader {
 
   /** Remove a plugin from the internal map (after uninstall). */
   remove(pluginId: string): void {
+    const loaded = this.plugins.get(pluginId);
+    if (loaded?.builtin) {
+      throw new Error(`Cannot remove built-in extension "${pluginId}"`);
+    }
     this.plugins.delete(pluginId);
     logger.info(`Removed plugin "${pluginId}" from loader`);
   }

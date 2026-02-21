@@ -1,19 +1,19 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Inbox,
   CalendarDays,
+  CalendarRange,
   Clock,
   Settings,
-  Puzzle,
   MessageSquare,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Focus,
   Plus,
   Search,
   SlidersHorizontal,
   CheckCircle2,
+  Star,
 } from "lucide-react";
 import type { Project } from "../../core/types.js";
 import type { PanelInfo, ViewInfo } from "../api/index.js";
@@ -40,9 +40,6 @@ interface SidebarProps {
   panels?: PanelInfo[];
   pluginViews?: ViewInfo[];
   selectedPluginViewId?: string | null;
-  onToggleChat?: () => void;
-  chatOpen?: boolean;
-  onFocusMode?: () => void;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
   projectTaskCounts?: Map<string, number>;
@@ -50,10 +47,10 @@ interface SidebarProps {
   onSearch?: () => void;
   inboxCount?: number;
   todayCount?: number;
-  onCreateProject?: (name: string, color: string, icon: string) => void;
+  onOpenProjectModal?: () => void;
 }
 
-const TASK_NAV_ITEMS: Array<{
+const NAV_ITEMS: Array<{
   id: string;
   label: string;
   icon: typeof Inbox;
@@ -62,11 +59,10 @@ const TASK_NAV_ITEMS: Array<{
   { id: "inbox", label: "Inbox", icon: Inbox, countKey: "inbox" },
   { id: "today", label: "Today", icon: CalendarDays, countKey: "today" },
   { id: "upcoming", label: "Upcoming", icon: Clock },
+  { id: "calendar", label: "Calendar", icon: CalendarRange },
   { id: "filters-labels", label: "Filters & Labels", icon: SlidersHorizontal },
   { id: "completed", label: "Completed", icon: CheckCircle2 },
 ];
-
-const WORKSPACE_NAV_ITEMS = [{ id: "plugin-store", label: "Plugin Store", icon: Puzzle }];
 
 export function Sidebar({
   currentView,
@@ -77,9 +73,6 @@ export function Sidebar({
   panels = [],
   pluginViews = [],
   selectedPluginViewId,
-  onToggleChat,
-  chatOpen,
-  onFocusMode,
   collapsed = false,
   onToggleCollapsed,
   projectTaskCounts,
@@ -87,89 +80,134 @@ export function Sidebar({
   onSearch,
   inboxCount,
   todayCount,
-  onCreateProject,
+  onOpenProjectModal,
 }: SidebarProps) {
   const [projectsExpanded, setProjectsExpanded] = useState(true);
-  const [showProjectForm, setShowProjectForm] = useState(false);
-  const [newProjectName, setNewProjectName] = useState("");
-  const [newProjectColor, setNewProjectColor] = useState("#3b82f6");
-  const [newProjectIcon, setNewProjectIcon] = useState("");
-  const showToolsSection = Boolean(onFocusMode || onToggleChat);
+  const [favoritesExpanded, setFavoritesExpanded] = useState(true);
+  const [expandedParents, setExpandedParents] = useState<Set<string>>(new Set());
+
+  const favoriteProjects = useMemo(
+    () => projects.filter((p) => p.isFavorite && !p.archived),
+    [projects],
+  );
+
+  const projectTree = useMemo(() => {
+    const nonArchived = projects.filter((p) => !p.archived);
+    const roots = nonArchived.filter((p) => p.parentId === null);
+    const childrenMap = new Map<string, typeof nonArchived>();
+    for (const p of nonArchived) {
+      if (p.parentId) {
+        const existing = childrenMap.get(p.parentId) ?? [];
+        existing.push(p);
+        childrenMap.set(p.parentId, existing);
+      }
+    }
+    return { roots, childrenMap };
+  }, [projects]);
+
+  const toggleParentExpanded = (id: string) => {
+    setExpandedParents((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const countMap: Record<string, number | undefined> = {
     inbox: inboxCount,
     today: todayCount,
   };
 
-  const renderNavItems = (items: typeof TASK_NAV_ITEMS) => {
-    return items.map((item) => {
-      const Icon = item.icon;
-      const isActive = currentView === item.id;
-      const count = item.countKey ? countMap[item.countKey] : undefined;
-      return (
-        <li key={item.id}>
-          <button
-            onClick={() => onNavigate(item.id)}
-            aria-current={isActive ? "page" : undefined}
-            className={`group relative w-full text-left px-3 py-2 rounded-md text-sm flex items-center transition-colors ${
-              collapsed ? "justify-center" : "gap-3"
-            } ${
-              isActive
-                ? "bg-accent/10 text-accent font-medium"
-                : "text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface"
-            }`}
-          >
-            <Icon size={18} strokeWidth={isActive ? 2.25 : 1.75} />
-            {!collapsed && item.label}
-            {!collapsed && count !== undefined && count > 0 && (
-              <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full bg-surface-tertiary text-on-surface-secondary font-medium">
-                {count}
-              </span>
-            )}
-            <CollapsedTooltip visible={collapsed} label={item.label} />
-          </button>
-        </li>
-      );
-    });
-  };
+  const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.userAgent);
 
-  const renderToolButtons = () => {
+  // ── Reusable renderers ──
+
+  const renderNavButton = (
+    id: string,
+    label: string,
+    Icon: typeof Inbox,
+    isActive: boolean,
+    onClick: () => void,
+    count?: number,
+  ) => (
+    <li key={id}>
+      <button
+        onClick={onClick}
+        aria-current={isActive ? "page" : undefined}
+        className={`group relative w-full text-left px-3 py-1.5 rounded-md text-sm flex items-center transition-colors ${
+          collapsed ? "justify-center" : "gap-3"
+        } ${
+          isActive
+            ? "bg-accent/10 text-accent font-medium"
+            : "text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface"
+        }`}
+      >
+        <Icon size={18} strokeWidth={isActive ? 2.25 : 1.75} />
+        {!collapsed && <span className="flex-1">{label}</span>}
+        {!collapsed && count !== undefined && count > 0 && (
+          <span className="text-xs tabular-nums text-on-surface-muted">{count}</span>
+        )}
+        <CollapsedTooltip visible={collapsed} label={label} />
+      </button>
+    </li>
+  );
+
+  const renderProjectButton = (project: Project) => {
+    const isActive = currentView === "project" && selectedProjectId === project.id;
+    const projectCount = projectTaskCounts?.get(project.id) ?? 0;
     return (
-      <>
-        {onToggleChat && (
-          <button
-            onClick={onToggleChat}
-            aria-label={chatOpen ? "Close AI chat panel" : "Open AI chat panel"}
-            aria-pressed={chatOpen}
-            className={`group relative w-full px-3 py-2 rounded-md text-sm flex items-center transition-colors ${
-              collapsed ? "justify-center" : "gap-3"
-            } ${
-              chatOpen
-                ? "bg-accent/10 text-accent font-medium"
-                : "text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface"
-            }`}
-          >
-            <MessageSquare size={18} strokeWidth={chatOpen ? 2.25 : 1.75} />
-            {!collapsed && "AI Chat"}
-            <CollapsedTooltip visible={collapsed} label="AI Chat" />
-          </button>
+      <button
+        onClick={() => onNavigate("project", project.id)}
+        aria-current={isActive ? "page" : undefined}
+        className={`w-full text-left px-3 py-1.5 rounded-md text-sm flex items-center gap-3 transition-colors ${
+          isActive
+            ? "bg-accent/10 text-accent font-medium"
+            : "text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface"
+        }`}
+      >
+        {project.icon ? (
+          <span aria-hidden="true" className="flex-shrink-0 text-base leading-none">
+            {project.icon}
+          </span>
+        ) : (
+          <span
+            aria-hidden="true"
+            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+            style={{ backgroundColor: project.color }}
+          />
         )}
-        {onFocusMode && (
-          <button
-            onClick={onFocusMode}
-            aria-label="Enter focus mode"
-            className={`group relative w-full px-3 py-2 rounded-md text-sm flex items-center transition-colors text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface ${
-              collapsed ? "justify-center" : "gap-3"
-            }`}
-          >
-            <Focus size={18} strokeWidth={1.75} />
-            {!collapsed && "Focus Mode"}
-            <CollapsedTooltip visible={collapsed} label="Focus Mode" />
-          </button>
+        <span className="flex-1 truncate">{project.name}</span>
+        {projectCount > 0 && (
+          <span className="text-xs tabular-nums text-on-surface-muted">{projectCount}</span>
         )}
-      </>
+      </button>
     );
   };
+
+  // ── Section header ──
+  const SectionHeader = ({
+    label,
+    expanded,
+    onToggle,
+    trailing,
+  }: {
+    label: string;
+    expanded: boolean;
+    onToggle: () => void;
+    trailing?: React.ReactNode;
+  }) => (
+    <div className="flex items-center mt-5 mb-1 px-3">
+      <button
+        onClick={onToggle}
+        className="flex items-center gap-1 text-[11px] font-semibold text-on-surface-muted uppercase tracking-wider text-left hover:text-on-surface-secondary transition-colors flex-1"
+      >
+        {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        {label}
+      </button>
+      {trailing}
+    </div>
+  );
 
   return (
     <aside
@@ -178,33 +216,43 @@ export function Sidebar({
         collapsed ? "w-16 overflow-visible" : "w-sidebar overflow-y-auto"
       }`}
     >
-      <div className={`py-4 ${collapsed ? "px-2" : "px-5"}`}>
+      {/* ── Header ── */}
+      <div className={`py-4 ${collapsed ? "px-2" : "px-4"}`}>
         <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
           {!collapsed ? (
             <div className="flex items-center gap-2">
-              <img src="/images/logo.svg" alt="Saydo logo" className="w-7 h-7" />
-              <h2 className="text-lg font-bold text-on-surface tracking-tight">Saydo</h2>
+              <img src="/images/logo.svg" alt="Saydo logo" className="w-6 h-6" />
+              <h2 className="text-base font-bold text-on-surface tracking-tight">Saydo</h2>
             </div>
           ) : (
-            <img src="/images/logo.svg" alt="Saydo logo" className="w-7 h-7" />
+            <img src="/images/logo.svg" alt="Saydo logo" className="w-6 h-6" />
           )}
-          {onToggleCollapsed && (
+          {onToggleCollapsed && !collapsed && (
             <button
               onClick={onToggleCollapsed}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className="group relative p-2 rounded-md text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface transition-colors"
+              aria-label="Collapse sidebar"
+              className="p-1.5 rounded-md text-on-surface-muted hover:bg-surface-tertiary hover:text-on-surface transition-colors"
             >
-              {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              <ChevronLeft size={16} />
+            </button>
+          )}
+          {onToggleCollapsed && collapsed && (
+            <button
+              onClick={onToggleCollapsed}
+              aria-label="Expand sidebar"
+              className="group relative mt-2 p-1.5 rounded-md text-on-surface-muted hover:bg-surface-tertiary hover:text-on-surface transition-colors"
+            >
+              <ChevronRight size={16} />
               <CollapsedTooltip visible={collapsed} label="Expand sidebar" />
             </button>
           )}
         </div>
 
-        {/* Add task button */}
+        {/* ── Add task ── */}
         {onAddTask && (
           <button
             onClick={onAddTask}
-            className={`mt-3 w-full flex items-center rounded-lg bg-accent text-white font-medium text-sm transition-colors hover:bg-accent/90 ${
+            className={`mt-3 w-full flex items-center rounded-lg bg-accent text-white font-medium text-sm transition-colors hover:bg-accent-hover active:scale-[0.98] ${
               collapsed ? "justify-center p-2" : "gap-2 px-3 py-2"
             }`}
           >
@@ -213,141 +261,120 @@ export function Sidebar({
           </button>
         )}
 
-        {/* Search button */}
+        {/* ── Search ── */}
         {onSearch && !collapsed && (
           <button
             onClick={onSearch}
-            className="mt-2 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-on-surface-muted hover:bg-surface-tertiary hover:text-on-surface transition-colors"
+            className="mt-2 w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-on-surface-muted hover:bg-surface-tertiary hover:text-on-surface transition-colors"
           >
             <Search size={16} />
-            Search
+            <span className="flex-1 text-left">Search</span>
+            <kbd className="hidden sm:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-tertiary text-on-surface-muted border border-border/50">
+              {isMac ? "⌘K" : "Ctrl+K"}
+            </kbd>
           </button>
         )}
         {onSearch && collapsed && (
           <button
             onClick={onSearch}
             aria-label="Search"
-            className="group relative mt-2 w-full flex items-center justify-center p-2 rounded-lg text-on-surface-muted hover:bg-surface-tertiary hover:text-on-surface transition-colors"
+            className="group relative mt-2 w-full flex items-center justify-center p-2 rounded-md text-on-surface-muted hover:bg-surface-tertiary hover:text-on-surface transition-colors"
           >
             <Search size={16} />
             <CollapsedTooltip visible={collapsed} label="Search" />
           </button>
         )}
       </div>
-      <nav aria-label="Views" className={`flex-1 flex flex-col ${collapsed ? "px-2" : "px-3"}`}>
-        <div>
-          {!collapsed && (
-            <h3 className="text-xs font-semibold text-on-surface-muted uppercase tracking-wider mb-2 px-3">
-              Tasks
-            </h3>
-          )}
-          <ul className="space-y-0.5">{renderNavItems(TASK_NAV_ITEMS)}</ul>
 
-          {!collapsed && (projects.length > 0 || onCreateProject) && (
+      {/* ── Navigation ── */}
+      <nav aria-label="Views" className={`flex-1 flex flex-col min-h-0 ${collapsed ? "px-2" : "px-3"}`}>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          {/* Nav items — no section header needed (it's the primary content) */}
+          <ul className="space-y-0.5">
+            {NAV_ITEMS.map((item) =>
+              renderNavButton(
+                item.id,
+                item.label,
+                item.icon,
+                currentView === item.id,
+                () => onNavigate(item.id),
+                item.countKey ? countMap[item.countKey] : undefined,
+              ),
+            )}
+          </ul>
+
+          {/* ── Favorites ── */}
+          {!collapsed && favoriteProjects.length > 0 && (
             <>
-              <div className="flex items-center mt-6 mb-2 px-3">
-                <button
-                  onClick={() => setProjectsExpanded(!projectsExpanded)}
-                  className="flex items-center gap-1 text-xs font-semibold text-on-surface-muted uppercase tracking-wider text-left hover:text-on-surface-secondary transition-colors flex-1"
-                >
-                  {projectsExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                  My Projects
-                </button>
-                {onCreateProject && projectsExpanded && (
-                  <button
-                    onClick={() => setShowProjectForm((v) => !v)}
-                    title="New project"
-                    className="p-0.5 rounded text-on-surface-muted hover:text-on-surface-secondary hover:bg-surface-tertiary transition-colors"
-                  >
-                    <Plus size={14} />
-                  </button>
-                )}
-              </div>
-              {projectsExpanded && showProjectForm && onCreateProject && (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const name = newProjectName.trim();
-                    if (!name) return;
-                    onCreateProject(name, newProjectColor, newProjectIcon);
-                    setNewProjectName("");
-                    setNewProjectColor("#3b82f6");
-                    setNewProjectIcon("");
-                    setShowProjectForm(false);
-                  }}
-                  className="mx-3 mb-2 p-2 rounded-lg border border-border bg-surface-tertiary space-y-2"
-                >
-                  <input
-                    type="text"
-                    value={newProjectName}
-                    onChange={(e) => setNewProjectName(e.target.value)}
-                    placeholder="Project name"
-                    autoFocus
-                    className="w-full px-2 py-1.5 text-xs border border-border rounded bg-surface text-on-surface placeholder-on-surface-muted focus:outline-none focus:ring-1 focus:ring-accent"
-                  />
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={newProjectIcon}
-                      onChange={(e) => setNewProjectIcon(e.target.value)}
-                      placeholder="Emoji"
-                      maxLength={2}
-                      className="w-12 px-2 py-1.5 text-xs text-center border border-border rounded bg-surface text-on-surface placeholder-on-surface-muted focus:outline-none focus:ring-1 focus:ring-accent"
-                    />
-                    <input
-                      type="color"
-                      value={newProjectColor}
-                      onChange={(e) => setNewProjectColor(e.target.value)}
-                      title="Project color"
-                      className="w-7 h-7 rounded border border-border cursor-pointer"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!newProjectName.trim()}
-                      className="ml-auto px-2.5 py-1 text-xs bg-accent text-white rounded hover:bg-accent/90 disabled:opacity-50 transition-colors"
-                    >
-                      Add
-                    </button>
-                  </div>
-                </form>
+              <SectionHeader
+                label="Favorites"
+                expanded={favoritesExpanded}
+                onToggle={() => setFavoritesExpanded(!favoritesExpanded)}
+                trailing={
+                  <Star size={11} className="text-on-surface-muted mr-1" />
+                }
+              />
+              {favoritesExpanded && (
+                <ul className="space-y-0.5">
+                  {favoriteProjects.map((project) => (
+                    <li key={project.id}>{renderProjectButton(project)}</li>
+                  ))}
+                </ul>
               )}
+            </>
+          )}
+
+          {/* ── My Projects ── */}
+          {!collapsed && (projects.length > 0 || onOpenProjectModal) && (
+            <>
+              <SectionHeader
+                label="My Projects"
+                expanded={projectsExpanded}
+                onToggle={() => setProjectsExpanded(!projectsExpanded)}
+                trailing={
+                  onOpenProjectModal && projectsExpanded ? (
+                    <button
+                      onClick={onOpenProjectModal}
+                      title="New project"
+                      className="p-0.5 rounded text-on-surface-muted hover:text-on-surface-secondary hover:bg-surface-tertiary transition-colors"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  ) : undefined
+                }
+              />
               {projectsExpanded && (
                 <ul className="space-y-0.5">
-                  {projects.map((project) => {
-                    const isActive = currentView === "project" && selectedProjectId === project.id;
-                    const projectCount = projectTaskCounts?.get(project.id) ?? 0;
+                  {projectTree.roots.map((project) => {
+                    const children = projectTree.childrenMap.get(project.id) ?? [];
+                    const hasChildren = children.length > 0;
+                    const isParentExpanded = expandedParents.has(project.id);
                     return (
                       <li key={project.id}>
-                        <button
-                          onClick={() => onNavigate("project", project.id)}
-                          aria-current={isActive ? "page" : undefined}
-                          className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center gap-3 transition-colors ${
-                            isActive
-                              ? "bg-accent/10 text-accent font-medium"
-                              : "text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface"
-                          }`}
-                        >
-                          {project.icon ? (
-                            <span
-                              aria-hidden="true"
-                              className="flex-shrink-0 text-base leading-none"
+                        <div className="flex items-center">
+                          {hasChildren && (
+                            <button
+                              onClick={() => toggleParentExpanded(project.id)}
+                              className="p-0.5 mr-0.5 rounded text-on-surface-muted hover:text-on-surface-secondary transition-colors"
                             >
-                              {project.icon}
-                            </span>
-                          ) : (
-                            <span
-                              aria-hidden="true"
-                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: project.color }}
-                            />
+                              {isParentExpanded ? (
+                                <ChevronDown size={12} />
+                              ) : (
+                                <ChevronRight size={12} />
+                              )}
+                            </button>
                           )}
-                          <span className="flex-1">{project.name}</span>
-                          {projectCount > 0 && (
-                            <span className="text-xs px-1.5 py-0.5 rounded-full bg-surface-tertiary text-on-surface-secondary font-medium">
-                              {projectCount}
-                            </span>
-                          )}
-                        </button>
+                          <div className={`flex-1 ${!hasChildren ? "ml-5" : ""}`}>
+                            {renderProjectButton(project)}
+                          </div>
+                        </div>
+                        {hasChildren && isParentExpanded && (
+                          <ul className="ml-4 space-y-0.5">
+                            {children.map((child) => (
+                              <li key={child.id}>{renderProjectButton(child)}</li>
+                            ))}
+                          </ul>
+                        )}
                       </li>
                     );
                   })}
@@ -356,12 +383,13 @@ export function Sidebar({
             </>
           )}
 
+          {/* ── Plugin Panels ── */}
           {!collapsed && panels.length > 0 && (
             <>
-              <h3 className="text-xs font-semibold text-on-surface-muted uppercase tracking-wider mt-6 mb-2 px-3">
+              <h3 className="text-[11px] font-semibold text-on-surface-muted uppercase tracking-wider mt-5 mb-1 px-3">
                 Plugin Panels
               </h3>
-              <div className="space-y-2 px-3">
+              <div className="space-y-1.5 px-3">
                 {panels.map((panel) => (
                   <div
                     key={panel.id}
@@ -382,9 +410,10 @@ export function Sidebar({
             </>
           )}
 
+          {/* ── Custom Views ── */}
           {!collapsed && pluginViews.length > 0 && (
             <>
-              <h3 className="text-xs font-semibold text-on-surface-muted uppercase tracking-wider mt-6 mb-2 px-3">
+              <h3 className="text-[11px] font-semibold text-on-surface-muted uppercase tracking-wider mt-5 mb-1 px-3">
                 Custom Views
               </h3>
               <ul className="space-y-0.5">
@@ -396,7 +425,7 @@ export function Sidebar({
                       <button
                         onClick={() => onNavigate("plugin-view", view.id)}
                         aria-current={isActive ? "page" : undefined}
-                        className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center gap-3 transition-colors ${
+                        className={`w-full text-left px-3 py-1.5 rounded-md text-sm flex items-center gap-3 transition-colors ${
                           isActive
                             ? "bg-accent/10 text-accent font-medium"
                             : "text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface"
@@ -411,37 +440,28 @@ export function Sidebar({
               </ul>
             </>
           )}
-
-          {collapsed && showToolsSection && (
-            <div className="mx-2 my-3 border-t border-border/80" aria-hidden="true" />
-          )}
-
-          {showToolsSection && (
-            <>
-              {!collapsed && (
-                <h3 className="text-xs font-semibold text-on-surface-muted uppercase tracking-wider mt-6 mb-2 px-3">
-                  Tools
-                </h3>
-              )}
-              <div className="space-y-0.5">{renderToolButtons()}</div>
-            </>
-          )}
         </div>
 
-        <div className={`mt-auto ${collapsed ? "pb-3" : "pt-4 pb-3"}`}>
-          {collapsed && <div className="mx-2 mb-3 border-t border-border/80" aria-hidden="true" />}
+        {/* ── Bottom: Workspace ── */}
+        <div className={`shrink-0 border-t border-border/60 ${collapsed ? "pt-2 pb-3" : "pt-3 pb-3"}`}>
           {!collapsed && (
-            <h3 className="text-xs font-semibold text-on-surface-muted uppercase tracking-wider mb-2 px-3">
+            <h3 className="text-[11px] font-semibold text-on-surface-muted uppercase tracking-wider mb-1 px-3">
               Workspace
             </h3>
           )}
           <ul className="space-y-0.5">
-            {renderNavItems(WORKSPACE_NAV_ITEMS)}
+            {renderNavButton(
+              "ai-chat",
+              "AI Chat",
+              MessageSquare,
+              currentView === "ai-chat",
+              () => onNavigate("ai-chat"),
+            )}
             {onOpenSettings && (
               <li>
                 <button
                   onClick={onOpenSettings}
-                  className={`group relative w-full text-left px-3 py-2 rounded-md text-sm flex items-center transition-colors text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface ${
+                  className={`group relative w-full text-left px-3 py-1.5 rounded-md text-sm flex items-center transition-colors text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface ${
                     collapsed ? "justify-center" : "gap-3"
                   }`}
                 >

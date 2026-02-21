@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { formatTaskDate, formatTaskTime } from "../../src/utils/format-date.js";
+import { formatTaskDate, formatTaskTime, toDateKey } from "../../src/utils/format-date.js";
 
 describe("formatTaskDate", () => {
   beforeEach(() => {
@@ -79,5 +79,33 @@ describe("formatTaskTime", () => {
 
   it("returns empty string for invalid dates", () => {
     expect(formatTaskTime("invalid", "12h")).toBe("");
+  });
+});
+
+describe("toDateKey", () => {
+  it("returns local YYYY-MM-DD for a date", () => {
+    const d = new Date(2026, 1, 16); // Feb 16 local
+    expect(toDateKey(d)).toBe("2026-02-16");
+  });
+
+  it("pads single-digit month and day", () => {
+    const d = new Date(2026, 0, 5); // Jan 5 local
+    expect(toDateKey(d)).toBe("2026-01-05");
+  });
+
+  it("uses local date, not UTC (late night scenario)", () => {
+    // 11:30 PM on Feb 16 in UTC-6 = Feb 17 05:30 UTC
+    // toDateKey should return the LOCAL date, not the UTC date
+    const d = new Date("2026-02-17T05:30:00Z"); // UTC
+    // In a UTC-6 timezone this would be Feb 16 23:30
+    // In UTC this is Feb 17 05:30
+    // toDateKey uses getFullYear/getMonth/getDate which are local
+    // We can only verify it uses local time by checking the function contract
+    const key = toDateKey(d);
+    expect(key).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // The key should match the local date components
+    expect(key).toBe(
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
+    );
   });
 });

@@ -9,12 +9,23 @@ const logger = createLogger("projects");
 export class ProjectService {
   constructor(private queries: IStorage) {}
 
-  async create(name: string, color?: string): Promise<Project> {
-    const project = {
+  async create(
+    name: string,
+    opts?: {
+      color?: string;
+      parentId?: string | null;
+      isFavorite?: boolean;
+      viewStyle?: "list" | "board" | "calendar";
+    },
+  ): Promise<Project> {
+    const project: Project = {
       id: generateId(),
       name,
-      color: color ?? "#3b82f6",
+      color: opts?.color ?? "#3b82f6",
       icon: null,
+      parentId: opts?.parentId ?? null,
+      isFavorite: opts?.isFavorite ?? false,
+      viewStyle: opts?.viewStyle ?? "list",
       sortOrder: 0,
       archived: false,
       createdAt: new Date().toISOString(),
@@ -46,7 +57,7 @@ export class ProjectService {
 
   async update(
     id: string,
-    data: Partial<Pick<Project, "name" | "color" | "icon" | "archived">>,
+    data: Partial<Pick<Project, "name" | "color" | "icon" | "archived" | "parentId" | "isFavorite" | "viewStyle">>,
   ): Promise<Project | null> {
     const result = this.queries.updateProject(id, data);
     if (result.changes === 0) return null;

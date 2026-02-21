@@ -5,9 +5,7 @@ interface BottomNavBarProps {
   currentView: string;
   onNavigate: (view: string) => void;
   onMenuOpen: () => void;
-  onOpenChat: () => void;
   onOpenVoice: () => void;
-  chatOpen?: boolean;
   inboxCount?: number;
   todayCount?: number;
 }
@@ -25,9 +23,7 @@ export function BottomNavBar({
   currentView,
   onNavigate,
   onMenuOpen,
-  onOpenChat,
   onOpenVoice,
-  chatOpen,
   inboxCount,
   todayCount,
 }: BottomNavBarProps) {
@@ -49,9 +45,9 @@ export function BottomNavBar({
       longPressTimer.current = null;
     }
     if (!didLongPress.current) {
-      onOpenChat();
+      onNavigate("ai-chat");
     }
-  }, [onOpenChat]);
+  }, [onNavigate]);
 
   const handlePointerCancel = useCallback(() => {
     if (longPressTimer.current) {
@@ -108,7 +104,7 @@ export function BottomNavBar({
             onContextMenu={(e) => e.preventDefault()}
             aria-label="AI assistant — hold for voice"
             className={`-mt-5 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95 ${
-              chatOpen
+              currentView === "ai-chat"
                 ? "bg-accent text-white shadow-accent/30"
                 : "bg-accent text-white shadow-accent/20"
             }`}

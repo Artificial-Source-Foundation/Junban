@@ -4,6 +4,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 // Mock lucide-react
 vi.mock("lucide-react", () => ({
   CheckCircle2: (props: any) => <svg data-testid="check-icon" {...props} />,
+  ClipboardList: (props: any) => <svg data-testid="clipboard-icon" {...props} />,
 }));
 
 import { Completed } from "../../../src/ui/views/Completed.js";
@@ -39,7 +40,7 @@ describe("Completed", () => {
 
   it("shows empty state when no completed tasks", () => {
     render(<Completed tasks={[]} projects={[]} />);
-    expect(screen.getByText("No completed tasks yet.")).toBeTruthy();
+    expect(screen.getByText("No completed tasks yet")).toBeTruthy();
   });
 
   it("calls onSelectTask when task row is clicked", () => {

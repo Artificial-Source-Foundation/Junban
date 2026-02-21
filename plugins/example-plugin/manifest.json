@@ -1,5 +1,6 @@
 {
   "id": "example-plugin",
+  "icon": "🧩",
   "name": "Example Plugin",
   "version": "1.0.0",
   "author": "ASF",

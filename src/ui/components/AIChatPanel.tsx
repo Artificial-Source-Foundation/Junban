@@ -12,7 +12,7 @@ import {
   Loader2,
   Volume2,
 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useAIContext } from "../context/AIContext.js";
@@ -29,9 +29,11 @@ interface AIChatPanelProps {
   onClose: () => void;
   onOpenSettings: () => void;
   onSelectTask?: (taskId: string) => void;
+  mode?: "panel" | "view";
 }
 
-export function AIChatPanel({ onClose, onOpenSettings, onSelectTask }: AIChatPanelProps) {
+export function AIChatPanel({ onClose, onOpenSettings, onSelectTask, mode = "panel" }: AIChatPanelProps) {
+  const isView = mode === "view";
   const {
     messages,
     isStreaming,
@@ -79,18 +81,6 @@ export function AIChatPanel({ onClose, onOpenSettings, onSelectTask }: AIChatPan
   const wasStreamingRef = useRef(false);
 
   const ttsAvailable = !!(voice.ttsProvider && voice.settings.ttsEnabled);
-  console.log(
-    "[VoiceCall:Panel] ttsAvailable:",
-    ttsAvailable,
-    "sttProvider:",
-    voice.sttProvider?.id,
-    "ttsProvider:",
-    voice.ttsProvider?.id,
-    "ttsEnabled:",
-    voice.settings.ttsEnabled,
-    "voiceMode:",
-    voice.settings.voiceMode,
-  );
 
   const voiceCall = useVoiceCall({
     speak: voice.speak,
@@ -105,20 +95,12 @@ export function AIChatPanel({ onClose, onOpenSettings, onSelectTask }: AIChatPan
   const handleVoiceResult = useCallback(
     (transcript: string) => {
       const cleaned = transcript.trim();
-      console.log(
-        "[VoiceCall:Panel] handleVoiceResult:",
-        JSON.stringify(cleaned),
-        "callActive:",
-        voiceCall.isCallActive,
-      );
       // Filter out empty or non-speech markers from STT
       if (!cleaned || cleaned === "[BLANK_AUDIO]") {
-        console.log("[VoiceCall:Panel] filtered out empty/blank transcript");
         return;
       }
       // During voice call, always auto-send
       if (voiceCall.isCallActive || voice.settings.autoSend) {
-        console.log("[VoiceCall:Panel] auto-sending transcript to AI");
         sendMessage(cleaned);
       } else {
         setInput((prev) => (prev ? prev + " " + cleaned : cleaned));
@@ -130,13 +112,11 @@ export function AIChatPanel({ onClose, onOpenSettings, onSelectTask }: AIChatPan
   // VAD integration — auto-detect speech and transcribe
   const handleVADSpeechEnd = useCallback(
     async (audio: Blob) => {
-      console.log("[VoiceCall:Panel] VAD speech ended, audio size:", audio.size);
       try {
         const transcript = await voice.transcribeAudio(audio);
-        console.log("[VoiceCall:Panel] VAD transcription result:", JSON.stringify(transcript));
         handleVoiceResult(transcript);
-      } catch (err) {
-        console.warn("[VoiceCall:Panel] VAD transcription failed:", err);
+      } catch {
+        // VAD transcription failed
       }
     },
     [voice, handleVoiceResult],
@@ -171,21 +151,6 @@ export function AIChatPanel({ onClose, onOpenSettings, onSelectTask }: AIChatPan
     (voice.sttProvider instanceof BrowserSTTProvider || (isNonBrowserSTT && !vad.isSupported));
   const useBrowserSTTLoop = needBrowserSTTFallback && browserSTTAvailable;
 
-  console.log(
-    "[VoiceCall:Panel] vadEnabled:",
-    vadEnabled,
-    "vad.isListening:",
-    vad.isListening,
-    "vad.isSupported:",
-    vad.isSupported,
-    "useBrowserSTTLoop:",
-    useBrowserSTTLoop,
-    "isNonBrowserSTT:",
-    isNonBrowserSTT,
-    "callState:",
-    voiceCall.callState,
-  );
-
   // Browser STT recognition loop — used for Browser STT provider, or as fallback when VAD fails
   const browserSTTRef = useRef<BrowserSTTProvider | null>(null);
   useEffect(() => {
@@ -196,22 +161,11 @@ export function AIChatPanel({ onClose, onOpenSettings, onSelectTask }: AIChatPan
 
   useEffect(() => {
     if (!useBrowserSTTLoop || voiceCall.callState !== "listening") {
-      if (voiceCall.isCallActive) {
-        console.log(
-          "[VoiceCall:Panel] Browser STT loop NOT starting — useBrowserSTTLoop:",
-          useBrowserSTTLoop,
-          "callState:",
-          voiceCall.callState,
-        );
-      }
       return;
     }
     const stt = browserSTTRef.current;
     if (!stt) return;
     let cancelled = false;
-    console.log(
-      "[VoiceCall:Panel] Browser STT loop STARTING" + (isNonBrowserSTT ? " (VAD fallback)" : ""),
-    );
 
     const listen = async () => {
       while (!cancelled) {
@@ -220,14 +174,12 @@ export function AIChatPanel({ onClose, onOpenSettings, onSelectTask }: AIChatPan
           if (cancelled) break;
           const cleaned = transcript.trim();
           if (cleaned && cleaned !== "[BLANK_AUDIO]") {
-            console.log("[VoiceCall:Panel] Browser STT got:", JSON.stringify(cleaned));
             handleVoiceResult(cleaned);
             break;
           }
           // No speech detected — retry after brief pause
           await new Promise((r) => setTimeout(r, 200));
-        } catch (err) {
-          console.warn("[VoiceCall:Panel] Browser STT error:", err);
+        } catch {
           if (cancelled) break;
           await new Promise((r) => setTimeout(r, 1000));
         }
@@ -267,6 +219,28 @@ export function AIChatPanel({ onClose, onOpenSettings, onSelectTask }: AIChatPan
   }, [isStreaming, messages, voice, voiceCall.isCallActive]);
 
   if (!isConfigured) {
+    if (isView) {
+      return (
+        <aside className="w-full h-full flex flex-col bg-surface">
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mb-6">
+              <Bot size={32} className="text-accent" />
+            </div>
+            <h4 className="font-medium text-lg text-on-surface mb-2">AI Assistant</h4>
+            <p className="text-sm text-on-surface-muted mb-6 max-w-md">
+              Configure an AI provider in Settings to start chatting.
+            </p>
+            <button
+              onClick={onOpenSettings}
+              className="px-5 py-2.5 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors flex items-center gap-2"
+            >
+              <Settings size={16} />
+              Open Settings
+            </button>
+          </div>
+        </aside>
+      );
+    }
     return (
       <aside className="w-full h-full md:w-80 md:h-auto border-l-0 md:border-l border-border flex flex-col bg-surface">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -295,6 +269,136 @@ export function AIChatPanel({ onClose, onOpenSettings, onSelectTask }: AIChatPan
             Open Settings
           </button>
         </div>
+      </aside>
+    );
+  }
+
+  const viewSuggestions = [
+    { emoji: "\ud83d\udccb", text: "What tasks do I have?" },
+    { emoji: "\ud83d\udcc5", text: "Plan my day" },
+    { emoji: "\u23f0", text: "What's overdue?" },
+    { emoji: "\ud83d\udcca", text: "Summarize my week" },
+  ];
+
+  if (isView) {
+    return (
+      <aside className="w-full h-full flex flex-col bg-surface relative">
+        {/* Floating clear button */}
+        {messages.length > 0 && (
+          <button
+            onClick={clearChat}
+            title="Clear chat"
+            className="absolute top-4 right-4 z-10 text-on-surface-muted hover:text-on-surface-secondary p-2 rounded-lg hover:bg-surface-tertiary transition-colors"
+          >
+            <Trash2 size={18} />
+          </button>
+        )}
+
+        {/* Messages / Empty state */}
+        {messages.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center px-4 pb-24">
+              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6 shadow-[0_0_24px_rgba(var(--color-accent-rgb,99,102,241),0.15)]">
+                <Bot size={32} className="text-accent" />
+              </div>
+              <h2 className="text-2xl font-light text-on-surface mb-8">
+                What can I help you with?
+              </h2>
+              <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+                {viewSuggestions.map((s) => (
+                  <button
+                    key={s.text}
+                    onClick={() => sendMessage(s.text)}
+                    disabled={isStreaming}
+                    className="rounded-xl border border-border px-4 py-3 text-left text-sm text-on-surface-secondary hover:bg-surface-tertiary disabled:opacity-50 transition-colors"
+                  >
+                    <span className="mr-2">{s.emoji}</span>
+                    {s.text}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-auto">
+            <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
+              {messages.map((msg, i) => (
+                <MessageBubble
+                  key={i}
+                  message={msg}
+                  onRetry={
+                    msg.isError && msg.retryable && i === messages.length - 1
+                      ? retryLastMessage
+                      : undefined
+                  }
+                  onSelectTask={onSelectTask}
+                />
+              ))}
+              {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
+                <div className="flex items-center gap-1.5 text-on-surface-muted text-sm">
+                  <span
+                    className="inline-block w-1.5 h-1.5 bg-accent rounded-full animate-bounce"
+                    style={{ animationDelay: "0ms" }}
+                  />
+                  <span
+                    className="inline-block w-1.5 h-1.5 bg-accent rounded-full animate-bounce"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <span
+                    className="inline-block w-1.5 h-1.5 bg-accent rounded-full animate-bounce"
+                    style={{ animationDelay: "300ms" }}
+                  />
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+        )}
+
+        {/* Bottom-pinned input pill */}
+        {voiceCall.isCallActive ? (
+          <div className="max-w-3xl mx-auto w-full px-4 pb-6">
+            <VoiceCallOverlay
+              callState={voiceCall.callState as Exclude<typeof voiceCall.callState, "idle">}
+              callDuration={voiceCall.callDuration}
+              onEndCall={voiceCall.endCall}
+              isInGracePeriod={vad.isInGracePeriod}
+              gracePeriodProgress={vad.gracePeriodProgress}
+            />
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="max-w-3xl mx-auto w-full px-4 pb-6">
+            <div className="flex items-center gap-2 rounded-2xl bg-surface-secondary border border-border shadow-sm px-4 py-3">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask anything..."
+                className="min-w-0 flex-1 bg-transparent text-base text-on-surface placeholder-on-surface-muted focus:outline-none"
+              />
+              <VoiceButton onResult={handleVoiceResult} disabled={isStreaming} voice={voice} />
+              {voice.sttProvider && ttsAvailable && (
+                <button
+                  type="button"
+                  onClick={voiceCall.startCall}
+                  disabled={isStreaming}
+                  title="Start voice call"
+                  className="shrink-0 p-2 text-sm rounded-lg text-on-surface-muted hover:bg-surface-tertiary disabled:opacity-50 transition-colors"
+                >
+                  <Phone size={18} />
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={isStreaming || !input.trim()}
+                className="shrink-0 p-2 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Send size={18} />
+              </button>
+            </div>
+          </form>
+        )}
       </aside>
     );
   }
@@ -444,8 +548,8 @@ function getErrorHint(category?: string, message?: string): string | null {
   }
 }
 
-function extractTasksFromToolCalls(
-  toolCalls?: AIChatMessage["toolCalls"],
+function extractTasksFromMessage(
+  msg: AIChatMessage,
 ): {
   id: string;
   title: string;
@@ -453,7 +557,24 @@ function extractTasksFromToolCalls(
   priority?: number | null;
   dueDate?: string | null;
 }[] {
+  const taskToolNames = new Set(["create_task", "update_task", "complete_task"]);
+  const toolCalls = msg.toolCalls;
+  const toolResults = msg.toolResults;
   if (!toolCalls || toolCalls.length === 0) return [];
+
+  // Build a map from tool name → parsed result data (contains real task IDs)
+  const resultByTool = new Map<string, Record<string, unknown>>();
+  if (toolResults) {
+    for (const tr of toolResults) {
+      if (!taskToolNames.has(tr.toolName)) continue;
+      try {
+        resultByTool.set(tr.toolName, JSON.parse(tr.data));
+      } catch {
+        /* skip */
+      }
+    }
+  }
+
   const tasks: {
     id: string;
     title: string;
@@ -461,19 +582,32 @@ function extractTasksFromToolCalls(
     priority?: number | null;
     dueDate?: string | null;
   }[] = [];
-  const taskToolNames = new Set(["create_task", "update_task", "complete_task"]);
 
   for (const tc of toolCalls) {
     if (!taskToolNames.has(tc.name)) continue;
     try {
       const args = JSON.parse(tc.arguments);
-      if (args.title || args.taskId) {
+      const result = resultByTool.get(tc.name) as Record<string, unknown> | undefined;
+      // The result contains { success, task: { id, title, ... } } or { success, taskId }
+      const resultTask = result?.task as Record<string, unknown> | undefined;
+      const id =
+        (resultTask?.id as string) ??
+        (result?.taskId as string) ??
+        args.taskId ??
+        "";
+      const title =
+        (resultTask?.title as string) ??
+        args.title ??
+        tc.name.replace(/_/g, " ");
+      if (title || id) {
         tasks.push({
-          id: args.taskId ?? "",
-          title: args.title ?? tc.name.replace(/_/g, " "),
-          priority: args.priority ?? null,
-          dueDate: args.dueDate ?? null,
-          status: tc.name === "complete_task" ? "completed" : "pending",
+          id,
+          title,
+          priority: (resultTask?.priority as number) ?? args.priority ?? null,
+          dueDate: (resultTask?.dueDate as string) ?? args.dueDate ?? null,
+          status:
+            (resultTask?.status as string) ??
+            (tc.name === "complete_task" ? "completed" : "pending"),
         });
       }
     } catch {
@@ -529,7 +663,7 @@ function MessageBubble({
     );
   }
 
-  const inlineTasks = extractTasksFromToolCalls(message.toolCalls);
+  const inlineTasks = extractTasksFromMessage(message);
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
@@ -547,7 +681,7 @@ function MessageBubble({
               <ChatTaskCard
                 key={task.id || i}
                 task={task}
-                onClick={task.id ? onSelectTask : undefined}
+                onClick={onSelectTask}
               />
             ))}
           </div>
@@ -579,7 +713,11 @@ function MarkdownMessage({
 }) {
   const components = createMarkdownComponents(onSelectTask);
   return (
-    <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={components}
+      urlTransform={(url) => (url.startsWith("saydo://") ? url : defaultUrlTransform(url))}
+    >
       {content}
     </ReactMarkdown>
   );

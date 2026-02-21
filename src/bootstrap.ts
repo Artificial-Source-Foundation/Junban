@@ -1,5 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import { getDb } from "./db/client.js";
 import { runMigrations } from "./db/migrate.js";
 import { TaskService } from "./core/tasks.js";
@@ -84,16 +85,22 @@ export function bootstrap(dbPath?: string): AppServices {
   logger.debug("Services created");
 
   const pluginDir = path.resolve(env.PLUGIN_DIR);
-  const pluginLoader = new PluginLoader(pluginDir, {
-    taskService,
-    eventBus,
-    settingsManager,
-    commandRegistry,
-    uiRegistry,
-    queries: storage,
-    aiProviderRegistry,
-    toolRegistry,
-  });
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const builtinDir = path.join(__dirname, "plugins", "builtin");
+  const pluginLoader = new PluginLoader(
+    pluginDir,
+    {
+      taskService,
+      eventBus,
+      settingsManager,
+      commandRegistry,
+      uiRegistry,
+      queries: storage,
+      aiProviderRegistry,
+      toolRegistry,
+    },
+    builtinDir,
+  );
 
   return {
     taskService,

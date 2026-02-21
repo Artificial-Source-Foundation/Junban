@@ -23,15 +23,30 @@ export function registerProjectCrudTools(registry: ToolRegistry): void {
             type: "string",
             description: 'Emoji icon for the project (e.g. "🚀", "📚"). Optional.',
           },
+          parentId: {
+            type: "string",
+            description: "ID of a parent project to nest this project under. Optional.",
+          },
+          isFavorite: {
+            type: "boolean",
+            description: "Pin project to Favorites section in sidebar. Default: false.",
+          },
+          viewStyle: {
+            type: "string",
+            enum: ["list", "board", "calendar"],
+            description: 'Default view layout for this project. Default: "list".',
+          },
         },
         required: ["name"],
       },
     },
     async (args, ctx) => {
-      const project = await ctx.projectService.create(
-        args.name as string,
-        args.color as string | undefined,
-      );
+      const project = await ctx.projectService.create(args.name as string, {
+        color: args.color as string | undefined,
+        parentId: (args.parentId as string) || null,
+        isFavorite: (args.isFavorite as boolean) || false,
+        viewStyle: (args.viewStyle as "list" | "board" | "calendar") || "list",
+      });
       if (args.icon) {
         await ctx.projectService.update(project.id, { icon: args.icon as string });
         project.icon = args.icon as string;
@@ -43,6 +58,9 @@ export function registerProjectCrudTools(registry: ToolRegistry): void {
           name: project.name,
           color: project.color,
           icon: project.icon,
+          parentId: project.parentId,
+          isFavorite: project.isFavorite,
+          viewStyle: project.viewStyle,
           archived: project.archived,
         },
       });
@@ -75,6 +93,9 @@ export function registerProjectCrudTools(registry: ToolRegistry): void {
           name: p.name,
           color: p.color,
           icon: p.icon,
+          parentId: p.parentId,
+          isFavorite: p.isFavorite,
+          viewStyle: p.viewStyle,
           archived: p.archived,
         })),
       });
@@ -119,6 +140,9 @@ export function registerProjectCrudTools(registry: ToolRegistry): void {
           name: project.name,
           color: project.color,
           icon: project.icon,
+          parentId: project.parentId,
+          isFavorite: project.isFavorite,
+          viewStyle: project.viewStyle,
           archived: project.archived,
           createdAt: project.createdAt,
         },
@@ -129,7 +153,7 @@ export function registerProjectCrudTools(registry: ToolRegistry): void {
   registry.register(
     {
       name: "update_project",
-      description: "Update an existing project. Can change name, color, icon, or archived status.",
+      description: "Update an existing project. Can change name, color, icon, archived status, parent, favorite, or view style.",
       parameters: {
         type: "object",
         properties: {
@@ -147,16 +171,29 @@ export function registerProjectCrudTools(registry: ToolRegistry): void {
             type: "boolean",
             description: "Set to true to archive, false to unarchive",
           },
+          parentId: {
+            type: "string",
+            description: "ID of parent project. Set to empty string to remove parent.",
+          },
+          isFavorite: {
+            type: "boolean",
+            description: "Pin/unpin project from Favorites sidebar section.",
+          },
+          viewStyle: {
+            type: "string",
+            enum: ["list", "board", "calendar"],
+            description: "Default view layout for the project.",
+          },
         },
         required: ["projectId"],
       },
     },
     async (args, ctx) => {
       const { projectId, ...updates } = args;
-      // Convert empty icon to null for clearing
+      // Convert empty icon/parentId to null for clearing
       const cleaned: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(updates)) {
-        if (key === "icon" && value === "") {
+        if ((key === "icon" || key === "parentId") && value === "") {
           cleaned[key] = null;
         } else {
           cleaned[key] = value;
@@ -164,7 +201,7 @@ export function registerProjectCrudTools(registry: ToolRegistry): void {
       }
       const project = await ctx.projectService.update(
         projectId as string,
-        cleaned as { name?: string; color?: string; icon?: string | null; archived?: boolean },
+        cleaned as Partial<{ name: string; color: string; icon: string | null; archived: boolean; parentId: string | null; isFavorite: boolean; viewStyle: "list" | "board" | "calendar" }>,
       );
       if (!project) {
         return JSON.stringify({ error: "Project not found" });
@@ -176,6 +213,9 @@ export function registerProjectCrudTools(registry: ToolRegistry): void {
           name: project.name,
           color: project.color,
           icon: project.icon,
+          parentId: project.parentId,
+          isFavorite: project.isFavorite,
+          viewStyle: project.viewStyle,
           archived: project.archived,
         },
       });

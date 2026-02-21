@@ -5,17 +5,6 @@
   "lastUpdated": "2026-02-13",
   "plugins": [
     {
-      "id": "saydo-pomodoro",
-      "name": "Pomodoro Timer",
-      "description": "Built-in Pomodoro timer with configurable work/break intervals and task integration.",
-      "author": "ASF",
-      "version": "0.1.0",
-      "repository": "https://github.com/asf-org/saydo-plugin-pomodoro",
-      "downloadUrl": "https://github.com/asf-org/saydo-plugin-pomodoro/releases/latest/download/plugin.tar.gz",
-      "tags": ["productivity", "timer"],
-      "minSaydoVersion": "1.0.0"
-    },
-    {
       "id": "saydo-kanban",
       "name": "Kanban Board",
       "description": "Kanban-style board view for tasks with drag-and-drop columns.",
@@ -24,7 +13,10 @@
       "repository": "https://github.com/asf-org/saydo-plugin-kanban",
       "downloadUrl": "https://github.com/asf-org/saydo-plugin-kanban/releases/latest/download/plugin.tar.gz",
       "tags": ["view", "kanban", "productivity"],
-      "minSaydoVersion": "1.0.0"
+      "minSaydoVersion": "1.0.0",
+      "icon": "📋",
+      "downloads": 0,
+      "longDescription": "Adds a fully interactive Kanban board view to Saydo. Organize tasks into customizable columns (e.g. To Do, In Progress, Done) with drag-and-drop support. Perfect for visual thinkers who prefer board-style workflows over traditional lists."
     },
     {
       "id": "saydo-calendar",
@@ -35,7 +27,10 @@
       "repository": "https://github.com/asf-org/saydo-plugin-calendar",
       "downloadUrl": "https://github.com/asf-org/saydo-plugin-calendar/releases/latest/download/plugin.tar.gz",
       "tags": ["view", "calendar"],
-      "minSaydoVersion": "1.0.0"
+      "minSaydoVersion": "1.0.0",
+      "icon": "📅",
+      "downloads": 0,
+      "longDescription": "Visualize your tasks on a monthly or weekly calendar. See deadlines at a glance, drag tasks to reschedule them, and plan your week ahead. Supports color-coded projects and priority indicators."
     },
     {
       "id": "saydo-time-tracking",
@@ -46,7 +41,10 @@
       "repository": "https://github.com/asf-org/saydo-plugin-time-tracking",
       "downloadUrl": "https://github.com/asf-org/saydo-plugin-time-tracking/releases/latest/download/plugin.tar.gz",
       "tags": ["productivity", "tracking"],
-      "minSaydoVersion": "1.0.0"
+      "minSaydoVersion": "1.0.0",
+      "icon": "⏱️",
+      "downloads": 0,
+      "longDescription": "Built-in time tracking for any task. Start and stop timers with one click, view daily and weekly time reports, and understand where your time goes. All data stays local — no external services required."
     },
     {
       "id": "saydo-git-sync",
@@ -57,7 +55,10 @@
       "repository": "https://github.com/asf-org/saydo-plugin-git-sync",
       "downloadUrl": "https://github.com/asf-org/saydo-plugin-git-sync/releases/latest/download/plugin.tar.gz",
       "tags": ["sync", "git"],
-      "minSaydoVersion": "1.0.0"
+      "minSaydoVersion": "1.0.0",
+      "icon": "🔄",
+      "downloads": 0,
+      "longDescription": "Keep your tasks in sync across multiple devices using Git. Automatically commits and pushes changes to a Git repository of your choice. Supports conflict resolution and works with any Git hosting provider (GitHub, GitLab, etc.)."
     }
   ]
 }

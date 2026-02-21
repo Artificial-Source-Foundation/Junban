@@ -73,7 +73,7 @@ export function FocusMode({ tasks, onComplete, onClose }: FocusModeProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [completeAndAdvance, goNext, goPrev, onClose]);
 
-  if (total === 0) {
+  if (total === 0 || !currentTask) {
     return (
       <div
         role="dialog"
@@ -129,36 +129,36 @@ export function FocusMode({ tasks, onComplete, onClose }: FocusModeProps) {
       <div className="flex-1 flex items-center justify-center px-6">
         <div className="max-w-2xl w-full text-center">
           {/* Priority indicator */}
-          {currentTask!.priority && (
+          {currentTask.priority && (
             <span
               className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full mb-4 ${
-                currentTask!.priority === 1
+                currentTask.priority === 1
                   ? "bg-priority-1/15 text-priority-1"
-                  : currentTask!.priority === 2
+                  : currentTask.priority === 2
                     ? "bg-priority-2/15 text-priority-2"
-                    : currentTask!.priority === 3
+                    : currentTask.priority === 3
                       ? "bg-priority-3/15 text-priority-3"
                       : "bg-priority-4/15 text-priority-4"
               }`}
             >
-              P{currentTask!.priority}
+              P{currentTask.priority}
             </span>
           )}
 
           <h1 className="text-4xl font-bold text-on-surface mb-4 leading-tight">
-            {currentTask!.title}
+            {currentTask.title}
           </h1>
 
-          {currentTask!.description && (
+          {currentTask.description && (
             <p className="text-lg text-on-surface-secondary mb-6 whitespace-pre-wrap">
-              {currentTask!.description}
+              {currentTask.description}
             </p>
           )}
 
           {/* Tags */}
-          {currentTask!.tags.length > 0 && (
+          {currentTask.tags.length > 0 && (
             <div className="flex gap-2 justify-center mb-6 flex-wrap">
-              {currentTask!.tags.map((tag) => (
+              {currentTask.tags.map((tag) => (
                 <span
                   key={tag.id}
                   className="font-mono text-sm px-2.5 py-1 rounded-lg bg-surface-tertiary text-on-surface-secondary"
@@ -170,22 +170,22 @@ export function FocusMode({ tasks, onComplete, onClose }: FocusModeProps) {
           )}
 
           {/* Due date */}
-          {currentTask!.dueDate && (
+          {currentTask.dueDate && (
             <p
               className={`text-sm mb-6 ${
-                new Date(currentTask!.dueDate) < new Date()
+                new Date(currentTask.dueDate) < new Date()
                   ? "text-error font-medium"
                   : "text-on-surface-muted"
               }`}
             >
-              Due: {new Date(currentTask!.dueDate).toLocaleDateString()}
+              Due: {new Date(currentTask.dueDate).toLocaleDateString()}
             </p>
           )}
 
           {/* Sub-tasks checklist */}
-          {currentTask!.children && currentTask!.children.length > 0 && (
+          {currentTask.children && currentTask.children.length > 0 && (
             <div className="text-left max-w-md mx-auto mb-6 space-y-2">
-              {currentTask!.children.map((child) => (
+              {currentTask.children.map((child) => (
                 <div
                   key={child.id}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg bg-surface-secondary"

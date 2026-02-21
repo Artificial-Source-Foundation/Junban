@@ -30,7 +30,7 @@ export function useReminders({
         onReminder({ id: task.id, title: task.title });
 
         // Clear the reminder so it doesn't re-fire
-        api.updateTask(task.id, { remindAt: null } as any).catch(() => {
+        api.updateTask(task.id, { remindAt: null }).catch(() => {
           // Non-critical — reminder will fire again on next poll
         });
       }

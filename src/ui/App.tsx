@@ -1,22 +1,22 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { CommandPalette } from "./components/CommandPalette.js";
 import { StatusBar } from "./components/StatusBar.js";
 import { TaskDetailPanel } from "./components/TaskDetailPanel.js";
 import { BulkActionBar } from "./components/BulkActionBar.js";
-import { RightActionRail } from "./components/RightActionRail.js";
+import { AIChat } from "./views/AIChat.js";
 import { BottomNavBar } from "./components/BottomNavBar.js";
 import { MobileDrawer } from "./components/MobileDrawer.js";
 import { FAB } from "./components/FAB.js";
 import { SearchModal } from "./components/SearchModal.js";
+import { AddProjectModal } from "./components/AddProjectModal.js";
 import { TaskProvider, useTaskContext } from "./context/TaskContext.js";
 import { PluginProvider, usePluginContext } from "./context/PluginContext.js";
 import { AIProvider, useAIContext } from "./context/AIContext.js";
 import { VoiceProvider, useVoiceContext } from "./context/VoiceContext.js";
 import { UndoProvider, useUndoContext } from "./context/UndoContext.js";
 import { SettingsProvider } from "./context/SettingsContext.js";
-import { AIChatPanel } from "./components/AIChatPanel.js";
 import { FocusMode } from "./components/FocusMode.js";
 import { TemplateSelector } from "./components/TemplateSelector.js";
 import { Toast } from "./components/Toast.js";
@@ -36,18 +36,21 @@ import { Today } from "./views/Today.js";
 import { Upcoming } from "./views/Upcoming.js";
 import { Project } from "./views/Project.js";
 import { Settings } from "./views/Settings.js";
-import { PluginStore } from "./views/PluginStore.js";
 import { PluginView } from "./views/PluginView.js";
 import { Completed } from "./views/Completed.js";
+import { Calendar } from "./views/Calendar.js";
 import { FiltersLabels } from "./views/FiltersLabels.js";
 import { TaskPage } from "./views/TaskPage.js";
+import { Breadcrumb, type BreadcrumbItem } from "./components/Breadcrumb.js";
 import type { SettingsTab } from "./views/Settings.js";
 import type { Project as ProjectType } from "../core/types.js";
 import { api } from "./api/index.js";
+import { toDateKey } from "../utils/format-date.js";
+import { SkeletonTaskList } from "./components/Skeleton.js";
+import { QuickAddModal } from "./components/QuickAddModal.js";
+import { OnboardingModal } from "./components/OnboardingModal.js";
 
-const AI_SIDEBAR_OPEN_SETTING_KEY = "ui_ai_sidebar_open";
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "saydo.ui.sidebar.collapsed";
-const AI_CHAT_EXPANDED_STORAGE_KEY = "saydo.ui.ai-chat.expanded";
 
 function AppContent() {
   // ── Routing ──
@@ -58,8 +61,6 @@ function AppContent() {
     selectedPluginViewId,
     settingsTab,
     setSettingsTab,
-    pluginStoreSearchQuery,
-    setPluginStoreSearchQuery,
     focusModeOpen,
     setFocusModeOpen,
     handleNavigate,
@@ -86,11 +87,6 @@ function AppContent() {
 
   // ── UI state ──
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [chatPanelOpen, setChatPanelOpen] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage.getItem(AI_CHAT_EXPANDED_STORAGE_KEY) === "1";
-  });
-  const [chatPanelStateLoaded, setChatPanelStateLoaded] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "1";
@@ -104,10 +100,13 @@ function AppContent() {
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [addTaskTrigger, setAddTaskTrigger] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [projectModalOpen, setProjectModalOpen] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
 
   // ── Context hooks ──
   const { state, refreshTasks } = useTaskContext();
-  const { undo, redo, toast, dismissToast } = useUndoContext();
+  const { undo, redo, toast, dismissToast, showToast } = useUndoContext();
   const {
     commands: pluginCommands,
     panels,
@@ -136,11 +135,6 @@ function AppContent() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchProjects();
-    fetchTags();
-  }, [fetchProjects, fetchTags]);
-
   const taskCount = state.tasks.length;
   useEffect(() => {
     fetchProjects();
@@ -155,62 +149,17 @@ function AppContent() {
     }
   }, [dataMutationCount, fetchProjects, fetchTags]);
 
-  // ── AI chat sidebar persistence ──
-  useEffect(() => {
-    let mounted = true;
-    api
-      .getAppSetting(AI_SIDEBAR_OPEN_SETTING_KEY)
-      .then((value) => {
-        if (!mounted || value === null) return;
-        setChatPanelOpen(value === "1" || value.toLowerCase() === "true");
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (mounted) setChatPanelStateLoaded(true);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!chatPanelStateLoaded) return;
-    api.setAppSetting(AI_SIDEBAR_OPEN_SETTING_KEY, chatPanelOpen ? "1" : "0").catch(() => {});
-  }, [chatPanelOpen, chatPanelStateLoaded]);
-
   // ── Local storage sync ──
   useEffect(() => {
     window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, sidebarCollapsed ? "1" : "0");
   }, [sidebarCollapsed]);
 
+  // ── Onboarding check ──
   useEffect(() => {
-    window.localStorage.setItem(AI_CHAT_EXPANDED_STORAGE_KEY, chatPanelOpen ? "1" : "0");
-  }, [chatPanelOpen]);
-
-  // ── Auto-manage LM Studio models ──
-  const autoLoadedModelRef = useRef<string | null>(null);
-  const { config: aiConfig } = useAIContext();
-
-  useEffect(() => {
-    if (!chatPanelStateLoaded) return;
-    const autoManage = window.localStorage.getItem("saydo.ai.auto-manage-lmstudio") === "1";
-    if (!autoManage || aiConfig?.provider !== "lmstudio" || !aiConfig.model) return;
-
-    if (chatPanelOpen) {
-      // Auto-load model when chat opens
-      api
-        .loadModel("lmstudio", aiConfig.model)
-        .then(() => {
-          autoLoadedModelRef.current = aiConfig.model;
-        })
-        .catch(() => {});
-    } else if (autoLoadedModelRef.current) {
-      // Auto-unload model when chat closes
-      const modelToUnload = autoLoadedModelRef.current;
-      autoLoadedModelRef.current = null;
-      api.unloadModel("lmstudio", modelToUnload).catch(() => {});
-    }
-  }, [chatPanelOpen, chatPanelStateLoaded, aiConfig]);
+    api.getAppSetting("onboarding_completed").then((val) => {
+      if (!val) setOnboardingOpen(true);
+    });
+  }, []);
 
   // ── Close drawer on navigation ──
   useEffect(() => {
@@ -229,7 +178,7 @@ function AppContent() {
       case "inbox":
         return tasks.filter((t) => t.status === "pending" && !t.projectId);
       case "today": {
-        const today = new Date().toISOString().split("T")[0];
+        const today = toDateKey(new Date());
         return tasks.filter((t) => t.status === "pending" && t.dueDate?.startsWith(today));
       }
       case "upcoming":
@@ -250,7 +199,7 @@ function AppContent() {
   );
 
   const todayTaskCount = useMemo(() => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = toDateKey(new Date());
     return state.tasks.filter((t) => t.status === "pending" && t.dueDate?.startsWith(today)).length;
   }, [state.tasks]);
 
@@ -266,9 +215,23 @@ function AppContent() {
 
   // ── Project CRUD handlers ──
   const handleCreateProject = useCallback(
-    async (name: string, color: string, icon: string) => {
+    async (
+      name: string,
+      color: string,
+      icon: string,
+      parentId: string | null,
+      isFavorite: boolean,
+      viewStyle: "list" | "board" | "calendar",
+    ) => {
       try {
-        await api.createProject(name, color || undefined, icon || undefined);
+        await api.createProject(
+          name,
+          color || undefined,
+          icon || undefined,
+          parentId,
+          isFavorite,
+          viewStyle,
+        );
         fetchProjects();
       } catch {
         // Non-critical
@@ -279,12 +242,12 @@ function AppContent() {
 
   // ── Mobile AI voice handler ──
   const handleOpenVoice = useCallback(() => {
-    setChatPanelOpen(true);
+    handleNavigate("ai-chat");
     // Enable push-to-talk if voice is off
     if (voice.settings.voiceMode === "off") {
       voice.updateSettings({ voiceMode: "push-to-talk" });
     }
-  }, [voice]);
+  }, [voice, handleNavigate]);
 
   // ── Add task handler for sidebar button ──
   const handleAddTask = useCallback(() => {
@@ -328,14 +291,18 @@ function AppContent() {
         new Notification("Saydo Reminder", { body: task.title });
       }
       playSound("reminder");
+      showToast(`Reminder: ${task.title}`, {
+        label: "View",
+        onClick: () => handleSelectTask(task.id),
+      });
     },
-    [playSound],
+    [playSound, showToast, handleSelectTask],
   );
 
   useReminders({ onReminder: handleReminder, enabled: true });
 
   // ── Keyboard shortcuts ──
-  useAppShortcuts(setCommandPaletteOpen, undo, redo, setSearchOpen);
+  useAppShortcuts(setCommandPaletteOpen, undo, redo, setSearchOpen, setFocusModeOpen, setQuickAddOpen);
 
   // ── Settings modal helpers ──
   const handleOpenSettings = useCallback(() => {
@@ -354,12 +321,12 @@ function AppContent() {
   const commands = useAppCommands(
     handleNavigate,
     handleOpenSettingsTab,
-    setChatPanelOpen,
     setFocusModeOpen,
     setTemplateSelectorOpen,
     projects,
     pluginCommands,
     executeCommand,
+    setQuickAddOpen,
   );
 
   // ── Task detail panel navigation ──
@@ -390,8 +357,6 @@ function AppContent() {
         const project = projects.find((p) => p.id === selectedProjectId);
         return project ? `${project.name} - Saydo` : "Project - Saydo";
       }
-      case "plugin-store":
-        return "Plugin Store - Saydo";
       case "plugin-view": {
         const pluginView = pluginViews.find((view) => view.id === selectedPluginViewId);
         return pluginView ? `${pluginView.name} - Saydo` : "Custom View - Saydo";
@@ -402,10 +367,14 @@ function AppContent() {
           : null;
         return t ? `${t.title} - Saydo` : "Task - Saydo";
       }
+      case "calendar":
+        return "Calendar - Saydo";
       case "filters-labels":
         return "Filters & Labels - Saydo";
       case "completed":
         return "Completed - Saydo";
+      case "ai-chat":
+        return "AI Chat - Saydo";
       default:
         return "Saydo";
     }
@@ -527,6 +496,16 @@ function AppContent() {
           />
         );
       }
+      case "calendar":
+        return (
+          <Calendar
+            tasks={state.tasks}
+            projects={projects}
+            onSelectTask={handleSelectTask}
+            onToggleTask={handleToggleTask}
+            onUpdateDueDate={handleUpdateDueDate}
+          />
+        );
       case "filters-labels":
         return (
           <FiltersLabels
@@ -540,18 +519,18 @@ function AppContent() {
         return (
           <Completed tasks={state.tasks} projects={projects} onSelectTask={handleSelectTask} />
         );
-      case "plugin-store":
-        return (
-          <PluginStore
-            searchQuery={pluginStoreSearchQuery}
-            onSearchQueryChange={setPluginStoreSearchQuery}
-          />
-        );
       case "plugin-view":
         return selectedPluginViewId ? (
           <PluginView viewId={selectedPluginViewId} />
         ) : (
           <p className="text-on-surface-muted">No plugin view selected.</p>
+        );
+      case "ai-chat":
+        return (
+          <AIChat
+            onOpenSettings={() => setSettingsOpen(true)}
+            onSelectTask={handleSelectTask}
+          />
         );
       default:
         return null;
@@ -585,7 +564,7 @@ function AppContent() {
             onSearch={() => setSearchOpen(true)}
             inboxCount={inboxTaskCount}
             todayCount={todayTaskCount}
-            onCreateProject={handleCreateProject}
+            onOpenProjectModal={() => setProjectModalOpen(true)}
           />
         </div>
         <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto p-3 md:p-6">
@@ -599,44 +578,41 @@ function AppContent() {
             projects={projects}
           />
           {state.loading ? (
-            <p className="text-on-surface-muted">Loading...</p>
+            <SkeletonTaskList />
           ) : state.error ? (
             <p role="alert" className="text-error">
               Error: {state.error}
             </p>
           ) : (
-            <ErrorBoundary>{renderView()}</ErrorBoundary>
+            <ErrorBoundary>
+              <div key={`${currentView}-${selectedProjectId ?? ""}-${selectedPluginViewId ?? ""}`} className="animate-fade-in">
+                {(currentView === "project" || currentView === "task") && (
+                  <Breadcrumb
+                    items={(() => {
+                      const items: BreadcrumbItem[] = [];
+                      if (currentView === "project") {
+                        items.push({ label: "Projects", onClick: () => handleNavigate("inbox") });
+                        const project = projects.find((p) => p.id === selectedProjectId);
+                        if (project) items.push({ label: project.name });
+                      } else if (currentView === "task") {
+                        const routeTask = selectedRouteTaskId ? state.tasks.find((t) => t.id === selectedRouteTaskId) : null;
+                        if (routeTask?.projectId) {
+                          const project = projects.find((p) => p.id === routeTask.projectId);
+                          if (project) {
+                            items.push({ label: project.name, onClick: () => handleNavigate("project", project.id) });
+                          }
+                        }
+                        if (routeTask) items.push({ label: routeTask.title });
+                      }
+                      return items;
+                    })()}
+                  />
+                )}
+                {renderView()}
+              </div>
+            </ErrorBoundary>
           )}
         </main>
-        {chatPanelOpen &&
-          (isMobile ? (
-            <div className="fixed inset-0 z-50">
-              <AIChatPanel
-                onClose={() => setChatPanelOpen(false)}
-                onOpenSettings={() => {
-                  setSettingsOpen(true);
-                  setChatPanelOpen(false);
-                }}
-                onSelectTask={handleSelectTask}
-              />
-            </div>
-          ) : (
-            <AIChatPanel
-              onClose={() => setChatPanelOpen(false)}
-              onOpenSettings={() => {
-                setSettingsOpen(true);
-                setChatPanelOpen(false);
-              }}
-              onSelectTask={handleSelectTask}
-            />
-          ))}
-        <div className="hidden md:flex">
-          <RightActionRail
-            chatOpen={chatPanelOpen}
-            onToggleChat={() => setChatPanelOpen((open) => !open)}
-            onFocusMode={() => setFocusModeOpen(true)}
-          />
-        </div>
       </div>
 
       {/* Mobile drawer */}
@@ -665,7 +641,10 @@ function AppContent() {
           }}
           inboxCount={inboxTaskCount}
           todayCount={todayTaskCount}
-          onCreateProject={handleCreateProject}
+          onOpenProjectModal={() => {
+            setDrawerOpen(false);
+            setProjectModalOpen(true);
+          }}
         />
       </MobileDrawer>
 
@@ -677,9 +656,7 @@ function AppContent() {
             currentView={currentView}
             onNavigate={handleNavigate}
             onMenuOpen={() => setDrawerOpen(true)}
-            onOpenChat={() => setChatPanelOpen(true)}
             onOpenVoice={handleOpenVoice}
-            chatOpen={chatPanelOpen}
             inboxCount={inboxTaskCount}
             todayCount={todayTaskCount}
           />
@@ -752,6 +729,24 @@ function AppContent() {
         tasks={state.tasks}
         projects={projects}
         onSelectTask={handleSelectTask}
+      />
+      <AddProjectModal
+        open={projectModalOpen}
+        onClose={() => setProjectModalOpen(false)}
+        onSubmit={handleCreateProject}
+        projects={projects}
+      />
+      <QuickAddModal
+        open={quickAddOpen}
+        onClose={() => setQuickAddOpen(false)}
+        onCreateTask={handleCreateTask}
+      />
+      <OnboardingModal
+        open={onboardingOpen}
+        onComplete={() => {
+          setOnboardingOpen(false);
+          api.setAppSetting("onboarding_completed", "true");
+        }}
       />
       {toast && (
         <Toast

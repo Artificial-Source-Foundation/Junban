@@ -6,19 +6,19 @@ export type View =
   | "inbox"
   | "today"
   | "upcoming"
+  | "calendar"
   | "project"
   | "task"
-  | "plugin-store"
   | "plugin-view"
   | "filters-labels"
-  | "completed";
+  | "completed"
+  | "ai-chat";
 
 interface RouteState {
   view: View;
   projectId: string | null;
   taskId: string | null;
   pluginViewId: string | null;
-  pluginSearch: string;
   focusModeOpen: boolean;
 }
 
@@ -27,7 +27,6 @@ const DEFAULT_ROUTE_STATE: RouteState = {
   projectId: null,
   taskId: null,
   pluginViewId: null,
-  pluginSearch: "",
   focusModeOpen: false,
 };
 
@@ -60,6 +59,9 @@ function parseRouteStateFromHash(hash: string, defaultView: View = "inbox"): Rou
     case "upcoming":
       route.view = "upcoming";
       break;
+    case "calendar":
+      route.view = "calendar";
+      break;
     case "project":
       route.view = "project";
       route.projectId = decodePathSegment(pathSegments[1]);
@@ -75,8 +77,8 @@ function parseRouteStateFromHash(hash: string, defaultView: View = "inbox"): Rou
       route.view = "inbox";
       break;
     case "plugin-store":
-      route.view = "plugin-store";
-      route.pluginSearch = params.get("q") ?? "";
+      // Plugin store is now inside Settings > Plugins — redirect to inbox
+      route.view = "inbox";
       break;
     case "plugin-view":
       route.view = "plugin-view";
@@ -88,6 +90,9 @@ function parseRouteStateFromHash(hash: string, defaultView: View = "inbox"): Rou
       break;
     case "completed":
       route.view = "completed";
+      break;
+    case "ai-chat":
+      route.view = "ai-chat";
       break;
     default:
       route.view = defaultView;
@@ -101,9 +106,6 @@ function parseRouteStateFromHash(hash: string, defaultView: View = "inbox"): Rou
 function buildHashFromRoute(route: RouteState): string {
   const params = new URLSearchParams();
 
-  if (route.view === "plugin-store" && route.pluginSearch.trim()) {
-    params.set("q", route.pluginSearch);
-  }
   if (route.focusModeOpen) {
     params.set("focus", "1");
   }
@@ -121,9 +123,6 @@ function buildHashFromRoute(route: RouteState): string {
     case "task":
       path = route.taskId ? `/task/${encodeURIComponent(route.taskId)}` : "/inbox";
       break;
-    case "plugin-store":
-      path = "/plugin-store";
-      break;
     case "plugin-view":
       path = route.pluginViewId
         ? `/plugin-view/${encodeURIComponent(route.pluginViewId)}`
@@ -134,6 +133,9 @@ function buildHashFromRoute(route: RouteState): string {
       break;
     case "completed":
       path = "/completed";
+      break;
+    case "ai-chat":
+      path = "/ai-chat";
       break;
     case "inbox":
     default:
@@ -153,7 +155,6 @@ export function useRouting() {
   const [selectedRouteTaskId, setSelectedRouteTaskId] = useState<string | null>(null);
   const [selectedPluginViewId, setSelectedPluginViewId] = useState<string | null>(null);
   const [settingsTab, setSettingsTab] = useState<SettingsTab>("general");
-  const [pluginStoreSearchQuery, setPluginStoreSearchQuery] = useState("");
   const [focusModeOpen, setFocusModeOpen] = useState(false);
   const [routeReady, setRouteReady] = useState(false);
   const navigationKeyRef = useRef<string | null>(null);
@@ -163,7 +164,6 @@ export function useRouting() {
     setSelectedProjectId(route.view === "project" ? route.projectId : null);
     setSelectedRouteTaskId(route.view === "task" ? route.taskId : null);
     setSelectedPluginViewId(route.view === "plugin-view" ? route.pluginViewId : null);
-    setPluginStoreSearchQuery(route.pluginSearch);
     setFocusModeOpen(route.focusModeOpen);
   }, []);
 
@@ -195,7 +195,6 @@ export function useRouting() {
       projectId: selectedProjectId,
       taskId: selectedRouteTaskId,
       pluginViewId: selectedPluginViewId,
-      pluginSearch: pluginStoreSearchQuery,
       focusModeOpen,
     };
 
@@ -219,7 +218,6 @@ export function useRouting() {
     selectedProjectId,
     selectedRouteTaskId,
     selectedPluginViewId,
-    pluginStoreSearchQuery,
     focusModeOpen,
   ]);
 
@@ -230,13 +228,12 @@ export function useRouting() {
         projectId: view === "project" ? (id ?? null) : null,
         taskId: view === "task" ? (id ?? null) : null,
         pluginViewId: view === "plugin-view" ? (id ?? null) : null,
-        pluginSearch: pluginStoreSearchQuery,
         focusModeOpen,
       };
 
       applyRouteState(nextRoute);
     },
-    [applyRouteState, pluginStoreSearchQuery, focusModeOpen],
+    [applyRouteState, focusModeOpen],
   );
 
   const openSettingsTab = useCallback((tab: SettingsTab) => {
@@ -250,8 +247,6 @@ export function useRouting() {
     selectedPluginViewId,
     settingsTab,
     setSettingsTab,
-    pluginStoreSearchQuery,
-    setPluginStoreSearchQuery,
     focusModeOpen,
     setFocusModeOpen,
     handleNavigate,

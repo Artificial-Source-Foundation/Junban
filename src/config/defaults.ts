@@ -10,15 +10,48 @@ export const PRIORITIES = {
 export const TASK_STATUSES = ["pending", "completed", "cancelled"] as const;
 
 export const DEFAULT_PROJECT_COLORS = [
-  "#ef4444",
-  "#f59e0b",
-  "#10b981",
-  "#3b82f6",
-  "#8b5cf6",
-  "#ec4899",
-  "#06b6d4",
-  "#84cc16",
+  "#b8255f", // Berry Red
+  "#db4035", // Red
+  "#ff9933", // Orange
+  "#fad000", // Yellow
+  "#afb83b", // Olive Green
+  "#7ecc49", // Lime Green
+  "#299438", // Emerald
+  "#6accbc", // Mint Green
+  "#158fad", // Teal
+  "#14aaf5", // Sky Blue
+  "#4073ff", // Blue
+  "#884dff", // Grape
+  "#af38eb", // Purple
+  "#eb96eb", // Violet
+  "#e05194", // Magenta
+  "#ff8d85", // Pink
+  "#808080", // Grey
+  "#b8b8a8", // Taupe
+  "#ccac93", // Rose
 ] as const;
+
+export const PROJECT_COLOR_LABELS: Record<string, string> = {
+  "#b8255f": "Berry Red",
+  "#db4035": "Red",
+  "#ff9933": "Orange",
+  "#fad000": "Yellow",
+  "#afb83b": "Olive Green",
+  "#7ecc49": "Lime Green",
+  "#299438": "Emerald",
+  "#6accbc": "Mint Green",
+  "#158fad": "Teal",
+  "#14aaf5": "Sky Blue",
+  "#4073ff": "Blue",
+  "#884dff": "Grape",
+  "#af38eb": "Purple",
+  "#eb96eb": "Violet",
+  "#e05194": "Magenta",
+  "#ff8d85": "Pink",
+  "#808080": "Grey",
+  "#b8b8a8": "Taupe",
+  "#ccac93": "Rose",
+};
 
 export const COMMAND_PALETTE_HOTKEY = "Ctrl+K";
 export const MAX_TASK_TITLE_LENGTH = 500;
