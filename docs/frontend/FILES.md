@@ -8,7 +8,7 @@
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `src/ui/App.tsx` | 798 | Root React component. Wraps everything in 6 nested context providers. Contains `AppContent` which handles routing, layout, state orchestration, and renders all views. |
+| `src/ui/App.tsx` | 783 | Root React component. Wraps everything in 6 nested context providers. Contains `AppContent` which handles routing, layout, state orchestration, and renders all views. |
 | `src/ui/main.tsx` | 11 | Entry point. Renders `<App />` in `React.StrictMode`. Imports theme manager to trigger initialization. |
 | `src/ui/index.css` | 108 | Root CSS. Imports Tailwind and all theme CSS files. Defines custom fonts (Outfit, Space Grotesk, Space Mono), density scaling, font size variants, reduce-motion class, and 6 entrance animations. |
 | `src/ui/shortcuts.ts` | 159 | `ShortcutManager` class. Handles registration, rebinding, conflict detection, key normalization, serialization, and subscription for keyboard shortcuts. |
@@ -37,24 +37,28 @@
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `src/ui/components/TaskInput.tsx` | 93 | Natural language task input with live NLP preview. |
+| `src/ui/components/TaskInput.tsx` | 106 | Natural language task input with live NLP preview. |
 | `src/ui/components/TaskItem.tsx` | 291 | Single task row with priority circle, metadata, drag handle. `React.memo` wrapped. |
-| `src/ui/components/TaskList.tsx` | 247 | Sortable task list with @dnd-kit, tree flattening, inline subtask creation. |
+| `src/ui/components/TaskList.tsx` | 277 | Sortable task list with @dnd-kit, tree flattening, inline subtask creation. |
 | `src/ui/components/TaskDetailPanel.tsx` | 349 | Modal task detail with two-column layout, inline editing, subtask section. |
 | `src/ui/components/SubtaskBlock.tsx` | 141 | Individual subtask row with inline editing and DnD sortable wrapper. |
 | `src/ui/components/SubtaskSection.tsx` | 267 | Collapsible subtask list with DnD, progress bar, inline add. |
 | `src/ui/components/InlineAddSubtask.tsx` | 64 | Inline subtask creation input for tree view. |
 | `src/ui/components/TaskMetadataSidebar.tsx` | 331 | Task metadata editor sidebar (date, priority, tags, reminder, recurrence). |
+| `src/ui/components/OverdueSection.tsx` | 98 | Shared overdue tasks section with expand/collapse and reschedule. |
+| `src/ui/components/VirtualizedTaskList.tsx` | 71 | Virtualized task list using @tanstack/react-virtual for large lists. |
+| `src/ui/components/TaskPreview.tsx` | 73 | Hover popover showing task metadata on 300ms delay. |
 
 ### Navigation Components
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `src/ui/components/Sidebar.tsx` | 407 | Main navigation sidebar with views, projects, plugins, tools. Collapsible. |
+| `src/ui/components/Sidebar.tsx` | 479 | Main navigation sidebar with views, projects, plugins, tools. Collapsible. |
 | `src/ui/components/BottomNavBar.tsx` | 132 | Mobile bottom nav with AI orb (long-press for voice). |
-| `src/ui/components/MobileDrawer.tsx` | 55 | Slide-in drawer for mobile sidebar. |
+| `src/ui/components/MobileDrawer.tsx` | 62 | Slide-in drawer for mobile sidebar. |
 | `src/ui/components/CommandPalette.tsx` | 150 | Fuzzy search command palette (Ctrl+K). |
 | `src/ui/components/SearchModal.tsx` | 248 | Global task search with debounced query and keyboard nav. |
+| `src/ui/components/Breadcrumb.tsx` | 35 | Breadcrumb navigation for project and task views. |
 
 ### AI Components
 
@@ -75,6 +79,9 @@
 | `src/ui/components/AddProjectModal.tsx` | 181 | Project creation modal with name, emoji, color. |
 | `src/ui/components/PermissionDialog.tsx` | 83 | Plugin permission approval dialog. |
 | `src/ui/components/ConfirmDialog.tsx` | 102 | Styled confirmation dialog (danger/default). |
+| `src/ui/components/QuickAddModal.tsx` | 65 | Quick-add task modal (Ctrl+N / q shortcut). |
+| `src/ui/components/ContextMenu.tsx` | 182 | Generic right-click context menu with submenus and keyboard nav. |
+| `src/ui/components/OnboardingModal.tsx` | 102 | 3-step onboarding wizard for first-run experience. |
 
 ### UI Chrome
 
@@ -84,10 +91,12 @@
 | `src/ui/components/FAB.tsx` | 17 | Mobile floating action button. |
 | `src/ui/components/FocusMode.tsx` | 258 | Full-screen single-task focus mode with keyboard shortcuts. |
 | `src/ui/components/QueryBar.tsx` | 177 | Search/filter bar with debounced parsing and suggestions. |
-| `src/ui/components/RightActionRail.tsx` | 74 | Desktop right rail with AI chat and focus mode buttons. |
 | `src/ui/components/StatusBar.tsx` | 20 | Bottom status bar for plugin items. |
 | `src/ui/components/PluginPanel.tsx` | 17 | Plugin sidebar panel container. |
 | `src/ui/components/Toast.tsx` | 42 | Auto-dismissing toast notification with undo action. |
+| `src/ui/components/EmptyState.tsx` | 26 | Reusable empty state with icon, title, description, and optional action. |
+| `src/ui/components/Skeleton.tsx` | 45 | Skeleton loading components (SkeletonLine, SkeletonTaskItem, SkeletonTaskList). |
+| `src/ui/components/CompletionRing.tsx` | 45 | SVG circle progress ring for daily completion stats. |
 | `src/ui/components/ErrorBoundary.tsx` | 57 | React error boundary with fallback UI. |
 
 ---
@@ -97,14 +106,15 @@
 | File | Lines | Purpose |
 |------|-------|---------|
 | `src/ui/views/Inbox.tsx` | 83 | Inbox view -- unassigned pending tasks. |
-| `src/ui/views/Today.tsx` | 197 | Today's tasks + overdue section with reschedule. |
-| `src/ui/views/Upcoming.tsx` | 239 | Date-grouped upcoming tasks + overdue section. |
+| `src/ui/views/Today.tsx` | 142 | Today's tasks + overdue section with reschedule. |
+| `src/ui/views/Upcoming.tsx` | 176 | Date-grouped upcoming tasks + overdue section. |
 | `src/ui/views/Project.tsx` | 79 | Single project view. |
-| `src/ui/views/Completed.tsx` | 158 | Completed tasks grouped by date with project filter. |
+| `src/ui/views/Completed.tsx` | 160 | Completed tasks grouped by date with project filter. |
 | `src/ui/views/FiltersLabels.tsx` | 283 | Saved filters and tag/label management. |
 | `src/ui/views/TaskPage.tsx` | 183 | Full-page task detail view. |
 | `src/ui/views/PluginStore.tsx` | 225 | Community plugin store. |
 | `src/ui/views/PluginView.tsx` | 40 | Plugin custom view renderer (polls content). |
+| `src/ui/views/Calendar.tsx` | 170 | Week-based calendar view with task entries by due date. |
 | `src/ui/views/Settings.tsx` | 321 | Settings modal with 9 tabs, responsive layout. |
 
 ### Settings Tabs (`src/ui/views/settings/`)
@@ -142,7 +152,7 @@
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `src/ui/hooks/useRouting.ts` | 260 | Hash-based routing with View type and navigation functions. |
+| `src/ui/hooks/useRouting.ts` | 255 | Hash-based routing with View type and navigation functions. |
 | `src/ui/hooks/useTaskHandlers.ts` | 124 | Task CRUD handlers with sound effects and undo support. |
 | `src/ui/hooks/useKeyboardNavigation.ts` | 71 | Vim-style j/k/Enter/Escape task list navigation. |
 | `src/ui/hooks/useMultiSelect.ts` | 52 | Ctrl/Shift multi-select with range support. |
@@ -154,6 +164,7 @@
 | `src/ui/hooks/useReminders.ts` | 51 | Polls for due reminders, fires browser notifications. |
 | `src/ui/hooks/useVAD.ts` | 202 | Voice Activity Detection with smart endpoint grace period. |
 | `src/ui/hooks/useVoiceCall.ts` | 197 | Voice call state machine orchestration. |
+| `src/ui/hooks/useFocusTrap.ts` | 50 | Focus trapping for modals/drawers (saves/restores focus, traps Tab). |
 
 ---
 
@@ -172,12 +183,12 @@
 
 | Category | Files | Total Lines |
 |----------|-------|-------------|
-| Root files | 5 | 1,079 |
+| Root files | 5 | 1,064 |
 | API layer | 8 | 1,128 |
-| Components | 26 | 4,660 |
-| Views | 10 | 1,808 |
+| Components | 35 | 5,450 |
+| Views | 11 | 1,862 |
 | Settings tabs | 11 | 2,668 |
 | Context providers | 6 | 1,285 |
-| Hooks | 12 | 1,246 |
+| Hooks | 13 | 1,291 |
 | Theme system | 4 | 161 |
-| **Total** | **82** | **14,035** |
+| **Total** | **93** | **14,909** |

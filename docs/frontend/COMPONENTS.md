@@ -8,7 +8,7 @@
 
 ### TaskInput.tsx
 
-- **Path:** `src/ui/components/TaskInput.tsx` (93 lines)
+- **Path:** `src/ui/components/TaskInput.tsx` (106 lines)
 - **Purpose:** Natural language task input field. Parses free-text into structured task data in real time using the NLP parser.
 - **Key Exports:** `TaskInput`
 - **Props:**
@@ -16,7 +16,7 @@
   - `defaultProjectId?: string` -- pre-selects a project for the created task
 - **Key Dependencies:** `parseTask` from `../../parser/task-parser.js`, `CreateTaskInput` from `../../core/types.js`
 - **Used By:** `Inbox.tsx`, `Today.tsx`, `Upcoming.tsx`, `Project.tsx`
-- **Notes:** Shows a live preview line below the input displaying parsed due date, priority, and tags. Submits on Enter, clears input on success.
+- **Notes:** Shows a live preview line below the input displaying parsed due date, priority, and tags. Submits on Enter, clears input on success. Preview tokens are styled as colored pill badges with icons (Flag for priority, Hash for tags, Calendar for date, FolderOpen for project, Repeat for recurrence).
 
 ---
 
@@ -42,13 +42,13 @@
   - `projects?: Project[]`
 - **Key Dependencies:** `lucide-react` icons, `DatePicker.tsx` (inline date editing), `core/types.js`
 - **Used By:** `TaskList.tsx` (via `SortableTaskItem`), `FocusMode.tsx`
-- **Notes:** Priority colors map: p1=red, p2=amber, p3=accent, p4=muted. Overdue dates shown in red. Mobile-responsive -- hides drag handle on touch devices.
+- **Notes:** Priority colors map: p1=red, p2=amber, p3=accent, p4=muted. Overdue dates shown in red. Mobile-responsive -- hides drag handle on touch devices. Supports `onContextMenu` handler for right-click context menu integration.
 
 ---
 
 ### TaskList.tsx
 
-- **Path:** `src/ui/components/TaskList.tsx` (247 lines)
+- **Path:** `src/ui/components/TaskList.tsx` (277 lines)
 - **Purpose:** Renders a sortable list of tasks with drag-and-drop reordering, hierarchical tree flattening, and inline subtask creation.
 - **Key Exports:** `TaskList`
 - **Props:**
@@ -65,7 +65,7 @@
   - `onOutdent?: (id: string) => void`
 - **Key Dependencies:** `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`, `TaskItem.tsx`, `InlineAddSubtask.tsx`
 - **Used By:** `Inbox.tsx`, `Today.tsx`, `Upcoming.tsx`, `Project.tsx`, `Completed.tsx`
-- **Notes:** Builds a flat tree from `parentId` relationships. Uses `DndContext` + `SortableContext` with `verticalListSortingStrategy`. Supports keyboard-based indent/outdent (Tab/Shift+Tab) on focused items.
+- **Notes:** Builds a flat tree from `parentId` relationships. Uses `DndContext` + `SortableContext` with `verticalListSortingStrategy`. Supports keyboard-based indent/outdent (Tab/Shift+Tab) on focused items. Includes a `DragOverlay` for styled drag ghost (semi-transparent, shadow, slight rotation) during drag-and-drop.
 
 ---
 
@@ -154,12 +154,57 @@
 
 ---
 
+### OverdueSection.tsx
+
+- **Path:** `src/ui/components/OverdueSection.tsx` (98 lines)
+- **Purpose:** Shared overdue tasks section with expand/collapse, count badge, and per-task reschedule button. Extracted from duplicated code in Today.tsx and Upcoming.tsx.
+- **Key Exports:** `OverdueSection`
+- **Props:**
+  - `tasks: Task[]` -- overdue tasks
+  - `projects: Map<string, Project>` -- project lookup map
+  - `onSelectTask: (id: string) => void`
+  - `onToggleTask: (id: string) => void`
+  - `onReschedule: (taskId: string) => void`
+  - `selectedTaskId?: string | null`
+- **Key Dependencies:** `lucide-react` (AlertTriangle, ChevronDown, ChevronRight, Calendar), `core/types.js`
+- **Used By:** `Today.tsx`, `Upcoming.tsx`
+- **Notes:** Collapsible section with red "Overdue" header and count badge. Each task has a calendar icon button to reschedule to today.
+
+---
+
+### VirtualizedTaskList.tsx
+
+- **Path:** `src/ui/components/VirtualizedTaskList.tsx` (71 lines)
+- **Purpose:** Virtualized wrapper around TaskList for large task lists (>50 items). Uses `@tanstack/react-virtual` for windowed rendering.
+- **Key Exports:** `VirtualizedTaskList`
+- **Props:** Same as `TaskList` props
+- **Key Dependencies:** `@tanstack/react-virtual` (useVirtualizer), `TaskItem.tsx`
+- **Used By:** `TaskList.tsx` (conditional rendering when tasks.length > 50)
+- **Notes:** Estimated row height 52px, overscan 10. Only activates for lists exceeding 50 items to avoid unnecessary overhead on small lists.
+
+---
+
+### TaskPreview.tsx
+
+- **Path:** `src/ui/components/TaskPreview.tsx` (73 lines)
+- **Purpose:** Hover popover that shows task metadata (title, description, priority, due date, recurrence, tags) on 300ms hover delay.
+- **Key Exports:** `TaskPreview`
+- **Props:**
+  - `task: Task` -- the task to preview
+  - `anchorRect: DOMRect` -- position reference for the popover
+  - `onClose: () => void`
+- **Key Dependencies:** `lucide-react` (Calendar, Flag, Repeat, Tag)
+- **Used By:** `TaskItem.tsx` (hover handler)
+- **Notes:** `position: fixed` relative to anchor element. Uses `role="tooltip"`. Closes on outside click. Disabled on touch devices.
+
+---
+
 ## Navigation Components
 
 ### Sidebar.tsx
 
-- **Path:** `src/ui/components/Sidebar.tsx` (407 lines)
-- **Purpose:** Main navigation sidebar with task views (Inbox, Today, Upcoming, Filters & Labels, Completed), collapsible projects section, plugin panels/views, tools section (AI Chat, Focus Mode), and workspace section (Plugin Store, Settings).
+- **Path:** `src/ui/components/Sidebar.tsx` (479 lines)
+- **Purpose:** Main navigation sidebar with task views (Inbox, Today, Upcoming, Calendar, Filters & Labels, Completed), collapsible projects section, plugin panels/views, tools section (AI Chat, Focus Mode), and workspace section (Plugin Store, Settings).
 - **Key Exports:** `Sidebar`
 - **Props:**
   - `currentView: string`
@@ -204,7 +249,7 @@
 
 ### MobileDrawer.tsx
 
-- **Path:** `src/ui/components/MobileDrawer.tsx` (55 lines)
+- **Path:** `src/ui/components/MobileDrawer.tsx` (62 lines)
 - **Purpose:** Slide-in drawer overlay for mobile sidebar navigation. Wraps the Sidebar component.
 - **Key Exports:** `MobileDrawer`
 - **Props:**
@@ -213,7 +258,7 @@
   - `children: ReactNode`
 - **Key Dependencies:** None (pure layout component)
 - **Used By:** `App.tsx`
-- **Notes:** Slides in from the left with a backdrop overlay. Closes on backdrop click.
+- **Notes:** Slides in from the left with a backdrop overlay. Closes on backdrop click. Uses `useFocusTrap` hook to trap focus within the drawer while open.
 
 ---
 
@@ -246,6 +291,19 @@
 - **Key Dependencies:** `lucide-react` (Search, X icons)
 - **Used By:** `App.tsx`
 - **Notes:** Debounced search (150ms). Highlights matching text in results. Keyboard navigation with arrow keys and Enter to select. Closes on Escape.
+
+---
+
+### Breadcrumb.tsx
+
+- **Path:** `src/ui/components/Breadcrumb.tsx` (35 lines)
+- **Purpose:** Breadcrumb navigation bar for project and task views. Shows Home icon + chevron-separated path segments.
+- **Key Exports:** `Breadcrumb`
+- **Props:**
+  - `items: BreadcrumbItem[]` -- array of `{ label, onClick? }` segments
+- **Key Dependencies:** `lucide-react` (Home, ChevronRight)
+- **Used By:** `App.tsx` (rendered above view content for project and task views)
+- **Notes:** Items with `onClick` are clickable links. Last item is rendered as plain text (current location). Home icon always links to inbox.
 
 ---
 
@@ -415,6 +473,50 @@
 
 ---
 
+### QuickAddModal.tsx
+
+- **Path:** `src/ui/components/QuickAddModal.tsx` (65 lines)
+- **Purpose:** Quick-add task modal triggered by keyboard shortcut (Ctrl+N or `q`). Centered overlay with TaskInput.
+- **Key Exports:** `QuickAddModal`
+- **Props:**
+  - `open: boolean`
+  - `onClose: () => void`
+  - `onCreateTask: (input: CreateTaskInput) => void`
+- **Key Dependencies:** `TaskInput.tsx`
+- **Used By:** `App.tsx`
+- **Notes:** Auto-focuses input on open. Closes on Escape or backdrop click. Uses `animate-scale-fade-in` entrance animation. Submits task and closes on completion.
+
+---
+
+### ContextMenu.tsx
+
+- **Path:** `src/ui/components/ContextMenu.tsx` (182 lines)
+- **Purpose:** Generic right-click context menu with submenu support and full keyboard navigation.
+- **Key Exports:** `ContextMenu`, `ContextMenuItem` (interface)
+- **Props:**
+  - `items: ContextMenuItem[]` -- menu items with label, icon?, onClick?, children? (for submenus)
+  - `position: { x: number; y: number }` -- screen coordinates
+  - `onClose: () => void`
+- **Key Dependencies:** `lucide-react` (ChevronRight)
+- **Used By:** `TaskItem.tsx` (via onContextMenu handler)
+- **Notes:** Keyboard navigation: ArrowDown/Up to move, Enter to select, Escape to close, ArrowRight to open submenu. Supports nested submenus. Closes on outside click, Escape, or scroll. Viewport-aware positioning.
+
+---
+
+### OnboardingModal.tsx
+
+- **Path:** `src/ui/components/OnboardingModal.tsx` (102 lines)
+- **Purpose:** First-run onboarding wizard with 3 steps: Welcome, Task Syntax Demo, and All Set.
+- **Key Exports:** `OnboardingModal`
+- **Props:**
+  - `open: boolean`
+  - `onClose: () => void`
+- **Key Dependencies:** `lucide-react`, `api` (setAppSetting)
+- **Used By:** `App.tsx` (checks `onboarding_completed` setting on mount)
+- **Notes:** Progress dots for step indicator. Skip/Back/Next/Get Started navigation. Sets `onboarding_completed` app setting to `"true"` on completion. Step 2 shows task input syntax examples (priorities, tags, dates, projects).
+
+---
+
 ## UI Chrome
 
 ### BulkActionBar.tsx
@@ -482,21 +584,6 @@
 
 ---
 
-### RightActionRail.tsx
-
-- **Path:** `src/ui/components/RightActionRail.tsx` (74 lines)
-- **Purpose:** Desktop right-side vertical rail with AI chat toggle button and focus mode button.
-- **Key Exports:** `RightActionRail`
-- **Props:**
-  - `onToggleChat?: () => void`
-  - `chatOpen?: boolean`
-  - `onFocusMode?: () => void`
-- **Key Dependencies:** `lucide-react` (MessageSquare, Focus icons)
-- **Used By:** `App.tsx` (desktop layout, hidden on mobile)
-- **Notes:** Fixed position on the right edge. Buttons stack vertically. Chat button shows active state when panel is open.
-
----
-
 ### StatusBar.tsx
 
 - **Path:** `src/ui/components/StatusBar.tsx` (20 lines)
@@ -550,3 +637,49 @@
 - **Key Dependencies:** None
 - **Used By:** `App.tsx` (wraps the entire app)
 - **Notes:** Shows error message and stack trace in development. "Try Again" button resets the error state. Class component (required by React error boundary API).
+
+---
+
+### EmptyState.tsx
+
+- **Path:** `src/ui/components/EmptyState.tsx` (26 lines)
+- **Purpose:** Reusable empty state component with centered layout, icon, title, optional description, and optional action button.
+- **Key Exports:** `EmptyState`
+- **Props:**
+  - `icon: ReactNode` -- icon element (typically from lucide-react)
+  - `title: string`
+  - `description?: string`
+  - `action?: { label: string; onClick: () => void }`
+- **Key Dependencies:** None
+- **Used By:** `Completed.tsx`, `FiltersLabels.tsx`, `TaskList.tsx`
+- **Notes:** Standardized empty state layout: icon (40px, opacity-50), title, description, optional CTA button with accent styling.
+
+---
+
+### Skeleton.tsx
+
+- **Path:** `src/ui/components/Skeleton.tsx` (45 lines)
+- **Purpose:** Skeleton loading placeholder components for initial app load state.
+- **Key Exports:** `SkeletonLine`, `SkeletonTaskItem`, `SkeletonTaskList`
+- **Props:**
+  - `SkeletonLine`: `width?: string` -- CSS width (default "100%")
+  - `SkeletonTaskItem`: none
+  - `SkeletonTaskList`: `count?: number` -- number of skeleton rows (default 5)
+- **Key Dependencies:** None
+- **Used By:** `App.tsx` (replaces "Loading..." text during initial data fetch)
+- **Notes:** Uses `animate-pulse` with `bg-surface-tertiary`. Has `aria-busy="true"` and `role="status"` for accessibility.
+
+---
+
+### CompletionRing.tsx
+
+- **Path:** `src/ui/components/CompletionRing.tsx` (45 lines)
+- **Purpose:** SVG circle progress indicator showing daily task completion ratio.
+- **Key Exports:** `CompletionRing`
+- **Props:**
+  - `completed: number` -- number of completed tasks
+  - `total: number` -- total number of tasks
+  - `size?: number` -- diameter in pixels (default 32)
+- **Key Dependencies:** None
+- **Used By:** `Today.tsx` (header)
+- **Notes:** Uses SVG `stroke-dasharray` / `stroke-dashoffset` for the progress arc. Shows `completed/total` text. Includes `aria-label` for accessibility. Track color: `surface-tertiary`, progress color: `accent`.

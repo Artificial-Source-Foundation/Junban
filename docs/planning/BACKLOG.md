@@ -259,6 +259,34 @@ All work items for ASF Saydo, organized by area and prioritized within each sect
 | H-16 | Accessibility: Skip-to-content link | done | S12 | sr-only focus link in App.tsx |
 | H-17 | Accessibility: TaskDetailPanel + AIChatPanel ARIA | done | S12 | role="complementary", aria-labels |
 
+## Frontend Enhancements
+
+| ID | Item | Status | Sprint | Notes |
+|----|------|--------|--------|-------|
+| FE-01 | Remove console.log from AIChatPanel | done | S32 | Cleaned 11 debug statements |
+| FE-02 | Fix `(task as any).remindAt` type casts | done | S32 | remindAt is defined in types; removed stale `as any` |
+| FE-03 | Fix UTC date comparison bug (toDateKey) | done | S32 | Replaced UTC `toISOString().split("T")[0]` with local-time `toDateKey()` |
+| FE-04 | Fix double-fetch of projects/tags | done | S32 | Removed duplicate mount effect in App.tsx |
+| FE-05 | Fix AI sidebar persistence conflict | done | S32 | Removed localStorage; use appSettings only |
+| FE-06 | Fix FocusMode non-null assertions | done | S32 | Added null guard, removed `currentTask!` |
+| FE-07 | Extract OverdueSection component | done | S32 | Deduplicated ~70 lines from Today + Upcoming |
+| FE-08 | Create EmptyState component | done | S32 | Reusable empty state with icon, title, description, action |
+| FE-09 | Create Skeleton loading components | done | S32 | SkeletonLine, SkeletonTaskItem, SkeletonTaskList |
+| FE-10 | Focus trap for MobileDrawer | done | S32 | Custom useFocusTrap hook |
+| FE-11 | Inline parse pills in TaskInput | done | S32 | Colored pill badges with icons for preview tokens |
+| FE-12 | Quick-Add Modal | done | S32 | Ctrl+N / q shortcut, centered overlay |
+| FE-13 | View transitions (fade-in animation) | done | S32 | animate-fade-in wrapper keyed by view |
+| FE-14 | Enhanced empty states | done | S32 | EmptyState component in Completed, FiltersLabels, TaskList |
+| FE-15 | Right-click context menu | done | S32 | ContextMenu with submenus, keyboard nav |
+| FE-16 | Reminder in-app toasts | done | S32 | showToast on reminder with "View" action |
+| FE-17 | Task list virtualization | done | S32 | @tanstack/react-virtual for >50 items |
+| FE-18 | Task hover preview | done | S32 | TaskPreview popover on 300ms hover |
+| FE-19 | Drag-and-drop DragOverlay | done | S32 | Styled drag ghost with shadow + rotation |
+| FE-20 | Onboarding wizard | done | S32 | 3-step OnboardingModal on first run |
+| FE-21 | Daily completion ring | done | S32 | CompletionRing SVG in Today header |
+| FE-22 | Calendar view (week grid) | done | S32 | Calendar.tsx with week nav, task entries by due date |
+| FE-23 | Breadcrumb navigation | done | S32 | Breadcrumb component for project/task views |
+
 ## Documentation
 
 | ID | Item | Status | Sprint | Notes |

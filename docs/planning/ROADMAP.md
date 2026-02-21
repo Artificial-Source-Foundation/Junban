@@ -140,7 +140,7 @@ Ideas for future development:
 - **CalDAV sync plugin** — sync tasks with Nextcloud, iCloud, Google Calendar
 - **Git sync plugin** — version-controlled task storage across devices (free alternative to Saydo Sync)
 - **WebDAV sync plugin** — generic sync for self-hosted setups
-- **Calendar view plugin** — monthly/weekly view of tasks by due date
+- ~~**Calendar view plugin**~~ — ✅ Implemented as core Calendar view (week grid) in v1.0
 - **Kanban board plugin** — drag-and-drop column-based task management
 - **Time tracking plugin** — track time spent on tasks with reports
 - **Habit tracker plugin** — recurring habit tracking with streaks

@@ -6,7 +6,7 @@
 
 ## useRouting.ts
 
-- **Path:** `src/ui/hooks/useRouting.ts` (260 lines)
+- **Path:** `src/ui/hooks/useRouting.ts` (255 lines)
 - **Purpose:** Hash-based client-side routing. Parses the URL hash into a structured `View` object and provides navigation functions.
 - **Key Exports:** `useRouting`
 - **Return Value:**
@@ -18,7 +18,7 @@
   - `selectedTaskId: string | null`
   - `selectedProjectId: string | null`
   - `selectedPluginViewId: string | null`
-- **View Type:** Union of view states: `inbox`, `today`, `upcoming`, `project` (with `projectId`), `completed`, `filters-labels`, `task` (with `taskId`), `plugin-store`, `plugin-view` (with `viewId`), `settings` (with optional `tab`)
+- **View Type:** Union of view states: `inbox`, `today`, `upcoming`, `calendar`, `project` (with `projectId`), `completed`, `filters-labels`, `task` (with `taskId`), `plugin-store`, `plugin-view` (with `viewId`), `settings` (with optional `tab`), `ai-chat`
 - **Key Dependencies:** `window.location.hash`, `hashchange` event listener
 - **Used By:** `App.tsx`
 - **Notes:** Parses hash routes like `#/inbox`, `#/project/abc123`, `#/task/xyz`, `#/settings/ai`. Uses `pushState` with hash for navigation. `startView` setting from SettingsContext determines the default route. Supports `?task=id` query parameter for opening task detail panel alongside any view.
@@ -214,3 +214,18 @@
 - **Key Dependencies:** `useVAD`, `useVoiceContext`, `useAIContext`
 - **Used By:** `AIChatPanel.tsx`
 - **Notes:** Duration timer ticks every second while active. Greeting message is "How can I help you?" spoken via TTS. The loop continues until `endCall` is called or `active` becomes false. Handles errors gracefully by returning to listening state.
+
+---
+
+## useFocusTrap.ts
+
+- **Path:** `src/ui/hooks/useFocusTrap.ts` (50 lines)
+- **Purpose:** Custom focus trap hook for modals and drawers. Saves the previously focused element on activation, focuses the first focusable child, traps Tab/Shift+Tab within the container, and restores focus on deactivation.
+- **Key Exports:** `useFocusTrap`
+- **Params:**
+  - `containerRef: RefObject<HTMLElement>` -- ref to the container element to trap focus within
+  - `active: boolean` -- whether the trap is active
+- **Return Value:** None (side effect only)
+- **Key Dependencies:** None
+- **Used By:** `MobileDrawer.tsx`
+- **Notes:** Queries all focusable elements (a, button, input, textarea, select, [tabindex]) within the container. Tab on the last element wraps to the first; Shift+Tab on the first wraps to the last. Restores the originally focused element when the trap deactivates.

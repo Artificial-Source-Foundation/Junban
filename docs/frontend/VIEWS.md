@@ -25,30 +25,30 @@
 
 ### Today.tsx
 
-- **Path:** `src/ui/views/Today.tsx` (197 lines)
-- **Purpose:** Shows tasks due today and overdue tasks with a reschedule option.
+- **Path:** `src/ui/views/Today.tsx` (142 lines)
+- **Purpose:** Shows tasks due today and overdue tasks with a reschedule option. Includes a CompletionRing in the header.
 - **Key Exports:** `TodayView`
 - **Props:**
   - `tasks: Task[]`
   - `projects: Project[]`
   - Same task action callbacks as InboxView
   - `onUpdate: (id, input) => void` -- needed for reschedule
-- **Key Dependencies:** `TaskInput.tsx`, `TaskList.tsx`
+- **Key Dependencies:** `TaskInput.tsx`, `TaskList.tsx`, `CompletionRing.tsx`, `OverdueSection.tsx`
 - **Used By:** `App.tsx`
-- **Notes:** Two sections: "Overdue" (red header, with "Reschedule to today" button for each) and "Today". Empty state message when no tasks due today.
+- **Notes:** Uses OverdueSection component for the overdue section. CompletionRing SVG shows completed/total for today's tasks.
 
 ---
 
 ### Upcoming.tsx
 
-- **Path:** `src/ui/views/Upcoming.tsx` (239 lines)
+- **Path:** `src/ui/views/Upcoming.tsx` (176 lines)
 - **Purpose:** Shows upcoming tasks grouped by date, plus an overdue section at the top.
 - **Key Exports:** `UpcomingView`
 - **Props:**
   - Same as TodayView
-- **Key Dependencies:** `TaskInput.tsx`, `TaskList.tsx`
+- **Key Dependencies:** `TaskInput.tsx`, `TaskList.tsx`, `OverdueSection.tsx`
 - **Used By:** `App.tsx`
-- **Notes:** Groups tasks by due date with date headers (e.g., "Monday, Jan 15"). Overdue section collapsible. Tasks without due dates shown in a "No date" section at the bottom.
+- **Notes:** Groups tasks by due date with date headers (e.g., "Monday, Jan 15"). Overdue section collapsible. Tasks without due dates shown in a "No date" section at the bottom. Uses OverdueSection component for the overdue section (shared with Today view).
 
 ---
 
@@ -70,7 +70,7 @@
 
 ### Completed.tsx
 
-- **Path:** `src/ui/views/Completed.tsx` (158 lines)
+- **Path:** `src/ui/views/Completed.tsx` (160 lines)
 - **Purpose:** Shows completed tasks grouped by completion date, with project filter dropdown.
 - **Key Exports:** `CompletedView`
 - **Props:**
@@ -78,9 +78,9 @@
   - `projects: Project[]`
   - `onDelete, onSelect, onNavigateToTask`
   - `onComplete` -- used for "uncomplete" action
-- **Key Dependencies:** `TaskList.tsx`
+- **Key Dependencies:** `TaskList.tsx`, `EmptyState.tsx`
 - **Used By:** `App.tsx`
-- **Notes:** Tasks grouped by completedAt date into sections: "Today", "Yesterday", "This Week", "Older". Filter by project dropdown in header. No TaskInput here (cannot add tasks to completed view).
+- **Notes:** Tasks grouped by completedAt date into sections: "Today", "Yesterday", "This Week", "Older". Filter by project dropdown in header. No TaskInput here (cannot add tasks to completed view). Uses EmptyState component when no completed tasks exist.
 
 ---
 
@@ -139,6 +139,23 @@
 - **Key Dependencies:** `api.getPluginViewContent`
 - **Used By:** `App.tsx`
 - **Notes:** Polls view content every 1 second using `setInterval`. Renders content as raw HTML-like text (plugins set content as strings).
+
+---
+
+### Calendar.tsx
+
+- **Path:** `src/ui/views/Calendar.tsx` (170 lines)
+- **Purpose:** Week-based calendar view showing tasks plotted on a 7-day grid by their due date.
+- **Key Exports:** `Calendar`
+- **Props:**
+  - `tasks: Task[]`
+  - `projects: Project[]`
+  - `onSelectTask: (id: string) => void`
+  - `onToggleTask: (id: string) => void`
+  - `onUpdateDueDate?: (taskId: string, dueDate: string | null) => void`
+- **Key Dependencies:** `lucide-react` (CalendarRange, ChevronLeft, ChevronRight), `toDateKey` from `utils/format-date.js`
+- **Used By:** `App.tsx`
+- **Notes:** Week navigation with Previous/Next/Today buttons. Shows week range label (e.g., "February 15 - 21, 2026"). Today's column highlighted with accent background. Tasks colored by priority (P1-P2 use error color). Project color dots shown next to task titles. Responsive 7-column grid layout.
 
 ---
 
