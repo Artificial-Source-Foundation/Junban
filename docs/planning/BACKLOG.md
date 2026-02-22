@@ -142,6 +142,7 @@ All work items for ASF Saydo, organized by area and prioritized within each sect
 | PL-18 | Built-in Pomodoro plugin (fully functional) | done | S4 | Timer, pause/resume, configurable durations |
 | PL-19 | Plugin API versioning (version constants + meta object) | done | S13 | PLUGIN_API_VERSION, PLUGIN_API_STABILITY |
 | PL-20 | Manifest targetApiVersion + loader compatibility check | done | S13 | Warns on major version mismatch |
+| PL-21 | Plugin view slots + structured content renderer | done | S34 | ViewSlot (navigation/tools/workspace), ViewContentType (text/structured), StructuredContentRenderer, slot-based sidebar, Pomodoro view rewrite |
 
 ## AI Assistant
 
@@ -306,6 +307,7 @@ All work items for ASF Saydo, organized by area and prioritized within each sect
 | QA-11 | Duplicate "Quick Add Task" in keyboard shortcuts settings | done | S33 | Fixed: renamed to "Quick Add Task (Alt)" |
 | QA-12 | Collapsed sidebar hides My Projects section entirely | done | S33 | Fixed: added collapsed project icons with tooltips |
 | QA-13 | Reminder polling every 30s even when no reminders exist | done | S33 | Fixed: increased default interval to 60s |
+| QA-14 | Plugin toggle doesn't refresh sidebar views | done | S34 | Fixed: PluginsTab handleToggleBuiltin now refreshes views, panels, statusBar, commands |
 
 ## Documentation
 

@@ -168,7 +168,7 @@ Cleanup (unregister commands, UI, AI providers, tools)
 | `tasks.create` | `task:write` | `async (input) => Task` |
 | `commands.register` | `commands` | `(command) => void` — prefixes command ID with `pluginId:` |
 | `ui.addSidebarPanel` | `ui:panel` | `(panel) => void` |
-| `ui.addView` | `ui:view` | `(view) => void` |
+| `ui.addView` | `ui:view` | `(view) => void` — accepts `slot?` (default "tools"), `contentType?` (default "text") |
 | `ui.addStatusBarItem` | `ui:status` | `(item) => StatusBarHandle` |
 | `storage.get` | `storage` | `async <T>(key) => T | null` |
 | `storage.set` | `storage` | `async (key, value) => void` |
@@ -295,11 +295,13 @@ Methods return `undefined` when the plugin lacks the required permission.
 
 ### `ui-registry.ts`
 **Path:** `src/plugins/ui-registry.ts`
-**Lines:** 94
-**Purpose:** Stores plugin-registered UI components: sidebar panels, views, and status bar items. Components are stored but rendering is wired in Sprint 4.
+**Lines:** 100
+**Purpose:** Stores plugin-registered UI components: sidebar panels, views (with slot and content type), and status bar items.
 **Key Exports:**
+- `ViewSlot` — `"navigation" | "tools" | "workspace"` — determines where a view appears in the sidebar
+- `ViewContentType` — `"text" | "structured"` — determines how view content is rendered
 - `PanelRegistration` — `{ id, pluginId, title, icon, component?, getContent? }`
-- `ViewRegistration` — `{ id, pluginId, name, icon, component?, getContent? }`
+- `ViewRegistration` — `{ id, pluginId, name, icon, slot: ViewSlot, contentType: ViewContentType, component?, getContent? }`
 - `StatusBarRegistration` — `{ id, pluginId, text, icon, onClick? }`
 - `StatusBarHandle` — `{ update(data) }` — allows updating text/icon after registration
 - `UIRegistry` — class:

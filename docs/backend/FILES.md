@@ -91,8 +91,8 @@ Complete index of every non-UI source file in `src/`. Sorted by directory, then 
 | `sandbox.ts` | `src/plugins/sandbox.ts` | 23 | Plugin sandbox placeholder (permission checks in API, full isolation deferred) |
 | `settings.ts` | `src/plugins/settings.ts` | 75 | Per-plugin settings manager with DB persistence and caching |
 | `types.ts` | `src/plugins/types.ts` | 74 | Plugin manifest Zod schema, setting definitions, permission list |
-| `ui-registry.ts` | `src/plugins/ui-registry.ts` | 95 | Plugin UI registry -- panels, views, status bar items |
-| `index.ts` | `src/plugins/builtin/pomodoro/index.ts` | 195 | Built-in Pomodoro timer plugin -- work/break phases, start/pause/reset commands, status bar, sidebar panel |
+| `ui-registry.ts` | `src/plugins/ui-registry.ts` | 100 | Plugin UI registry -- panels, views (with slot + contentType), status bar items |
+| `index.ts` | `src/plugins/builtin/pomodoro/index.ts` | 195 | Built-in Pomodoro timer plugin -- work/break phases, start/pause/reset/skip commands, status bar, structured content view |
 | `interface.ts` | `src/storage/interface.ts` | 159 | IStorage interface, all row types, ChatSessionInfo, MutationResult |
 | `markdown-backend.ts` | `src/storage/markdown-backend.ts` | 827 | Markdown storage backend (files + in-memory indexes, chat sessions, templates) |
 | `markdown-utils.ts` | `src/storage/markdown-utils.ts` | 168 | YAML frontmatter, slugify, task file parse/serialize |

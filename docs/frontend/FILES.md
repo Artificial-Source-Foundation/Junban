@@ -53,7 +53,7 @@
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `src/ui/components/Sidebar.tsx` | 480 | Main navigation sidebar with views, projects, favorites, plugins, workspace tools. Collapsible. |
+| `src/ui/components/Sidebar.tsx` | 530 | Main navigation sidebar with slot-based plugin view rendering (navigation/tools/workspace), projects, workspace tools. Collapsible. |
 | `src/ui/components/BottomNavBar.tsx` | 128 | Mobile bottom nav with AI orb (long-press for voice). |
 | `src/ui/components/MobileDrawer.tsx` | 62 | Slide-in drawer for mobile sidebar. |
 | `src/ui/components/CommandPalette.tsx` | 150 | Fuzzy search command palette (Ctrl+K). |
@@ -89,6 +89,7 @@
 
 | File | Lines | Purpose |
 |------|-------|---------|
+| `src/ui/components/StructuredContentRenderer.tsx` | 145 | JSON-to-React renderer for plugin structured content. 7 UI primitives: text, badge, progress, button, divider, row, spacer. |
 | `src/ui/components/PluginBrowser.tsx` | 657 | Full-screen plugin browser modal with search, filter tabs (all/installed/not-installed), split-pane detail view, install/uninstall/toggle actions. |
 | `src/ui/components/PluginCard.tsx` | 559 | Reusable plugin card with two modes: `store` (install/uninstall) and `settings` (toggle/permissions). Includes gradient banners, plugin settings editor. |
 
@@ -136,7 +137,7 @@
 | `src/ui/views/Completed.tsx` | 160 | Completed tasks grouped by date with project filter. |
 | `src/ui/views/FiltersLabels.tsx` | 283 | Saved filters and tag/label management. |
 | `src/ui/views/TaskPage.tsx` | 183 | Full-page task detail view. |
-| `src/ui/views/PluginView.tsx` | 40 | Plugin custom view renderer (polls content). |
+| `src/ui/views/PluginView.tsx` | 70 | Plugin view renderer with text and structured content support. Accepts `viewInfo` prop for contentType/slot. |
 | `src/ui/views/Calendar.tsx` | 147 | Calendar view shell with day/week/month mode switcher, navigation controls, and sub-view rendering. |
 | `src/ui/views/AIChat.tsx` | 49 | AI Chat full-page view wrapper. Auto-manages LM Studio model loading/unloading. |
 | `src/ui/views/Settings.tsx` | 322 | Settings modal with 9 tabs, responsive layout (mobile index page with sections, desktop split-pane). |

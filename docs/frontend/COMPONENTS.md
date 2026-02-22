@@ -203,8 +203,8 @@
 
 ### Sidebar.tsx
 
-- **Path:** `src/ui/components/Sidebar.tsx` (479 lines)
-- **Purpose:** Main navigation sidebar with task views (Inbox, Today, Upcoming, Calendar, Filters & Labels, Completed), collapsible projects section, plugin panels/views, tools section (AI Chat, Focus Mode), and workspace section (Plugin Store, Settings).
+- **Path:** `src/ui/components/Sidebar.tsx` (530 lines)
+- **Purpose:** Main navigation sidebar with slot-based plugin view rendering. Groups views by slot (navigation, tools, workspace). Navigation views (Inbox, Today, etc.), collapsible projects section, tools section (plugin views + AI Chat + Focus Mode), and workspace section (Plugin Store, Settings).
 - **Key Exports:** `Sidebar`
 - **Props:**
   - `currentView: string`
@@ -222,9 +222,10 @@
   - `onAddTask?, onSearch?` -- top action buttons
   - `inboxCount?, todayCount?` -- badge counts
   - `onOpenProjectModal?` -- add project button
+  - `builtinPluginIds?: Set<string>` -- restricts navigation-slot views to built-in plugins
 - **Key Dependencies:** `lucide-react`, `core/types.js`, `api/index.js` (PanelInfo, ViewInfo)
 - **Used By:** `App.tsx`
-- **Notes:** Collapsed mode shows only icons with hover tooltips (`CollapsedTooltip` internal component). Badge counts on Inbox and Today items. Projects section has a "+" button for creating new projects.
+- **Notes:** Plugin views are grouped by slot via `useMemo`: `navigation` views render inline after built-in nav items (restricted to builtin plugins), `tools` views render in a collapsible "Tools" section between My Projects and Workspace, `workspace` views render in the bottom Workspace section. Emoji plugin icons handled alongside Lucide component icons. Collapsed mode shows only icons with hover tooltips (`CollapsedTooltip` internal component). Badge counts on Inbox and Today items. Old "Plugin Panels" and "Custom Views" sections removed in favor of slot-based rendering.
 
 ---
 
@@ -553,6 +554,28 @@ Extracted sub-components used by `AIChatPanel.tsx`. Each handles a single concer
 ---
 
 ## Plugin Components
+
+### StructuredContentRenderer.tsx
+
+- **Path:** `src/ui/components/StructuredContentRenderer.tsx` (145 lines)
+- **Purpose:** JSON-to-React renderer for plugin structured content. Accepts a JSON root structure and renders interactive UI elements.
+- **Key Exports:** `StructuredContentRenderer`
+- **Props:**
+  - `content: string` -- JSON string with root structure `{ layout: "stack" | "center", elements: UIElement[] }`
+  - `onCommand?: (commandId: string) => void` -- callback for button clicks
+- **Key Dependencies:** None (self-contained with Tailwind classes)
+- **Used By:** `PluginView.tsx`
+- **Notes:** Supports 7 UI primitives:
+  - `text` — styled text with variants: title, subtitle, body, caption, mono
+  - `badge` — rounded pill with colors: default, accent, success, warning, error
+  - `progress` — progress bar with `value`/`max`, optional label and color
+  - `button` — clickable button with variants: primary, secondary, ghost. Fires `onCommand(commandId)`
+  - `divider` — horizontal rule
+  - `row` — flex container with nested elements, configurable gap and justify
+  - `spacer` — vertical spacing (sm=8px, md=16px, lg=24px)
+  Unknown element types are silently skipped for forward compatibility. Recursive rendering via internal `RenderElement` component.
+
+---
 
 ### PluginBrowser.tsx
 

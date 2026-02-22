@@ -299,14 +299,57 @@ this.app.ui.addSidebarPanel({
 #### Custom View (`ui:view`)
 
 ```typescript
-// Register a full-page view
+// Register a full-page view (text content, default)
 this.app.ui.addView({
   id: "kanban",
   name: "Kanban Board",
   icon: "columns",
   component: KanbanView, // React component
 });
+
+// Register a view with structured JSON content (interactive UI)
+this.app.ui.addView({
+  id: "my-timer",
+  name: "Timer",
+  icon: "⏱️",
+  slot: "tools",         // "navigation" | "tools" | "workspace" (default: "tools")
+  contentType: "structured", // "text" | "structured" (default: "text")
+  render: () => JSON.stringify({
+    layout: "center",
+    elements: [
+      { type: "text", value: "25:00", variant: "mono" },
+      { type: "progress", value: 60, max: 100, color: "accent" },
+      { type: "row", justify: "center", gap: "md", elements: [
+        { type: "button", label: "Start", commandId: "my-plugin:start", variant: "primary" },
+        { type: "button", label: "Reset", commandId: "my-plugin:reset", variant: "ghost" },
+      ]},
+      { type: "badge", value: "Idle", color: "default" },
+    ],
+  }),
+});
 ```
+
+##### View Slots
+
+| Slot | Sidebar Location | Notes |
+|------|-----------------|-------|
+| `navigation` | After built-in nav items (Inbox, Today, etc.) | Restricted to built-in plugins |
+| `tools` | Collapsible "Tools" section between projects and workspace | Default for all plugins |
+| `workspace` | Bottom section alongside AI Chat and Settings | |
+
+##### Structured Content Elements
+
+| Type | Props | Renders As |
+|------|-------|-----------|
+| `text` | `value`, `variant` (title/subtitle/body/caption/mono) | Styled text |
+| `badge` | `value`, `color` (default/accent/success/warning/error) | Rounded pill |
+| `progress` | `value`, `max`, `label?`, `color?` | Progress bar |
+| `button` | `label`, `commandId`, `variant` (primary/secondary/ghost) | Button that executes a plugin command |
+| `divider` | — | Horizontal rule |
+| `row` | `elements[]`, `gap?` (sm/md/lg), `justify?` (start/center/end/between) | Flex row |
+| `spacer` | `size` (sm/md/lg) | Vertical spacing |
+
+Unknown element types are silently skipped (forward-compatible).
 
 #### Status Bar (`ui:status`)
 
@@ -479,7 +522,7 @@ type SettingDefinition =
 
 ### Current Version
 
-- **API Version**: 1.0.0
+- **API Version**: 1.1.0
 - **Stability**: Stable
 
 The Plugin API follows [semver](https://semver.org/):

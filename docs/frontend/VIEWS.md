@@ -142,14 +142,15 @@
 
 ### PluginView.tsx
 
-- **Path:** `src/ui/views/PluginView.tsx` (41 lines)
-- **Purpose:** Renders content from a plugin-registered custom view.
+- **Path:** `src/ui/views/PluginView.tsx` (70 lines)
+- **Purpose:** Renders content from a plugin-registered custom view. Supports both text and structured content modes.
 - **Key Exports:** `PluginView`
 - **Props:**
   - `viewId: string`
-- **Key Dependencies:** `api.getPluginViewContent`
+  - `viewInfo?: ViewInfo` -- optional view metadata (slot, contentType, pluginId)
+- **Key Dependencies:** `api.getPluginViewContent`, `StructuredContentRenderer`, `ViewInfo` from `../api/index.js`
 - **Used By:** `App.tsx`
-- **Notes:** Polls view content every 1 second using `setInterval`. Uses a `mountedRef` to prevent state updates after unmount. Renders content as monospace preformatted text (plugins set content as strings).
+- **Notes:** If `viewInfo.contentType === "structured"`: parses content as JSON and renders via `StructuredContentRenderer` with 500ms polling (for responsive timer updates). If `contentType === "text"` (default): renders as monospace preformatted text with 1000ms polling. Uses a `mountedRef` to prevent state updates after unmount. Passes `handleCommand` callback to StructuredContentRenderer for button interactions.
 
 ---
 

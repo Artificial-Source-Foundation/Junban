@@ -1,6 +1,6 @@
 # Project Status
 
-Quick-reference for what's done, what's in progress, and what's still missing. Updated 2026-02-21.
+Quick-reference for what's done, what's in progress, and what's still missing. Updated 2026-02-22.
 
 ## Completion Overview
 
@@ -11,28 +11,29 @@ Quick-reference for what's done, what's in progress, and what's still missing. U
 | Parser & NLP | 7/7 | 0 | Complete |
 | UI — Views & Components | 34/35 | 1 | Logo design pending |
 | CLI | 7/8 | 1 | Fuzzy picker idea |
-| Plugin System | 20/20 | 0 | Complete |
+| Plugin System | 21/21 | 0 | Complete |
 | AI Assistant | 45/57 | 12 | Core done; ideas pending |
 | Storage & Data | 12/12 | 0 | Complete |
-| Testing | 10/10 | 0 | 94 test files, 1000+ tests |
+| Testing | 10/10 | 0 | 96 test files, 1773+ tests |
 | Hardening & Quality | 17/17 | 0 | Complete |
-| Frontend Enhancements | 23/23 | 0 | Complete |
+| Frontend Enhancements | 25/25 | 0 | Complete |
+| QA — Bugs | 14/14 | 0 | Complete |
 | Documentation | 15/15 | 0 | Complete |
-| **Total** | **221/235** | **14** | **94% complete** |
+| **Total** | **224/238** | **14** | **94% complete** |
 
 ## What's Fully Done
 
 - Task CRUD with subtasks, templates, recurrence, filters, priorities
 - SQLite + Markdown dual storage backends
-- 54 React components, 24 views, 13 hooks, 6 contexts
-- AI assistant with 25 tools, 8 providers, chat persistence
+- 55 React components, 24 views, 13 hooks, 6 contexts
+- AI assistant with 27 tools, 8 providers, chat persistence
 - Voice I/O: 8 adapters (STT/TTS), VAD, Web Workers
 - Plugin system with sandboxing, permissions, lifecycle, registry
 - CLI companion with 5 commands
 - Tauri desktop app scaffold + auto-updater
 - CI/CD pipeline (GitHub Actions)
 - Design token system, accessibility audit, performance optimization
-- 94 test files, 1000+ passing tests
+- 96 test files, 1773+ passing tests
 
 ## What's Missing
 
@@ -47,8 +48,6 @@ Quick-reference for what's done, what's in progress, and what's still missing. U
 #### AI Tools — High Value
 | ID | Item | Why |
 |----|------|-----|
-| A-32 | Morning briefing / daily plan (`plan_my_day` tool) | Users expect this from a smart task manager. Sunsama-inspired. |
-| A-33 | Daily review / shutdown (`daily_review` tool) | End-of-day reflection. Pairs with A-32. |
 | A-37 | Weekly review & analytics (`weekly_review` tool) | Completion rates, trends, neglected projects. |
 | A-39 | Meeting notes to tasks (`extract_tasks_from_text` tool) | Paste text, get structured tasks. High utility. |
 | A-36 | AI time estimation (`estimatedMinutes` field) | Track estimates vs actuals. Schema change needed. |
@@ -108,7 +107,7 @@ Quick-reference for what's done, what's in progress, and what's still missing. U
 
 ## Sprint History
 
-32 sprints completed. See [SPRINTS.md](../planning/SPRINTS.md) for full history.
+34 sprints completed. See [SPRINTS.md](../planning/SPRINTS.md) for full history.
 
 | Sprint | Theme | Tests After |
 |--------|-------|-------------|
@@ -144,6 +143,8 @@ Quick-reference for what's done, what's in progress, and what's still missing. U
 | S29 | Voice Call & Tag Tools | 1018 |
 | S30-31 | GitHub Issues batch | 1018+ |
 | S32 | Frontend Enhancements | 1018+ |
+| S33 | QA & Polish | 1773 |
+| S34 | Plugin Slot System | 1773 |
 
 ## Known Technical Debt
 
