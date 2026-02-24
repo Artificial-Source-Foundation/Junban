@@ -59,6 +59,5 @@ plugins/*/dist/
 .cache/
 *.tsbuildinfo
 
-# Dev screenshots
-pomodoro-active.png
-settings-modal-size.png
+# Dev / E2E test screenshots
+*.png
