@@ -291,7 +291,7 @@ All work items for ASF Saydo, organized by area and prioritized within each sect
 | FE-12 | Quick-Add Modal | done | S32 | Ctrl+N / q shortcut, centered overlay |
 | FE-13 | View transitions (fade-in animation) | done | S32 | animate-fade-in wrapper keyed by view |
 | FE-14 | Enhanced empty states | done | S32 | EmptyState component in Completed, FiltersLabels, TaskList |
-| FE-15 | Right-click context menu | done | S32 | ContextMenu with submenus, keyboard nav |
+| FE-15 | Right-click context menu | done | S32 | ContextMenu with submenus, keyboard nav. Wired to task views in S36. |
 | FE-16 | Reminder in-app toasts | done | S32 | showToast on reminder with "View" action |
 | FE-17 | Task list virtualization | done | S32 | @tanstack/react-virtual for >50 items |
 | FE-18 | Task hover preview | done | S32 | TaskPreview popover on 300ms hover |
@@ -321,6 +321,9 @@ All work items for ASF Saydo, organized by area and prioritized within each sect
 | QA-12 | Collapsed sidebar hides My Projects section entirely | done | S33 | Fixed: added collapsed project icons with tooltips |
 | QA-13 | Reminder polling every 30s even when no reminders exist | done | S33 | Fixed: increased default interval to 60s |
 | QA-14 | Plugin toggle doesn't refresh sidebar views | done | S34 | Fixed: PluginsTab handleToggleBuiltin now refreshes views, panels, statusBar, commands |
+| QA-15 | NLP "deadline friday" keyword doesn't set deadline field | done | S36 | Fixed: extractDeadline() now tries "deadline <date>" keyword before "!!" prefix |
+| QA-16 | Right-click context menu on tasks does nothing | done | S36 | Fixed: onContextMenu wired through TaskList → views → App.tsx with ContextMenu items |
+| QA-17 | Ultrawide monitors: content stretches edge-to-edge | done | S36 | Fixed: max-w-7xl wrapper inside main element caps content at 1280px |
 
 ## Documentation
 

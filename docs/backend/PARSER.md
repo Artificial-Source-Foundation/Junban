@@ -14,6 +14,9 @@ Raw Input
   |-> extractTags()         -- removes "#tag" patterns
   |-> extractProject()      -- removes "+projectName" patterns
   |-> extractRecurrence()   -- removes "daily", "weekly", "every N days", etc.
+  |-> extractDuration()     -- removes "~30m", "~1h", "~1.5h"
+  |-> extractDeadline()     -- removes "deadline friday" or "!!friday"
+  |-> extractSomeday()      -- removes "~someday" or "/someday"
   |-> parseDate()           -- chrono-node extracts dates/times
   |-> removeDateText()      -- strips matched date text
   |-> remaining text        -- becomes the task title
@@ -50,7 +53,7 @@ Each step extracts its tokens and returns the cleaned remaining text for the nex
 
 ### `grammar.ts`
 **Path:** `src/parser/grammar.ts`
-**Lines:** 74
+**Lines:** 123
 **Purpose:** Grammar rules for task-specific syntax extraction. Each function extracts a specific token type from the input string and returns both the extracted value and the cleaned remaining text.
 
 **Key Exports:**
@@ -65,6 +68,14 @@ Each step extracts its tokens and returns the cleaned remaining text for the nex
   - Matches: `every N days`, `every N weeks`
 - `extractProject(input: string): { project: string | null; text: string }`
   - Matches: `+project-name` (word chars and hyphens)
+- `extractDuration(input: string): { estimatedMinutes: number | null; text: string }`
+  - Matches: `~30m`, `~1h`, `~1.5h`, `~90m` (requires `~` prefix)
+- `extractDeadline(input: string): { deadlineText: string | null; text: string }`
+  - Matches: `deadline friday`, `deadline next friday` (keyword syntax, case-insensitive)
+  - Matches: `!!friday`, `!!next friday` (`!!` prefix syntax)
+  - Keyword syntax tried first, then `!!` prefix as fallback
+- `extractSomeday(input: string): { isSomeday: boolean; text: string }`
+  - Matches: `~someday` or `/someday`
 
 **Key Dependencies:** None (pure regex functions)
 
@@ -74,14 +85,14 @@ Each step extracts its tokens and returns the cleaned remaining text for the nex
 
 ### `task-parser.ts`
 **Path:** `src/parser/task-parser.ts`
-**Lines:** 57
-**Purpose:** The main parser entry point. Orchestrates the full parsing pipeline: priority, tags, project, recurrence, then date/time. Whatever text remains after all extractions becomes the task title.
+**Lines:** 99
+**Purpose:** The main parser entry point. Orchestrates the full parsing pipeline: priority, tags, project, recurrence, duration, deadline, someday, then date/time. Whatever text remains after all extractions becomes the task title.
 
 **Key Exports:**
-- `ParsedTask` -- interface: `{ title: string; priority: number | null; tags: string[]; project: string | null; dueDate: Date | null; dueTime: boolean; recurrence: string | null }`
+- `ParsedTask` -- interface: `{ title: string; priority: number | null; tags: string[]; project: string | null; dueDate: Date | null; dueTime: boolean; recurrence: string | null; estimatedMinutes: number | null; deadline: Date | null; isSomeday: boolean }`
 - `parseTask(input: string): ParsedTask`
 
-**Key Dependencies:** `parseDate`, `removeDateText` from `nlp.ts`; `extractPriority`, `extractTags`, `extractProject`, `extractRecurrence` from `grammar.ts`
+**Key Dependencies:** `parseDate`, `removeDateText` from `nlp.ts`; `extractPriority`, `extractTags`, `extractProject`, `extractRecurrence`, `extractDuration`, `extractDeadline`, `extractSomeday` from `grammar.ts`
 
 **Used By:** `src/cli/commands/add.ts`, `src/core/import.ts` (Markdown import)
 
@@ -93,3 +104,7 @@ Each step extracts its tokens and returns the cleaned remaining text for the nex
 | `"standup daily"` | title: "standup", recurrence: "daily" |
 | `"clean house every 2 weeks"` | title: "clean house", recurrence: "every 2 weeks" |
 | `"deploy p2 #ops +infra next friday"` | title: "deploy", priority: 2, tags: ["ops"], project: "infra", dueDate: next Friday |
+| `"submit report deadline friday p1"` | title: "submit report", deadline: Friday, priority: 1, dueDate: null |
+| `"write docs !!jan 15"` | title: "write docs", deadline: Jan 15 |
+| `"deep work ~2h p1"` | title: "deep work", estimatedMinutes: 120, priority: 1 |
+| `"read book ~someday"` | title: "read book", isSomeday: true |

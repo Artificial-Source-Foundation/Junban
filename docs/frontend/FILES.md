@@ -8,7 +8,7 @@
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `src/ui/App.tsx` | 791 | Root React component. Wraps everything in 6 nested context providers. Contains `AppContent` which handles routing, layout, state orchestration, and renders all views. |
+| `src/ui/App.tsx` | 1068 | Root React component. Wraps everything in 6 nested context providers. Contains `AppContent` which handles routing, layout, state orchestration, right-click context menu, and renders all views. Main content constrained to max-w-7xl for ultrawide monitors. |
 | `src/ui/main.tsx` | 12 | Entry point. Renders `<App />` in `React.StrictMode`. Imports theme manager to trigger initialization. |
 | `src/ui/index.css` | 135 | Root CSS. Imports Tailwind and all theme CSS files. Defines custom fonts (Outfit, Space Grotesk, Space Mono), density scaling, font size variants, reduce-motion class, and 8 animations (fade-in, slide-up-fade, scale-fade-in, drop-fade-in, toast-in, pop-in, message-enter, typing-shimmer). |
 | `src/ui/shortcuts.ts` | 160 | `ShortcutManager` class. Handles registration, rebinding, conflict detection, key normalization, serialization, and subscription for keyboard shortcuts. |
@@ -42,7 +42,7 @@
 |------|-------|---------|
 | `src/ui/components/TaskInput.tsx` | 107 | Natural language task input with live NLP preview. |
 | `src/ui/components/TaskItem.tsx` | 300 | Single task row with priority circle, metadata, drag handle. `React.memo` wrapped. |
-| `src/ui/components/TaskList.tsx` | 278 | Sortable task list with @dnd-kit, tree flattening, inline subtask creation. |
+| `src/ui/components/TaskList.tsx` | 283 | Sortable task list with @dnd-kit, tree flattening, inline subtask creation. Passes onContextMenu through to TaskItem. |
 | `src/ui/components/TaskDetailPanel.tsx` | 350 | Modal task detail with two-column layout, inline editing, subtask section. |
 | `src/ui/components/SubtaskBlock.tsx` | 142 | Individual subtask row with inline editing and DnD sortable wrapper. |
 | `src/ui/components/SubtaskSection.tsx` | 268 | Collapsible subtask list with DnD, progress bar, inline add. |
@@ -134,10 +134,10 @@
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `src/ui/views/Inbox.tsx` | 83 | Inbox view -- unassigned pending tasks. |
-| `src/ui/views/Today.tsx` | 142 | Today's tasks + overdue section with reschedule. |
-| `src/ui/views/Upcoming.tsx` | 176 | Date-grouped upcoming tasks + overdue section. |
-| `src/ui/views/Project.tsx` | 79 | Single project view. |
+| `src/ui/views/Inbox.tsx` | 98 | Inbox view -- unassigned pending tasks. Passes onContextMenu to TaskList. |
+| `src/ui/views/Today.tsx` | 142 | Today's tasks + overdue section with reschedule. Passes onContextMenu to TaskList. |
+| `src/ui/views/Upcoming.tsx` | 181 | Date-grouped upcoming tasks + overdue section. Passes onContextMenu to TaskList. |
+| `src/ui/views/Project.tsx` | 403 | Single project view with list/board modes, sections. Passes onContextMenu to TaskList. |
 | `src/ui/views/Completed.tsx` | 160 | Completed tasks grouped by date with project filter. |
 | `src/ui/views/Cancelled.tsx` | 157 | Cancelled tasks grouped by cancellation date with restore action. |
 | `src/ui/views/Someday.tsx` | 75 | Someday/Maybe parked tasks view with activate action. |

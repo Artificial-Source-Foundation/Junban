@@ -48,7 +48,7 @@
 
 ### TaskList.tsx
 
-- **Path:** `src/ui/components/TaskList.tsx` (277 lines)
+- **Path:** `src/ui/components/TaskList.tsx` (283 lines)
 - **Purpose:** Renders a sortable list of tasks with drag-and-drop reordering, hierarchical tree flattening, and inline subtask creation.
 - **Key Exports:** `TaskList`
 - **Props:**
@@ -63,6 +63,7 @@
   - `onAddSubtask?: (parentId: string, title: string) => void`
   - `onIndent?: (id: string) => void`
   - `onOutdent?: (id: string) => void`
+  - `onContextMenu?: (taskId: string, position: { x: number; y: number }) => void` -- right-click context menu handler, passed through to TaskItem
 - **Key Dependencies:** `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`, `TaskItem.tsx`, `InlineAddSubtask.tsx`
 - **Used By:** `Inbox.tsx`, `Today.tsx`, `Upcoming.tsx`, `Project.tsx`, `Completed.tsx`
 - **Notes:** Builds a flat tree from `parentId` relationships. Uses `DndContext` + `SortableContext` with `verticalListSortingStrategy`. Supports keyboard-based indent/outdent (Tab/Shift+Tab) on focused items. Includes a `DragOverlay` for styled drag ghost (semi-transparent, shadow, slight rotation) during drag-and-drop.
@@ -766,8 +767,8 @@ Extracted sub-components used by `AIChatPanel.tsx`. Each handles a single concer
   - `position: { x: number; y: number }` -- screen coordinates
   - `onClose: () => void`
 - **Key Dependencies:** `lucide-react` (ChevronRight)
-- **Used By:** `TaskItem.tsx` (via onContextMenu handler)
-- **Notes:** Keyboard navigation: ArrowDown/Up to move, Enter to select, Escape to close, ArrowRight to open submenu. Supports nested submenus. Closes on outside click, Escape, or scroll. Viewport-aware positioning.
+- **Used By:** `App.tsx` (renders the menu with task-specific items), `TaskItem.tsx` (fires onContextMenu on right-click)
+- **Notes:** Keyboard navigation: ArrowDown/Up to move, Enter to select, Escape to close, ArrowRight to open submenu. Supports nested submenus. Closes on outside click, Escape, or scroll. Viewport-aware positioning. App.tsx builds menu items: Edit, Complete/Uncomplete, Priority submenu (P1-P4), Move to project submenu (Inbox + all projects), Delete. Context menu clears on view navigation.
 
 ---
 

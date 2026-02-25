@@ -51,7 +51,7 @@ src/
 ├── parser/                  # Natural language parsing
 │   ├── nlp.ts               # Date/time extraction (chrono-node)
 │   ├── task-parser.ts       # Full task string parser ("buy milk p1 #groceries tomorrow")
-│   └── grammar.ts           # Grammar rules (priorities, tags, projects)
+│   └── grammar.ts           # Grammar rules (priorities, tags, projects, recurrence, duration, deadline, someday)
 │
 ├── ai/                      # AI layer
 │   ├── provider.ts          # LLMProviderPlugin interface
@@ -104,7 +104,7 @@ src/
 │   └── types.ts             # Plugin manifest schema (Zod)
 │
 ├── ui/                      # React frontend
-│   ├── App.tsx              # Root component — routing, layout, keyboard nav
+│   ├── App.tsx              # Root component — routing, layout, keyboard nav, context menu, max-w-7xl constraint
 │   ├── main.tsx             # React entry point, theme init
 │   ├── index.css            # Global styles
 │   ├── shortcuts.ts         # Keyboard shortcut definitions
@@ -149,6 +149,7 @@ src/
 │   │   ├── QueryBar.tsx          # NL search with debounced filtering
 │   │   ├── AIChatPanel.tsx       # AI sidebar chat + voice call UI
 │   │   ├── VoiceCallOverlay.tsx  # Voice call in-call UI (pulsing indicator, timer)
+│   │   ├── ContextMenu.tsx       # Right-click context menu (Edit, Complete, Priority, Move, Delete)
 │   │   ├── ConfirmDialog.tsx     # Styled confirmation dialog (replaces window.confirm)
 │   │   ├── BulkActionBar.tsx     # Multi-select toolbar
 │   │   ├── TemplateSelector.tsx  # Template picker modal

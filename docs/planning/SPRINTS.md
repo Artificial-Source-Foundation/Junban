@@ -23,7 +23,7 @@ Two-week sprint cycles. Each sprint has a clear goal and pulls items from the [B
 
 ## Sprint History
 
-35 sprints completed. Individual sprint details are in [`sprints/`](sprints/).
+36 sprints completed. Individual sprint details are in [`sprints/`](sprints/).
 
 | Sprint | Theme | Tests | Details |
 |--------|-------|-------|---------|
@@ -62,6 +62,7 @@ Two-week sprint cycles. Each sprint has a clear goal and pulls items from the [B
 | [S33](sprints/S33-qa-polish.md) | QA & Polish | 1773 | 13 bugs, 2 AI tools, Today redesign |
 | [S34](sprints/S34-plugin-slot-system.md) | Plugin Slot System | 1773 | View slots, structured content, Pomodoro rewrite |
 | [S35](sprints/S35-big-features.md) | Big Features | 1774 | Kanban board, stats, comments, sections, cancelled/someday views |
+| [S36](sprints/S36-bug-fixes.md) | Bug Fixes | 1785 | NLP deadline keyword, context menu wiring, ultrawide max-width |
 
 ---
 

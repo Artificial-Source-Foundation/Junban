@@ -82,9 +82,9 @@ Complete index of every non-UI source file in `src/`. Sorted by directory, then 
 | `persistence.ts` | `src/db/persistence.ts` | 24 | Tauri AppData file persistence for sql.js database |
 | `queries.ts` | `src/db/queries.ts` | 229 | Drizzle query factory for all entity CRUD, chat sessions, templates, plugin permissions |
 | `schema.ts` | `src/db/schema.ts` | 90 | Drizzle ORM table definitions (8 tables) |
-| `grammar.ts` | `src/parser/grammar.ts` | 75 | Regex extraction rules: priority, tags, project, recurrence |
+| `grammar.ts` | `src/parser/grammar.ts` | 123 | Regex extraction rules: priority, tags, project, recurrence, duration, deadline, someday |
 | `nlp.ts` | `src/parser/nlp.ts` | 51 | chrono-node date/time extraction and cleanup |
-| `task-parser.ts` | `src/parser/task-parser.ts` | 58 | Main task parser orchestrator |
+| `task-parser.ts` | `src/parser/task-parser.ts` | 99 | Main task parser orchestrator (priority, tags, project, recurrence, duration, deadline, someday, date) |
 | `api.ts` | `src/plugins/api.ts` | 167 | Plugin API surface -- permission-gated access to tasks, commands, UI, events, storage, AI |
 | `command-registry.ts` | `src/plugins/command-registry.ts` | 51 | Plugin command registry |
 | `installer.ts` | `src/plugins/installer.ts` | 134 | Plugin installer -- download, extract, validate tar.gz archives |
