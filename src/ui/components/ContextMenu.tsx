@@ -9,6 +9,8 @@ export interface ContextMenuItem {
   separator?: boolean;
   shortcut?: string;
   submenu?: ContextMenuItem[];
+  /** When true, clicking this submenu item won't close the menu */
+  keepOpen?: boolean;
   onClick?: () => void;
 }
 
@@ -22,6 +24,23 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [focusIndex, setFocusIndex] = useState(0);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const [adjustedPosition, setAdjustedPosition] = useState(position);
+
+  // Viewport clamping — adjust position if menu overflows
+  useEffect(() => {
+    if (!menuRef.current) return;
+    const rect = menuRef.current.getBoundingClientRect();
+    let { x, y } = position;
+    if (y + rect.height > window.innerHeight) {
+      y = Math.max(4, window.innerHeight - rect.height - 4);
+    }
+    if (x + rect.width > window.innerWidth) {
+      x = Math.max(4, window.innerWidth - rect.width - 4);
+    }
+    if (x !== position.x || y !== position.y) {
+      setAdjustedPosition({ x, y });
+    }
+  }, [position]);
 
   // Close on outside click, Escape, scroll
   useEffect(() => {
@@ -114,8 +133,8 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
   // Ensure menu stays in viewport
   const style: React.CSSProperties = {
     position: "fixed",
-    left: position.x,
-    top: position.y,
+    left: adjustedPosition.x,
+    top: adjustedPosition.y,
     zIndex: 100,
   };
 
@@ -140,7 +159,7 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
                 return;
               }
               item.onClick?.();
-              onClose();
+              if (!item.keepOpen) onClose();
             }}
             onMouseEnter={() => {
               if (item.submenu) setOpenSubmenu(item.id);
@@ -164,23 +183,34 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
           {item.submenu && openSubmenu === item.id && (
             <div className="absolute left-full top-0 ml-0.5 min-w-[160px] py-1 bg-surface border border-border rounded-lg shadow-xl">
               {item.submenu.map((sub) => (
-                <button
-                  key={sub.id}
-                  role="menuitem"
-                  tabIndex={-1}
-                  onClick={() => {
-                    sub.onClick?.();
-                    onClose();
-                  }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-left transition-colors ${
-                    sub.danger
-                      ? "text-error hover:bg-error/10"
-                      : "text-on-surface hover:bg-surface-tertiary"
-                  }`}
-                >
-                  {sub.icon && <span className="w-4 flex-shrink-0">{sub.icon}</span>}
-                  <span>{sub.label}</span>
-                </button>
+                <div key={sub.id}>
+                  <button
+                    role="menuitem"
+                    aria-disabled={sub.disabled}
+                    tabIndex={-1}
+                    onClick={() => {
+                      if (sub.disabled) return;
+                      sub.onClick?.();
+                      if (!sub.keepOpen) onClose();
+                    }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-left transition-colors ${
+                      sub.disabled
+                        ? "text-on-surface-muted cursor-not-allowed"
+                        : sub.danger
+                          ? "text-error hover:bg-error/10"
+                          : "text-on-surface hover:bg-surface-tertiary"
+                    }`}
+                  >
+                    {sub.icon && <span className="w-4 flex-shrink-0">{sub.icon}</span>}
+                    <span className="flex-1">{sub.label}</span>
+                    {sub.shortcut && (
+                      <span className="text-on-surface-muted text-xs ml-4 flex-shrink-0">{sub.shortcut}</span>
+                    )}
+                  </button>
+                  {sub.separator && (
+                    <div className="my-1 border-t border-border/50" role="separator" />
+                  )}
+                </div>
               ))}
             </div>
           )}

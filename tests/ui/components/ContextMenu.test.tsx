@@ -133,4 +133,97 @@ describe("ContextMenu", () => {
     expect(screen.getByText("First")).toBeDefined();
     expect(screen.getByText("Second")).toBeDefined();
   });
+
+  it("renders shortcut text in submenu items", () => {
+    const items: ContextMenuItem[] = [
+      {
+        id: "due",
+        label: "Due date",
+        submenu: [
+          { id: "today", label: "Today", shortcut: "Sat", onClick: vi.fn() },
+          { id: "tomorrow", label: "Tomorrow", shortcut: "Sun", onClick: vi.fn() },
+        ],
+      },
+    ];
+    renderMenu(items);
+    fireEvent.mouseEnter(screen.getByText("Due date"));
+    expect(screen.getByText("Sat")).toBeDefined();
+    expect(screen.getByText("Sun")).toBeDefined();
+  });
+
+  it("renders separator in submenu items", () => {
+    const items: ContextMenuItem[] = [
+      {
+        id: "remind",
+        label: "Reminder",
+        submenu: [
+          { id: "30min", label: "In 30 min", onClick: vi.fn() },
+          { id: "custom", label: "Custom...", separator: true, onClick: vi.fn() },
+        ],
+      },
+    ];
+    renderMenu(items);
+    fireEvent.mouseEnter(screen.getByText("Reminder"));
+    // Separator from parent item + separator from submenu item
+    const seps = screen.queryAllByRole("separator");
+    expect(seps.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("keepOpen prevents menu close on submenu item click", () => {
+    const onClick = vi.fn();
+    const onClose = vi.fn();
+    const items: ContextMenuItem[] = [
+      {
+        id: "labels",
+        label: "Labels",
+        submenu: [
+          { id: "tag-work", label: "Work", keepOpen: true, onClick },
+        ],
+      },
+    ];
+    render(<ContextMenu items={items} position={{ x: 0, y: 0 }} onClose={onClose} />);
+    fireEvent.mouseEnter(screen.getByText("Labels"));
+    fireEvent.click(screen.getByText("Work"));
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("without keepOpen, submenu item click closes menu", () => {
+    const onClick = vi.fn();
+    const onClose = vi.fn();
+    const items: ContextMenuItem[] = [
+      {
+        id: "priority",
+        label: "Priority",
+        submenu: [
+          { id: "p1", label: "P1", onClick },
+        ],
+      },
+    ];
+    render(<ContextMenu items={items} position={{ x: 0, y: 0 }} onClose={onClose} />);
+    fireEvent.mouseEnter(screen.getByText("Priority"));
+    fireEvent.click(screen.getByText("P1"));
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("disabled submenu items render with muted style and do not fire onClick", () => {
+    const onClick = vi.fn();
+    const onClose = vi.fn();
+    const items: ContextMenuItem[] = [
+      {
+        id: "labels",
+        label: "Labels",
+        submenu: [
+          { id: "no-tags", label: "No labels yet", disabled: true, onClick },
+        ],
+      },
+    ];
+    render(<ContextMenu items={items} position={{ x: 0, y: 0 }} onClose={onClose} />);
+    fireEvent.mouseEnter(screen.getByText("Labels"));
+    const disabledBtn = screen.getByText("No labels yet").closest("button")!;
+    expect(disabledBtn.className).toContain("cursor-not-allowed");
+    fireEvent.click(disabledBtn);
+    expect(onClick).not.toHaveBeenCalled();
+  });
 });

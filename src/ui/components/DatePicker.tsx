@@ -9,6 +9,8 @@ interface DatePickerProps {
   onClose: () => void;
   /** Ref to the trigger element for positioning the portal */
   triggerRef?: React.RefObject<HTMLElement | null>;
+  /** Fixed position for portal rendering without a trigger element (e.g. from context menu) */
+  fixedPosition?: { x: number; y: number };
 }
 
 const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -37,7 +39,7 @@ function addDays(date: Date, days: number): Date {
   return result;
 }
 
-export function DatePicker({ value, onChange, showTime = false, onClose, triggerRef }: DatePickerProps) {
+export function DatePicker({ value, onChange, showTime = false, onClose, triggerRef, fixedPosition }: DatePickerProps) {
   const now = new Date();
   const initialDate = value ? new Date(value) : now;
   const [viewYear, setViewYear] = useState(initialDate.getFullYear());
@@ -48,12 +50,26 @@ export function DatePicker({ value, onChange, showTime = false, onClose, trigger
 
   const selectedDateStr = value ? value.split("T")[0] : null;
 
-  // Compute fixed position from trigger element
+  // Compute fixed position from trigger element or fixedPosition prop
   useEffect(() => {
-    if (!triggerRef?.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
     const pickerHeight = showTime ? 380 : 330;
     const pickerWidth = 256; // w-64
+
+    if (fixedPosition) {
+      let top = fixedPosition.y;
+      if (top + pickerHeight > window.innerHeight) {
+        top = Math.max(4, window.innerHeight - pickerHeight - 4);
+      }
+      let left = fixedPosition.x;
+      if (left + pickerWidth > window.innerWidth) {
+        left = Math.max(4, window.innerWidth - pickerWidth - 8);
+      }
+      setPosition({ top, left });
+      return;
+    }
+
+    if (!triggerRef?.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
     // Position above the trigger if it would overflow the viewport bottom
     let top = rect.bottom + 4;
     if (top + pickerHeight > window.innerHeight) {
@@ -65,7 +81,7 @@ export function DatePicker({ value, onChange, showTime = false, onClose, trigger
       left = window.innerWidth - pickerWidth - 8;
     }
     setPosition({ top, left });
-  }, [triggerRef, showTime]);
+  }, [triggerRef, fixedPosition, showTime]);
 
   // Close on click outside
   useEffect(() => {
@@ -136,7 +152,7 @@ export function DatePicker({ value, onChange, showTime = false, onClose, trigger
   const tomorrow = addDays(now, 1);
   const nextWeek = addDays(now, 7 - now.getDay() + 1); // Next Monday
 
-  const usePortal = triggerRef?.current != null;
+  const usePortal = fixedPosition != null || triggerRef?.current != null;
 
   const picker = (
     <div

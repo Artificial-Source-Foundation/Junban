@@ -54,7 +54,9 @@ import { ContextMenu, type ContextMenuItem } from "./components/ContextMenu.js";
 import {
   Pencil, Check, Undo2, Trash2, Flag, FolderInput,
   Calendar as CalendarIcon, Bell, ArrowUpRight, Copy, Link,
+  Tag as TagIcon, ListPlus, Lightbulb, XCircle, CircleDot,
 } from "lucide-react";
+import { DatePicker } from "./components/DatePicker.js";
 import type { Project as ProjectType, Section, TaskComment, TaskActivity } from "../core/types.js";
 import { api } from "./api/index.js";
 import { toDateKey } from "../utils/format-date.js";
@@ -133,6 +135,11 @@ function AppContent() {
     taskId: string;
     position: { x: number; y: number };
   } | null>(null);
+  const [customDatePicker, setCustomDatePicker] = useState<{
+    taskId: string;
+    mode: "dueDate" | "reminder";
+    position: { x: number; y: number };
+  } | null>(null);
 
   // ── Context hooks ──
   const { state, refreshTasks } = useTaskContext();
@@ -150,7 +157,7 @@ function AppContent() {
     [plugins],
   );
   const voice = useVoiceContext();
-  const { dataMutationCount } = useAIContext();
+  const { dataMutationCount, setFocusedTaskId } = useAIContext();
 
   // ── Data fetching ──
   const fetchProjects = useCallback(async () => {
@@ -198,6 +205,11 @@ function AppContent() {
       fetchTags();
     }
   }, [dataMutationCount, fetchProjects, fetchTags]);
+
+  // Sync selected task → AI focused task context
+  useEffect(() => {
+    setFocusedTaskId(selectedTaskId);
+  }, [selectedTaskId, setFocusedTaskId]);
 
   // ── Local storage sync ──
   useEffect(() => {
@@ -398,6 +410,7 @@ function AppContent() {
     if (!task) return [];
 
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const todayISO = today.toISOString();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -405,23 +418,38 @@ function AppContent() {
     const nextMonday = new Date(today);
     nextMonday.setDate(nextMonday.getDate() + ((8 - nextMonday.getDay()) % 7 || 7));
     const nextMondayISO = nextMonday.toISOString();
+    const nextSaturday = new Date(today);
+    nextSaturday.setDate(nextSaturday.getDate() + ((6 - nextSaturday.getDay() + 7) % 7 || 7));
+    const nextSaturdayISO = nextSaturday.toISOString();
+
+    const dayAbbr = (d: Date) => d.toLocaleDateString(undefined, { weekday: "short" });
+    const shortDate = (d: Date) => d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 
     // ── Due date submenu ──
     const dueDateSubmenu: ContextMenuItem[] = [
       {
         id: "due-today",
         label: "Today",
+        shortcut: dayAbbr(today),
         onClick: () => handleUpdateTask(task.id, { dueDate: todayISO, dueTime: false }),
       },
       {
         id: "due-tomorrow",
         label: "Tomorrow",
+        shortcut: dayAbbr(tomorrow),
         onClick: () => handleUpdateTask(task.id, { dueDate: tomorrowISO, dueTime: false }),
       },
       {
         id: "due-next-week",
         label: "Next week",
+        shortcut: shortDate(nextMonday),
         onClick: () => handleUpdateTask(task.id, { dueDate: nextMondayISO, dueTime: false }),
+      },
+      {
+        id: "due-next-weekend",
+        label: "Next weekend",
+        shortcut: shortDate(nextSaturday),
+        onClick: () => handleUpdateTask(task.id, { dueDate: nextSaturdayISO, dueTime: false }),
       },
     ];
     if (task.dueDate) {
@@ -431,6 +459,15 @@ function AppContent() {
         onClick: () => handleUpdateTask(task.id, { dueDate: null, dueTime: false }),
       });
     }
+    dueDateSubmenu.push({
+      id: "due-custom",
+      label: "Custom...",
+      separator: true,
+      onClick: () => {
+        setContextMenu(null);
+        setCustomDatePicker({ taskId: task.id, mode: "dueDate", position: contextMenu.position });
+      },
+    });
 
     // ── Priority submenu ──
     const prioritySubmenu: ContextMenuItem[] = [
@@ -448,6 +485,11 @@ function AppContent() {
     }
 
     // ── Reminder submenu ──
+    const tomorrowAt9 = new Date(tomorrow);
+    tomorrowAt9.setHours(9, 0, 0, 0);
+    const nextMondayAt9 = new Date(nextMonday);
+    nextMondayAt9.setHours(9, 0, 0, 0);
+
     const reminderSubmenu: ContextMenuItem[] = [
       {
         id: "remind-30min",
@@ -460,13 +502,21 @@ function AppContent() {
         onClick: () => handleUpdateTask(task.id, { remindAt: new Date(Date.now() + 60 * 60_000).toISOString() }),
       },
       {
+        id: "remind-3hr",
+        label: "In 3 hours",
+        onClick: () => handleUpdateTask(task.id, { remindAt: new Date(Date.now() + 180 * 60_000).toISOString() }),
+      },
+      {
         id: "remind-tomorrow-9am",
         label: "Tomorrow at 9 AM",
-        onClick: () => {
-          const d = new Date(tomorrow);
-          d.setHours(9, 0, 0, 0);
-          handleUpdateTask(task.id, { remindAt: d.toISOString() });
-        },
+        shortcut: shortDate(tomorrowAt9),
+        onClick: () => handleUpdateTask(task.id, { remindAt: tomorrowAt9.toISOString() }),
+      },
+      {
+        id: "remind-next-monday-9am",
+        label: "Next Monday at 9 AM",
+        shortcut: shortDate(nextMondayAt9),
+        onClick: () => handleUpdateTask(task.id, { remindAt: nextMondayAt9.toISOString() }),
       },
     ];
     if (task.remindAt) {
@@ -476,6 +526,35 @@ function AppContent() {
         onClick: () => handleUpdateTask(task.id, { remindAt: null }),
       });
     }
+    reminderSubmenu.push({
+      id: "remind-custom",
+      label: "Custom...",
+      separator: true,
+      onClick: () => {
+        setContextMenu(null);
+        setCustomDatePicker({ taskId: task.id, mode: "reminder", position: contextMenu.position });
+      },
+    });
+
+    // ── Labels/Tags submenu ──
+    const taskTagNames = task.tags.map((t) => t.name);
+    const labelsSubmenu: ContextMenuItem[] = availableTags.length > 0
+      ? availableTags.map((tag) => {
+          const hasTag = taskTagNames.includes(tag);
+          return {
+            id: `tag-${tag}`,
+            label: tag,
+            icon: hasTag ? <Check size={14} /> : undefined,
+            keepOpen: true,
+            onClick: () => {
+              const newTags = hasTag
+                ? taskTagNames.filter((t) => t !== tag)
+                : [...taskTagNames, tag];
+              handleUpdateTask(task.id, { tags: newTags } as any);
+            },
+          };
+        })
+      : [{ id: "no-tags", label: "No labels yet", disabled: true }];
 
     // ── Build items ──
     const items: ContextMenuItem[] = [
@@ -510,9 +589,23 @@ function AppContent() {
         label: "Reminder",
         icon: <Bell size={14} />,
         submenu: reminderSubmenu,
+      },
+      {
+        id: "labels",
+        label: "Labels",
+        icon: <TagIcon size={14} />,
+        submenu: labelsSubmenu,
         separator: true,
       },
     ];
+
+    // ── Add subtask ──
+    items.push({
+      id: "add-subtask",
+      label: "Add subtask",
+      icon: <ListPlus size={14} />,
+      onClick: () => handleSelectTask(task.id),
+    });
 
     // ── Move to project submenu ──
     if (projects.length > 0) {
@@ -545,6 +638,23 @@ function AppContent() {
       });
     }
 
+    // ── Move to Someday / Remove from Someday ──
+    items.push({
+      id: "someday",
+      label: task.isSomeday ? "Remove from Someday" : "Move to Someday",
+      icon: <Lightbulb size={14} />,
+      onClick: () => handleUpdateTask(task.id, { isSomeday: !task.isSomeday } as any),
+    });
+
+    // ── Mark as cancelled / Reopen ──
+    items.push({
+      id: "cancel-reopen",
+      label: task.status === "cancelled" ? "Reopen" : "Mark as cancelled",
+      icon: task.status === "cancelled" ? <CircleDot size={14} /> : <XCircle size={14} />,
+      separator: true,
+      onClick: () => handleUpdateTask(task.id, { status: task.status === "cancelled" ? "pending" : "cancelled" } as any),
+    });
+
     items.push({
       id: "duplicate",
       label: "Duplicate",
@@ -568,11 +678,12 @@ function AppContent() {
     });
 
     return items;
-  }, [contextMenu, state.tasks, projects, handleSelectTask, handleToggleTask, handleUpdateTask, handleDeleteTask, handleDuplicateTask, handleCopyTaskLink, handleNavigate]);
+  }, [contextMenu, state.tasks, projects, availableTags, handleSelectTask, handleToggleTask, handleUpdateTask, handleDeleteTask, handleDuplicateTask, handleCopyTaskLink, handleNavigate]);
 
   // Clear context menu on navigation
   useEffect(() => {
     setContextMenu(null);
+    setCustomDatePicker(null);
   }, [currentView, selectedProjectId, selectedPluginViewId, selectedFilterId]);
 
   // ── Sections ──
@@ -1312,6 +1423,29 @@ function AppContent() {
           onClose={() => setContextMenu(null)}
         />
       )}
+      {customDatePicker && (() => {
+        const pickerTask = state.tasks.find((t) => t.id === customDatePicker.taskId);
+        const currentValue = customDatePicker.mode === "dueDate"
+          ? pickerTask?.dueDate ?? null
+          : pickerTask?.remindAt ?? null;
+        return (
+          <DatePicker
+            value={currentValue}
+            onChange={(date) => {
+              if (customDatePicker.mode === "dueDate") {
+                const dueTime = date ? !date.endsWith("T00:00:00") : false;
+                handleUpdateTask(customDatePicker.taskId, { dueDate: date, dueTime });
+              } else {
+                handleUpdateTask(customDatePicker.taskId, { remindAt: date });
+              }
+              setCustomDatePicker(null);
+            }}
+            showTime
+            onClose={() => setCustomDatePicker(null)}
+            fixedPosition={customDatePicker.position}
+          />
+        );
+      })()}
     </div>
     </BlockedTaskIdsContext.Provider>
   );
