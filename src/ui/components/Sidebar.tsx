@@ -36,7 +36,13 @@ import {
   Grid2x2,
   Filter,
   EyeOff,
+  Eye,
   RotateCcw,
+  ArrowUpToLine,
+  ArrowDownToLine,
+  Home,
+  Link,
+  Heart,
 } from "lucide-react";
 import type { Project } from "../../core/types.js";
 import type { PanelInfo, ViewInfo } from "../api/index.js";
@@ -178,6 +184,7 @@ export function Sidebar({
   const [toolsExpanded, setToolsExpanded] = useState(true);
   const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [expandedParents, setExpandedParents] = useState<Set<string>>(new Set());
+  const [favoriteViewsExpanded, setFavoriteViewsExpanded] = useState(true);
   const [ctxMenu, setCtxMenu] = useState<{ itemId: string; x: number; y: number } | null>(null);
 
   // DnD sensors
@@ -251,6 +258,23 @@ export function Sidebar({
     [],
   );
 
+  // Favorite views
+  const favoriteViewIds = useMemo(() => {
+    const str = settings.sidebar_favorite_views;
+    if (!str) return new Set<string>();
+    return new Set(str.split(",").filter(Boolean));
+  }, [settings.sidebar_favorite_views]);
+
+  const favoriteNavItems = useMemo(
+    () => orderedNavItems.filter((item) => favoriteViewIds.has(item.id)),
+    [orderedNavItems, favoriteViewIds],
+  );
+
+  // Check if any optional views are hidden
+  const hasHiddenViews = useMemo(() => {
+    return Object.entries(NAV_FEATURE_MAP).some(([, key]) => settings[key] === "false");
+  }, [settings]);
+
   const contextMenuItems = useMemo(() => {
     if (!ctxMenu) return [];
     const { itemId } = ctxMenu;
@@ -258,17 +282,74 @@ export function Sidebar({
       id: string;
       label: string;
       icon?: React.ReactNode;
+      separator?: boolean;
       onClick?: () => void;
     }> = [];
 
+    // ── Group 1: Favorites ──
+    const isFavorited = favoriteViewIds.has(itemId);
+    items.push({
+      id: "favorite",
+      label: isFavorited ? "Remove from Favorites" : "Add to Favorites",
+      icon: <Heart size={14} />,
+      onClick: () => {
+        const current = new Set(favoriteViewIds);
+        if (isFavorited) current.delete(itemId);
+        else current.add(itemId);
+        updateSetting("sidebar_favorite_views", [...current].join(","));
+      },
+    });
+
+    // ── Group 2: Set as Home ──
+    const isHome = settings.start_view === itemId;
+    items.push({
+      id: "set-home",
+      label: isHome ? "Home view" : "Set as Home view",
+      icon: <Home size={14} />,
+      separator: true,
+      disabled: isHome,
+      onClick: isHome ? undefined : () => updateSetting("start_view", itemId),
+    });
+
+    // Copy link
+    items.push({
+      id: "copy-link",
+      label: "Copy link",
+      icon: <Link size={14} />,
+      onClick: () => {
+        const url = `${window.location.origin}${window.location.pathname}#/${itemId}`;
+        navigator.clipboard.writeText(url).catch(() => {});
+      },
+    });
+
+    // ── Group 3: Visibility ──
     const featureKey = NAV_FEATURE_MAP[itemId];
     if (featureKey && !CORE_VIEWS.has(itemId)) {
       items.push({
         id: "hide",
         label: "Hide from sidebar",
         icon: <EyeOff size={14} />,
+        separator: true,
         onClick: () => updateSetting(featureKey, "false"),
       });
+
+      // Hide others — hide all optional views except this one
+      const otherOptionalVisible = orderedNavItems.filter(
+        (i) => i.id !== itemId && NAV_FEATURE_MAP[i.id] && !CORE_VIEWS.has(i.id),
+      );
+      if (otherOptionalVisible.length > 0) {
+        items.push({
+          id: "hide-others",
+          label: "Hide others",
+          icon: <EyeOff size={14} />,
+          onClick: () => {
+            for (const other of otherOptionalVisible) {
+              const key = NAV_FEATURE_MAP[other.id];
+              if (key) updateSetting(key, "false");
+            }
+          },
+        });
+      }
     }
 
     if (CORE_VIEWS.has(itemId) && onOpenSettings) {
@@ -276,7 +357,54 @@ export function Sidebar({
         id: "manage",
         label: "Manage in Settings",
         icon: <Settings size={14} />,
+        separator: true,
         onClick: () => onOpenSettings(),
+      });
+    }
+
+    // Show all hidden
+    if (hasHiddenViews) {
+      items.push({
+        id: "show-all",
+        label: "Show all hidden",
+        icon: <Eye size={14} />,
+        separator: !featureKey && !CORE_VIEWS.has(itemId),
+        onClick: () => {
+          for (const [, key] of Object.entries(NAV_FEATURE_MAP)) {
+            if (settings[key] === "false") updateSetting(key, "true");
+          }
+        },
+      });
+    }
+
+    // ── Group 4: Ordering ──
+    const ids = orderedNavItems.map((i) => i.id);
+    const currentIndex = ids.indexOf(itemId);
+
+    if (currentIndex > 0) {
+      items.push({
+        id: "move-top",
+        label: "Move to top",
+        icon: <ArrowUpToLine size={14} />,
+        separator: true,
+        onClick: () => {
+          const reordered = ids.filter((id) => id !== itemId);
+          reordered.unshift(itemId);
+          updateSetting("sidebar_nav_order", reordered.join(","));
+        },
+      });
+    }
+
+    if (currentIndex >= 0 && currentIndex < ids.length - 1) {
+      items.push({
+        id: "move-bottom",
+        label: "Move to bottom",
+        icon: <ArrowDownToLine size={14} />,
+        onClick: () => {
+          const reordered = ids.filter((id) => id !== itemId);
+          reordered.push(itemId);
+          updateSetting("sidebar_nav_order", reordered.join(","));
+        },
       });
     }
 
@@ -290,7 +418,7 @@ export function Sidebar({
     }
 
     return items;
-  }, [ctxMenu, onOpenSettings, settings.sidebar_nav_order, updateSetting]);
+  }, [ctxMenu, favoriteViewIds, settings, onOpenSettings, orderedNavItems, hasHiddenViews, updateSetting]);
 
   const favoriteProjects = useMemo(
     () => projects.filter((p) => p.isFavorite && !p.archived),
@@ -631,6 +759,34 @@ export function Sidebar({
                 );
               })}
             </div>
+          )}
+
+          {/* ── Favorite Views ── */}
+          {!collapsed && favoriteNavItems.length > 0 && (
+            <>
+              <SectionHeader
+                label="Favorite Views"
+                expanded={favoriteViewsExpanded}
+                onToggle={() => setFavoriteViewsExpanded(!favoriteViewsExpanded)}
+                trailing={<Heart size={11} className="text-on-surface-muted mr-1" />}
+              />
+              {favoriteViewsExpanded && (
+                <ul className="space-y-0.5">
+                  {favoriteNavItems.map((item) => (
+                    <li key={`fav-${item.id}`}>
+                      {renderNavButton(
+                        `fav-${item.id}`,
+                        item.label,
+                        item.icon,
+                        currentView === item.id,
+                        () => onNavigate(item.id),
+                        item.countKey ? countMap[item.countKey] : undefined,
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
 
           {/* ── Favorites ── */}

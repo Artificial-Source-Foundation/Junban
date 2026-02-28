@@ -6,6 +6,8 @@ export interface ContextMenuItem {
   icon?: React.ReactNode;
   danger?: boolean;
   disabled?: boolean;
+  separator?: boolean;
+  shortcut?: string;
   submenu?: ContextMenuItem[];
   onClick?: () => void;
 }
@@ -154,6 +156,9 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
           >
             {item.icon && <span className="w-4 flex-shrink-0">{item.icon}</span>}
             <span className="flex-1">{item.label}</span>
+            {item.shortcut && (
+              <span className="text-on-surface-muted text-xs ml-4 flex-shrink-0">{item.shortcut}</span>
+            )}
             {item.submenu && <span className="text-on-surface-muted text-xs">&#9656;</span>}
           </button>
           {item.submenu && openSubmenu === item.id && (
@@ -178,6 +183,9 @@ export function ContextMenu({ items, position, onClose }: ContextMenuProps) {
                 </button>
               ))}
             </div>
+          )}
+          {item.separator && (
+            <div className="my-1 border-t border-border/50" role="separator" />
           )}
         </div>
       ))}

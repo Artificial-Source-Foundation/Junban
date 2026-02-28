@@ -11,7 +11,7 @@ export interface GeneralSettings {
   time_format: "12h" | "24h";
   default_priority: "none" | "p1" | "p2" | "p3" | "p4";
   confirm_delete: "true" | "false";
-  start_view: "inbox" | "today" | "upcoming" | "ai-chat";
+  start_view: string;
   sound_enabled: "true" | "false";
   sound_volume: string;
   sound_complete: "true" | "false";
@@ -34,6 +34,7 @@ export interface GeneralSettings {
   feature_filters_labels: "true" | "false";
   feature_completed: "true" | "false";
   sidebar_nav_order: string;
+  sidebar_favorite_views: string;
   daily_capacity_minutes: string;
   nudge_enabled: "true" | "false";
   nudge_overdue_alert: "true" | "false";
@@ -76,6 +77,7 @@ const DEFAULT_SETTINGS: GeneralSettings = {
   feature_filters_labels: "true",
   feature_completed: "true",
   sidebar_nav_order: "",
+  sidebar_favorite_views: "",
   daily_capacity_minutes: "480",
   nudge_enabled: "true",
   nudge_overdue_alert: "true",
