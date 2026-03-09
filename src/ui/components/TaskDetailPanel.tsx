@@ -9,13 +9,7 @@ import {
   MoreHorizontal,
   Maximize2,
   Inbox,
-  MessageSquare,
-  History,
-  PlusCircle,
-  CheckCircle2,
   Pencil,
-  Send,
-  Link,
 } from "lucide-react";
 import { MarkdownMessage } from "./chat/MarkdownMessage.js";
 import type { Task, UpdateTaskInput, TaskComment, TaskActivity } from "../../core/types.js";
@@ -24,6 +18,8 @@ import { SubtaskSection } from "./SubtaskSection.js";
 import { TaskMetadataSidebar } from "./TaskMetadataSidebar.js";
 import { ConfirmDialog } from "./ConfirmDialog.js";
 import { useGeneralSettings } from "../context/SettingsContext.js";
+import { TaskRelations } from "./task-detail/TaskRelations.js";
+import { TaskCommentsActivity } from "./task-detail/TaskCommentsActivity.js";
 
 interface TaskDetailPanelProps {
   task: Task;
@@ -428,314 +424,39 @@ export function TaskDetailPanel({
             />
 
             {/* Relations */}
-            {(relBlocks.length > 0 || relBlockedBy.length > 0 || relSearchOpen) && (
-              <div className="border-t border-border pt-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Link size={14} className="text-on-surface-muted" />
-                  <h3 className="text-sm font-medium text-on-surface">Relations</h3>
-                </div>
-
-                {relBlocks.length > 0 && (
-                  <div className="mb-2">
-                    <span className="text-xs text-on-surface-muted font-medium uppercase tracking-wider">
-                      Blocks
-                    </span>
-                    <div className="mt-1 space-y-1">
-                      {relBlocks.map((t) => (
-                        <div
-                          key={t.id}
-                          className="flex items-center justify-between group rounded px-2 py-1 hover:bg-surface-secondary"
-                        >
-                          <button
-                            className="text-sm text-on-surface hover:text-accent truncate text-left"
-                            onClick={() => onSelect?.(t.id)}
-                          >
-                            {t.title}
-                          </button>
-                          <button
-                            className="p-0.5 rounded text-on-surface-muted hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
-                            title="Remove relation"
-                            onClick={async () => {
-                              await taskApi.removeTaskRelation(task.id, t.id);
-                              setRelBlocks((prev) => prev.filter((r) => r.id !== t.id));
-                            }}
-                          >
-                            <X size={12} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {relBlockedBy.length > 0 && (
-                  <div className="mb-2">
-                    <span className="text-xs text-on-surface-muted font-medium uppercase tracking-wider">
-                      Blocked by
-                    </span>
-                    <div className="mt-1 space-y-1">
-                      {relBlockedBy.map((t) => (
-                        <div
-                          key={t.id}
-                          className="flex items-center justify-between group rounded px-2 py-1 hover:bg-surface-secondary"
-                        >
-                          <button
-                            className="text-sm text-on-surface hover:text-accent truncate text-left"
-                            onClick={() => onSelect?.(t.id)}
-                          >
-                            {t.title}
-                          </button>
-                          <button
-                            className="p-0.5 rounded text-on-surface-muted hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
-                            title="Remove relation"
-                            onClick={async () => {
-                              await taskApi.removeTaskRelation(t.id, task.id);
-                              setRelBlockedBy((prev) => prev.filter((r) => r.id !== t.id));
-                            }}
-                          >
-                            <X size={12} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Add relation search */}
-                {relSearchOpen && (
-                  <div className="mt-2">
-                    <input
-                      type="text"
-                      value={relSearch}
-                      onChange={(e) => setRelSearch(e.target.value)}
-                      placeholder="Search tasks to link..."
-                      autoFocus
-                      className="w-full text-sm bg-transparent border border-border rounded-md px-3 py-1.5 text-on-surface placeholder-on-surface-muted/50 focus:outline-none focus:ring-1 focus:ring-accent"
-                    />
-                    {relSearch.trim() && (
-                      <div className="mt-1 max-h-32 overflow-y-auto rounded-md border border-border bg-surface">
-                        {allTasks
-                          .filter(
-                            (t) =>
-                              t.id !== task.id &&
-                              t.status === "pending" &&
-                              t.title.toLowerCase().includes(relSearch.toLowerCase()) &&
-                              !relBlocks.some((r) => r.id === t.id) &&
-                              !relBlockedBy.some((r) => r.id === t.id),
-                          )
-                          .slice(0, 8)
-                          .map((t) => (
-                            <button
-                              key={t.id}
-                              className="w-full text-left px-3 py-1.5 text-sm hover:bg-surface-secondary text-on-surface truncate"
-                              onClick={async () => {
-                                try {
-                                  await taskApi.addTaskRelation(task.id, t.id);
-                                  setRelBlocks((prev) => [...prev, t]);
-                                  setRelSearch("");
-                                  setRelSearchOpen(false);
-                                } catch {
-                                  // cycle or other error — ignore
-                                }
-                              }}
-                            >
-                              {t.title}
-                            </button>
-                          ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Add relation button */}
-            {!relSearchOpen && (
-              <button
-                className="flex items-center gap-1.5 text-xs text-on-surface-muted hover:text-accent mt-2"
-                onClick={() => setRelSearchOpen(true)}
-              >
-                <Link size={12} />
-                Add relation
-              </button>
-            )}
+            <TaskRelations
+              task={task}
+              allTasks={allTasks}
+              relBlocks={relBlocks}
+              setRelBlocks={setRelBlocks}
+              relBlockedBy={relBlockedBy}
+              setRelBlockedBy={setRelBlockedBy}
+              relSearch={relSearch}
+              setRelSearch={setRelSearch}
+              relSearchOpen={relSearchOpen}
+              setRelSearchOpen={setRelSearchOpen}
+              onSelect={onSelect}
+            />
 
             {/* Comments & Activity */}
             {showCommentsActivity && (
-              <div className="border-t border-border pt-4">
-                {/* Tabs */}
-                <div className="flex gap-4 mb-3 border-b border-border">
-                  <button
-                    className={`pb-2 text-sm font-medium flex items-center gap-1.5 transition-colors ${
-                      activeTab === "comments"
-                        ? "text-on-surface border-b-2 border-accent"
-                        : "text-on-surface-muted hover:text-on-surface"
-                    }`}
-                    onClick={() => setActiveTab("comments")}
-                  >
-                    <MessageSquare size={14} />
-                    Comments
-                    {comments && comments.length > 0 && (
-                      <span className="text-xs text-on-surface-muted ml-0.5">
-                        ({comments.length})
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    className={`pb-2 text-sm font-medium flex items-center gap-1.5 transition-colors ${
-                      activeTab === "activity"
-                        ? "text-on-surface border-b-2 border-accent"
-                        : "text-on-surface-muted hover:text-on-surface"
-                    }`}
-                    onClick={() => setActiveTab("activity")}
-                  >
-                    <History size={14} />
-                    Activity
-                    {activity && activity.length > 0 && (
-                      <span className="text-xs text-on-surface-muted ml-0.5">
-                        ({activity.length})
-                      </span>
-                    )}
-                  </button>
-                </div>
-
-                {/* Comments tab content */}
-                {activeTab === "comments" && (
-                  <div className="space-y-3">
-                    {/* Comment list */}
-                    {comments && comments.length > 0 && (
-                      <div className="space-y-2">
-                        {[...comments]
-                          .sort(
-                            (a, b) =>
-                              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-                          )
-                          .map((comment) => (
-                            <div
-                              key={comment.id}
-                              className="group rounded-lg bg-surface-secondary px-3 py-2"
-                            >
-                              {editingCommentId === comment.id ? (
-                                <textarea
-                                  value={editingCommentContent}
-                                  onChange={(e) => setEditingCommentContent(e.target.value)}
-                                  onBlur={() => handleSaveCommentEdit(comment.id)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter" && !e.shiftKey) {
-                                      e.preventDefault();
-                                      handleSaveCommentEdit(comment.id);
-                                    }
-                                    if (e.key === "Escape") {
-                                      setEditingCommentId(null);
-                                      setEditingCommentContent("");
-                                    }
-                                  }}
-                                  autoFocus
-                                  className="w-full text-sm bg-transparent border border-border rounded-md px-2 py-1 text-on-surface focus:outline-none focus:ring-1 focus:ring-accent resize-none min-h-[60px]"
-                                />
-                              ) : (
-                                <div className="flex items-start justify-between gap-2">
-                                  <p className="text-sm text-on-surface whitespace-pre-wrap flex-1">
-                                    {comment.content}
-                                  </p>
-                                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                    {onUpdateComment && (
-                                      <button
-                                        onClick={() => {
-                                          setEditingCommentId(comment.id);
-                                          setEditingCommentContent(comment.content);
-                                        }}
-                                        className="p-1 rounded text-on-surface-muted hover:text-on-surface hover:bg-surface-tertiary transition-colors"
-                                        title="Edit comment"
-                                      >
-                                        <Pencil size={12} />
-                                      </button>
-                                    )}
-                                    {onDeleteComment && (
-                                      <button
-                                        onClick={() => onDeleteComment(comment.id)}
-                                        className="p-1 rounded text-on-surface-muted hover:text-error hover:bg-surface-tertiary transition-colors"
-                                        title="Delete comment"
-                                      >
-                                        <Trash2 size={12} />
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                              <span className="text-xs text-on-surface-muted mt-1 block">
-                                {formatRelativeTime(comment.createdAt)}
-                                {comment.updatedAt !== comment.createdAt && " (edited)"}
-                              </span>
-                            </div>
-                          ))}
-                      </div>
-                    )}
-
-                    {comments && comments.length === 0 && (
-                      <p className="text-xs text-on-surface-muted italic">No comments yet.</p>
-                    )}
-
-                    {/* Add comment */}
-                    {onAddComment && (
-                      <div className="flex gap-2 items-end">
-                        <textarea
-                          value={newComment}
-                          onChange={(e) => setNewComment(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSubmitComment();
-                            }
-                          }}
-                          placeholder="Add a comment..."
-                          className="flex-1 text-sm bg-transparent border border-border rounded-md px-3 py-2 text-on-surface placeholder-on-surface-muted/50 focus:outline-none focus:ring-1 focus:ring-accent resize-none min-h-[36px] max-h-[120px]"
-                          rows={1}
-                        />
-                        <button
-                          onClick={handleSubmitComment}
-                          disabled={!newComment.trim()}
-                          className="px-3 py-2 text-sm font-medium rounded-md bg-accent text-on-accent hover:bg-accent/90 transition-colors disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1.5 flex-shrink-0"
-                        >
-                          <Send size={12} />
-                          Comment
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Activity tab content */}
-                {activeTab === "activity" && (
-                  <div className="space-y-1">
-                    {activity && activity.length > 0 ? (
-                      [...activity]
-                        .sort(
-                          (a, b) =>
-                            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-                        )
-                        .map((entry) => (
-                          <div
-                            key={entry.id}
-                            className="flex items-start gap-2.5 py-1.5 text-xs text-on-surface-muted"
-                          >
-                            <span className="mt-0.5 flex-shrink-0">
-                              {getActivityIcon(entry.action)}
-                            </span>
-                            <span className="flex-1">{formatActivityDescription(entry)}</span>
-                            <span className="flex-shrink-0 whitespace-nowrap">
-                              {formatRelativeTime(entry.createdAt)}
-                            </span>
-                          </div>
-                        ))
-                    ) : (
-                      <p className="text-xs text-on-surface-muted italic py-1">
-                        No activity recorded.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
+              <TaskCommentsActivity
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                comments={comments}
+                activity={activity}
+                newComment={newComment}
+                setNewComment={setNewComment}
+                editingCommentId={editingCommentId}
+                setEditingCommentId={setEditingCommentId}
+                editingCommentContent={editingCommentContent}
+                setEditingCommentContent={setEditingCommentContent}
+                onSubmitComment={handleSubmitComment}
+                onSaveCommentEdit={handleSaveCommentEdit}
+                onUpdateComment={onUpdateComment}
+                onDeleteComment={onDeleteComment}
+                showAddComment={!!onAddComment}
+              />
             )}
           </div>
 
@@ -763,65 +484,4 @@ export function TaskDetailPanel({
       />
     </div>
   );
-}
-
-/** Format an ISO timestamp into a short relative string. */
-function formatRelativeTime(isoStr: string): string {
-  const now = Date.now();
-  const then = new Date(isoStr).getTime();
-  const diffMs = now - then;
-
-  if (diffMs < 0) return "just now";
-
-  const seconds = Math.floor(diffMs / 1000);
-  if (seconds < 60) return "just now";
-
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
-
-  const months = Math.floor(days / 30);
-  if (months < 12) return `${months}mo ago`;
-
-  const years = Math.floor(months / 12);
-  return `${years}y ago`;
-}
-
-/** Return an icon element for the given activity action. */
-function getActivityIcon(action: string) {
-  switch (action) {
-    case "created":
-      return <PlusCircle size={12} />;
-    case "completed":
-      return <CheckCircle2 size={12} />;
-    case "updated":
-      return <Pencil size={12} />;
-    default:
-      return <History size={12} />;
-  }
-}
-
-/** Build a human-readable description for an activity entry. */
-function formatActivityDescription(entry: TaskActivity): string {
-  switch (entry.action) {
-    case "created":
-      return "Task created";
-    case "completed":
-      return "Task completed";
-    case "updated":
-      if (entry.field) {
-        if (entry.newValue) {
-          return `Changed ${entry.field} to "${entry.newValue}"`;
-        }
-        return `Updated ${entry.field}`;
-      }
-      return "Task updated";
-    default:
-      return entry.action.charAt(0).toUpperCase() + entry.action.slice(1);
-  }
 }
