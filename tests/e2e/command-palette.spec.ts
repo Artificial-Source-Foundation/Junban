@@ -41,6 +41,15 @@ test.describe("Command palette", () => {
     await expect(page.getByRole("dialog", { name: "Command palette" })).not.toBeVisible();
   });
 
+  test("closes on Escape", async ({ page }) => {
+    await page.keyboard.press("Control+k");
+    await expect(page.getByRole("dialog", { name: "Command palette" })).toBeVisible({ timeout: 5000 });
+
+    await page.keyboard.press("Escape");
+
+    await expect(page.getByRole("dialog", { name: "Command palette" })).not.toBeVisible({ timeout: 5000 });
+  });
+
   test("shows empty filter message", async ({ page }) => {
     await page.keyboard.press("Control+k");
     await expect(page.getByRole("dialog", { name: "Command palette" })).toBeVisible();

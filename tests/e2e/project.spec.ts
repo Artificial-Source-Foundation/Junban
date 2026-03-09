@@ -77,6 +77,18 @@ test.describe("Project view", () => {
     await expect(page.getByText(/1\s*of\s*2/).first()).toBeVisible();
   });
 
+  test("empty project shows empty state", async ({ page }) => {
+    await createProjectViaApi(page, "Empty Project");
+    await page.reload();
+    await expect(page.getByText("Inbox").first()).toBeVisible({ timeout: 10000 });
+
+    // Navigate to the empty project
+    await page.getByText("Empty Project").click();
+
+    // Should show "0 tasks" or an empty state message
+    await expect(page.getByText("0 tasks")).toBeVisible({ timeout: 5000 });
+  });
+
   test("project tasks not shown in Inbox", async ({ page }) => {
     const project = await createProjectViaApi(page, "Isolated Project");
     await createTaskViaApi(page, "Inbox task");

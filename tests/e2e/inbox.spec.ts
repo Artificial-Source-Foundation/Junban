@@ -56,6 +56,42 @@ test.describe("Inbox view", () => {
     await expect(dialog.getByDisplayValue("Detail test task")).toBeVisible();
   });
 
+  test("delete task from detail panel", async ({ page }) => {
+    await createTaskViaApi(page, "Task to delete");
+    await page.reload();
+    await expect(page.getByText("Inbox").first()).toBeVisible({ timeout: 10000 });
+
+    await openTaskDetail(page, "Task to delete");
+
+    const dialog = page.getByRole("dialog", { name: "Task details" });
+    await dialog.getByLabel(/delete/i).click();
+
+    // Confirm deletion if a confirmation dialog appears
+    const confirmBtn = page.getByRole("button", { name: "Delete" });
+    if (await confirmBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await confirmBtn.click();
+    }
+
+    await expect(page.getByText("Task to delete")).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test("priority indicator displayed on tasks", async ({ page }) => {
+    await createTaskViaApi(page, "Urgent task", { priority: 1 });
+    await createTaskViaApi(page, "Normal task", { priority: 4 });
+    await page.reload();
+    await expect(page.getByText("Inbox").first()).toBeVisible({ timeout: 10000 });
+
+    // Both tasks should be visible
+    await expect(page.getByText("Urgent task")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Normal task")).toBeVisible();
+
+    // P1 task has a priority border style (border-l-priority-1)
+    const urgentRow = page.getByLabel("Task: Urgent task");
+    await expect(urgentRow).toBeVisible();
+    // The row should have a priority-colored left border class
+    await expect(urgentRow).toHaveClass(/border-l-priority-1/);
+  });
+
   test("displays correct task count", async ({ page }) => {
     await createTaskViaApi(page, "Task one");
     await createTaskViaApi(page, "Task two");
