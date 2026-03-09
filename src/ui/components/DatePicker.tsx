@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/refs */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -153,7 +152,7 @@ export function DatePicker({ value, onChange, showTime = false, onClose, trigger
   const tomorrow = addDays(now, 1);
   const nextWeek = addDays(now, 7 - now.getDay() + 1); // Next Monday
 
-  const usePortal = fixedPosition != null || triggerRef?.current != null;
+  const usePortal = fixedPosition != null || triggerRef != null;
 
   const picker = (
     <div

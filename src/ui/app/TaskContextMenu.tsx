@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/purity */
 import { useState, useMemo, useCallback } from "react";
 import {
   Pencil, Check, Undo2, Trash2, Flag, FolderInput,
@@ -7,6 +6,11 @@ import {
 } from "lucide-react";
 import type { ContextMenuItem } from "../components/ContextMenu.js";
 import type { Project as ProjectType } from "../../core/types.js";
+
+/** Build an ISO reminder string N minutes from now. Called at click time, not render time. */
+function reminderFromNow(minutes: number): string {
+  return new Date(Date.now() + minutes * 60_000).toISOString();
+}
 
 export function useTaskContextMenu({
   tasks,
@@ -135,33 +139,36 @@ export function useTaskContextMenu({
     const nextMondayAt9 = new Date(nextMonday);
     nextMondayAt9.setHours(9, 0, 0, 0);
 
+    const tomorrowAt9ISO = tomorrowAt9.toISOString();
+    const nextMondayAt9ISO = nextMondayAt9.toISOString();
+
     const reminderSubmenu: ContextMenuItem[] = [
       {
         id: "remind-30min",
         label: "In 30 minutes",
-        onClick: () => handleUpdateTask(task.id, { remindAt: new Date(Date.now() + 30 * 60_000).toISOString() }),
+        onClick: () => handleUpdateTask(task.id, { remindAt: reminderFromNow(30) }),
       },
       {
         id: "remind-1hr",
         label: "In 1 hour",
-        onClick: () => handleUpdateTask(task.id, { remindAt: new Date(Date.now() + 60 * 60_000).toISOString() }),
+        onClick: () => handleUpdateTask(task.id, { remindAt: reminderFromNow(60) }),
       },
       {
         id: "remind-3hr",
         label: "In 3 hours",
-        onClick: () => handleUpdateTask(task.id, { remindAt: new Date(Date.now() + 180 * 60_000).toISOString() }),
+        onClick: () => handleUpdateTask(task.id, { remindAt: reminderFromNow(180) }),
       },
       {
         id: "remind-tomorrow-9am",
         label: "Tomorrow at 9 AM",
         shortcut: shortDate(tomorrowAt9),
-        onClick: () => handleUpdateTask(task.id, { remindAt: tomorrowAt9.toISOString() }),
+        onClick: () => handleUpdateTask(task.id, { remindAt: tomorrowAt9ISO }),
       },
       {
         id: "remind-next-monday-9am",
         label: "Next Monday at 9 AM",
         shortcut: shortDate(nextMondayAt9),
-        onClick: () => handleUpdateTask(task.id, { remindAt: nextMondayAt9.toISOString() }),
+        onClick: () => handleUpdateTask(task.id, { remindAt: nextMondayAt9ISO }),
       },
     ];
     if (task.remindAt) {
