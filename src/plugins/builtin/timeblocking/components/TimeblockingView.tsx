@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
-import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, CalendarClock, Sparkles } from "lucide-react";
 import type { TimeSlot } from "../types.js";
 import { useTimeblocking } from "../context.js";
 import { DayTimeline } from "./DayTimeline.js";
@@ -11,6 +11,7 @@ import { TaskDragPreview, BlockDragPreview } from "./DragPreview.js";
 import { ReplanBanner } from "./ReplanBanner.js";
 import { SettingsPopover } from "./SettingsPopover.js";
 import { FocusTimer } from "./FocusTimer.js";
+import { SchedulePreviewBar } from "./SchedulePreviewBar.js";
 import { ContextMenu } from "../../../../ui/components/ContextMenu.js";
 import { VIEW_MODE_LABELS, getPixelsPerHour, formatDateRange } from "../utils/timeblocking-utils.js";
 import { useTimeblockingState } from "../hooks/useTimeblockingState.js";
@@ -20,6 +21,7 @@ import { useTimeblockingBlocks } from "../hooks/useTimeblockingBlocks.js";
 import { useTimeblockingDnD } from "../hooks/useTimeblockingDnD.js";
 import { useTimeblockingContextMenu } from "../hooks/useTimeblockingContextMenu.js";
 import { useTimeblockingKeyboard } from "../hooks/useTimeblockingKeyboard.js";
+import { useAutoSchedule } from "../hooks/useAutoSchedule.js";
 
 export function TimeblockingView() {
   const plugin = useTimeblocking();
@@ -132,6 +134,17 @@ export function TimeblockingView() {
     setSelectedBlockId,
   });
 
+  const autoScheduleHook = useAutoSchedule({
+    store,
+    tasks,
+    selectedDate,
+    workDayStart,
+    workDayEnd,
+    gridInterval,
+    defaultDuration,
+    refreshData,
+  });
+
   // Slot renderer passed to timeline columns
   const renderSlot = useCallback(
     (slot: TimeSlot) => (
@@ -177,6 +190,7 @@ export function TimeblockingView() {
     onSlotCreate: blockOps.handleSlotCreate,
     onTimelineContextMenu: ctxMenu.handleTimelineContextMenu,
     renderSlot,
+    proposedBlocks: autoScheduleHook.preview?.proposed ?? null,
   };
 
   return (
@@ -241,6 +255,20 @@ export function TimeblockingView() {
             </button>
           ))}
         </div>
+
+        {/* Auto-schedule button */}
+        <button
+          onClick={autoScheduleHook.generatePreview}
+          disabled={autoScheduleHook.preview !== null}
+          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Auto-schedule tasks"
+          data-testid="auto-schedule-btn"
+          title="Auto-schedule pending tasks into available time gaps"
+        >
+          <CalendarClock size={14} />
+          <Sparkles size={10} />
+          <span className="hidden sm:inline">Auto-schedule</span>
+        </button>
 
         {/* Settings popover */}
         <SettingsPopover
@@ -319,6 +347,16 @@ export function TimeblockingView() {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Auto-schedule preview bar */}
+      {autoScheduleHook.preview && (
+        <SchedulePreviewBar
+          schedule={autoScheduleHook.preview}
+          onApply={autoScheduleHook.applyPreview}
+          onCancel={autoScheduleHook.cancelPreview}
+          isApplying={autoScheduleHook.isApplying}
+        />
+      )}
 
       {/* Context menu */}
       {contextMenu && ctxMenu.contextMenuItems.length > 0 && (

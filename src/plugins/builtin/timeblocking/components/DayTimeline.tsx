@@ -1,11 +1,13 @@
 import { useRef } from "react";
 import type { TimeBlock, TimeSlot } from "../types.js";
+import type { ProposedBlock } from "../auto-scheduler.js";
 import {
   TimelineColumn,
   timeToMinutes,
   formatHour,
   formatDateStr,
 } from "./TimelineColumn.js";
+import { ProposedBlockOverlay } from "./ProposedBlockOverlay.js";
 
 interface DayTimelineProps {
   date: Date;
@@ -30,6 +32,8 @@ interface DayTimelineProps {
   onTimelineContextMenu?: (e: React.MouseEvent, date: string, time: string) => void;
   onBlockContextMenu?: (e: React.MouseEvent, blockId: string) => void;
   renderSlot?: (slot: TimeSlot) => React.ReactNode;
+  /** Proposed blocks from auto-scheduler (ghost overlay). */
+  proposedBlocks?: ProposedBlock[] | null;
   /** Hide the date header (when parent already shows it). */
   showHeader?: boolean;
 }
@@ -66,6 +70,7 @@ export function DayTimeline({
   onTimelineContextMenu,
   onBlockContextMenu,
   renderSlot,
+  proposedBlocks,
   showHeader = true,
 }: DayTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -118,6 +123,17 @@ export function DayTimeline({
               </div>
             ))}
           </div>
+
+          {/* Proposed block ghosts from auto-scheduler */}
+          {proposedBlocks && proposedBlocks.length > 0 && (
+            <div className="absolute left-16 right-0 top-0 bottom-0 pointer-events-none z-20">
+              <ProposedBlockOverlay
+                proposed={proposedBlocks.filter((p) => p.date === dateStr)}
+                workDayStart={workDayStart}
+                pixelsPerHour={pixelsPerHour}
+              />
+            </div>
+          )}
 
           {/* Single column grid */}
           <TimelineColumn

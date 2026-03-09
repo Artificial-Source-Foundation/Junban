@@ -5,6 +5,7 @@ import { TimeBlockStore } from "./store.js";
 import { TimeblockingContext } from "./context.js";
 import { TimeblockingView as TimeblockingViewComponent } from "./components/TimeblockingView.js";
 import { buildTimeblockingTools } from "./ai-tools.js";
+import { buildAutoScheduleTools } from "../../../ai/tools/builtin/auto-schedule.js";
 
 const log = createLogger("timeblocking");
 
@@ -100,10 +101,17 @@ export default class TimeblockingPlugin extends Plugin {
         workDayEnd: this.settings.get<string>("workDayEnd") ?? "17:00",
         defaultDurationMinutes: parseInt(this.settings.get<string>("defaultDurationMinutes") ?? "30", 10),
       }));
-      for (const tool of tools) {
+      const autoScheduleTools = buildAutoScheduleTools(this.store, () => ({
+        workDayStart: this.settings.get<string>("workDayStart") ?? "09:00",
+        workDayEnd: this.settings.get<string>("workDayEnd") ?? "17:00",
+        defaultDurationMinutes: parseInt(this.settings.get<string>("defaultDurationMinutes") ?? "30", 10),
+        gridIntervalMinutes: parseInt(this.settings.get<string>("gridIntervalMinutes") ?? "15", 10),
+      }));
+      const allTools = [...tools, ...autoScheduleTools];
+      for (const tool of allTools) {
         this.app.ai.registerTool(tool.definition, tool.executor);
       }
-      log.info("Registered AI tools", { count: tools.length });
+      log.info("Registered AI tools", { count: allTools.length });
     }
 
     log.info("Timeblocking plugin loaded");
