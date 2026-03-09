@@ -35,6 +35,7 @@ import { registerMemoryTools } from "./tools/builtin/memory-tools.js";
 import { registerBulkOperationTools } from "./tools/builtin/bulk-operations.js";
 import { registerTimeEstimationTools } from "./tools/builtin/time-estimation.js";
 import { registerWeeklyReviewTool } from "./tools/builtin/weekly-review.js";
+import { registerExtractTasksFromTextTool } from "./tools/builtin/extract-tasks-from-text.js";
 
 /** Create a provider registry with all built-in providers. */
 export function createDefaultRegistry(): LLMProviderRegistry {
@@ -70,6 +71,7 @@ export function createDefaultToolRegistry(): ToolRegistry {
   registerBulkOperationTools(registry);
   registerTimeEstimationTools(registry);
   registerWeeklyReviewTool(registry);
+  registerExtractTasksFromTextTool(registry);
   logger.info("Tool registry initialized", { tools: registry.size });
   return registry;
 }
