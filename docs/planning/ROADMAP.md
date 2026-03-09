@@ -109,19 +109,19 @@ Production-quality task manager with a stable plugin API.
 
 Akiflow-inspired timeblocking as a first-class plugin. Validates plugin React rendering.
 
-- [ ] Plugin system: React component rendering (`contentType: "react"`)
-- [ ] Plugin system: network permission wiring
-- [ ] Plugin system: expanded task event bus
-- [ ] TimeBlock & TimeSlot data model with recurrence
-- [ ] Day timeline view with drag-and-drop (create, move, resize blocks)
-- [ ] Week timeline view with N-day support (1–7 columns)
-- [ ] TimeSlot containers (hold multiple tasks, progress tracking)
-- [ ] Split view layout (task list + timeline side-by-side)
-- [ ] Recurring blocks (daily, weekly, monthly)
-- [ ] Replan Undone Tasks (reschedule incomplete blocks)
-- [ ] Plugin settings (work hours, default duration, grid interval)
-- [ ] Keyboard shortcuts (D/W/1-7, T for today, arrows to navigate)
-- [ ] Focus mode integration (pin current block)
+- [x] Plugin system: React component rendering (`contentType: "react"`)
+- [x] Plugin system: network permission wiring
+- [x] Plugin system: expanded task event bus
+- [x] TimeBlock & TimeSlot data model with recurrence
+- [x] Day timeline view with drag-and-drop (create, move, resize blocks)
+- [x] Week timeline view with N-day support (1–7 columns)
+- [x] TimeSlot containers (hold multiple tasks, progress tracking)
+- [x] Split view layout (task list + timeline side-by-side)
+- [x] Recurring blocks (daily, weekly, monthly)
+- [x] Replan Undone Tasks (reschedule incomplete blocks)
+- [x] Plugin settings (work hours, default duration, grid interval)
+- [x] Keyboard shortcuts (D/W/1-7, T for today, arrows to navigate)
+- [x] Focus mode integration (pin current block)
 
 ## v1.2 — Calendar Integrations
 
@@ -176,7 +176,7 @@ Full browser-based client (requires Saydo Sync).
 | Plugin System | 21/21 | 0 | Complete |
 | AI Assistant | 46/58 | 12 | Core done; ideas pending |
 | Storage & Data | 13/13 | 0 | Complete |
-| Testing | 10/10 | 0 | 153 test files, 1796+ tests |
+| Testing | 10/10 | 0 | 181 test files, 2159 tests |
 | Hardening & Quality | 17/17 | 0 | Complete |
 | Frontend Enhancements | 25/25 | 0 | Complete |
 | QA — Bugs | 14/14 | 0 | Complete |
@@ -198,7 +198,7 @@ Full browser-based client (requires Saydo Sync).
 - Kanban board, calendar views, matrix view, stats dashboard
 - Task comments, activity tracking, daily rituals
 - Responsive mobile UI, sound effects, saved filters
-- 153 test files, 1796+ passing tests (including 12 Playwright E2E specs)
+- 181 test files, 2159 passing tests (including 33+ Playwright E2E spec files)
 
 ### Ideas (need scoping)
 
@@ -238,7 +238,7 @@ Full browser-based client (requires Saydo Sync).
 
 ## Sprint History
 
-37 sprints completed across ~19 months of development.
+45 sprints completed across ~21 months of development.
 
 | Sprint | Theme | Tests |
 |--------|-------|-------|
@@ -279,9 +279,17 @@ Full browser-based client (requires Saydo Sync).
 | S35 | Big Features | 1774 |
 | S36 | Bug Fixes | 1785 |
 | S37 | Core UI Enhancements | 1796 |
+| S38 | Module Decomposition (DX-01–07) | 1956 |
+| S39 | Plugin React Rendering | 1956+ |
+| S40 | Timeblocking Data Model | 1956+ |
+| S41 | Timeblocking Day View | 1956+ |
+| S42 | Timeblocking Week View | 1956+ |
+| S43 | Timeblocking Polish + E2E | 2146 |
+| S44 | Module Decomposition II (DX-08–14) | 2159 |
+| S45 | Lint Cleanup | 2159 |
 
 ### Known Technical Debt
 
 1. `src/main.ts:24` — TODO: Start UI or CLI based on context (currently assumes UI)
-2. E2E tests started (12 Playwright specs) — expand coverage for remaining views
+2. E2E tests expanded (33+ Playwright spec files) — continue expanding coverage
 3. No `.env` committed — only `.env.example` exists
