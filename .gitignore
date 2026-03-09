@@ -55,6 +55,9 @@ logs/
 plugins/*/node_modules/
 plugins/*/dist/
 
+# Development (local sprint tracking, prompts, results)
+docs/development/
+
 # Misc
 .cache/
 *.tsbuildinfo

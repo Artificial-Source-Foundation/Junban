@@ -5,6 +5,15 @@ All notable changes to ASF Saydo are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Planned — v1.1 (Timeblocking Plugin)
+
+- Plugin system: React component rendering for interactive plugin views
+- Plugin system: `network` permission wiring
+- Timeblocking plugin (Akiflow-inspired): drag-and-drop day/week timeline, time blocks, time slots (task containers), recurring blocks, split view, replan undone tasks
+- Calendar integration via automation connectors (n8n, Activepieces, Pipedream) — deferred to v1.2
+
 ## [1.0.0] — 2026-02-28
 
 First stable public release. 37 sprints, 1930+ tests, 251 features shipped.

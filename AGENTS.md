@@ -21,7 +21,7 @@ This file helps AI agents (Claude, ChatGPT, Copilot, etc.) navigate the Saydo co
 | Understand the parser | [docs/backend/PARSER.md](docs/backend/PARSER.md) for NLP pipeline |
 | Understand architecture | [docs/guides/ARCHITECTURE.md](docs/guides/ARCHITECTURE.md) for high-level design |
 | Check security | [docs/guides/SECURITY.md](docs/guides/SECURITY.md) for threat model |
-| See what's planned | [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md) and [docs/planning/BACKLOG.md](docs/planning/BACKLOG.md) |
+| See what's planned | [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md) (public) or `docs/development/` (local sprint tracking, gitignored) |
 
 ## Documentation Map
 
@@ -50,7 +50,8 @@ docs/
 │   └── UTILS.md         Logger, IDs, dates, sounds, env config
 │
 ├── plugins/           Plugin author documentation (API ref + examples)
-└── planning/          Roadmap, backlog, sprint history
+├── planning/          Roadmap (public, committed)
+└── development/       Sprint tracking, backlog, prompts (local, gitignored)
 ```
 
 ## Key Conventions

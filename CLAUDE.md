@@ -394,7 +394,10 @@ docs/
 ├── plugins/                         # Plugin author documentation
 │   ├── API.md                       # Plugin API reference (for authors)
 │   └── EXAMPLES.md                  # Example plugin walkthroughs
-└── planning/                        # Project planning
-    ├── BACKLOG.md                   # All work items, prioritized by area
-    └── ROADMAP.md                   # Milestones, status, sprint history
+├── planning/                        # Public project planning (committed)
+│   └── ROADMAP.md                   # Milestones, status, sprint history
+└── development/                     # Sprint tracking (local, gitignored)
+    ├── backlog.md                   # All work items, prioritized by area
+    ├── epics.md                     # High-level work streams
+    └── sprints/                     # Per-sprint overviews, prompts, results
 ```

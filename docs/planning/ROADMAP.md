@@ -105,6 +105,34 @@ Production-quality task manager with a stable plugin API.
 - [x] First batch of community plugins published
 - [x] MCP server for external AI agent integration (Claude Desktop, custom agents)
 
+## v1.1 — Timeblocking Plugin
+
+Akiflow-inspired timeblocking as a first-class plugin. Validates plugin React rendering.
+
+- [ ] Plugin system: React component rendering (`contentType: "react"`)
+- [ ] Plugin system: network permission wiring
+- [ ] Plugin system: expanded task event bus
+- [ ] TimeBlock & TimeSlot data model with recurrence
+- [ ] Day timeline view with drag-and-drop (create, move, resize blocks)
+- [ ] Week timeline view with N-day support (1–7 columns)
+- [ ] TimeSlot containers (hold multiple tasks, progress tracking)
+- [ ] Split view layout (task list + timeline side-by-side)
+- [ ] Recurring blocks (daily, weekly, monthly)
+- [ ] Replan Undone Tasks (reschedule incomplete blocks)
+- [ ] Plugin settings (work hours, default duration, grid interval)
+- [ ] Keyboard shortcuts (D/W/1-7, T for today, arrows to navigate)
+- [ ] Focus mode integration (pin current block)
+
+## v1.2 — Calendar Integrations
+
+External calendar sync via automation connectors (no native OAuth).
+
+- [ ] Webhook/API endpoint for time block CRUD events
+- [ ] n8n / Activepieces / Pipedream connector documentation
+- [ ] ICS export of time blocks
+- [ ] Lock block → calendar event (public/private/busy)
+- [ ] Two-way sync via automation platform (pull external events)
+
 ## v1.5 — Saydo Sync
 
 Cross-device sync service (paid, optional — like Obsidian Sync).
@@ -193,6 +221,8 @@ Full browser-based client (requires Saydo Sync).
 
 ### Plugin Ideas
 
+- **Timeblocking** (Akiflow-style) — v1.1, sprints S38–S42 (see BACKLOG.md)
+- Calendar sync via automation connectors (n8n, Activepieces, Pipedream, Make) — v1.2
 - CalDAV sync (Nextcloud, iCloud, Google Calendar)
 - Git sync (free alternative to Saydo Sync)
 - WebDAV sync (self-hosted)
