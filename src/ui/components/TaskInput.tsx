@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { Plus, Flag, Hash, Calendar, FolderOpen, Repeat } from "lucide-react";
+import { Plus, Flag, Hash, Calendar, FolderOpen, Repeat, Clock } from "lucide-react";
 import { parseTask } from "../../parser/task-parser.js";
 import { formatRecurrenceLabel } from "./RecurrencePicker.js";
 import { useGeneralSettings } from "../context/SettingsContext.js";
@@ -101,6 +101,14 @@ export function TaskInput({
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-teal-500/15 text-teal-500 font-medium">
               <Repeat size={10} />
               {formatRecurrenceLabel(preview.recurrence)}
+            </span>
+          )}
+          {preview.estimatedMinutes != null && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-sky-500/15 text-sky-500 font-medium">
+              <Clock size={10} />
+              {preview.estimatedMinutes < 60
+                ? `${preview.estimatedMinutes}m`
+                : `${Math.floor(preview.estimatedMinutes / 60)}h${preview.estimatedMinutes % 60 > 0 ? `${preview.estimatedMinutes % 60}m` : ""}`}
             </span>
           )}
         </div>

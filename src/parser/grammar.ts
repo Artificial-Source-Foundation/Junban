@@ -73,11 +73,22 @@ export function extractProject(input: string): { project: string | null; text: s
   return { project, text };
 }
 
-/** Extract estimated duration (~30m, ~1h, ~1.5h, ~90m) from input. The ~ prefix is required. */
+/** Extract estimated duration (~30m, ~1h, ~1.5h, ~90m, ~1h30m) from input. The ~ prefix is required. */
 export function extractDuration(input: string): {
   estimatedMinutes: number | null;
   text: string;
 } {
+  // Try compound format first: ~1h30m
+  const compoundMatch = input.match(/~(\d+)h(\d+)m\b/i);
+  if (compoundMatch) {
+    const hours = parseInt(compoundMatch[1], 10);
+    const mins = parseInt(compoundMatch[2], 10);
+    const estimatedMinutes = hours * 60 + mins;
+    const text = input.replace(compoundMatch[0], "").replace(/\s+/g, " ").trim();
+    return { estimatedMinutes, text };
+  }
+
+  // Simple format: ~30m, ~1h, ~1.5h
   const match = input.match(/~(\d+(?:\.\d+)?)(m|h)\b/i);
   if (!match) return { estimatedMinutes: null, text: input };
 
