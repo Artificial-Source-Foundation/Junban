@@ -2,8 +2,8 @@ import { type ReactNode, type MouseEvent as ReactMouseEvent } from "react";
 import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
 import type { SensorDescriptor, SensorOptions } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { Plus, Star, Heart, Filter } from "lucide-react";
-import type { Project } from "../../../core/types.js";
+import { Plus, Star, Heart, Filter, type LucideIcon } from "lucide-react";
+import type { Project } from "@/core/types.js";
 import type { PanelInfo, ViewInfo } from "../../api/index.js";
 import { PluginErrorBoundary } from "../../views/PluginView.js";
 import {
@@ -24,7 +24,7 @@ interface ViewNavigationProps {
   onNavigate: (view: string, id?: string) => void;
   // Items & order
   orderedSidebarItems: string[];
-  navItemMap: Map<string, { id: string; label: string; icon: any; countKey?: "inbox" | "today" }>;
+  navItemMap: Map<string, { id: string; label: string; icon: LucideIcon | string; countKey?: "inbox" | "today" }>;
   countMap: Record<string, number | undefined>;
   // Plugin views
   viewsBySlot: { navigation: ViewInfo[]; tools: ViewInfo[]; workspace: ViewInfo[] };
@@ -45,7 +45,7 @@ interface ViewNavigationProps {
   favoriteViewsExpanded: boolean;
   setFavoriteViewsExpanded: (v: boolean) => void;
   // Favorites
-  favoriteNavItems: Array<{ id: string; label: string; icon: any; countKey?: "inbox" | "today" }>;
+  favoriteNavItems: Array<{ id: string; label: string; icon: LucideIcon | string; countKey?: "inbox" | "today" }>;
   // Filters
   savedFilters: Array<{ id: string; name: string; query: string; color?: string }>;
   selectedFilterId?: string | null;

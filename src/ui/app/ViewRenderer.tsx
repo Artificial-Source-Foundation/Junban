@@ -18,32 +18,32 @@ import { FilterView } from "../views/FilterView.js";
 import { TaskPage } from "../views/TaskPage.js";
 import { AIChat } from "../views/AIChat.js";
 import { DopamineMenu } from "../views/DopamineMenu.js";
-import type { Project as ProjectType, Section } from "../../core/types.js";
-import type { ViewInfo } from "../api/index.js";
-import type { View, CalendarMode } from "../hooks/useRouting.js";
-import type { GeneralSettings } from "../context/SettingsContext.js";
+import { useAppState } from "../context/AppStateContext.js";
+import type { UpdateTaskInput } from "../../core/types.js";
+import type { CalendarMode } from "../hooks/useRouting.js";
+
+/** Parsed task input from TaskInput / QuickAdd — mirrors useTaskHandlers.handleCreateTask param. */
+export interface ParsedTaskInput {
+  title: string;
+  priority: number | null;
+  tags: string[];
+  project: string | null;
+  dueDate: Date | null;
+  dueTime: boolean;
+  recurrence?: string | null;
+  estimatedMinutes?: number | null;
+  deadline?: Date | null;
+  isSomeday?: boolean;
+  dreadLevel?: number | null;
+}
 
 interface ViewRendererProps {
-  currentView: View;
-  tasks: any[];
-  projects: ProjectType[];
-  selectedProjectId: string | null;
-  selectedRouteTaskId: string | null;
-  selectedPluginViewId: string | null;
-  selectedFilterId: string | null;
-  selectedTaskId: string | null;
-  multiSelectedIds: Set<string>;
-  featureSettings: GeneralSettings;
-  pluginViews: ViewInfo[];
-  calendarMode: CalendarMode | null;
   setCalendarMode: (mode: CalendarMode) => void;
-  sections: Section[];
-  availableTags: string[];
   addTaskTrigger: number;
-  handleCreateTask: (data: any) => void;
+  handleCreateTask: (data: ParsedTaskInput) => void;
   handleToggleTask: (id: string) => void;
   handleSelectTask: (id: string) => void;
-  handleUpdateTask: (id: string, data: any) => void;
+  handleUpdateTask: (id: string, data: UpdateTaskInput) => void;
   handleDeleteTask: (id: string) => void;
   handleMultiSelect: (
     id: string,
@@ -64,21 +64,7 @@ interface ViewRendererProps {
 }
 
 export function ViewRenderer({
-  currentView,
-  tasks,
-  projects,
-  selectedProjectId,
-  selectedRouteTaskId,
-  selectedPluginViewId,
-  selectedFilterId,
-  selectedTaskId,
-  multiSelectedIds,
-  featureSettings,
-  pluginViews,
-  calendarMode,
   setCalendarMode,
-  sections,
-  availableTags,
   addTaskTrigger,
   handleCreateTask,
   handleToggleTask,
@@ -99,6 +85,22 @@ export function ViewRenderer({
   handleMoveTask,
   setSettingsOpen,
 }: ViewRendererProps) {
+  const {
+    currentView,
+    tasks,
+    projects,
+    selectedProjectId,
+    selectedRouteTaskId,
+    selectedPluginViewId,
+    selectedFilterId,
+    selectedTaskId,
+    multiSelectedIds,
+    featureSettings,
+    pluginViews,
+    calendarMode,
+    sections,
+    availableTags,
+  } = useAppState();
   const reducedMotion = useReducedMotion();
   const viewKey = `${currentView}-${selectedProjectId ?? ""}-${selectedPluginViewId ?? ""}-${selectedFilterId ?? ""}`;
 
@@ -190,7 +192,7 @@ export function ViewRenderer({
       }
       case "task": {
         const routeTask = selectedRouteTaskId
-          ? tasks.find((t: any) => t.id === selectedRouteTaskId)
+          ? tasks.find((t) => t.id === selectedRouteTaskId)
           : null;
         if (!routeTask) {
           return <p className="text-on-surface-muted">Task not found.</p>;

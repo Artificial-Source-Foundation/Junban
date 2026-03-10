@@ -7,12 +7,14 @@ import { UIRegistry } from "../../src/plugins/ui-registry.js";
 import type { Permission } from "../../src/plugins/types.js";
 
 function createAPI(permissions: Permission[]) {
-  const { taskService, eventBus, storage } = createTestServices();
+  const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
   const uiRegistry = new UIRegistry();
   const api = createPluginAPI({
     pluginId: "test-react",
     permissions,
     taskService,
+    projectService,
+    tagService,
     eventBus,
     settingsManager: new PluginSettingsManager(storage),
     commandRegistry: new CommandRegistry(),
@@ -27,10 +29,10 @@ describe("Plugin API — React component registration", () => {
     const { api, uiRegistry } = createAPI(["ui:view"]);
     const TestComponent = () => "hello";
 
-    api.ui.addView!({
+    api.ui.addView({
       id: "react-view",
       name: "React View",
-      icon: "⚛️",
+      icon: "x",
       contentType: "react",
       component: TestComponent,
     });
@@ -46,10 +48,10 @@ describe("Plugin API — React component registration", () => {
     const { api, uiRegistry } = createAPI(["ui:panel"]);
     const TestComponent = () => "panel content";
 
-    api.ui.addSidebarPanel!({
+    api.ui.addSidebarPanel({
       id: "react-panel",
       title: "React Panel",
-      icon: "🔧",
+      icon: "x",
       contentType: "react",
       component: TestComponent,
     });
@@ -63,10 +65,10 @@ describe("Plugin API — React component registration", () => {
   it("should default to text contentType for views", () => {
     const { api, uiRegistry } = createAPI(["ui:view"]);
 
-    api.ui.addView!({
+    api.ui.addView({
       id: "text-view",
       name: "Text View",
-      icon: "📄",
+      icon: "x",
       render: () => "hello",
     });
 
@@ -77,10 +79,10 @@ describe("Plugin API — React component registration", () => {
   it("should default to text contentType for panels", () => {
     const { api, uiRegistry } = createAPI(["ui:panel"]);
 
-    api.ui.addSidebarPanel!({
+    api.ui.addSidebarPanel({
       id: "text-panel",
       title: "Text Panel",
-      icon: "📄",
+      icon: "x",
       render: () => "hello",
     });
 

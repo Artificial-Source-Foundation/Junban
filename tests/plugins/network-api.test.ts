@@ -7,11 +7,13 @@ import { UIRegistry } from "../../src/plugins/ui-registry.js";
 import type { Permission } from "../../src/plugins/types.js";
 
 function createAPI(permissions: Permission[]) {
-  const { taskService, eventBus, storage } = createTestServices();
+  const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
   return createPluginAPI({
     pluginId: "test-network",
     permissions,
     taskService,
+    projectService,
+    tagService,
     eventBus,
     settingsManager: new PluginSettingsManager(storage),
     commandRegistry: new CommandRegistry(),
@@ -31,15 +33,15 @@ describe("Plugin Network API", () => {
     globalThis.fetch = originalFetch;
   });
 
-  it("should be undefined without network permission", () => {
+  it("should throw without network permission", () => {
     const api = createAPI(["task:read"]);
-    expect(api.network).toBeUndefined();
+    expect(() => api.network.fetch("http://example.com")).toThrow(/requires the "network" permission/);
   });
 
   it("should be defined with network permission", () => {
     const api = createAPI(["network"]);
     expect(api.network).toBeDefined();
-    expect(api.network!.fetch).toBeTypeOf("function");
+    expect(api.network.fetch).toBeTypeOf("function");
   });
 
   it("should call global fetch with provided url and options", async () => {
@@ -47,7 +49,7 @@ describe("Plugin Network API", () => {
     globalThis.fetch = vi.fn().mockResolvedValue(mockResponse);
 
     const api = createAPI(["network"]);
-    const result = await api.network!.fetch("https://example.com/api", {
+    const result = await api.network.fetch("https://example.com/api", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key: "value" }),
@@ -66,7 +68,7 @@ describe("Plugin Network API", () => {
     globalThis.fetch = vi.fn().mockResolvedValue(new Response("ok"));
 
     const api = createAPI(["network"]);
-    await api.network!.fetch("https://example.com/data");
+    await api.network.fetch("https://example.com/data");
 
     expect(logSpy).toHaveBeenCalledWith(
       expect.stringContaining("Plugin fetch request"),
@@ -79,7 +81,7 @@ describe("Plugin Network API", () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
     const api = createAPI(["network"]);
-    await expect(api.network!.fetch("https://unreachable.test")).rejects.toThrow("Network error");
+    await expect(api.network.fetch("https://unreachable.test")).rejects.toThrow("Network error");
   });
 
   it("should default to GET method in logs", async () => {
@@ -87,7 +89,7 @@ describe("Plugin Network API", () => {
     globalThis.fetch = vi.fn().mockResolvedValue(new Response("ok"));
 
     const api = createAPI(["network"]);
-    await api.network!.fetch("https://example.com");
+    await api.network.fetch("https://example.com");
 
     expect(logSpy).toHaveBeenCalledWith(
       expect.stringContaining('"method":"GET"'),

@@ -28,6 +28,9 @@ export function exportCSV(tasks: Task[]): string {
     "createdAt",
     "updatedAt",
     "completedAt",
+    "estimatedMinutes",
+    "actualMinutes",
+    "dreadLevel",
   ];
 
   const rows = tasks.map((task) => {
@@ -44,6 +47,9 @@ export function exportCSV(tasks: Task[]): string {
       task.createdAt,
       task.updatedAt,
       task.completedAt ?? "",
+      task.estimatedMinutes?.toString() ?? "",
+      task.actualMinutes?.toString() ?? "",
+      task.dreadLevel?.toString() ?? "",
     ].join(",");
   });
 

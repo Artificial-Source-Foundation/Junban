@@ -219,6 +219,34 @@
 
 ---
 
+### DopamineMenu.tsx
+
+- **Path:** `src/ui/views/DopamineMenu.tsx` (157 lines)
+- **Purpose:** Quick wins filtered view for low-motivation moments. Shows short, easy tasks to help users build momentum when they lack energy or motivation.
+- **Key Exports:** `DopamineMenu`, `filterQuickWins`, `sortQuickWins`
+- **Props:**
+  - `tasks: Task[]`
+  - `onToggleTask, onSelectTask`
+  - `selectedTaskId: string | null`
+  - `selectedTaskIds?, onMultiSelect?, onReorder?, onAddSubtask?, onUpdateDueDate?`
+- **Key Dependencies:** `TaskList.tsx`, `lucide-react` (Zap)
+- **Used By:** `App.tsx` (route: `dopamine-menu`)
+- **Notes:** `filterQuickWins` selects pending tasks with `estimatedMinutes <= 15` or `priority >= 3` (low priority = easy). `sortQuickWins` orders by shortest estimated time first (nulls last). Shows a Zap icon header with task count. Renders the filtered list using standard `TaskList` component.
+
+---
+
+### QuickCapture.tsx
+
+- **Path:** `src/ui/views/QuickCapture.tsx` (82 lines)
+- **Purpose:** Minimal task input view for the Tauri global hotkey capture window. Contains only a `TaskInput` with no sidebar, navigation, or chrome.
+- **Key Exports:** `QuickCapture`
+- **Props:** None
+- **Key Dependencies:** `TaskInput.tsx`, `isTauri` from `utils/tauri.js`, `@tauri-apps/api/window` (lazy import)
+- **Used By:** `App.tsx` (route: `/quick-capture`)
+- **Notes:** Lifecycle: on Enter (task submit) emits `quick-capture-submit` event to main window then hides; on Escape hides the window; on blur hides the window. Uses `getCurrentWindow().hide()` from Tauri APIs. Degrades gracefully in non-Tauri environments.
+
+---
+
 ### Calendar.tsx
 
 - **Path:** `src/ui/views/Calendar.tsx` (147 lines)

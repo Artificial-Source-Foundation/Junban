@@ -19,6 +19,9 @@ function makeTasks(): Task[] {
       sortOrder: 0,
       createdAt: "2025-01-01T00:00:00.000Z",
       updatedAt: "2025-01-01T00:00:00.000Z",
+      estimatedMinutes: null,
+      actualMinutes: null,
+      dreadLevel: null,
     },
     {
       id: "t2",
@@ -35,6 +38,9 @@ function makeTasks(): Task[] {
       sortOrder: 1,
       createdAt: "2025-01-01T00:00:00.000Z",
       updatedAt: "2025-06-01T12:00:00.000Z",
+      estimatedMinutes: null,
+      actualMinutes: null,
+      dreadLevel: null,
     },
   ];
 }
@@ -62,7 +68,7 @@ describe("exportCSV", () => {
   it("produces correct headers", () => {
     const csv = exportCSV([]);
     expect(csv).toBe(
-      "id,title,description,status,priority,dueDate,projectId,tags,recurrence,createdAt,updatedAt,completedAt",
+      "id,title,description,status,priority,dueDate,projectId,tags,recurrence,createdAt,updatedAt,completedAt,estimatedMinutes,actualMinutes,dreadLevel",
     );
   });
 

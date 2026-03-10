@@ -1,141 +1,73 @@
 # Plugin API Reference
 
-## Overview
+> **API Version**: 2.0.0 | **Stability**: Stable
 
-Saydo's plugin system is inspired by Obsidian. Plugins are JS/TS packages that extend the app's functionality through a controlled API surface. Plugins can register commands, add UI panels and views, hook into task lifecycle events, and manage their own settings.
+## 1. Getting Started
 
-## Quick Start
+A Saydo plugin is a directory with two files:
 
-```bash
-# Create a plugin directory
-mkdir -p plugins/my-plugin
+```
+plugins/my-plugin/
+  manifest.json   # Metadata, permissions, settings
+  index.ts        # Entry file — exports a Plugin subclass
+```
 
-# Create manifest
-cat > plugins/my-plugin/manifest.json << 'EOF'
+### manifest.json
+
+```json
 {
   "id": "my-plugin",
   "name": "My Plugin",
   "version": "1.0.0",
   "author": "Your Name",
-  "description": "A brief description of what this plugin does",
+  "description": "What this plugin does.",
   "main": "index.ts",
   "minSaydoVersion": "1.0.0",
   "permissions": ["task:read", "commands"]
 }
-EOF
+```
 
-# Create entry file
-cat > plugins/my-plugin/index.ts << 'EOF'
-import { Plugin } from "@asf-saydo/plugin-api";
+**Required fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Unique identifier. Lowercase letters, digits, and hyphens only (`/^[a-z0-9-]+$/`). |
+| `name` | `string` | Human-readable display name. |
+| `version` | `string` | Semver version (e.g. `1.0.0`). |
+| `author` | `string` | Author name or organization. |
+| `description` | `string` | Brief description (shown in the plugin store). |
+| `main` | `string` | Entry file path relative to the plugin directory. |
+| `minSaydoVersion` | `string` | Minimum Saydo version required. |
+
+**Optional fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `targetApiVersion` | `string` | Plugin API version this plugin targets. If the plugin targets a newer major version than the running Saydo, a warning is logged. |
+| `icon` | `string` | Emoji or icon name for the plugin. |
+| `permissions` | `string[]` | Required permissions (see [Permissions](#2-permissions)). Defaults to `[]`. |
+| `settings` | `SettingDefinition[]` | Plugin settings schema (see [Settings](#9-settings)). |
+| `repository` | `string` | URL to source code repository. |
+| `license` | `string` | SPDX license identifier. |
+| `keywords` | `string[]` | Tags for plugin discovery. |
+| `dependencies` | `Record<string, string>` | Other plugins this plugin depends on. |
+
+### Entry File
+
+```typescript
+import { Plugin } from "../../src/plugins/lifecycle.js";
 
 export default class MyPlugin extends Plugin {
   async onLoad() {
-    console.log("My plugin loaded!");
+    // Called when the plugin is activated.
+    // Register commands, views, panels, event listeners here.
   }
 
   async onUnload() {
-    console.log("My plugin unloaded!");
+    // Called when the plugin is deactivated.
+    // Clean up timers, event listeners, subscriptions.
+    // Commands, UI panels, views, and status bar items are auto-removed.
   }
-}
-EOF
-```
-
-Restart Saydo (or toggle the plugin in Settings) to activate.
-
-## Plugin Manifest
-
-Every plugin must have a `manifest.json` in its root directory.
-
-### Required Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Unique identifier (lowercase, hyphens, e.g., `my-plugin`) |
-| `name` | string | Human-readable display name |
-| `version` | string | Semver version (e.g., `1.0.0`) |
-| `author` | string | Author name or organization |
-| `description` | string | Brief description (shown in plugin store) |
-| `main` | string | Entry file path relative to plugin directory |
-| `minSaydoVersion` | string | Minimum Saydo version required |
-
-### Optional Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `targetApiVersion` | string | Plugin API version this plugin targets (see [API Versioning](#api-versioning--stability)) |
-| `permissions` | string[] | Required permissions (see [Permissions](#permissions)) |
-| `settings` | SettingDef[] | Plugin settings schema (see [Settings](#settings-api)) |
-| `repository` | string | URL to source code |
-| `license` | string | SPDX license identifier |
-| `keywords` | string[] | Tags for plugin discovery |
-| `dependencies` | object | Other plugins this plugin depends on |
-
-### Full Example
-
-```json
-{
-  "id": "pomodoro-timer",
-  "name": "Pomodoro Timer",
-  "version": "1.2.0",
-  "author": "ASF",
-  "description": "Pomodoro technique timer with task integration and statistics.",
-  "main": "index.ts",
-  "minSaydoVersion": "1.0.0",
-  "license": "MIT",
-  "repository": "https://github.com/ASF-GROUP/saydo-plugin-pomodoro",
-  "keywords": ["pomodoro", "timer", "productivity"],
-  "permissions": ["task:read", "task:write", "ui:panel", "ui:status", "commands", "storage"],
-  "settings": [
-    {
-      "id": "workMinutes",
-      "name": "Work Duration",
-      "type": "number",
-      "default": 25,
-      "description": "Length of a work interval in minutes",
-      "min": 1,
-      "max": 120
-    },
-    {
-      "id": "breakMinutes",
-      "name": "Break Duration",
-      "type": "number",
-      "default": 5,
-      "description": "Length of a break interval in minutes",
-      "min": 1,
-      "max": 60
-    },
-    {
-      "id": "autoStartBreak",
-      "name": "Auto-start Break",
-      "type": "boolean",
-      "default": true,
-      "description": "Automatically start break timer after work interval"
-    },
-    {
-      "id": "notificationSound",
-      "name": "Notification Sound",
-      "type": "select",
-      "default": "bell",
-      "description": "Sound to play when timer ends",
-      "options": ["bell", "chime", "ding", "none"]
-    }
-  ]
-}
-```
-
-## Plugin Base Class
-
-All plugins extend the `Plugin` base class:
-
-```typescript
-import { Plugin, type SaydoAPI, type PluginManifest } from "@asf-saydo/plugin-api";
-
-export default class MyPlugin extends Plugin {
-  // Called when the plugin is activated
-  async onLoad(): Promise<void> {}
-
-  // Called when the plugin is deactivated
-  async onUnload(): Promise<void> {}
 }
 ```
 
@@ -143,302 +75,525 @@ export default class MyPlugin extends Plugin {
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `this.app` | `SaydoAPI` | Full Saydo API access (filtered by permissions) |
-| `this.manifest` | `PluginManifest` | This plugin's parsed manifest |
-| `this.settings` | `PluginSettings` | This plugin's settings (read/write) |
+| `this.app` | `PluginAPI` | The full Saydo API. Every method is always present. Methods you lack permission for throw a clear error. |
+| `this.settings` | `PluginSettingsAccessor` | Read/write this plugin's settings. |
 
-## Lifecycle Hooks
+### Lifecycle
 
-### Core Lifecycle
+1. Saydo discovers the plugin directory and validates `manifest.json`.
+2. The user approves the requested permissions.
+3. Saydo calls `onLoad()`. Register everything here.
+4. The plugin is active until the user disables it or Saydo shuts down.
+5. Saydo calls `onUnload()`. Clean up side effects here.
+
+## 2. Permissions
+
+Plugins declare required permissions in `manifest.json`. Users see these permissions before activating the plugin.
+
+| Permission | Grants Access To |
+|------------|-----------------|
+| `task:read` | `tasks.list()`, `tasks.get()`, `events.on()` |
+| `task:write` | `tasks.create()`, `tasks.update()`, `tasks.complete()`, `tasks.uncomplete()`, `tasks.delete()` |
+| `project:read` | `projects.list()`, `projects.get()` |
+| `project:write` | `projects.create()`, `projects.update()`, `projects.delete()` |
+| `tag:read` | `tags.list()` |
+| `tag:write` | `tags.create()`, `tags.delete()` |
+| `ui:panel` | `ui.addSidebarPanel()` |
+| `ui:view` | `ui.addView()` |
+| `ui:status` | `ui.addStatusBarItem()` |
+| `commands` | `commands.register()` |
+| `settings` | Settings tab in the Settings view |
+| `storage` | `storage.get()`, `storage.set()`, `storage.delete()`, `storage.keys()` |
+| `network` | `network.fetch()` |
+| `ai:provider` | `ai.registerProvider()` |
+| `ai:tools` | `ai.registerTool()` |
+
+### How Permission Errors Work
+
+Every API method is always present on `this.app` -- there is no `undefined`. If you call a method without the required permission, it throws an error with a clear message:
+
+```
+Plugin "my-plugin" requires the "task:write" permission to call tasks.create().
+Add "task:write" to the "permissions" array in your manifest.json.
+```
+
+This means:
+- No optional chaining (`?.`) needed -- ever.
+- TypeScript types are always clean.
+- Errors tell you exactly what to fix.
+
+## 3. Task API
+
+### `tasks.list(filter?)`
+
+**Permission:** `task:read`
 
 ```typescript
-export default class MyPlugin extends Plugin {
-  async onLoad(): Promise<void> {
-    // Plugin is being activated
-    // Register commands, views, panels, event listeners here
-  }
+// List all tasks
+const tasks = await this.app.tasks.list();
 
-  async onUnload(): Promise<void> {
-    // Plugin is being deactivated
-    // Clean up timers, listeners, subscriptions
-    // UI elements are auto-removed, but clean up any side effects
-  }
+// List with a filter
+const pending = await this.app.tasks.list({ status: "pending" });
+const overdue = await this.app.tasks.list({ overdue: true });
+```
+
+**Parameters:**
+- `filter` (optional): `TaskFilter` object with fields like `status`, `projectId`, `tag`, `overdue`, `search`, etc.
+
+**Returns:** `Promise<Task[]>`
+
+### `tasks.get(id)`
+
+**Permission:** `task:read`
+
+```typescript
+const task = await this.app.tasks.get("task-id");
+if (task) {
+  console.log(task.title, task.status, task.priority);
 }
 ```
 
-### Task Event Hooks
+**Parameters:**
+- `id`: `string` -- the task ID.
 
-Register listeners for task events in `onLoad()`:
+**Returns:** `Promise<Task | null>` -- `null` if not found.
+
+### `tasks.create(input)`
+
+**Permission:** `task:write`
+
+```typescript
+const task = await this.app.tasks.create({
+  title: "Review PR #42",
+  priority: 2,
+  dueDate: new Date().toISOString(),
+  tags: ["work", "code-review"],
+  projectId: "project-id",
+});
+```
+
+**Parameters:**
+- `input`: `CreateTaskInput` object:
+  - `title` (required): `string` (1-500 chars)
+  - `description` (optional): `string | null`
+  - `priority` (optional): `1 | 2 | 3 | 4 | null`
+  - `dueDate` (optional): ISO 8601 datetime string or `null`
+  - `dueTime` (optional): `boolean` (default `false` -- whether dueDate includes a time component)
+  - `projectId` (optional): `string | null`
+  - `tags` (optional): `string[]` (tag names, created if they don't exist)
+  - `recurrence` (optional): `string | null` (e.g. `"daily"`, `"weekly"`)
+  - `parentId` (optional): `string | null` (for sub-tasks)
+  - `remindAt` (optional): ISO 8601 datetime string or `null`
+  - `estimatedMinutes` (optional): `number | null`
+  - `deadline` (optional): ISO 8601 datetime string or `null`
+  - `isSomeday` (optional): `boolean`
+  - `sectionId` (optional): `string | null`
+  - `dreadLevel` (optional): `1-5 | null`
+
+**Returns:** `Promise<Task>`
+
+### `tasks.update(id, changes)`
+
+**Permission:** `task:write`
+
+```typescript
+await this.app.tasks.update("task-id", {
+  title: "Updated title",
+  priority: 1,
+  tags: ["urgent"],
+});
+```
+
+**Parameters:**
+- `id`: `string`
+- `changes`: `UpdateTaskInput` -- partial `CreateTaskInput` plus optional `status` and `completedAt`.
+
+**Returns:** `Promise<Task>` -- the updated task.
+
+**Throws:** `NotFoundError` if the task doesn't exist.
+
+### `tasks.complete(id)`
+
+**Permission:** `task:write`
+
+```typescript
+const completed = await this.app.tasks.complete("task-id");
+// completed.status === "completed"
+// completed.completedAt is set
+```
+
+**Returns:** `Promise<Task>` -- the completed task.
+
+**Throws:** `NotFoundError` if the task doesn't exist.
+
+**Side effects:** If the task has a recurrence rule, a new occurrence is automatically created.
+
+### `tasks.uncomplete(id)`
+
+**Permission:** `task:write`
+
+```typescript
+const reopened = await this.app.tasks.uncomplete("task-id");
+// reopened.status === "pending"
+// reopened.completedAt === null
+```
+
+**Returns:** `Promise<Task>` -- the uncompleted task.
+
+**Throws:** `NotFoundError` if the task doesn't exist.
+
+### `tasks.delete(id)`
+
+**Permission:** `task:write`
+
+```typescript
+const wasDeleted = await this.app.tasks.delete("task-id");
+// wasDeleted === true if the task existed
+```
+
+**Returns:** `Promise<boolean>` -- `true` if the task was deleted.
+
+## 4. Project API
+
+### `projects.list()`
+
+**Permission:** `project:read`
+
+```typescript
+const projects = await this.app.projects.list();
+for (const project of projects) {
+  console.log(project.name, project.color);
+}
+```
+
+**Returns:** `Promise<Project[]>`
+
+### `projects.get(id)`
+
+**Permission:** `project:read`
+
+```typescript
+const project = await this.app.projects.get("project-id");
+```
+
+**Returns:** `Promise<Project | null>`
+
+### `projects.create(name, opts?)`
+
+**Permission:** `project:write`
+
+```typescript
+const project = await this.app.projects.create("Work", {
+  color: "#3b82f6",
+  viewStyle: "board",
+});
+```
+
+**Parameters:**
+- `name`: `string`
+- `opts` (optional): `{ color?: string, parentId?: string | null, isFavorite?: boolean, viewStyle?: "list" | "board" | "calendar" }`
+
+**Returns:** `Promise<Project>`
+
+### `projects.update(id, changes)`
+
+**Permission:** `project:write`
+
+```typescript
+await this.app.projects.update("project-id", {
+  name: "Renamed",
+  color: "#ef4444",
+  archived: true,
+});
+```
+
+**Parameters:**
+- `id`: `string`
+- `changes`: `Partial<{ name, color, icon, archived, parentId, isFavorite, viewStyle }>`
+
+**Returns:** `Promise<Project | null>` -- `null` if the project doesn't exist.
+
+### `projects.delete(id)`
+
+**Permission:** `project:write`
+
+```typescript
+const wasDeleted = await this.app.projects.delete("project-id");
+```
+
+**Returns:** `Promise<boolean>`
+
+## 5. Tag API
+
+### `tags.list()`
+
+**Permission:** `tag:read`
+
+```typescript
+const tags = await this.app.tags.list();
+for (const tag of tags) {
+  console.log(tag.name, tag.color);
+}
+```
+
+**Returns:** `Promise<Tag[]>`
+
+### `tags.create(name, color?)`
+
+**Permission:** `tag:write`
+
+```typescript
+const tag = await this.app.tags.create("urgent", "#ef4444");
+```
+
+**Parameters:**
+- `name`: `string` (auto-lowercased and trimmed)
+- `color` (optional): `string` (hex color, defaults to `"#6b7280"`)
+
+**Returns:** `Promise<Tag>`
+
+### `tags.delete(id)`
+
+**Permission:** `tag:write`
+
+```typescript
+const wasDeleted = await this.app.tags.delete("tag-id");
+```
+
+**Returns:** `Promise<boolean>`
+
+## 6. Events
+
+**Permission:** `task:read` (required for `events.on()`)
+
+### Subscribing
 
 ```typescript
 async onLoad() {
-  // Listen to task creation
-  this.app.events.on("task:create", (task: Task) => {
-    console.log(`Task created: ${task.title}`);
-  });
-
-  // Listen to task completion
-  this.app.events.on("task:complete", (task: Task) => {
-    console.log(`Task completed: ${task.title}`);
-  });
-
-  // Listen to task updates
-  this.app.events.on("task:update", (task: Task, changes: Partial<Task>) => {
-    console.log(`Task updated: ${task.title}`, changes);
-  });
-
-  // Listen to task deletion
-  this.app.events.on("task:delete", (task: Task) => {
-    console.log(`Task deleted: ${task.title}`);
-  });
+  this.app.events.on("task:create", this.handleCreate);
+  this.app.events.on("task:complete", this.handleComplete);
 }
+
+async onUnload() {
+  // IMPORTANT: Always remove your listeners in onUnload.
+  // Events are NOT auto-removed.
+  this.app.events.off("task:create", this.handleCreate);
+  this.app.events.off("task:complete", this.handleComplete);
+}
+
+// Use arrow functions so `this` is correctly bound:
+private handleCreate = (task: Task) => { /* ... */ };
+private handleComplete = (task: Task) => { /* ... */ };
 ```
 
 ### Available Events
 
-| Event | Payload | When |
-|-------|---------|------|
-| `task:create` | `(task: Task)` | After a task is created |
-| `task:complete` | `(task: Task)` | After a task is marked complete |
-| `task:uncomplete` | `(task: Task)` | After a task is uncompleted |
-| `task:update` | `(task: Task, changes: Partial<Task>)` | After a task is modified |
-| `task:delete` | `(task: Task)` | After a task is deleted |
-| `project:create` | `(project: Project)` | After a project is created |
-| `project:delete` | `(project: Project)` | After a project is deleted |
-| `settings:change` | `(key: string, value: unknown)` | After app settings change |
-| `plugin:settings:change` | `(settings: Record<string, unknown>)` | After this plugin's settings change |
-| `theme:change` | `(theme: string)` | After theme is switched |
+| Event | Payload Type | When |
+|-------|-------------|------|
+| `task:create` | `Task` | After a task is created |
+| `task:complete` | `Task` | After a task is marked complete |
+| `task:uncomplete` | `Task` | After a completed task is set back to pending |
+| `task:update` | `{ task: Task; changes: Partial<Task> }` | After a task is modified |
+| `task:delete` | `Task` | After a task is deleted |
+| `task:moved` | `{ task: Task; fromProjectId: string \| null; toProjectId: string \| null }` | After a task is moved between projects |
+| `task:estimated` | `{ task: Task; previousMinutes: number \| null; newMinutes: number \| null }` | After a task's estimated minutes changes |
+| `task:reorder` | `string[]` | After tasks are reordered (array of IDs) |
+| `section:create` | `Section` | After a section is created |
+| `section:update` | `Section` | After a section is updated |
+| `section:delete` | `Section` | After a section is deleted |
+| `section:reorder` | `string[]` | After sections are reordered |
 
-## Saydo API
+## 7. Commands
 
-The `this.app` object provides access to Saydo functionality, filtered by the plugin's declared permissions.
-
-### Task API (`task:read` + `task:write`)
-
-```typescript
-// Read tasks
-const tasks = await this.app.tasks.list({ project: "work", status: "pending" });
-const task = await this.app.tasks.get("task-id");
-const today = await this.app.tasks.listToday();
-const overdue = await this.app.tasks.listOverdue();
-
-// Write tasks (requires task:write)
-const newTask = await this.app.tasks.create({
-  title: "Review PR",
-  dueDate: new Date("2025-02-01"),
-  priority: 2,
-  tags: ["dev"],
-  project: "work",
-});
-
-await this.app.tasks.update("task-id", { priority: 1 });
-await this.app.tasks.complete("task-id");
-await this.app.tasks.uncomplete("task-id");
-await this.app.tasks.delete("task-id");
-```
-
-### Project API (`task:read` + `task:write`)
+**Permission:** `commands`
 
 ```typescript
-const projects = await this.app.projects.list();
-const project = await this.app.projects.get("project-id");
-const newProject = await this.app.projects.create({ name: "Work", color: "#3b82f6" });
-await this.app.projects.update("project-id", { color: "#ef4444" });
-await this.app.projects.archive("project-id");
-await this.app.projects.delete("project-id");
-```
-
-### Tag API (`task:read` + `task:write`)
-
-```typescript
-const tags = await this.app.tags.list();
-const tagged = await this.app.tasks.list({ tag: "urgent" });
-await this.app.tags.create({ name: "urgent", color: "#ef4444" });
-await this.app.tags.delete("tag-id");
-```
-
-### Command API (`commands`)
-
-```typescript
-// Register a command (appears in command palette, can have a hotkey)
 this.app.commands.register({
-  id: "pomodoro:start",
-  name: "Start Pomodoro Timer",
-  icon: "timer",
-  hotkey: "Ctrl+Shift+P",
+  id: "do-thing",          // Prefixed with pluginId automatically: "my-plugin:do-thing"
+  name: "Do the Thing",    // Shown in command palette
   callback: () => {
-    this.startTimer();
+    // Called when the user runs this command
   },
-});
-
-// Register a command with a check function (only shown when condition is met)
-this.app.commands.register({
-  id: "pomodoro:stop",
-  name: "Stop Pomodoro Timer",
-  check: () => this.isTimerRunning,
-  callback: () => {
-    this.stopTimer();
-  },
+  hotkey: "Ctrl+Shift+T",  // Optional keyboard shortcut
 });
 ```
 
-### UI API
+Commands appear in the command palette (Ctrl+K). They are auto-removed when the plugin is unloaded.
 
-#### Sidebar Panel (`ui:panel`)
+## 8. UI
+
+### Sidebar Panel (`ui:panel`)
 
 ```typescript
-// Add a panel to the sidebar
 this.app.ui.addSidebarPanel({
-  id: "pomodoro-panel",
-  title: "Pomodoro",
-  icon: "timer",
-  component: PomodoroPanel, // React component
+  id: "my-panel",
+  title: "My Panel",
+  icon: "list",
+  contentType: "react",       // "text" (default) or "react"
+  component: MyPanelComponent, // Required if contentType is "react"
+  render: () => "Hello",       // Required if contentType is "text"
 });
 ```
 
-#### Custom View (`ui:view`)
+### Custom View (`ui:view`)
 
 ```typescript
-// Register a full-page view (text content, default)
 this.app.ui.addView({
-  id: "kanban",
-  name: "Kanban Board",
+  id: "my-view",
+  name: "My View",
   icon: "columns",
-  component: KanbanView, // React component
-});
-
-// Register a view with structured JSON content (interactive UI)
-this.app.ui.addView({
-  id: "my-timer",
-  name: "Timer",
-  icon: "⏱️",
-  slot: "tools",         // "navigation" | "tools" | "workspace" (default: "tools")
-  contentType: "structured", // "text" | "structured" (default: "text")
-  render: () => JSON.stringify({
-    layout: "center",
-    elements: [
-      { type: "text", value: "25:00", variant: "mono" },
-      { type: "progress", value: 60, max: 100, color: "accent" },
-      { type: "row", justify: "center", gap: "md", elements: [
-        { type: "button", label: "Start", commandId: "my-plugin:start", variant: "primary" },
-        { type: "button", label: "Reset", commandId: "my-plugin:reset", variant: "ghost" },
-      ]},
-      { type: "badge", value: "Idle", color: "default" },
-    ],
-  }),
+  slot: "tools",              // "navigation" | "tools" (default) | "workspace"
+  contentType: "react",       // "text" | "structured" | "react"
+  component: MyViewComponent, // Required if contentType is "react"
+  render: () => "Hello",      // Required if contentType is "text" or "structured"
 });
 ```
 
-##### View Slots
+**View Slots:**
 
-| Slot | Sidebar Location | Notes |
-|------|-----------------|-------|
-| `navigation` | After built-in nav items (Inbox, Today, etc.) | Restricted to built-in plugins |
-| `tools` | Collapsible "Tools" section between projects and workspace | Default for all plugins |
-| `workspace` | Bottom section alongside AI Chat and Settings | |
+| Slot | Sidebar Location |
+|------|-----------------|
+| `navigation` | After built-in nav items (Inbox, Today, etc.) |
+| `tools` | Collapsible "Tools" section (default) |
+| `workspace` | Bottom section alongside AI Chat and Settings |
 
-##### Structured Content Elements
+**Content Types:**
 
-| Type | Props | Renders As |
-|------|-------|-----------|
-| `text` | `value`, `variant` (title/subtitle/body/caption/mono) | Styled text |
-| `badge` | `value`, `color` (default/accent/success/warning/error) | Rounded pill |
-| `progress` | `value`, `max`, `label?`, `color?` | Progress bar |
-| `button` | `label`, `commandId`, `variant` (primary/secondary/ghost) | Button that executes a plugin command |
-| `divider` | — | Horizontal rule |
-| `row` | `elements[]`, `gap?` (sm/md/lg), `justify?` (start/center/end/between) | Flex row |
-| `spacer` | `size` (sm/md/lg) | Vertical spacing |
+| Type | Description |
+|------|-------------|
+| `text` | Plain text returned by `render()` |
+| `structured` | JSON string returned by `render()` describing a structured UI layout |
+| `react` | React component passed via `component` |
 
-Unknown element types are silently skipped (forward-compatible).
-
-#### Status Bar (`ui:status`)
+### Status Bar (`ui:status`)
 
 ```typescript
-// Add an item to the status bar
-const statusItem = this.app.ui.addStatusBarItem({
-  id: "pomodoro-status",
-  text: "25:00",
+const handle = this.app.ui.addStatusBarItem({
+  id: "my-status",
+  text: "Ready",
   icon: "timer",
-  onClick: () => this.toggleTimer(),
+  onClick: () => { /* ... */ },
 });
 
-// Update it later
-statusItem.update({ text: "24:59" });
+// Update later:
+handle.update({ text: "Running", icon: "play" });
 ```
 
-### Storage API (`storage`)
+Status bar items are auto-removed when the plugin is unloaded.
 
-Plugin-specific key-value storage, isolated from other plugins:
+## 9. Settings
+
+Settings are defined in `manifest.json` and shown in the Settings view (Settings > Plugins > Your Plugin). Plugins read their values at runtime:
 
 ```typescript
-// Store data
+const value = this.settings.get<number>("workMinutes"); // Returns the user's value or the manifest default
+await this.settings.set("workMinutes", 30);             // Override the value
+```
+
+### Setting Types
+
+```json
+{
+  "settings": [
+    { "id": "name", "name": "Display Name", "type": "text", "default": "hello", "placeholder": "Enter name..." },
+    { "id": "count", "name": "Count", "type": "number", "default": 25, "min": 1, "max": 120 },
+    { "id": "enabled", "name": "Enabled", "type": "boolean", "default": true },
+    { "id": "mode", "name": "Mode", "type": "select", "default": "auto", "options": ["auto", "manual", "off"] }
+  ]
+}
+```
+
+Each setting has: `id`, `name`, `type`, `default`, and optional `description`.
+
+## 10. Storage
+
+**Permission:** `storage`
+
+Plugin-specific key-value storage, isolated from other plugins. Persisted to the database.
+
+```typescript
+// Write
 await this.app.storage.set("sessions-today", 3);
-await this.app.storage.set("history", [{ date: "2025-01-15", sessions: 8 }]);
+await this.app.storage.set("history", [{ date: "2025-01-15", count: 8 }]);
 
-// Read data
-const count = await this.app.storage.get<number>("sessions-today");
-const history = await this.app.storage.get<SessionHistory[]>("history");
+// Read
+const count = await this.app.storage.get<number>("sessions-today");    // 3 or null
+const history = await this.app.storage.get<object[]>("history");       // array or null
 
-// Delete data
+// Delete
 await this.app.storage.delete("sessions-today");
 
 // List all keys
-const keys = await this.app.storage.keys();
+const keys = await this.app.storage.keys(); // ["history"]
 ```
 
-### Settings API (`settings`)
+### Settings vs. Storage
 
-Settings are defined in `manifest.json` and managed by Saydo. Plugins read their values:
+| | Settings | Storage |
+|---|---------|---------|
+| Defined in | `manifest.json` | Code |
+| UI | Auto-generated settings tab | None |
+| Use for | User-configurable options | Plugin internal state |
+| Defaults | Manifest `default` value | `null` |
+| Permission | Always available | Requires `storage` |
+
+## 11. Network
+
+**Permission:** `network`
 
 ```typescript
-// Read a setting (returns the value or the default from manifest)
-const workMinutes = this.settings.get<number>("workMinutes"); // 25
-const autoStart = this.settings.get<boolean>("autoStartBreak"); // true
+const response = await this.app.network.fetch("https://api.example.com/data", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ key: "value" }),
+});
+const data = await response.json();
+```
 
-// Listen for settings changes
-this.app.events.on("plugin:settings:change", (settings) => {
-  this.workMinutes = settings.workMinutes as number;
-  this.restartTimerIfNeeded();
+Wraps the standard `fetch()` API. All requests are logged.
+
+## 12. AI
+
+### Register a Provider (`ai:provider`)
+
+```typescript
+this.app.ai.registerProvider({
+  name: "my-provider",
+  // ... LLMProviderPlugin interface
 });
 ```
 
-Users configure plugin settings in the Settings view (Settings > Plugins > Your Plugin).
+### Register a Tool (`ai:tools`)
 
-## Permissions
-
-Plugins declare required permissions in `manifest.json`. Users see these permissions when installing a plugin and can choose to approve or deny.
-
-| Permission | Grants Access To |
-|------------|-----------------|
-| `task:read` | Read tasks, projects, tags |
-| `task:write` | Create, update, delete tasks/projects/tags |
-| `ui:panel` | Add sidebar panels |
-| `ui:view` | Register full-page views |
-| `ui:status` | Add status bar items |
-| `commands` | Register commands in command palette |
-| `settings` | Add a settings tab for this plugin |
-| `storage` | Plugin-specific key-value storage |
-| `network` | Make HTTP requests (prompted per-domain) |
-
-### Permission Principles
-
-- **Least privilege**: Only request what you need
-- **Transparent**: Users see exactly what a plugin can do before installing
-- **Granular**: Read and write are separate — a view-only plugin doesn't need write access
-- **Network is special**: `network` permission shows a domain allowlist prompt on first use
-
-## Plugin Directory Structure
-
+```typescript
+this.app.ai.registerTool(
+  {
+    name: "my-tool",
+    description: "Does something useful",
+    parameters: { /* JSON Schema */ },
+  },
+  async (params) => {
+    // Tool executor
+    return { result: "done" };
+  },
+);
 ```
-plugins/
-└── my-plugin/
-    ├── manifest.json     # Required: plugin metadata and config
-    ├── index.ts          # Required: entry point (exports Plugin subclass)
-    ├── components/       # Optional: React components for UI
-    │   └── Panel.tsx
-    ├── styles.css        # Optional: plugin-specific styles
-    └── README.md         # Optional: plugin documentation
-```
+
+## 13. Error Handling
+
+- **Permission errors**: Thrown synchronously with a message telling you which permission to add.
+- **Not found errors**: `tasks.update()`, `tasks.complete()`, `tasks.uncomplete()` throw `NotFoundError` if the task ID doesn't exist.
+- **Plugin crashes**: If `onLoad()` throws, the plugin is disabled and all its registrations are cleaned up.
+- **Event listener errors**: Errors in event callbacks are caught and logged. They don't crash the app or other listeners.
+
+## 14. Best Practices for AI-Generated Plugins
+
+1. **Never use optional chaining on `this.app`**. Every method is always a function. If permission is missing, it throws.
+2. **Declare all needed permissions in manifest.json**. The error message tells you exactly what to add.
+3. **Use arrow functions for event handlers** so `this` is correctly bound.
+4. **Clean up event listeners in `onUnload()`**. Events are NOT auto-removed. Commands, UI panels, and status bar items ARE auto-removed.
+5. **Use `storage` for persistent state, `settings` for user-configurable options**.
+6. **Keep `onLoad()` fast**. Don't do heavy computation during startup.
 
 ## Type Reference
 
@@ -451,15 +606,24 @@ interface Task {
   description: string | null;
   status: "pending" | "completed" | "cancelled";
   priority: 1 | 2 | 3 | 4 | null;
-  dueDate: Date | null;
+  dueDate: string | null;       // ISO 8601 datetime
   dueTime: boolean;
-  completedAt: Date | null;
+  completedAt: string | null;   // ISO 8601 datetime
   projectId: string | null;
   recurrence: string | null;
+  parentId: string | null;
+  remindAt: string | null;
+  estimatedMinutes: number | null;
+  actualMinutes: number | null;
+  deadline: string | null;
+  isSomeday: boolean;
+  sectionId: string | null;
+  dreadLevel: number | null;    // 1-5
   tags: Tag[];
+  children?: Task[];
   sortOrder: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;            // ISO 8601 datetime
+  updatedAt: string;            // ISO 8601 datetime
 }
 ```
 
@@ -471,9 +635,12 @@ interface Project {
   name: string;
   color: string;
   icon: string | null;
+  parentId: string | null;
+  isFavorite: boolean;
+  viewStyle: "list" | "board" | "calendar";
   sortOrder: number;
   archived: boolean;
-  createdAt: Date;
+  createdAt: string;
 }
 ```
 
@@ -487,105 +654,19 @@ interface Tag {
 }
 ```
 
-### PluginManifest
+## API Versioning
+
+The Plugin API follows semver. The current version is `2.0.0`.
+
+| Version Change | Meaning |
+|----------------|---------|
+| Major (3.0.0) | Breaking changes -- plugins may need updates |
+| Minor (2.1.0) | Additive -- new features, fully backward-compatible |
+| Patch (2.0.1) | Bug fixes only -- no API surface changes |
+
+Plugins can check the version at runtime:
 
 ```typescript
-interface PluginManifest {
-  id: string;
-  name: string;
-  version: string;
-  author: string;
-  description: string;
-  main: string;
-  minSaydoVersion: string;
-  targetApiVersion?: string;
-  permissions?: string[];
-  settings?: SettingDefinition[];
-  repository?: string;
-  license?: string;
-  keywords?: string[];
-  dependencies?: Record<string, string>;
-}
+console.log(this.app.meta.version);   // "2.0.0"
+console.log(this.app.meta.stability); // "stable"
 ```
-
-### SettingDefinition
-
-```typescript
-type SettingDefinition =
-  | { id: string; name: string; type: "text"; default: string; description?: string; placeholder?: string }
-  | { id: string; name: string; type: "number"; default: number; description?: string; min?: number; max?: number }
-  | { id: string; name: string; type: "boolean"; default: boolean; description?: string }
-  | { id: string; name: string; type: "select"; default: string; description?: string; options: string[] };
-```
-
-## API Versioning & Stability
-
-### Current Version
-
-- **API Version**: 1.1.0
-- **Stability**: Stable
-
-The Plugin API follows [semver](https://semver.org/):
-
-| Version Change | Meaning | Example |
-|----------------|---------|---------|
-| Major (2.0.0) | Breaking changes — plugins may need updates | Removing an API method, changing return types |
-| Minor (1.1.0) | Additive — new features, fully backward-compatible | Adding a new `this.app.tags.rename()` method |
-| Patch (1.0.1) | Bug fixes only — no API surface changes | Fixing an edge case in `this.app.tasks.list()` |
-
-### `targetApiVersion` Manifest Field
-
-Plugins can declare which API version they target:
-
-```json
-{
-  "id": "my-plugin",
-  "name": "My Plugin",
-  "version": "1.0.0",
-  "author": "You",
-  "description": "Example plugin",
-  "main": "index.ts",
-  "minSaydoVersion": "1.0.0",
-  "targetApiVersion": "1.0.0"
-}
-```
-
-If a plugin targets a newer major version than the running Saydo instance provides, a warning is logged and the plugin may not function correctly.
-
-### Runtime Introspection
-
-Plugins can check the API version at runtime via `this.app.meta`:
-
-```typescript
-async onLoad() {
-  console.log(`API version: ${this.app.meta.version}`);    // "1.0.0"
-  console.log(`Stability: ${this.app.meta.stability}`);      // "stable"
-}
-```
-
-### Stability Levels
-
-| Level | Meaning |
-|-------|---------|
-| `stable` | Breaking changes require a major version bump. Safe for production plugins. |
-| `experimental` | API may change between minor versions. Used for new features under development. |
-
-The current Plugin API is **stable** as of v1.0.0.
-
-## Sandbox Restrictions
-
-Plugins run in a sandboxed environment with the following restrictions:
-
-| Feature | Access |
-|---------|--------|
-| Saydo API | Yes (filtered by permissions) |
-| React rendering | Yes (within allocated UI slots) |
-| `setTimeout` / `setInterval` | Yes (auto-cleared on unload) |
-| `fetch` / HTTP requests | Only with `network` permission |
-| Filesystem access | No (use Storage API instead) |
-| `eval` / `new Function` | No |
-| `process` / `require` | No |
-| DOM manipulation outside plugin slots | No |
-| Other plugin data | No |
-
-See [SECURITY.md](../guides/SECURITY.md) for the full threat model and sandboxing details.

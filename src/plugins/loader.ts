@@ -4,6 +4,8 @@ import { PluginManifest, type Permission } from "./types.js";
 import { createPluginAPI, PLUGIN_API_VERSION } from "./api.js";
 import { Plugin } from "./lifecycle.js";
 import type { TaskService } from "../core/tasks.js";
+import type { ProjectService } from "../core/projects.js";
+import type { TagService } from "../core/tags.js";
 import type { EventBus } from "../core/event-bus.js";
 import type { PluginSettingsManager } from "./settings.js";
 import type { CommandRegistry } from "./command-registry.js";
@@ -26,6 +28,8 @@ export interface LoadedPlugin {
 
 export interface PluginServices {
   taskService: TaskService;
+  projectService: ProjectService;
+  tagService: TagService;
   eventBus: EventBus;
   settingsManager: PluginSettingsManager;
   commandRegistry: CommandRegistry;
@@ -215,6 +219,8 @@ export class PluginLoader {
       pluginId,
       permissions: effectivePermissions,
       taskService: this.services.taskService,
+      projectService: this.services.projectService,
+      tagService: this.services.tagService,
       eventBus: this.services.eventBus,
       settingsManager: this.services.settingsManager,
       commandRegistry: this.services.commandRegistry,

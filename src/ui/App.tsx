@@ -45,6 +45,7 @@ import { QuickAddModal } from "./components/QuickAddModal.js";
 import { ExtractTasksModal } from "./components/ExtractTasksModal.js";
 import { OnboardingModal } from "./components/OnboardingModal.js";
 import { BlockedTaskIdsContext } from "./context/BlockedTaskIdsContext.js";
+import { AppStateProvider, type AppState } from "./context/AppStateContext.js";
 import { AppProviders } from "./app/AppProviders.js";
 import { useTaskContextMenu } from "./app/TaskContextMenu.js";
 import { ViewRenderer } from "./app/ViewRenderer.js";
@@ -722,6 +723,41 @@ function AppContent() {
     document.title = appTitle;
   }, [appTitle]);
 
+  const appState: AppState = useMemo(
+    () => ({
+      currentView,
+      projects,
+      selectedProjectId,
+      selectedRouteTaskId,
+      selectedPluginViewId,
+      selectedFilterId,
+      selectedTaskId,
+      multiSelectedIds,
+      featureSettings,
+      pluginViews,
+      calendarMode,
+      sections,
+      availableTags,
+      tasks: state.tasks,
+    }),
+    [
+      currentView,
+      projects,
+      selectedProjectId,
+      selectedRouteTaskId,
+      selectedPluginViewId,
+      selectedFilterId,
+      selectedTaskId,
+      multiSelectedIds,
+      featureSettings,
+      pluginViews,
+      calendarMode,
+      sections,
+      availableTags,
+      state.tasks,
+    ],
+  );
+
   return (
     <BlockedTaskIdsContext.Provider value={blockedTaskIds}>
       <div className="flex flex-col h-screen bg-surface text-on-surface pb-[--height-bottom-nav] md:pb-0">
@@ -811,42 +847,30 @@ function AppContent() {
                         })()}
                       />
                     )}
-                    <ViewRenderer
-                      currentView={currentView}
-                      tasks={state.tasks}
-                      projects={projects}
-                      selectedProjectId={selectedProjectId}
-                      selectedRouteTaskId={selectedRouteTaskId}
-                      selectedPluginViewId={selectedPluginViewId}
-                      selectedFilterId={selectedFilterId}
-                      selectedTaskId={selectedTaskId}
-                      multiSelectedIds={multiSelectedIds}
-                      featureSettings={featureSettings}
-                      pluginViews={pluginViews}
-                      calendarMode={calendarMode}
-                      setCalendarMode={setCalendarMode}
-                      sections={sections}
-                      availableTags={availableTags}
-                      addTaskTrigger={addTaskTrigger}
-                      handleCreateTask={handleCreateTask}
-                      handleToggleTask={handleToggleTask}
-                      handleSelectTask={handleSelectTask}
-                      handleUpdateTask={handleUpdateTask}
-                      handleDeleteTask={handleDeleteTask}
-                      handleMultiSelect={handleMultiSelect}
-                      handleReorder={handleReorder}
-                      handleAddSubtask={handleAddSubtask}
-                      handleUpdateDueDate={handleUpdateDueDate}
-                      handleContextMenu={handleContextMenu}
-                      handleNavigate={handleNavigate}
-                      handleRestoreTask={handleRestoreTask}
-                      handleActivateTask={handleActivateTask}
-                      handleCreateSection={handleCreateSection}
-                      handleUpdateSection={handleUpdateSection}
-                      handleDeleteSection={handleDeleteSection}
-                      handleMoveTask={handleMoveTask}
-                      setSettingsOpen={setSettingsOpen}
-                    />
+                    <AppStateProvider value={appState}>
+                      <ViewRenderer
+                        setCalendarMode={setCalendarMode}
+                        addTaskTrigger={addTaskTrigger}
+                        handleCreateTask={handleCreateTask}
+                        handleToggleTask={handleToggleTask}
+                        handleSelectTask={handleSelectTask}
+                        handleUpdateTask={handleUpdateTask}
+                        handleDeleteTask={handleDeleteTask}
+                        handleMultiSelect={handleMultiSelect}
+                        handleReorder={handleReorder}
+                        handleAddSubtask={handleAddSubtask}
+                        handleUpdateDueDate={handleUpdateDueDate}
+                        handleContextMenu={handleContextMenu}
+                        handleNavigate={handleNavigate}
+                        handleRestoreTask={handleRestoreTask}
+                        handleActivateTask={handleActivateTask}
+                        handleCreateSection={handleCreateSection}
+                        handleUpdateSection={handleUpdateSection}
+                        handleDeleteSection={handleDeleteSection}
+                        handleMoveTask={handleMoveTask}
+                        setSettingsOpen={setSettingsOpen}
+                      />
+                    </AppStateProvider>
                   </div>
                 </ErrorBoundary>
               )}

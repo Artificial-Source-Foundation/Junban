@@ -59,6 +59,10 @@ export type SettingDefinition = z.infer<typeof SettingDefinition>;
 export const VALID_PERMISSIONS = [
   "task:read",
   "task:write",
+  "project:read",
+  "project:write",
+  "tag:read",
+  "tag:write",
   "ui:panel",
   "ui:view",
   "ui:status",

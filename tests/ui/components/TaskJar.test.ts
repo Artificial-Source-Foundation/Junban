@@ -2,9 +2,13 @@ import { describe, it, expect } from "vitest";
 import type { Task } from "../../../src/core/types.js";
 import { buildJarPool, pickRandom } from "../../../src/ui/components/TaskJar.js";
 
-const today = new Date().toISOString().split("T")[0];
-const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
-const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+function localDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+const today = localDateKey(new Date());
+const yesterday = localDateKey(new Date(Date.now() - 86400000));
+const tomorrow = localDateKey(new Date(Date.now() + 86400000));
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {

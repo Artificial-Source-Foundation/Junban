@@ -11,8 +11,8 @@ import { UIRegistry } from "../../src/plugins/ui-registry.js";
 import type { Permission } from "../../src/plugins/types.js";
 
 describe("Plugin API versioning", () => {
-  it("PLUGIN_API_VERSION is 1.1.0", () => {
-    expect(PLUGIN_API_VERSION).toBe("1.1.0");
+  it("PLUGIN_API_VERSION is 2.0.0", () => {
+    expect(PLUGIN_API_VERSION).toBe("2.0.0");
   });
 
   it("PLUGIN_API_STABILITY is stable", () => {
@@ -20,11 +20,13 @@ describe("Plugin API versioning", () => {
   });
 
   it("createPluginAPI returns object with meta property", () => {
-    const { taskService, eventBus, storage } = createTestServices();
+    const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
     const api = createPluginAPI({
       pluginId: "test-meta",
       permissions: [] as Permission[],
       taskService,
+      projectService,
+      tagService,
       eventBus,
       settingsManager: new PluginSettingsManager(storage),
       commandRegistry: new CommandRegistry(),
@@ -37,11 +39,13 @@ describe("Plugin API versioning", () => {
   });
 
   it("meta.version matches PLUGIN_API_VERSION", () => {
-    const { taskService, eventBus, storage } = createTestServices();
+    const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
     const api = createPluginAPI({
       pluginId: "test-meta",
       permissions: [] as Permission[],
       taskService,
+      projectService,
+      tagService,
       eventBus,
       settingsManager: new PluginSettingsManager(storage),
       commandRegistry: new CommandRegistry(),
@@ -53,11 +57,13 @@ describe("Plugin API versioning", () => {
   });
 
   it("meta.stability matches PLUGIN_API_STABILITY", () => {
-    const { taskService, eventBus, storage } = createTestServices();
+    const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
     const api = createPluginAPI({
       pluginId: "test-meta",
       permissions: [] as Permission[],
       taskService,
+      projectService,
+      tagService,
       eventBus,
       settingsManager: new PluginSettingsManager(storage),
       commandRegistry: new CommandRegistry(),

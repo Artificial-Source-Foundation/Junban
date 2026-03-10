@@ -1,6 +1,6 @@
 # Frontend Context Providers Reference
 
-> Every context provider in `src/ui/context/`.
+> Every context provider in `src/ui/context/` (8 context files + `ai/` subdirectory with 3 granular contexts).
 
 ---
 
@@ -15,10 +15,11 @@ SettingsProvider
       AIProvider
         VoiceProvider
           UndoProvider
-            <AppContent />
+            AppStateProvider
+              <AppContent />
 ```
 
-This nesting order matters because inner providers can depend on outer ones (e.g., AIProvider references tasks from TaskProvider).
+This nesting order matters because inner providers can depend on outer ones (e.g., AIProvider references tasks from TaskProvider, AppStateProvider aggregates read-only state from all above providers).
 
 ---
 
@@ -215,3 +216,62 @@ This nesting order matters because inner providers can depend on outer ones (e.g
 - **Key Dependencies:** `api` (getAppSetting, setAppSetting)
 - **Used By:** `GeneralTab.tsx`, `AppearanceTab.tsx`, `DatePicker.tsx`, `useSoundEffect.ts`, `Today.tsx`, `Project.tsx`, and any component that reads user preferences
 - **Notes:** The provider wraps children in a `<div>` that fades in once settings are loaded, preventing flash of unstyled content. All setting values are stored as strings in the backend. The `darkenColor` helper converts hex to HSL, reduces lightness, and converts back. The context is created with default values so `useGeneralSettings()` can be called without a provider (returns defaults).
+
+---
+
+## AppStateContext.tsx
+
+- **Path:** `src/ui/context/AppStateContext.tsx` (42 lines)
+- **Purpose:** Read-only aggregated app state to reduce prop drilling. Provides a single context with the most commonly needed state values from across the app.
+- **Key Exports:**
+  - `AppStateProvider` -- context provider component
+  - `useAppState()` -- hook to consume the context
+- **Context Value (`AppState` interface):**
+  - `currentView: View` -- active view/route
+  - `projects: ProjectType[]` -- all projects
+  - `selectedProjectId: string | null` -- currently selected project
+  - `selectedRouteTaskId: string | null` -- task ID from route params
+  - `selectedPluginViewId: string | null` -- active plugin view ID
+  - `selectedFilterId: string | null` -- active filter ID
+  - `selectedTaskId: string | null` -- currently selected task in list
+  - `multiSelectedIds: Set<string>` -- bulk-selected task IDs
+  - `featureSettings: GeneralSettings` -- current feature flag values
+  - `pluginViews: ViewInfo[]` -- registered plugin views
+  - `calendarMode: CalendarMode | null` -- current calendar mode
+  - `sections: Section[]` -- project sections
+  - `availableTags: string[]` -- all tag names
+  - `tasks: Task[]` -- all tasks
+- **Key Dependencies:** Types from `core/types.js`, `hooks/useRouting.js`, `api/index.js`, `SettingsContext.js`
+- **Used By:** Any deeply nested component that needs read-only access to app state without prop drilling
+- **Notes:** This is a pure pass-through context -- it does not manage any state itself. The `AppStateProvider` receives its `value` prop from `App.tsx`, which computes it from the various other contexts and local state. Throws if used outside the provider.
+
+---
+
+## BlockedTaskIdsContext.tsx
+
+- **Path:** `src/ui/context/BlockedTaskIdsContext.tsx`
+- **Purpose:** Provides the set of task IDs that are currently blocked (e.g., by dependencies or other constraints) to avoid prop drilling.
+- **Key Exports:**
+  - `BlockedTaskIdsProvider` -- context provider component
+  - `useBlockedTaskIds()` -- hook to consume the context
+- **Context Value:** `Set<string>` -- IDs of blocked tasks
+- **Used By:** `TaskItem.tsx`, `TaskList.tsx`
+
+---
+
+## AIContext — 3-Context Split
+
+The `AIContext.tsx` facade composes three granular contexts from `src/ui/context/ai/`:
+
+| File | Context | Purpose |
+|------|---------|---------|
+| `AIConfigContext.tsx` | `AIConfigContext` | AI provider configuration state (`config`, `isConfigured`, `updateConfig`, `refreshConfig`) |
+| `AIChatContext.tsx` | `AIChatContext` | Chat messages and streaming (`messages`, `isStreaming`, `sendMessage`, `clearChat`, `retryLastMessage`, `editAndResend`, `regenerateLastResponse`, `voiceCallActive`, `dataMutationCount`) |
+| `AISessionContext.tsx` | `AISessionContext` | Multi-session management (`sessions`, `activeSessionId`, `createNewSession`, `switchSession`, `deleteSession`, `renameSession`) |
+
+Supporting hooks in `src/ui/context/ai/`:
+- `useAISendMessage.ts` -- SSE stream processing, tool call handling, mutation tracking
+- `useAIMessageActions.ts` -- edit/resend, regenerate, retry logic
+- `useAISessionManagement.ts` -- session CRUD and switching
+
+The `useAIContext()` hook from `AIContext.tsx` merges all three contexts into a single flat object for backward compatibility.

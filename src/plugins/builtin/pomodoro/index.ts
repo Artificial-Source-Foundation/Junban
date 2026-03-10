@@ -15,40 +15,39 @@ export default class PomodoroPlugin extends Plugin {
     this.timeLeft = this.getWorkSeconds();
 
     // Register commands
-    this.app.commands?.register({
+    this.app.commands.register({
       id: "start",
       name: "Pomodoro: Start",
       callback: () => this.start(),
     });
 
-    this.app.commands?.register({
+    this.app.commands.register({
       id: "pause",
       name: "Pomodoro: Pause",
       callback: () => this.pause(),
     });
 
-    this.app.commands?.register({
+    this.app.commands.register({
       id: "reset",
       name: "Pomodoro: Reset",
       callback: () => this.reset(),
     });
 
-    this.app.commands?.register({
+    this.app.commands.register({
       id: "skip",
       name: "Pomodoro: Skip",
       callback: () => this.skip(),
     });
 
     // Status bar
-    this.statusHandle =
-      this.app.ui.addStatusBarItem?.({
-        id: "pomodoro-timer",
-        text: "Ready",
-        icon: "\uD83C\uDF45",
-      }) ?? null;
+    this.statusHandle = this.app.ui.addStatusBarItem({
+      id: "pomodoro-timer",
+      text: "Ready",
+      icon: "\uD83C\uDF45",
+    });
 
     // View (replaces old sidebar panel)
-    this.app.ui.addView?.({
+    this.app.ui.addView({
       id: "pomodoro",
       name: "Pomodoro",
       icon: "\uD83C\uDF45",

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useClickOutside } from "../hooks/useClickOutside.js";
 
 interface RecurrencePickerProps {
   value: string | null;
@@ -20,15 +21,7 @@ export function RecurrencePicker({ value, onChange, onClose }: RecurrencePickerP
   const ref = useRef<HTMLDivElement>(null);
 
   // Close on click outside
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [onClose]);
+  useClickOutside(ref, onClose);
 
   // Close on Escape
   useEffect(() => {

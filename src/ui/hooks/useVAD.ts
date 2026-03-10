@@ -45,7 +45,7 @@ export function useVAD({
   const [isSupported, setIsSupported] = useState(true);
   const [isInGracePeriod, setIsInGracePeriod] = useState(false);
   const [gracePeriodProgress, setGracePeriodProgress] = useState(0);
-  const vadRef = useRef<any>(null);
+  const vadRef = useRef<{ start: () => void; pause: () => void; destroy: () => void } | null>(null);
   const onSpeechStartRef = useRef(onSpeechStart);
   const onSpeechEndRef = useRef(onSpeechEnd);
 
@@ -105,7 +105,7 @@ export function useVAD({
     try {
       log.debug("loading @ricky0123/vad-web");
       const { MicVAD } = await import("@ricky0123/vad-web");
-      const vadOptions: any = {
+      const vadOptions: Record<string, unknown> = {
         onSpeechStart: () => {
           log.debug("VAD speech started");
           setIsSpeaking(true);

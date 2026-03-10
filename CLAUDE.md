@@ -71,7 +71,7 @@ src/
 │   ├── sqlite-backend.ts    # SQLite implementation via Drizzle
 │   ├── markdown-backend.ts  # Markdown files with YAML frontmatter
 │   └── markdown-utils.ts    # YAML parsing/formatting helpers
-├── core/                    # Core task management logic (18 files)
+├── core/                    # Core task management logic (19 files)
 │   ├── tasks.ts             # Task CRUD operations
 │   ├── projects.ts          # Project management
 │   ├── tags.ts              # Tag system
@@ -83,6 +83,7 @@ src/
 │   ├── filters.ts           # Task filtering and search
 │   ├── query-parser.ts      # Natural language query → TaskFilter
 │   ├── nudges.ts            # Contextual nudge suggestions
+│   ├── timer.ts             # In-memory timer (start/stop, format, parse estimates)
 │   ├── export.ts            # Data export (JSON, CSV, Markdown)
 │   ├── import.ts            # Data import (Todoist, plain text)
 │   ├── event-bus.ts         # Internal event system
@@ -113,7 +114,9 @@ src/
 │   ├── command-registry.ts  # Plugin command registration
 │   ├── ui-registry.ts       # Plugin UI panel/view registration
 │   ├── types.ts             # Plugin manifest and API types
-│   └── builtin/pomodoro/    # Built-in Pomodoro plugin
+│   └── builtin/             # Built-in plugins
+│       ├── pomodoro/        # Pomodoro timer plugin
+│       └── timeblocking/    # Timeblocking plugin (day/week views, auto-scheduler, DnD)
 ├── ai/                      # AI assistant layer (45 files)
 │   ├── chat.ts              # Chat session management
 │   ├── provider.ts          # Provider setup + default registries
@@ -129,13 +132,14 @@ src/
 │   │   ├── interface.ts     # LLMProviderPlugin interface
 │   │   ├── registry.ts      # Provider registry
 │   │   └── adapters/        # 6 adapters: openai, anthropic, openrouter, ollama, lmstudio, openai-compat
-│   ├── tools/               # Tool system (16 files)
+│   ├── tools/               # Tool system (20 files)
 │   │   ├── registry.ts      # ToolRegistry
 │   │   ├── types.ts         # Tool type definitions
-│   │   └── builtin/         # 14 tool files: task-crud, project-crud, tag-crud, reminder-tools,
+│   │   └── builtin/         # 18 tool files: task-crud, project-crud, tag-crud, reminder-tools,
 │   │                        #   query-tasks, daily-planning, task-breakdown, analyze-patterns,
 │   │                        #   analyze-workload, smart-organize, energy-recommendations,
-│   │                        #   productivity-stats, bulk-operations, memory-tools
+│   │                        #   productivity-stats, bulk-operations, memory-tools,
+│   │                        #   time-estimation, weekly-review, extract-tasks-from-text, auto-schedule
 │   └── voice/               # Voice I/O (14 files)
 │       ├── interface.ts     # STT/TTS provider interfaces
 │       ├── registry.ts      # Voice provider registry
@@ -144,7 +148,13 @@ src/
 │       ├── adapters/        # 8 adapters: browser-stt, browser-tts, groq-stt, groq-tts,
 │       │                    #   inworld-tts, kokoro-local-tts, piper-local-tts, whisper-local-stt
 │       └── workers/         # 2 Web Workers: kokoro.worker.ts, kokoro-worker-types.ts
-├── ui/                      # React frontend (~128 files)
+├── server.ts                # Hono API server entry point (standalone backend)
+├── api/                     # API route modules for Hono server (11 files)
+│   ├── tasks.ts, projects.ts, tags.ts, sections.ts, comments.ts
+│   ├── templates.ts, settings.ts, stats.ts, plugins.ts
+│   ├── ai.ts                # AI chat streaming + config
+│   └── voice.ts             # STT/TTS proxy endpoints
+├── ui/                      # React frontend (~140 files)
 │   ├── App.tsx              # Root React component
 │   ├── main.tsx             # React entry point
 │   ├── index.css            # Global styles
@@ -162,28 +172,36 @@ src/
 │   │   ├── settings.ts      # Settings API calls
 │   │   ├── stats.ts         # Stats API calls
 │   │   └── ai.ts            # AI chat API calls
-│   ├── components/          # Reusable UI components (~45 files + 11 chat/)
+│   ├── components/          # Reusable UI components (~52 files + 11 chat/)
 │   │   ├── TaskItem.tsx, TaskInput.tsx, TaskList.tsx, TaskDetailPanel.tsx
 │   │   ├── Sidebar.tsx, CommandPalette.tsx, SearchModal.tsx
 │   │   ├── AIChatPanel.tsx, VoiceCallOverlay.tsx, DailyPlanningModal.tsx
+│   │   ├── DreadLevelSelector.tsx, EatTheFrog.tsx, TaskJar.tsx
+│   │   ├── WeeklyReviewModal.tsx, ExtractTasksModal.tsx
+│   │   ├── AnimatedPresence.tsx, CompletionBurst.tsx
 │   │   ├── chat/            # Chat sub-components (11 files)
 │   │   └── ... (BottomNavBar, FAB, MobileDrawer, DatePicker, etc.)
-│   ├── context/             # React contexts (7 files)
-│   │   ├── AIContext.tsx, TaskContext.tsx, PluginContext.tsx
+│   ├── context/             # React contexts (9 files + ai/ subdirectory)
+│   │   ├── AIContext.tsx     # AI context facade (composes 3 granular contexts)
+│   │   ├── ai/              # Split AI contexts: AIConfigContext, AIChatContext, AISessionContext
+│   │   ├── AppStateContext.tsx  # Read-only app state (reduces prop drilling)
+│   │   ├── TaskContext.tsx, PluginContext.tsx
 │   │   ├── VoiceContext.tsx, SettingsContext.tsx, UndoContext.tsx
 │   │   └── BlockedTaskIdsContext.tsx
-│   ├── hooks/               # Custom hooks (14 files)
+│   ├── hooks/               # Custom hooks (17 files)
 │   │   ├── useRouting.ts, useTaskHandlers.ts, useBulkActions.ts
 │   │   ├── useKeyboardNavigation.ts, useAppCommands.ts, useAppShortcuts.ts
 │   │   ├── useReminders.ts, useNudges.ts, useSoundEffect.ts, useVoiceCall.ts
 │   │   ├── useVAD.ts, useIsMobile.ts, useMultiSelect.ts
+│   │   ├── useGlobalShortcut.ts, useQuickCaptureWindow.ts, useClickOutside.ts
 │   │   └── useFocusTrap.ts
-│   ├── views/               # Application views (17 + calendar/ + settings/)
+│   ├── views/               # Application views (19 + calendar/ + settings/)
 │   │   ├── Inbox.tsx, Today.tsx, Upcoming.tsx, Project.tsx
 │   │   ├── Board.tsx, Calendar.tsx, Matrix.tsx, Stats.tsx
 │   │   ├── Completed.tsx, Cancelled.tsx, Someday.tsx
 │   │   ├── Settings.tsx, TaskPage.tsx, AIChat.tsx
 │   │   ├── FiltersLabels.tsx, FilterView.tsx, PluginView.tsx
+│   │   ├── DopamineMenu.tsx, QuickCapture.tsx
 │   │   ├── calendar/        # Calendar sub-views (3 files)
 │   │   └── settings/        # Settings tabs (10 tabs + components.tsx)
 │   └── themes/              # Theme system (4 files)
@@ -243,7 +261,9 @@ plugin(loader): implement sandbox isolation
 
 ### Running
 ```bash
-pnpm dev           # Dev mode (Vite dev server with HMR)
+pnpm dev           # Dev mode (Vite dev server with HMR, in-browser SQLite)
+pnpm dev:full      # Full dev mode (Vite + Hono API server, shared ./data/saydo.db)
+pnpm server        # Standalone API server on port 4822
 pnpm build         # Build for production
 pnpm start         # Preview production build
 pnpm check         # Lint + typecheck + test
@@ -269,7 +289,7 @@ The AI assistant is a conversational interface that lives in the sidebar:
 - **Context-aware**: The AI sees the user's task list, projects, priorities, and schedule to give relevant suggestions.
 - **Fully optional**: Zero AI code runs unless the user configures a provider. No API keys required for core functionality.
 
-### Plugin System
+### Plugin System (API v2.0.0)
 ```
 Plugin Discovery → Manifest Validation → Sandbox Creation → Lifecycle Hooks
 ```
@@ -277,7 +297,10 @@ Plugin Discovery → Manifest Validation → Sandbox Creation → Lifecycle Hook
 - Manifests declare: id, name, version, author, description, minSaydoVersion, permissions
 - Plugins run in a sandboxed context with access only to the Plugin API
 - Lifecycle: `onLoad()` → active → `onUnload()`. Plugins can also hook into task events.
-- Plugins can: register commands, add sidebar panels, add views, add settings tabs, listen to task events
+- **Full CRUD APIs**: tasks (list/get/create/update/complete/uncomplete/delete), projects (list/get/create/update/delete), tags (list/create/delete)
+- **15 permissions**: task:read, task:write, project:read, project:write, tag:read, tag:write, ui:panel, ui:view, ui:status, commands, settings, storage, network, ai:provider, ai:tools
+- **Clear error model**: all API methods always exist. Calling without permission throws with a message telling exactly which permission to add to manifest.json. No optional chaining needed.
+- Plugins can: register commands, add sidebar panels, add views, add settings tabs, listen to task events, register AI tools/providers
 - Plugin settings stored in SQLite (or JSON file in Markdown mode), keyed by plugin ID
 - **Vibe-code friendly**: The API is designed so AI (Claude/ChatGPT) can generate working plugins. If the API is too complex for AI to produce correct code, it's too complex.
 
@@ -310,7 +333,7 @@ Plugin Discovery → Manifest Validation → Sandbox Creation → Lifecycle Hook
 | `src/core/types.ts` | Core type definitions (Task, Project, Tag, etc.) |
 | `src/parser/task-parser.ts` | Natural language task input parser |
 | `src/ai/provider.ts` | AI provider setup + default registries |
-| `src/ai/tools/registry.ts` | AI tool registry (34 tools) |
+| `src/ai/tools/registry.ts` | AI tool registry (42 tools) |
 | `src/ai/voice/interface.ts` | STT/TTS provider interfaces |
 | `src/plugins/loader.ts` | Plugin discovery and loading |
 | `src/plugins/api.ts` | Plugin API surface — what plugins can do |
@@ -381,7 +404,7 @@ docs/
 │   ├── THEMES.md                    # Theme system, CSS tokens, adding themes
 │   └── VIEWS.md                     # 17 views + 10 settings tabs
 ├── backend/                         # Non-UI code reference
-│   ├── AI.md                        # 45 files: providers, pipeline, 34 tools
+│   ├── AI.md                        # 45 files: providers, pipeline, 42 tools
 │   ├── CLI.md                       # 5 CLI commands with usage examples
 │   ├── CORE.md                      # Task/project/tag services, events, undo
 │   ├── DATABASE.md                  # 14 tables, Drizzle schema, migrations

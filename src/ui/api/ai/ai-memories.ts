@@ -1,5 +1,5 @@
 import { isTauri, BASE, handleResponse, handleVoidResponse, getServices } from "../helpers.js";
-import type { AiMemoryRow } from "../../../storage/interface.js";
+import type { AiMemoryRow } from "@/storage/interface.js";
 
 export async function getAiMemories(): Promise<AiMemoryRow[]> {
   if (isTauri()) {

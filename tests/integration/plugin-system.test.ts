@@ -106,15 +106,30 @@ describe("Plugin System Integration", () => {
       expect(callback).toHaveBeenCalledOnce();
       expect(callback.mock.calls[0][0].title).toBe("Delete me");
     });
+
+    it("should emit task:uncomplete when a task is uncompleted", async () => {
+      const { taskService, eventBus } = createTestServices();
+      const callback = vi.fn();
+      eventBus.on("task:uncomplete", callback);
+
+      const task = await taskService.create({ title: "Uncomplete me" });
+      await taskService.complete(task.id);
+      await taskService.uncomplete(task.id);
+
+      expect(callback).toHaveBeenCalledOnce();
+      expect(callback.mock.calls[0][0].status).toBe("pending");
+    });
   });
 
   describe("PluginLoader - discover", () => {
     it("should discover a valid plugin", async () => {
-      const { taskService, eventBus, storage } = createTestServices();
+      const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
       writePlugin(pluginDir, "test-plugin", validManifest, pluginCode);
 
       const loader = new PluginLoader(pluginDir, {
         taskService,
+        projectService,
+        tagService,
         eventBus,
         settingsManager: new PluginSettingsManager(storage),
         commandRegistry: new CommandRegistry(),
@@ -129,11 +144,13 @@ describe("Plugin System Integration", () => {
     });
 
     it("should skip directories without manifest.json", async () => {
-      const { taskService, eventBus, storage } = createTestServices();
+      const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
       fs.mkdirSync(path.join(pluginDir, "no-manifest"), { recursive: true });
 
       const loader = new PluginLoader(pluginDir, {
         taskService,
+        projectService,
+        tagService,
         eventBus,
         settingsManager: new PluginSettingsManager(storage),
         commandRegistry: new CommandRegistry(),
@@ -146,12 +163,14 @@ describe("Plugin System Integration", () => {
     });
 
     it("should reject invalid manifests", async () => {
-      const { taskService, eventBus, storage } = createTestServices();
+      const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
       const invalid = { id: "INVALID ID!", name: "Bad" }; // Missing required fields
       writePlugin(pluginDir, "bad-plugin", invalid, "");
 
       const loader = new PluginLoader(pluginDir, {
         taskService,
+        projectService,
+        tagService,
         eventBus,
         settingsManager: new PluginSettingsManager(storage),
         commandRegistry: new CommandRegistry(),
@@ -164,13 +183,16 @@ describe("Plugin System Integration", () => {
     });
 
     it("should handle non-existent plugin directory", async () => {
-      const { taskService, eventBus, storage } = createTestServices();
+      const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
       const loader = new PluginLoader("/nonexistent/path", {
         taskService,
+        projectService,
+        tagService,
         eventBus,
         settingsManager: new PluginSettingsManager(storage),
         commandRegistry: new CommandRegistry(),
         uiRegistry: new UIRegistry(),
+        queries: storage,
       });
 
       const discovered = await loader.discover();
@@ -180,7 +202,7 @@ describe("Plugin System Integration", () => {
 
   describe("PluginLoader - load/unload lifecycle", () => {
     it("should load a plugin and call onLoad", async () => {
-      const { taskService, eventBus, storage } = createTestServices();
+      const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
       const loadCode = `
         export default class TestPlugin {
           async onLoad() { globalThis.__testPluginLoaded = true; }
@@ -191,6 +213,8 @@ describe("Plugin System Integration", () => {
 
       const loader = new PluginLoader(pluginDir, {
         taskService,
+        projectService,
+        tagService,
         eventBus,
         settingsManager: new PluginSettingsManager(storage),
         commandRegistry: new CommandRegistry(),
@@ -214,19 +238,19 @@ describe("Plugin System Integration", () => {
     });
 
     it("should clean up commands and UI on unload", async () => {
-      const { taskService, eventBus, storage } = createTestServices();
+      const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
       const commandRegistry = new CommandRegistry();
       const uiRegistry = new UIRegistry();
 
       const code = `
         export default class TestPlugin {
           async onLoad() {
-            this.app.commands?.register({
+            this.app.commands.register({
               id: "test:cmd",
               name: "Test Command",
               callback: () => {},
             });
-            this.app.ui.addStatusBarItem?.({
+            this.app.ui.addStatusBarItem({
               id: "test-status",
               text: "test",
               icon: "circle",
@@ -239,6 +263,8 @@ describe("Plugin System Integration", () => {
 
       const loader = new PluginLoader(pluginDir, {
         taskService,
+        projectService,
+        tagService,
         eventBus,
         settingsManager: new PluginSettingsManager(storage),
         commandRegistry,
@@ -261,12 +287,14 @@ describe("Plugin System Integration", () => {
   });
 
   describe("Plugin API - permission gating", () => {
-    it("should allow access to permitted APIs", () => {
-      const { taskService, eventBus, storage } = createTestServices();
+    it("should allow access to permitted APIs", async () => {
+      const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
       const api = createPluginAPI({
         pluginId: "test",
-        permissions: ["task:read", "commands", "storage"] as Permission[],
+        permissions: ["task:read", "task:write", "project:read", "tag:read", "commands", "storage"] as Permission[],
         taskService,
+        projectService,
+        tagService,
         eventBus,
         settingsManager: new PluginSettingsManager(storage),
         commandRegistry: new CommandRegistry(),
@@ -274,17 +302,37 @@ describe("Plugin System Integration", () => {
         settingDefinitions: [],
       });
 
+      // These should not throw
       expect(api.tasks.list).toBeDefined();
-      expect(api.commands).toBeDefined();
-      expect(api.storage).toBeDefined();
+      expect(api.tasks.get).toBeDefined();
+      expect(api.tasks.create).toBeDefined();
+      expect(api.tasks.update).toBeDefined();
+      expect(api.tasks.complete).toBeDefined();
+      expect(api.tasks.uncomplete).toBeDefined();
+      expect(api.tasks.delete).toBeDefined();
+      expect(api.projects.list).toBeDefined();
+      expect(api.projects.get).toBeDefined();
+      expect(api.tags.list).toBeDefined();
+      expect(api.commands.register).toBeDefined();
+      expect(api.storage.get).toBeDefined();
+
+      // Verify they actually work
+      const tasks = await api.tasks.list();
+      expect(tasks).toEqual([]);
+      const projects = await api.projects.list();
+      expect(projects).toEqual([]);
+      const tags = await api.tags.list();
+      expect(tags).toEqual([]);
     });
 
-    it("should deny access to unpermitted APIs", () => {
-      const { taskService, eventBus, storage } = createTestServices();
+    it("should throw clear errors for unpermitted APIs", () => {
+      const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
       const api = createPluginAPI({
         pluginId: "test",
         permissions: [] as Permission[],
         taskService,
+        projectService,
+        tagService,
         eventBus,
         settingsManager: new PluginSettingsManager(storage),
         commandRegistry: new CommandRegistry(),
@@ -292,21 +340,38 @@ describe("Plugin System Integration", () => {
         settingDefinitions: [],
       });
 
-      expect(api.tasks.list).toBeUndefined();
-      expect(api.tasks.create).toBeUndefined();
-      expect(api.commands).toBeUndefined();
-      expect(api.storage).toBeUndefined();
-      expect(api.ui.addSidebarPanel).toBeUndefined();
-      expect(api.ui.addView).toBeUndefined();
-      expect(api.ui.addStatusBarItem).toBeUndefined();
+      // All methods exist (no undefined) but throw with helpful messages
+      expect(() => api.tasks.list()).toThrow(/requires the "task:read" permission/);
+      expect(() => api.tasks.create({ title: "test" })).toThrow(/requires the "task:write" permission/);
+      expect(() => api.tasks.get("id")).toThrow(/requires the "task:read" permission/);
+      expect(() => api.tasks.update("id", {})).toThrow(/requires the "task:write" permission/);
+      expect(() => api.tasks.complete("id")).toThrow(/requires the "task:write" permission/);
+      expect(() => api.tasks.uncomplete("id")).toThrow(/requires the "task:write" permission/);
+      expect(() => api.tasks.delete("id")).toThrow(/requires the "task:write" permission/);
+      expect(() => api.projects.list()).toThrow(/requires the "project:read" permission/);
+      expect(() => api.projects.get("id")).toThrow(/requires the "project:read" permission/);
+      expect(() => api.projects.create("test")).toThrow(/requires the "project:write" permission/);
+      expect(() => api.projects.update("id", {})).toThrow(/requires the "project:write" permission/);
+      expect(() => api.projects.delete("id")).toThrow(/requires the "project:write" permission/);
+      expect(() => api.tags.list()).toThrow(/requires the "tag:read" permission/);
+      expect(() => api.tags.create("test")).toThrow(/requires the "tag:write" permission/);
+      expect(() => api.tags.delete("id")).toThrow(/requires the "tag:write" permission/);
+      expect(() => api.commands.register({ id: "x", name: "x", callback: () => {} })).toThrow(/requires the "commands" permission/);
+      expect(() => api.ui.addSidebarPanel({ id: "x", title: "x", icon: "x" })).toThrow(/requires the "ui:panel" permission/);
+      expect(() => api.ui.addView({ id: "x", name: "x", icon: "x" })).toThrow(/requires the "ui:view" permission/);
+      expect(() => api.ui.addStatusBarItem({ id: "x", text: "x", icon: "x" })).toThrow(/requires the "ui:status" permission/);
+      expect(() => api.storage.get("key")).toThrow(/requires the "storage" permission/);
+      expect(() => api.network.fetch("http://example.com")).toThrow(/requires the "network" permission/);
     });
 
     it("should throw when accessing events without task:read permission", () => {
-      const { taskService, eventBus, storage } = createTestServices();
+      const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
       const api = createPluginAPI({
         pluginId: "restricted",
         permissions: [] as Permission[],
         taskService,
+        projectService,
+        tagService,
         eventBus,
         settingsManager: new PluginSettingsManager(storage),
         commandRegistry: new CommandRegistry(),
@@ -314,7 +379,7 @@ describe("Plugin System Integration", () => {
         settingDefinitions: [],
       });
 
-      expect(() => api.events.on("task:create", () => {})).toThrow(/lacks "task:read" permission/);
+      expect(() => api.events.on("task:create", () => {})).toThrow(/requires the "task:read" permission/);
     });
   });
 
@@ -525,8 +590,8 @@ describe("Plugin System Integration", () => {
   });
 
   describe("Full lifecycle", () => {
-    it("should discover → load → receive events → unload", async () => {
-      const { taskService, eventBus, storage } = createTestServices();
+    it("should discover -> load -> receive events -> unload", async () => {
+      const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
 
       const code = `
         let count = 0;
@@ -546,6 +611,8 @@ describe("Plugin System Integration", () => {
 
       const loader = new PluginLoader(pluginDir, {
         taskService,
+        projectService,
+        tagService,
         eventBus,
         settingsManager: new PluginSettingsManager(storage),
         commandRegistry: new CommandRegistry(),

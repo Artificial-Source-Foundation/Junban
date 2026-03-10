@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Settings, X } from "lucide-react";
+import { useClickOutside } from "@/ui/hooks/useClickOutside.js";
 
 interface SettingsPopoverProps {
   workDayStart: string;
@@ -65,17 +66,8 @@ export function SettingsPopover({
 }: SettingsPopoverProps) {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
+  const closePopover = useCallback(() => setOpen(false), []);
+  useClickOutside(popoverRef, closePopover, open);
 
   return (
     <div className="relative">

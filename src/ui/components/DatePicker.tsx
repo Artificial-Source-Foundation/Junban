@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useClickOutside } from "../hooks/useClickOutside.js";
 
 interface DatePickerProps {
   value: string | null;
@@ -91,15 +92,7 @@ export function DatePicker({
   }, [triggerRef, fixedPosition, showTime]);
 
   // Close on click outside
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [onClose]);
+  useClickOutside(ref, onClose);
 
   // Close on Escape
   useEffect(() => {

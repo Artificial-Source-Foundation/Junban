@@ -7,6 +7,7 @@ const logger = createLogger("event-bus");
 export interface EventMap {
   "task:create": Task;
   "task:complete": Task;
+  "task:uncomplete": Task;
   "task:update": { task: Task; changes: Partial<Task> };
   "task:delete": Task;
   "task:moved": { task: Task; fromProjectId: string | null; toProjectId: string | null };

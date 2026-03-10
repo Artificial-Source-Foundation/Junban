@@ -72,8 +72,10 @@ Cleanup (unregister commands, UI, AI providers, tools)
   - `license` — optional string
   - `keywords` — optional string array (default: `[]`)
   - `dependencies` — optional record of string to string
-- `VALID_PERMISSIONS` — const tuple of all recognized permissions:
-  - `"task:read"`, `"task:write"` — task access
+- `VALID_PERMISSIONS` — const tuple of all 15 recognized permissions:
+  - `"task:read"`, `"task:write"` — task access (list, get, create, update, complete, uncomplete, delete)
+  - `"project:read"`, `"project:write"` — project access (list, get, create, update, delete)
+  - `"tag:read"`, `"tag:write"` — tag access (list, create, delete)
   - `"ui:panel"`, `"ui:view"`, `"ui:status"` — UI registration
   - `"commands"` — command palette registration
   - `"settings"` — settings access
@@ -154,7 +156,7 @@ Cleanup (unregister commands, UI, AI providers, tools)
 **Lines:** 166
 **Purpose:** Creates the permission-gated API object that plugins interact with. Each plugin gets its own API instance with access controlled by its declared permissions.
 **Key Exports:**
-- `PLUGIN_API_VERSION` — `"1.1.0"` (semver)
+- `PLUGIN_API_VERSION` — `"2.0.0"` (semver)
 - `PLUGIN_API_STABILITY` — `"stable"` (breaking changes require major version bump)
 - `PluginAPIOptions` — all services and configuration needed to construct the API
 - `PluginSettingsAccessor` — `{ get<T>(key), set(key, value) }`
@@ -164,16 +166,30 @@ Cleanup (unregister commands, UI, AI providers, tools)
 | Namespace | Permission | Methods |
 |-----------|-----------|---------|
 | `meta` | none | `version`, `stability` |
-| `tasks.list` | `task:read` | `async () => Task[]` |
+| `tasks.list` | `task:read` | `async (filter?) => Task[]` |
+| `tasks.get` | `task:read` | `async (id) => Task \| null` |
 | `tasks.create` | `task:write` | `async (input) => Task` |
+| `tasks.update` | `task:write` | `async (id, changes) => Task` |
+| `tasks.complete` | `task:write` | `async (id) => Task` |
+| `tasks.uncomplete` | `task:write` | `async (id) => Task` |
+| `tasks.delete` | `task:write` | `async (id) => boolean` |
+| `projects.list` | `project:read` | `async () => Project[]` |
+| `projects.get` | `project:read` | `async (id) => Project \| null` |
+| `projects.create` | `project:write` | `async (name, opts?) => Project` |
+| `projects.update` | `project:write` | `async (id, changes) => Project \| null` |
+| `projects.delete` | `project:write` | `async (id) => boolean` |
+| `tags.list` | `tag:read` | `async () => Tag[]` |
+| `tags.create` | `tag:write` | `async (name, color?) => Tag` |
+| `tags.delete` | `tag:write` | `async (id) => boolean` |
 | `commands.register` | `commands` | `(command) => void` — prefixes command ID with `pluginId:` |
 | `ui.addSidebarPanel` | `ui:panel` | `(panel) => void` |
 | `ui.addView` | `ui:view` | `(view) => void` — accepts `slot?` (default "tools"), `contentType?` (default "text") |
 | `ui.addStatusBarItem` | `ui:status` | `(item) => StatusBarHandle` |
-| `storage.get` | `storage` | `async <T>(key) => T | null` |
+| `storage.get` | `storage` | `async <T>(key) => T \| null` |
 | `storage.set` | `storage` | `async (key, value) => void` |
 | `storage.delete` | `storage` | `async (key) => void` |
 | `storage.keys` | `storage` | `async () => string[]` |
+| `network.fetch` | `network` | `async (url, options?) => Response` |
 | `events.on` | `task:read` | `(event, callback) => void` |
 | `events.off` | none | `(event, callback) => void` |
 | `ai.registerProvider` | `ai:provider` | `(plugin) => void` — prefixes provider name with `pluginId:` |
@@ -181,7 +197,7 @@ Cleanup (unregister commands, UI, AI providers, tools)
 | `settings.get` | none | `<T>(key) => T` |
 | `settings.set` | none | `async (key, value) => void` |
 
-Methods return `undefined` when the plugin lacks the required permission.
+Every API method is always present. Calling without the required permission throws an error with a clear message telling the plugin author exactly which permission to add to `manifest.json`. No optional chaining needed.
 
 **Key Dependencies:** All service types, `LLMProviderPlugin`, `ToolDefinition`, `ToolExecutor`
 **Used By:** `loader.ts` (creates API for each plugin)
@@ -326,19 +342,23 @@ Permissions control what parts of the Plugin API a plugin can access. The flow i
 5. **API gating:** `createPluginAPI()` checks `hasPermission()` for each API namespace. Methods return `undefined` (not Error) when permission is missing.
 6. **Revocation:** `revokePermissions()` unloads the plugin and deletes DB permissions
 
-### Permission Reference
+### Permission Reference (15 permissions)
 
 | Permission | Grants Access To |
 |------------|------------------|
-| `task:read` | `tasks.list()`, `events.on()` |
-| `task:write` | `tasks.create()` |
+| `task:read` | `tasks.list()`, `tasks.get()`, `events.on()` |
+| `task:write` | `tasks.create()`, `tasks.update()`, `tasks.complete()`, `tasks.uncomplete()`, `tasks.delete()` |
+| `project:read` | `projects.list()`, `projects.get()` |
+| `project:write` | `projects.create()`, `projects.update()`, `projects.delete()` |
+| `tag:read` | `tags.list()` |
+| `tag:write` | `tags.create()`, `tags.delete()` |
 | `ui:panel` | `ui.addSidebarPanel()` |
 | `ui:view` | `ui.addView()` |
 | `ui:status` | `ui.addStatusBarItem()` |
 | `commands` | `commands.register()` |
-| `settings` | (always available via `settings` accessor) |
+| `settings` | Settings tab in the Settings view |
 | `storage` | `storage.get/set/delete/keys()` |
-| `network` | (declared intent; not enforced at runtime yet) |
+| `network` | `network.fetch()` |
 | `ai:provider` | `ai.registerProvider()` |
 | `ai:tools` | `ai.registerTool()` |
 

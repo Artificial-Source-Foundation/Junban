@@ -968,3 +968,107 @@ Extracted sub-components used by `AIChatPanel.tsx`. Each handles a single concer
 - **Key Dependencies:** `useSyncExternalStore` (React), `shortcutManager` singleton from `shortcutManagerInstance.js`
 - **Used By:** `App.tsx`
 - **Notes:** Uses `useSyncExternalStore` to subscribe to `shortcutManager.onChordChange()` and read `shortcutManager.getPendingChord()`. Returns `null` when no chord is pending. Renders a fixed-position pill (`bottom-20`, horizontally centered, `z-50`) with a styled `<kbd>` element showing the pending key in uppercase and a "then ..." hint. Uses `animate-fade-in` entrance animation.
+
+---
+
+## Gamification & Motivation Components
+
+### DreadLevelSelector.tsx
+
+- **Path:** `src/ui/components/DreadLevelSelector.tsx` (99 lines)
+- **Purpose:** 5-level dread rating selector using frog icons. Allows users to rate how much they dread a task on a scale of 1 (low) to 5 (maximum dread).
+- **Key Exports:** `DreadLevelSelector`, `FrogIcon`, `getDreadLevelColor`
+- **Props:**
+  - `value: number | null` -- current dread level (1-5 or null)
+  - `onChange: (level: number | null) => void` -- callback when level changes
+  - `size?: number` -- icon size in pixels (default 16)
+- **Key Dependencies:** None (pure SVG)
+- **Used By:** `TaskDetailPanel.tsx`, `TaskMetadataSidebar.tsx`
+- **Notes:** Color scale from green (1) through yellow, orange, red to dark red (5). Each level has a label (e.g., "Low dread", "Maximum dread"). Clicking the active level deselects it (sets null). `FrogIcon` and `getDreadLevelColor` are exported for reuse by `EatTheFrog.tsx`.
+
+---
+
+### EatTheFrog.tsx
+
+- **Path:** `src/ui/components/EatTheFrog.tsx` (134 lines)
+- **Purpose:** Displays the highest-dread pending task as a prominent card in the Today view, encouraging users to tackle their most dreaded task first.
+- **Key Exports:** `EatTheFrog`, `selectFrogTask`
+- **Props:**
+  - `tasks: Task[]` -- all tasks to search for the frog
+  - `onToggleTask: (id: string) => void` -- complete the frog task
+  - `onSelectTask: (id: string) => void` -- navigate to task detail
+- **Key Dependencies:** `FrogIcon`, `getDreadLevelColor` from `DreadLevelSelector.tsx`, `lucide-react` (Check)
+- **Used By:** `Today.tsx`
+- **Notes:** `selectFrogTask` picks the highest-dread pending task, breaking ties by earliest due date then alphabetical title. Card shows frog icon, dread level color, task title, and a complete button. Includes a celebratory animation on completion. Hidden when no tasks have dread levels assigned.
+
+---
+
+### TaskJar.tsx
+
+- **Path:** `src/ui/components/TaskJar.tsx` (203 lines)
+- **Purpose:** Random task picker with a slot-machine-style animation. Helps users overcome decision paralysis by randomly selecting a task from today's pool.
+- **Key Exports:** `TaskJar`, `buildJarPool`, `pickRandom`
+- **Props:**
+  - `tasks: Task[]` -- all tasks (filtered internally to pending + due today/overdue)
+  - `onSelectTask: (id: string) => void` -- navigate to the selected task
+- **Key Dependencies:** `lucide-react` (Dices, X), `toDateKey` from `utils/format-date.js`
+- **Used By:** `Today.tsx`
+- **Notes:** `buildJarPool` filters to pending tasks due today or overdue. `pickRandom` selects a random task excluding the current one. Slot-machine CSS animation cycles through task titles before landing on the chosen one. Dismiss button (X) closes the jar. Button disabled when pool is empty.
+
+---
+
+### WeeklyReviewModal.tsx
+
+- **Path:** `src/ui/components/WeeklyReviewModal.tsx` (362 lines)
+- **Purpose:** Weekly productivity review modal with charts and analytics. Displays completion rate, task flow, daily stats, busiest day, productive time, neglected projects, overdue tasks, streaks, accomplishments, and suggestions.
+- **Key Exports:** `WeeklyReviewModal`, `WeeklyReviewData`
+- **Props:**
+  - `open: boolean`
+  - `onClose: () => void`
+  - `data: WeeklyReviewData` -- pre-computed review data (from `weekly_review` AI tool)
+- **Key Dependencies:** `lucide-react` (X, CheckCircle2, PlusCircle, AlertTriangle, Flame, Trophy, FolderX, Lightbulb), `useFocusTrap` hook
+- **Used By:** `AIChatPanel.tsx` (opened when AI generates a weekly review)
+- **Notes:** Renders as a portal modal with focus trap. Sections include: completion rate percentage, task flow (created/completed/cancelled/net), daily stats bar chart, busiest day highlight, productive time of day, neglected projects list, overdue tasks, current/best streaks, top accomplishments, and actionable suggestions. Uses `WeeklyReviewData` interface for typed data input.
+
+---
+
+### ExtractTasksModal.tsx
+
+- **Path:** `src/ui/components/ExtractTasksModal.tsx` (397 lines)
+- **Purpose:** Paste unstructured text (meeting notes, emails), and the AI extracts actionable tasks for review and batch creation.
+- **Key Exports:** `ExtractTasksModal`
+- **Props:**
+  - `open: boolean`
+  - `onClose: () => void`
+  - `projects: Project[]` -- for project assignment dropdown
+  - `onCreateTasks: (tasks, projectId) => Promise<void>` -- batch create callback
+- **Key Dependencies:** `lucide-react` (FileText, Loader2, Check, AlertCircle), `useFocusTrap` hook
+- **Used By:** `AIChatPanel.tsx`, command palette
+- **Notes:** Three-step flow: (1) paste text, (2) AI extracts tasks with priority/due date/description, (3) user reviews, selects/deselects individual tasks, assigns a project, and confirms creation. Each extracted task shows priority badge (P1-P4 with color), due date, and description. Supports select-all/deselect-all toggle.
+
+---
+
+## Animation Components
+
+### AnimatedPresence.tsx
+
+- **Path:** `src/ui/components/AnimatedPresence.tsx` (31 lines)
+- **Purpose:** Drop-in replacement for Framer Motion's `AnimatePresence` that respects reduced motion preferences (OS-level and app setting).
+- **Key Exports:** `AnimatedPresence`, `useReducedMotion` (re-exported)
+- **Props:** Same as `AnimatePresenceProps` from `framer-motion`
+- **Key Dependencies:** `framer-motion` (AnimatePresence), `useReducedMotion` from `./useReducedMotion.js`
+- **Used By:** Task list transitions, sidebar animations, modal enter/exit
+- **Notes:** When reduced motion is preferred, Framer Motion internally skips animations but `AnimatePresence` still tracks presence for conditional rendering. The `useReducedMotion` hook checks both the OS `prefers-reduced-motion` media query and the app's `reduce_animations` setting.
+
+---
+
+### CompletionBurst.tsx
+
+- **Path:** `src/ui/components/CompletionBurst.tsx` (44 lines)
+- **Purpose:** CSS keyframe particle burst effect triggered on task completion. Renders 8 small colored dots that burst outward from the center.
+- **Key Exports:** `CompletionBurst`
+- **Props:**
+  - `active: boolean` -- whether the burst animation should play
+- **Key Dependencies:** `useReducedMotion` from `./useReducedMotion.js`
+- **Used By:** `TaskItem.tsx` (on completion toggle)
+- **Notes:** Returns `null` when `active` is false or reduced motion is preferred. Uses CSS custom properties `--burst-angle` and `--burst-color` for each particle. Colors cycle through success (green), accent (indigo), and warning (amber) using CSS variables. Animation defined in `index.css` via `completion-burst-particle` class.

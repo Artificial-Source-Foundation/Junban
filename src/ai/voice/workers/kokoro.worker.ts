@@ -10,7 +10,20 @@ import type { KokoroWorkerRequest, KokoroWorkerResponse } from "./kokoro-worker-
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
-let ttsInstance: any = null;
+/** Minimal interface for the KokoroTTS instance used in this worker. */
+interface KokoroTTSInstance {
+  generate(
+    text: string,
+    options: { voice: string },
+  ): Promise<{
+    audio?: Float32Array;
+    data?: Float32Array;
+    sampling_rate?: number;
+    samplingRate?: number;
+  }>;
+}
+
+let ttsInstance: KokoroTTSInstance | null = null;
 
 function post(msg: KokoroWorkerResponse, transfer?: Transferable[]) {
   ctx.postMessage(msg, { transfer: transfer ?? [] });
@@ -22,14 +35,14 @@ ctx.addEventListener("message", async (e: MessageEvent<KokoroWorkerRequest>) => 
   if (msg.type === "load") {
     try {
       const { KokoroTTS } = await import("kokoro-js");
-      ttsInstance = await KokoroTTS.from_pretrained(msg.modelId, {
+      ttsInstance = (await KokoroTTS.from_pretrained(msg.modelId, {
         device: "wasm",
-        progress_callback: (event: any) => {
+        progress_callback: (event: { status: string; progress?: number }) => {
           if (event.status === "progress" && typeof event.progress === "number") {
             post({ type: "load-progress", progress: Math.round(event.progress) });
           }
         },
-      });
+      })) as unknown as KokoroTTSInstance;
       post({ type: "load-complete" });
     } catch (err) {
       ttsInstance = null;
@@ -43,8 +56,9 @@ ctx.addEventListener("message", async (e: MessageEvent<KokoroWorkerRequest>) => 
         throw new Error("Model not loaded");
       }
       const result = await ttsInstance.generate(msg.text, { voice: msg.voice });
-      const samples: Float32Array = result.audio ?? result.data;
-      const sampleRate: number = result.sampling_rate ?? result.samplingRate ?? 24000;
+      const samples = result.audio ?? result.data;
+      if (!samples) throw new Error("No audio data in result");
+      const sampleRate = result.sampling_rate ?? result.samplingRate ?? 24000;
 
       const wavBlob = float32ToWav(samples, sampleRate);
       const buffer = await wavBlob.arrayBuffer();

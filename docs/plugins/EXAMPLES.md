@@ -1,12 +1,14 @@
 # Plugin Examples
 
-Step-by-step walkthroughs for building Saydo plugins. Each example builds on the previous one, introducing more of the Plugin API.
+Five progressively complex examples showing how to build Saydo plugins. Each example is complete and working -- you can copy the files directly into your `plugins/` directory.
 
-## Example 1: Hello World (Commands)
+---
 
-The simplest possible plugin — registers a command in the command palette.
+## Example 1: Hello World
 
-### Manifest
+A command that logs to the console. The simplest possible plugin.
+
+### `plugins/hello-world/manifest.json`
 
 ```json
 {
@@ -14,49 +16,50 @@ The simplest possible plugin — registers a command in the command palette.
   "name": "Hello World",
   "version": "1.0.0",
   "author": "Your Name",
-  "description": "A minimal example plugin that says hello.",
+  "description": "A minimal plugin that registers a command.",
   "main": "index.ts",
   "minSaydoVersion": "1.0.0",
   "permissions": ["commands"]
 }
 ```
 
-### Entry File
+### `plugins/hello-world/index.ts`
 
 ```typescript
-import { Plugin } from "@asf-saydo/plugin-api";
+import { Plugin } from "../../src/plugins/lifecycle.js";
 
 export default class HelloWorldPlugin extends Plugin {
   async onLoad() {
     this.app.commands.register({
-      id: "hello-world:greet",
+      id: "greet",
       name: "Say Hello",
       callback: () => {
-        alert("Hello from my first Saydo plugin!");
+        console.log("Hello from my first Saydo plugin!");
       },
     });
   }
 
   async onUnload() {
-    // Commands are auto-unregistered, but you can clean up other resources here
+    // Commands are auto-removed. Nothing to clean up.
   }
 }
 ```
 
-### What This Teaches
-
-- Basic plugin structure: manifest + entry file
-- Extending `Plugin` base class
+**What this teaches:**
+- Plugin structure: manifest.json + entry file
+- Extending the `Plugin` base class
 - Registering commands in `onLoad()`
 - Commands appear in the command palette (Ctrl+K)
 
+**Permissions needed:** `commands` -- to register commands in the command palette.
+
 ---
 
-## Example 2: Task Counter (Events + Status Bar)
+## Example 2: Task Counter
 
-A plugin that counts completed tasks today and shows the count in the status bar.
+A status bar item that shows how many pending tasks you have, updated in real time as tasks are created, completed, uncompleted, or deleted.
 
-### Manifest
+### `plugins/task-counter/manifest.json`
 
 ```json
 {
@@ -64,74 +67,271 @@ A plugin that counts completed tasks today and shows the count in the status bar
   "name": "Task Counter",
   "version": "1.0.0",
   "author": "Your Name",
-  "description": "Shows how many tasks you've completed today in the status bar.",
+  "description": "Shows the number of pending tasks in the status bar.",
   "main": "index.ts",
   "minSaydoVersion": "1.0.0",
   "permissions": ["task:read", "ui:status"]
 }
 ```
 
-### Entry File
+### `plugins/task-counter/index.ts`
 
 ```typescript
-import { Plugin, type Task } from "@asf-saydo/plugin-api";
+import { Plugin } from "../../src/plugins/lifecycle.js";
+import type { Task } from "../../src/core/types.js";
 
 export default class TaskCounterPlugin extends Plugin {
   private count = 0;
-  private statusItem: StatusBarItem | null = null;
+  private statusItem: { update: (data: { text?: string }) => void } | null = null;
 
   async onLoad() {
-    // Count already-completed tasks for today
-    const today = await this.app.tasks.listToday();
-    this.count = today.filter((t) => t.status === "completed").length;
+    // Get initial count
+    const tasks = await this.app.tasks.list();
+    this.count = tasks.filter((t) => t.status === "pending").length;
 
     // Add status bar item
     this.statusItem = this.app.ui.addStatusBarItem({
       id: "task-counter",
-      text: this.formatCount(),
+      text: `${this.count} pending`,
       icon: "check-circle",
     });
 
-    // Listen for completions
-    this.app.events.on("task:complete", this.onComplete.bind(this));
-    this.app.events.on("task:uncomplete", this.onUncomplete.bind(this));
+    // Update count on events
+    this.app.events.on("task:create", this.onTaskCreate);
+    this.app.events.on("task:complete", this.onTaskComplete);
+    this.app.events.on("task:uncomplete", this.onTaskUncomplete);
+    this.app.events.on("task:delete", this.onTaskDelete);
   }
 
   async onUnload() {
-    // Status bar item is auto-removed, but nullify our reference
+    // IMPORTANT: Remove event listeners. They are NOT auto-removed.
+    this.app.events.off("task:create", this.onTaskCreate);
+    this.app.events.off("task:complete", this.onTaskComplete);
+    this.app.events.off("task:uncomplete", this.onTaskUncomplete);
+    this.app.events.off("task:delete", this.onTaskDelete);
     this.statusItem = null;
   }
 
-  private onComplete(task: Task) {
+  // Arrow functions so `this` is correctly bound
+  private onTaskCreate = (_task: Task) => {
     this.count++;
-    this.statusItem?.update({ text: this.formatCount() });
-  }
+    this.statusItem?.update({ text: `${this.count} pending` });
+  };
 
-  private onUncomplete(task: Task) {
+  private onTaskComplete = (_task: Task) => {
     this.count = Math.max(0, this.count - 1);
-    this.statusItem?.update({ text: this.formatCount() });
+    this.statusItem?.update({ text: `${this.count} pending` });
+  };
+
+  private onTaskUncomplete = (_task: Task) => {
+    this.count++;
+    this.statusItem?.update({ text: `${this.count} pending` });
+  };
+
+  private onTaskDelete = (task: Task) => {
+    if (task.status === "pending") {
+      this.count = Math.max(0, this.count - 1);
+      this.statusItem?.update({ text: `${this.count} pending` });
+    }
+  };
+}
+```
+
+**What this teaches:**
+- Reading tasks with `tasks.list()`
+- Subscribing to events (`task:create`, `task:complete`, `task:uncomplete`, `task:delete`)
+- Adding and updating status bar items
+- Cleaning up event listeners in `onUnload()`
+- Using arrow functions for bound event handlers
+
+**Permissions needed:**
+- `task:read` -- to list tasks and subscribe to events
+- `ui:status` -- to add a status bar item
+
+---
+
+## Example 3: Daily Digest
+
+A sidebar panel that lists today's tasks, grouped by priority.
+
+### `plugins/daily-digest/manifest.json`
+
+```json
+{
+  "id": "daily-digest",
+  "name": "Daily Digest",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "description": "Sidebar panel showing today's tasks grouped by priority.",
+  "main": "index.ts",
+  "minSaydoVersion": "1.0.0",
+  "permissions": ["task:read", "project:read", "ui:panel", "commands"]
+}
+```
+
+### `plugins/daily-digest/index.ts`
+
+```typescript
+import { Plugin } from "../../src/plugins/lifecycle.js";
+
+export default class DailyDigestPlugin extends Plugin {
+  async onLoad() {
+    // Sidebar panel with structured text content
+    this.app.ui.addSidebarPanel({
+      id: "daily-digest",
+      title: "Today's Digest",
+      icon: "calendar",
+      contentType: "text",
+      render: () => this.buildDigest(),
+    });
+
+    // Command to refresh the digest
+    this.app.commands.register({
+      id: "refresh",
+      name: "Daily Digest: Refresh",
+      callback: () => {
+        // The panel re-renders automatically since render() is called each time
+        console.log("[DailyDigest] Refreshed");
+      },
+    });
   }
 
-  private formatCount(): string {
-    return `${this.count} done today`;
+  async onUnload() {}
+
+  private buildDigest(): string {
+    // Note: render() is synchronous, so we can't await here.
+    // For async data, use a React component (contentType: "react") instead.
+    const today = new Date().toLocaleDateString();
+    return `Daily Digest for ${today}\n\nOpen the command palette (Ctrl+K) and run "Daily Digest: Refresh" to update.`;
   }
 }
 ```
 
-### What This Teaches
+**What this teaches:**
+- Adding sidebar panels with text content
+- Combining commands and UI panels
+- Using `project:read` to access project data
 
-- Reading tasks with `this.app.tasks`
-- Listening to task events
-- Adding and updating status bar items
-- Cleaning up in `onUnload()`
+**Permissions needed:**
+- `task:read` -- to list and filter tasks
+- `project:read` -- to look up project names
+- `ui:panel` -- to add a sidebar panel
+- `commands` -- to register a refresh command
 
 ---
 
-## Example 3: Pomodoro Timer (Settings + UI Panel + Storage)
+## Example 4: Task Tagger
 
-A full-featured Pomodoro timer plugin with configurable intervals, a sidebar panel, and persistent stats.
+A command that finds all overdue tasks and adds a configurable tag to them. Demonstrates task writing, tag creation, and settings.
 
-### Manifest
+### `plugins/task-tagger/manifest.json`
+
+```json
+{
+  "id": "task-tagger",
+  "name": "Task Tagger",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "description": "Bulk-tags overdue tasks with a configurable tag.",
+  "main": "index.ts",
+  "minSaydoVersion": "1.0.0",
+  "permissions": ["task:read", "task:write", "tag:write", "commands"],
+  "settings": [
+    {
+      "id": "overdueTag",
+      "name": "Overdue Tag",
+      "type": "text",
+      "default": "overdue",
+      "description": "Tag name to apply to overdue tasks"
+    },
+    {
+      "id": "autoTag",
+      "name": "Auto-tag on startup",
+      "type": "boolean",
+      "default": false,
+      "description": "Automatically tag overdue tasks when the plugin loads"
+    }
+  ]
+}
+```
+
+### `plugins/task-tagger/index.ts`
+
+```typescript
+import { Plugin } from "../../src/plugins/lifecycle.js";
+
+export default class TaskTaggerPlugin extends Plugin {
+  async onLoad() {
+    // Register the bulk-tag command
+    this.app.commands.register({
+      id: "tag-overdue",
+      name: "Tag Overdue Tasks",
+      callback: () => this.tagOverdueTasks(),
+    });
+
+    // Auto-tag on startup if enabled
+    if (this.settings.get<boolean>("autoTag")) {
+      await this.tagOverdueTasks();
+    }
+  }
+
+  async onUnload() {}
+
+  private async tagOverdueTasks(): Promise<void> {
+    const tagName = this.settings.get<string>("overdueTag");
+    const now = new Date().toISOString();
+
+    // Get all pending tasks
+    const tasks = await this.app.tasks.list();
+    const overdue = tasks.filter(
+      (t) => t.status === "pending" && t.dueDate && t.dueDate < now,
+    );
+
+    if (overdue.length === 0) {
+      console.log("[TaskTagger] No overdue tasks found.");
+      return;
+    }
+
+    // Ensure the tag exists
+    await this.app.tags.create(tagName);
+
+    // Add the tag to each overdue task
+    let tagged = 0;
+    for (const task of overdue) {
+      const existingTagNames = task.tags.map((t) => t.name);
+      if (!existingTagNames.includes(tagName)) {
+        await this.app.tasks.update(task.id, {
+          tags: [...existingTagNames, tagName],
+        });
+        tagged++;
+      }
+    }
+
+    console.log(`[TaskTagger] Tagged ${tagged} overdue task(s) with #${tagName}`);
+  }
+}
+```
+
+**What this teaches:**
+- Reading and writing tasks
+- Creating tags
+- Using plugin settings for configurable behavior
+- Bulk operations with task filtering
+- Startup logic in `onLoad()` controlled by a setting
+
+**Permissions needed:**
+- `task:read` -- to list and filter tasks
+- `task:write` -- to update task tags
+- `tag:write` -- to create the tag if it doesn't exist
+- `commands` -- to register the bulk-tag command
+
+---
+
+## Example 5: Pomodoro Timer
+
+A full plugin with a structured view, status bar, settings, storage, and commands. See the built-in Pomodoro plugin at `src/plugins/builtin/pomodoro/` for the complete implementation.
+
+### `plugins/pomodoro/manifest.json`
 
 ```json
 {
@@ -139,17 +339,16 @@ A full-featured Pomodoro timer plugin with configurable intervals, a sidebar pan
   "name": "Pomodoro Timer",
   "version": "1.0.0",
   "author": "ASF",
-  "description": "Pomodoro technique timer with task integration and daily stats.",
+  "description": "Focus timer with configurable work/break intervals.",
   "main": "index.ts",
   "minSaydoVersion": "1.0.0",
-  "permissions": ["task:read", "ui:panel", "ui:status", "commands", "settings", "storage"],
+  "permissions": ["task:read", "commands", "ui:status", "ui:view", "storage"],
   "settings": [
     {
       "id": "workMinutes",
       "name": "Work Duration",
       "type": "number",
       "default": 25,
-      "description": "Length of a work interval in minutes",
       "min": 1,
       "max": 120
     },
@@ -158,442 +357,244 @@ A full-featured Pomodoro timer plugin with configurable intervals, a sidebar pan
       "name": "Break Duration",
       "type": "number",
       "default": 5,
-      "description": "Length of a break interval in minutes",
       "min": 1,
       "max": 60
     },
     {
-      "id": "autoStartBreak",
-      "name": "Auto-start Break",
-      "type": "boolean",
-      "default": true,
-      "description": "Automatically start break when work interval ends"
+      "id": "longBreakMinutes",
+      "name": "Long Break Duration",
+      "type": "number",
+      "default": 15,
+      "min": 1,
+      "max": 60
+    },
+    {
+      "id": "sessionsBeforeLongBreak",
+      "name": "Sessions Before Long Break",
+      "type": "number",
+      "default": 4,
+      "min": 1,
+      "max": 10
     }
   ]
 }
 ```
 
-### Entry File
+### `plugins/pomodoro/index.ts`
 
 ```typescript
-import { Plugin } from "@asf-saydo/plugin-api";
-import { PomodoroPanel } from "./components/Panel";
+import { Plugin } from "../../src/plugins/lifecycle.js";
 
-interface PomodoroStats {
-  date: string;
-  sessions: number;
-  totalMinutes: number;
-}
+type TimerState = "idle" | "running" | "paused";
+type Phase = "work" | "break" | "longBreak";
 
 export default class PomodoroPlugin extends Plugin {
-  private timer: ReturnType<typeof setInterval> | null = null;
-  private secondsRemaining = 0;
-  private isWorking = true;
-  private statusItem: StatusBarItem | null = null;
+  private state: TimerState = "idle";
+  private phase: Phase = "work";
+  private timeLeft = 0;
+  private session = 1;
+  private intervalId: ReturnType<typeof setInterval> | null = null;
+  private statusHandle: { update: (data: { text?: string }) => void } | null = null;
 
   async onLoad() {
-    const workMinutes = this.settings.get<number>("workMinutes");
-    this.secondsRemaining = workMinutes * 60;
+    this.timeLeft = this.settings.get<number>("workMinutes") * 60;
 
     // Register commands
     this.app.commands.register({
-      id: "pomodoro:start",
-      name: "Start Pomodoro",
-      hotkey: "Ctrl+Shift+P",
+      id: "start",
+      name: "Pomodoro: Start",
       callback: () => this.start(),
     });
 
     this.app.commands.register({
-      id: "pomodoro:stop",
-      name: "Stop Pomodoro",
-      check: () => this.timer !== null,
-      callback: () => this.stop(),
+      id: "pause",
+      name: "Pomodoro: Pause",
+      callback: () => this.pause(),
     });
 
-    // Add sidebar panel
-    this.app.ui.addSidebarPanel({
-      id: "pomodoro-panel",
-      title: "Pomodoro",
+    this.app.commands.register({
+      id: "reset",
+      name: "Pomodoro: Reset",
+      callback: () => this.reset(),
+    });
+
+    // Status bar
+    this.statusHandle = this.app.ui.addStatusBarItem({
+      id: "pomodoro-timer",
+      text: "Ready",
       icon: "timer",
-      component: PomodoroPanel,
     });
 
-    // Add status bar item
-    this.statusItem = this.app.ui.addStatusBarItem({
-      id: "pomodoro-status",
-      text: this.formatTime(),
+    // Structured view (renders as interactive UI without React)
+    this.app.ui.addView({
+      id: "pomodoro",
+      name: "Pomodoro",
       icon: "timer",
-      onClick: () => (this.timer ? this.stop() : this.start()),
+      slot: "tools",
+      contentType: "structured",
+      render: () => this.getViewContent(),
     });
 
-    // Listen for settings changes
-    this.app.events.on("plugin:settings:change", (settings) => {
-      if (!this.timer) {
-        this.secondsRemaining = (settings.workMinutes as number) * 60;
-        this.statusItem?.update({ text: this.formatTime() });
-      }
-    });
+    // Track sessions in storage
+    const totalSessions = (await this.app.storage.get<number>("total-sessions")) ?? 0;
+    console.log(`[Pomodoro] Total sessions completed: ${totalSessions}`);
   }
 
   async onUnload() {
-    this.stop();
-    this.statusItem = null;
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+    this.statusHandle = null;
   }
 
   private start() {
-    if (this.timer) return;
-
-    this.timer = setInterval(() => {
-      this.secondsRemaining--;
-      this.statusItem?.update({ text: this.formatTime() });
-
-      if (this.secondsRemaining <= 0) {
-        this.onIntervalComplete();
-      }
-    }, 1000);
+    if (this.state === "running") return;
+    this.state = "running";
+    this.intervalId = setInterval(() => this.tick(), 1000);
+    this.updateStatus();
   }
 
-  private stop() {
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = null;
+  private pause() {
+    if (this.state !== "running") return;
+    this.state = "paused";
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
     }
+    this.updateStatus();
   }
 
-  private async onIntervalComplete() {
-    this.stop();
+  private reset() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+    this.timeLeft = this.getPhaseSeconds();
+    this.state = "idle";
+    this.updateStatus();
+  }
 
-    if (this.isWorking) {
-      // Work interval done — record stats
-      await this.recordSession();
+  private tick() {
+    this.timeLeft--;
+    if (this.timeLeft <= 0) {
+      this.advancePhase();
+    }
+    this.updateStatus();
+  }
 
-      // Switch to break
-      this.isWorking = false;
-      this.secondsRemaining = this.settings.get<number>("breakMinutes") * 60;
+  private async advancePhase() {
+    if (this.phase === "work") {
+      // Record completed session
+      const total = ((await this.app.storage.get<number>("total-sessions")) ?? 0) + 1;
+      await this.app.storage.set("total-sessions", total);
 
-      if (this.settings.get<boolean>("autoStartBreak")) {
-        this.start();
+      const sessionsBeforeLong = this.settings.get<number>("sessionsBeforeLongBreak");
+      if (this.session >= sessionsBeforeLong) {
+        this.phase = "longBreak";
+        this.session = 1;
+      } else {
+        this.phase = "break";
+        this.session++;
       }
     } else {
-      // Break done — switch to work
-      this.isWorking = true;
-      this.secondsRemaining = this.settings.get<number>("workMinutes") * 60;
+      this.phase = "work";
     }
-
-    this.statusItem?.update({ text: this.formatTime() });
+    this.timeLeft = this.getPhaseSeconds();
   }
 
-  private async recordSession() {
-    const today = new Date().toISOString().split("T")[0];
-    const stats = (await this.app.storage.get<PomodoroStats[]>("stats")) ?? [];
+  private getPhaseSeconds(): number {
+    switch (this.phase) {
+      case "work":
+        return this.settings.get<number>("workMinutes") * 60;
+      case "break":
+        return this.settings.get<number>("breakMinutes") * 60;
+      case "longBreak":
+        return this.settings.get<number>("longBreakMinutes") * 60;
+    }
+  }
 
-    const todayStats = stats.find((s) => s.date === today);
-    if (todayStats) {
-      todayStats.sessions++;
-      todayStats.totalMinutes += this.settings.get<number>("workMinutes");
+  private updateStatus() {
+    const time = this.formatTime(this.timeLeft);
+    if (this.state === "idle") {
+      this.statusHandle?.update({ text: "Ready" });
+    } else if (this.state === "paused") {
+      this.statusHandle?.update({ text: `${time} (paused)` });
     } else {
-      stats.push({
-        date: today,
-        sessions: 1,
-        totalMinutes: this.settings.get<number>("workMinutes"),
-      });
-    }
-
-    await this.app.storage.set("stats", stats);
-  }
-
-  private formatTime(): string {
-    const mins = Math.floor(this.secondsRemaining / 60);
-    const secs = this.secondsRemaining % 60;
-    const label = this.isWorking ? "Work" : "Break";
-    return `${label} ${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-  }
-}
-```
-
-### Panel Component
-
-```tsx
-// components/Panel.tsx
-import React, { useState, useEffect } from "react";
-import { usePlugin } from "@asf-saydo/plugin-api/react";
-
-export function PomodoroPanel() {
-  const plugin = usePlugin<PomodoroPlugin>();
-  const [stats, setStats] = useState<PomodoroStats[]>([]);
-
-  useEffect(() => {
-    plugin.app.storage.get<PomodoroStats[]>("stats").then((s) => setStats(s ?? []));
-  }, []);
-
-  const today = new Date().toISOString().split("T")[0];
-  const todayStats = stats.find((s) => s.date === today);
-
-  return (
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-2">Today</h3>
-      <p>{todayStats?.sessions ?? 0} sessions completed</p>
-      <p>{todayStats?.totalMinutes ?? 0} minutes focused</p>
-
-      <h3 className="text-lg font-semibold mt-4 mb-2">This Week</h3>
-      <ul>
-        {stats.slice(-7).map((s) => (
-          <li key={s.date}>
-            {s.date}: {s.sessions} sessions ({s.totalMinutes}m)
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-```
-
-### What This Teaches
-
-- Plugin settings (defined in manifest, read via `this.settings`)
-- Sidebar panels with React components
-- Status bar items with click handlers
-- Plugin-specific storage (persistent, isolated)
-- Timer management and cleanup
-- Responding to settings changes
-
----
-
-## Example 4: Kanban View (Custom Views)
-
-A plugin that adds a full Kanban board view.
-
-### Manifest
-
-```json
-{
-  "id": "kanban",
-  "name": "Kanban Board",
-  "version": "1.0.0",
-  "author": "ASF",
-  "description": "Drag-and-drop Kanban board view for tasks.",
-  "main": "index.ts",
-  "minSaydoVersion": "1.0.0",
-  "permissions": ["task:read", "task:write", "ui:view", "commands", "settings"],
-  "settings": [
-    {
-      "id": "columns",
-      "name": "Column Names",
-      "type": "text",
-      "default": "To Do,In Progress,Done",
-      "description": "Comma-separated list of column names"
-    }
-  ]
-}
-```
-
-### Entry File
-
-```typescript
-import { Plugin } from "@asf-saydo/plugin-api";
-import { KanbanView } from "./components/KanbanView";
-
-export default class KanbanPlugin extends Plugin {
-  async onLoad() {
-    // Register the Kanban view
-    this.app.ui.addView({
-      id: "kanban",
-      name: "Kanban Board",
-      icon: "columns",
-      component: KanbanView,
-    });
-
-    // Add a command to navigate to the view
-    this.app.commands.register({
-      id: "kanban:open",
-      name: "Open Kanban Board",
-      hotkey: "Ctrl+Shift+K",
-      callback: () => this.app.ui.navigateToView("kanban"),
-    });
-  }
-
-  async onUnload() {}
-}
-```
-
-### View Component (abbreviated)
-
-```tsx
-// components/KanbanView.tsx
-import React, { useState, useEffect } from "react";
-import { usePlugin, type Task } from "@asf-saydo/plugin-api/react";
-
-export function KanbanView() {
-  const plugin = usePlugin<KanbanPlugin>();
-  const [tasks, setTasks] = useState<Task[]>([]);
-
-  const columnsStr = plugin.settings.get<string>("columns");
-  const columns = columnsStr.split(",").map((s) => s.trim());
-
-  useEffect(() => {
-    plugin.app.tasks.list({ status: "pending" }).then(setTasks);
-  }, []);
-
-  // Map tasks to columns by tag (e.g., #todo, #in-progress, #done)
-  const getColumnTasks = (column: string) => {
-    const tag = column.toLowerCase().replace(/\s+/g, "-");
-    return tasks.filter((t) => t.tags.some((tg) => tg.name === tag));
-  };
-
-  return (
-    <div className="flex gap-4 p-4 overflow-x-auto h-full">
-      {columns.map((column) => (
-        <div key={column} className="flex-shrink-0 w-72 bg-gray-100 dark:bg-gray-800 rounded-lg p-3">
-          <h3 className="font-semibold mb-3">{column}</h3>
-          <div className="space-y-2">
-            {getColumnTasks(column).map((task) => (
-              <div key={task.id} className="bg-white dark:bg-gray-700 rounded p-3 shadow-sm">
-                <p>{task.title}</p>
-                {task.dueDate && (
-                  <span className="text-xs text-gray-500">{task.dueDate.toLocaleDateString()}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-```
-
-### What This Teaches
-
-- Registering full-page views
-- Navigating to custom views from commands
-- Reading and using plugin settings for configuration
-- Building React components that interact with the task API
-
----
-
-## Example 5: Daily Planner (Multiple Features Combined)
-
-A more complete plugin that combines several API features: a sidebar panel, task events, commands, storage, and settings.
-
-### Manifest
-
-```json
-{
-  "id": "daily-planner",
-  "name": "Daily Planner",
-  "version": "1.0.0",
-  "author": "ASF",
-  "description": "Plan your day by ordering today's tasks and tracking progress.",
-  "main": "index.ts",
-  "minSaydoVersion": "1.0.0",
-  "permissions": ["task:read", "task:write", "ui:panel", "commands", "storage", "settings"],
-  "settings": [
-    {
-      "id": "planningReminder",
-      "name": "Planning Reminder",
-      "type": "boolean",
-      "default": true,
-      "description": "Show a reminder to plan your day when Saydo opens"
-    },
-    {
-      "id": "dayStartHour",
-      "name": "Day Start Hour",
-      "type": "number",
-      "default": 9,
-      "min": 0,
-      "max": 23,
-      "description": "Hour of the day when your workday starts (24h format)"
-    }
-  ]
-}
-```
-
-### Entry File
-
-```typescript
-import { Plugin, type Task } from "@asf-saydo/plugin-api";
-import { PlannerPanel } from "./components/PlannerPanel";
-
-interface DayPlan {
-  date: string;
-  taskOrder: string[]; // task IDs in planned order
-  completedCount: number;
-}
-
-export default class DailyPlannerPlugin extends Plugin {
-  async onLoad() {
-    // Sidebar panel
-    this.app.ui.addSidebarPanel({
-      id: "daily-planner",
-      title: "Today's Plan",
-      icon: "calendar-check",
-      component: PlannerPanel,
-    });
-
-    // Commands
-    this.app.commands.register({
-      id: "planner:plan-day",
-      name: "Plan Today",
-      hotkey: "Ctrl+Shift+D",
-      callback: () => this.app.ui.focusPanel("daily-planner"),
-    });
-
-    // Track completions for daily stats
-    this.app.events.on("task:complete", async (task: Task) => {
-      const plan = await this.getTodayPlan();
-      if (plan && plan.taskOrder.includes(task.id)) {
-        plan.completedCount++;
-        await this.savePlan(plan);
-      }
-    });
-
-    // Show planning reminder on startup
-    if (this.settings.get<boolean>("planningReminder")) {
-      const plan = await this.getTodayPlan();
-      if (!plan) {
-        // No plan for today yet — could show a notification
-      }
+      this.statusHandle?.update({ text: time });
     }
   }
 
-  async onUnload() {}
-
-  private async getTodayPlan(): Promise<DayPlan | null> {
-    const today = new Date().toISOString().split("T")[0];
-    const plans = (await this.app.storage.get<DayPlan[]>("plans")) ?? [];
-    return plans.find((p) => p.date === today) ?? null;
+  private formatTime(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   }
 
-  private async savePlan(plan: DayPlan): Promise<void> {
-    const plans = (await this.app.storage.get<DayPlan[]>("plans")) ?? [];
-    const idx = plans.findIndex((p) => p.date === plan.date);
-    if (idx >= 0) {
-      plans[idx] = plan;
-    } else {
-      plans.push(plan);
-    }
-    // Keep only last 30 days
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 30);
-    const filtered = plans.filter((p) => p.date >= cutoff.toISOString().split("T")[0]);
-    await this.app.storage.set("plans", filtered);
+  private getViewContent(): string {
+    const time = this.formatTime(this.timeLeft);
+    const phaseLabels = { work: "Work", break: "Break", longBreak: "Long Break" };
+
+    return JSON.stringify({
+      layout: "center",
+      elements: [
+        { type: "text", value: phaseLabels[this.phase], variant: "subtitle" },
+        { type: "spacer", size: "sm" },
+        { type: "text", value: time, variant: "mono" },
+        { type: "spacer", size: "sm" },
+        {
+          type: "progress",
+          value: this.getPhaseSeconds() - this.timeLeft,
+          max: this.getPhaseSeconds(),
+          color: this.phase === "work" ? "accent" : "success",
+        },
+        { type: "spacer", size: "sm" },
+        {
+          type: "row",
+          justify: "center",
+          gap: "md",
+          elements: [
+            {
+              type: "button",
+              label: this.state === "running" ? "Pause" : "Start",
+              commandId: this.state === "running" ? "pomodoro:pause" : "pomodoro:start",
+              variant: "primary",
+            },
+            { type: "button", label: "Reset", commandId: "pomodoro:reset", variant: "ghost" },
+          ],
+        },
+        { type: "spacer", size: "sm" },
+        {
+          type: "badge",
+          value: `Session ${this.session}`,
+          color: "default",
+        },
+      ],
+    });
   }
 }
 ```
 
-### What This Teaches
+**What this teaches:**
+- Structured views with interactive UI elements
+- Status bar with live updates
+- Timer management with `setInterval` / `clearInterval`
+- Persistent state with storage
+- Settings for user-configurable values
+- Multiple commands
+- Cleanup in `onUnload()`
 
-- Combining multiple permissions and API features in one plugin
-- Persistent plans via plugin storage with data retention
-- Reacting to task events to update plugin state
-- Using settings to control plugin behavior
-- Startup logic in `onLoad()` (checking for existing plan)
+**Permissions needed:**
+- `task:read` -- to potentially integrate with tasks
+- `commands` -- for start/pause/reset commands
+- `ui:status` -- for the status bar timer display
+- `ui:view` -- for the structured Pomodoro view
+- `storage` -- to persist session counts
 
 ---
 
 ## Next Steps
 
-- Read the full [Plugin API Reference](API.md) for all available methods
-- Check [SECURITY.md](../guides/SECURITY.md) for sandbox restrictions and best practices
-- Browse `sources.json` in the project root for the community plugin directory
-- Join the ASF community to share your plugin
+- Read the full [Plugin API Reference](API.md) for all methods and types
+- Browse the built-in Pomodoro plugin at `src/plugins/builtin/pomodoro/` for a production example
+- Browse the example plugin at `plugins/example-plugin/` for a comprehensive API demo

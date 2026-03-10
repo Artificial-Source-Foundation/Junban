@@ -8,7 +8,7 @@ import {
   createDeleteAction,
   createUpdateAction,
 } from "../../core/actions.js";
-import type { Task, UpdateTaskInput } from "../../core/types.js";
+import type { Task, CreateTaskInput, UpdateTaskInput } from "../../core/types.js";
 
 export function useTaskHandlers(
   selectedProjectId: string | null,
@@ -34,7 +34,7 @@ export function useTaskHandlers(
         await updateTask(id, input);
         return {} as Task;
       },
-      createTask: async (input: any) => {
+      createTask: async (input: CreateTaskInput) => {
         await createTask(input);
         return {} as Task;
       },
@@ -72,12 +72,12 @@ export function useTaskHandlers(
       dueTime: parsed.dueTime,
       tags: parsed.tags,
       projectId,
-      ...(parsed.recurrence ? { recurrence: parsed.recurrence } : {}),
-      ...(parsed.estimatedMinutes != null ? { estimatedMinutes: parsed.estimatedMinutes } : {}),
-      ...(parsed.deadline ? { deadline: parsed.deadline.toISOString() } : {}),
-      ...(parsed.isSomeday ? { isSomeday: true } : {}),
-      ...(parsed.dreadLevel != null ? { dreadLevel: parsed.dreadLevel } : {}),
-    } as any);
+      recurrence: parsed.recurrence ?? undefined,
+      estimatedMinutes: parsed.estimatedMinutes ?? undefined,
+      deadline: parsed.deadline?.toISOString() ?? undefined,
+      isSomeday: parsed.isSomeday ?? undefined,
+      dreadLevel: parsed.dreadLevel ?? undefined,
+    });
     playSound("create");
   };
 
@@ -90,8 +90,8 @@ export function useTaskHandlers(
         createUpdateAction(
           actionApi,
           id,
-          { status: "completed" as any, completedAt: task.completedAt } as UpdateTaskInput,
-          { status: "pending" as any, completedAt: null } as UpdateTaskInput,
+          { status: "completed", completedAt: task.completedAt },
+          { status: "pending", completedAt: null },
         ),
       );
     } else {
@@ -122,7 +122,7 @@ export function useTaskHandlers(
       if (key === "tags") {
         oldFields.tags = task.tags.map((t) => t.name);
       } else {
-        oldFields[key] = (task as any)[key];
+        oldFields[key] = task[key as keyof Task];
       }
     }
     await undoManager.perform(
@@ -171,7 +171,7 @@ export function useTaskHandlers(
         tags: [],
         projectId: selectedProjectId,
         parentId,
-      } as any);
+      });
     },
     [createTask, selectedProjectId],
   );

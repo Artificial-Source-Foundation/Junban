@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Repeat, X } from "lucide-react";
+import { useClickOutside } from "@/ui/hooks/useClickOutside.js";
 import type { RecurrenceRule } from "../types.js";
 
 interface RecurrenceEditorProps {
@@ -20,6 +21,8 @@ const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export function RecurrenceEditor({ rule, onChange }: RecurrenceEditorProps) {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const closePopover = useCallback(() => setOpen(false), []);
+  useClickOutside(popoverRef, closePopover, open);
 
   // Derived state from the rule
   const frequency = rule?.frequency ?? "none";
@@ -28,18 +31,6 @@ export function RecurrenceEditor({ rule, onChange }: RecurrenceEditorProps) {
   const endDate = rule?.endDate ?? "";
   const isCustom = rule ? rule.interval > 1 && rule.frequency !== "monthly" : false;
   const displayFrequency = !rule ? "none" : isCustom ? "custom" : rule.frequency;
-
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
 
   const handleFrequencyChange = (value: string) => {
     if (value === "none") {

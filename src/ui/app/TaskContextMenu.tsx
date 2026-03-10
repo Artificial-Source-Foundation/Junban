@@ -18,7 +18,7 @@ import {
   CircleDot,
 } from "lucide-react";
 import type { ContextMenuItem } from "../components/ContextMenu.js";
-import type { Project as ProjectType } from "../../core/types.js";
+import type { Task, UpdateTaskInput, Project as ProjectType } from "../../core/types.js";
 
 /** Build an ISO reminder string N minutes from now. Called at click time, not render time. */
 function reminderFromNow(minutes: number): string {
@@ -37,12 +37,12 @@ export function useTaskContextMenu({
   handleCopyTaskLink,
   handleNavigate,
 }: {
-  tasks: any[];
+  tasks: Task[];
   projects: ProjectType[];
   availableTags: string[];
   handleSelectTask: (id: string) => void;
   handleToggleTask: (id: string) => void;
-  handleUpdateTask: (id: string, data: Record<string, any>) => void;
+  handleUpdateTask: (id: string, data: UpdateTaskInput) => void;
   handleDeleteTask: (id: string) => void;
   handleDuplicateTask: (id: string) => void;
   handleCopyTaskLink: (id: string) => void;

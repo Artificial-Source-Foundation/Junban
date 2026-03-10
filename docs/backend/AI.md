@@ -2,7 +2,7 @@
 
 The AI subsystem (`src/ai/`) implements Saydo's conversational AI assistant. It provides a pluggable multi-provider LLM architecture with a middleware pipeline, a tool calling system, and session management. The subsystem is designed so that AI is entirely optional: no AI code runs unless the user configures a provider.
 
-**Total files:** 47 | **Total lines:** ~6,378
+**Total files:** 53 | **Total lines:** ~7,500
 
 ---
 
@@ -607,6 +607,72 @@ Returns: `{ range, currentStreak, bestStreak, today: { completed, created, minut
 
 ---
 
+#### `time-estimation.ts`
+**Path:** `src/ai/tools/builtin/time-estimation.ts`
+**Purpose:** Time estimation and tracking analysis tools. Suggests durations for tasks based on similar completed tasks and provides time tracking summaries.
+**Registered Tools:**
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `estimate_task_duration` | Suggest an estimated duration based on similar completed tasks | `taskId` (required) |
+| `time_tracking_summary` | Summarize time tracking data across tasks | `days` (default 30) |
+
+**`estimate_task_duration`** analyzes completed tasks with actual time data, scoring similarity by matching tags, priority, and title words. Returns a weighted average of similar tasks' actual minutes.
+
+**Key Dependencies:** `ToolRegistry`
+**Used By:** `provider.ts` (registration)
+
+---
+
+#### `weekly-review.ts`
+**Path:** `src/ai/tools/builtin/weekly-review.ts`
+**Purpose:** Generates a comprehensive weekly review with analytics — completion rates, task flow, streaks, accomplishments, and suggestions.
+**Registered Tools:**
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `weekly_review` | Weekly review and analytics: completion rate, task flow, busiest day, productive time, neglected projects, overdue tasks, streaks, top accomplishments, and suggestions | `weekStart` (YYYY-MM-DD, default last Monday) |
+
+Returns: `{ weekStartDate, weekEndDate, completionRate, taskFlow, dailyStats, busiestDay, productiveTime, neglectedProjects, overdueCarryOver, streaks, topAccomplishments, suggestions }`
+
+**Key Dependencies:** `ToolRegistry`
+**Used By:** `provider.ts` (registration)
+
+---
+
+#### `extract-tasks-from-text.ts`
+**Path:** `src/ai/tools/builtin/extract-tasks-from-text.ts`
+**Purpose:** Extracts actionable tasks from unstructured text (meeting notes, emails). Supports dry-run preview and batch creation.
+**Registered Tools:**
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `extract_tasks_from_text` | Parse meeting notes or emails into structured tasks | `text` (required), `projectId` (optional), `dryRun` (boolean, default true) |
+
+In `dryRun` mode, returns extracted tasks for user review without creating them. When `dryRun: false`, creates all extracted tasks. Tolerates common LLM output quirks (markdown fences, extra keys).
+
+**Key Dependencies:** `ToolRegistry`
+**Used By:** `provider.ts` (registration)
+
+---
+
+#### `auto-schedule.ts`
+**Path:** `src/ai/tools/builtin/auto-schedule.ts`
+**Purpose:** AI tools for auto-scheduling tasks onto the timeblocking timeline. Bridges the auto-scheduling engine with the AI assistant.
+**Registered Tools:**
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `auto_schedule_day` | Schedule pending tasks into available time gaps for a day | `date` (YYYY-MM-DD, required), `mode` ("suggest" or "auto", default "suggest") |
+| `reschedule_day` | Reschedule a day's blocks, optionally bumping incomplete tasks | `date` (YYYY-MM-DD, required), `bumpIncomplete` (boolean, default true) |
+
+**`auto_schedule_day`** in "suggest" mode returns a proposal without changes; "auto" mode creates blocks immediately. Uses the timeblocking plugin's `autoSchedule` and `applySchedule` functions with configurable work day hours and grid intervals.
+
+**Key Dependencies:** `ToolDefinition`, `ToolExecutor`, `TimeBlockStore`, `autoSchedule`/`applySchedule` from timeblocking plugin
+**Used By:** Timeblocking plugin (registered when AI is available)
+
+---
+
 ## Tool Summary
 
 | Tool Name | Category | Description |
@@ -645,7 +711,13 @@ Returns: `{ range, currentStreak, bestStreak, today: { completed, created, minut
 | `save_memory` | AI Memory | Save a fact about the user |
 | `recall_memories` | AI Memory | Search saved memories |
 | `forget_memory` | AI Memory | Delete a saved memory |
+| `estimate_task_duration` | Time Estimation | Suggest duration based on similar completed tasks |
+| `time_tracking_summary` | Time Estimation | Summarize time tracking data |
+| `weekly_review` | Planning | Weekly review with analytics and suggestions |
+| `extract_tasks_from_text` | Extraction | Parse meeting notes/emails into tasks |
+| `auto_schedule_day` | Auto-Schedule | Schedule tasks into available time gaps |
+| `reschedule_day` | Auto-Schedule | Reschedule a day's blocks |
 
-**Total:** 34 tools across 14 files
+**Total:** 40 tools across 18 files
 
 All tools are also exposed via the [MCP server](MCP.md) for external AI agents (Claude Desktop, custom assistants, other apps).

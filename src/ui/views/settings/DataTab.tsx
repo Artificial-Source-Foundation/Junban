@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useTaskContext } from "../../context/TaskContext.js";
 import { api } from "../../api/index.js";
-import { exportJSON, exportCSV, exportMarkdown, type ExportData } from "../../../core/export.js";
-import { parseImport, type ImportPreview } from "../../../core/import.js";
+import { exportJSON, exportCSV, exportMarkdown, type ExportData } from "@/core/export.js";
+import { parseImport, type ImportPreview } from "@/core/import.js";
 import { SegmentedControl } from "./components.js";
-import type { Project } from "../../../core/types.js";
+import type { Project, Task } from "@/core/types.js";
 
 export function DataTab() {
   return (
@@ -95,13 +95,13 @@ function DataSection() {
       // Apply filters
       let filteredTasks = data.tasks;
       if (statusFilter !== "all") {
-        filteredTasks = filteredTasks.filter((t: any) => t.status === statusFilter);
+        filteredTasks = filteredTasks.filter((t: Task) => t.status === statusFilter);
       }
       if (projectFilter !== "all") {
         if (projectFilter === "none") {
-          filteredTasks = filteredTasks.filter((t: any) => !t.projectId);
+          filteredTasks = filteredTasks.filter((t: Task) => !t.projectId);
         } else {
-          filteredTasks = filteredTasks.filter((t: any) => t.projectId === projectFilter);
+          filteredTasks = filteredTasks.filter((t: Task) => t.projectId === projectFilter);
         }
       }
 

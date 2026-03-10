@@ -271,6 +271,24 @@ export class TaskService {
     return completed;
   }
 
+  async uncomplete(id: string): Promise<Task> {
+    const existing = await this.get(id);
+    if (!existing) throw new NotFoundError("Task", id);
+
+    const now = new Date().toISOString();
+    this.queries.updateTask(id, {
+      status: "pending",
+      completedAt: null,
+      updatedAt: now,
+    });
+
+    const uncompleted = (await this.get(id))!;
+    logger.debug("Task uncompleted", { id });
+    this.eventBus?.emit("task:uncomplete", uncompleted);
+
+    return uncompleted;
+  }
+
   async delete(id: string): Promise<boolean> {
     const existing = await this.get(id);
     this.queries.deleteTaskTags(id);

@@ -2,13 +2,22 @@
   "id": "example-plugin",
   "icon": "🧩",
   "name": "Example Plugin",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "author": "ASF",
-  "description": "A minimal example plugin demonstrating the Saydo Plugin API.",
+  "description": "A complete example plugin demonstrating the Saydo Plugin API: tasks, projects, tags, events, commands, status bar, and settings.",
   "main": "index.ts",
   "minSaydoVersion": "0.1.0",
+  "targetApiVersion": "2.0.0",
   "license": "MIT",
-  "permissions": ["task:read", "commands", "ui:status"],
+  "permissions": [
+    "task:read",
+    "task:write",
+    "project:read",
+    "tag:read",
+    "commands",
+    "ui:status",
+    "storage"
+  ],
   "settings": [
     {
       "id": "greeting",
@@ -23,6 +32,14 @@
       "type": "boolean",
       "default": true,
       "description": "Show the number of pending tasks in the status bar"
+    },
+    {
+      "id": "defaultPriority",
+      "name": "Default Priority",
+      "type": "select",
+      "default": "none",
+      "description": "Default priority for tasks created by this plugin",
+      "options": ["none", "1", "2", "3", "4"]
     }
   ]
 }

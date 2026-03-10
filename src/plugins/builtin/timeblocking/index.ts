@@ -1,11 +1,11 @@
 import React from "react";
 import { Plugin } from "../../lifecycle.js";
-import { createLogger } from "../../../utils/logger.js";
+import { createLogger } from "@/utils/logger.js";
 import { TimeBlockStore } from "./store.js";
 import { TimeblockingContext } from "./context.js";
 import { TimeblockingView as TimeblockingViewComponent } from "./components/TimeblockingView.js";
 import { buildTimeblockingTools } from "./ai-tools.js";
-import { buildAutoScheduleTools } from "../../../ai/tools/builtin/auto-schedule.js";
+import { buildAutoScheduleTools } from "@/ai/tools/builtin/auto-schedule.js";
 
 const log = createLogger("timeblocking");
 
@@ -22,14 +22,14 @@ export default class TimeblockingPlugin extends Plugin {
   store!: TimeBlockStore;
 
   async onLoad(): Promise<void> {
-    this.store = new TimeBlockStore(this.app.storage!);
+    this.store = new TimeBlockStore(this.app.storage);
     await this.store.initialize();
 
     this.app.events.on("task:delete", (task) => {
       this.unlinkTask(task.id);
     });
 
-    this.app.ui.addView?.({
+    this.app.ui.addView({
       id: "timeblocking",
       name: "Timeblocking",
       icon: "📅",
@@ -38,7 +38,7 @@ export default class TimeblockingPlugin extends Plugin {
       component: this.createViewComponent,
     });
 
-    this.app.commands?.register({
+    this.app.commands.register({
       id: "tb-new-block",
       name: "Timeblocking: New Block",
       callback: () => {
@@ -46,7 +46,7 @@ export default class TimeblockingPlugin extends Plugin {
       },
     });
 
-    this.app.commands?.register({
+    this.app.commands.register({
       id: "tb-new-slot",
       name: "Timeblocking: New Slot",
       callback: () => {
@@ -54,7 +54,7 @@ export default class TimeblockingPlugin extends Plugin {
       },
     });
 
-    this.app.commands?.register({
+    this.app.commands.register({
       id: "tb-day-view",
       name: "Timeblocking: Day View",
       callback: () => {
@@ -62,7 +62,7 @@ export default class TimeblockingPlugin extends Plugin {
       },
     });
 
-    this.app.commands?.register({
+    this.app.commands.register({
       id: "tb-week-view",
       name: "Timeblocking: Week View",
       callback: () => {
@@ -70,7 +70,7 @@ export default class TimeblockingPlugin extends Plugin {
       },
     });
 
-    this.app.commands?.register({
+    this.app.commands.register({
       id: "tb-today",
       name: "Timeblocking: Go to Today",
       callback: () => {
@@ -78,7 +78,7 @@ export default class TimeblockingPlugin extends Plugin {
       },
     });
 
-    this.app.commands?.register({
+    this.app.commands.register({
       id: "tb-toggle-sidebar",
       name: "Timeblocking: Toggle Sidebar",
       callback: () => {
@@ -86,7 +86,7 @@ export default class TimeblockingPlugin extends Plugin {
       },
     });
 
-    this.app.commands?.register({
+    this.app.commands.register({
       id: "tb-focus",
       name: "Timeblocking: Focus on Block",
       callback: () => {
@@ -94,25 +94,23 @@ export default class TimeblockingPlugin extends Plugin {
       },
     });
 
-    // Register AI tools
-    if (this.app.ai?.registerTool) {
-      const tools = buildTimeblockingTools(this.store, () => ({
-        workDayStart: this.settings.get<string>("workDayStart") ?? "09:00",
-        workDayEnd: this.settings.get<string>("workDayEnd") ?? "17:00",
-        defaultDurationMinutes: parseInt(this.settings.get<string>("defaultDurationMinutes") ?? "30", 10),
-      }));
-      const autoScheduleTools = buildAutoScheduleTools(this.store, () => ({
-        workDayStart: this.settings.get<string>("workDayStart") ?? "09:00",
-        workDayEnd: this.settings.get<string>("workDayEnd") ?? "17:00",
-        defaultDurationMinutes: parseInt(this.settings.get<string>("defaultDurationMinutes") ?? "30", 10),
-        gridIntervalMinutes: parseInt(this.settings.get<string>("gridIntervalMinutes") ?? "15", 10),
-      }));
-      const allTools = [...tools, ...autoScheduleTools];
-      for (const tool of allTools) {
-        this.app.ai.registerTool(tool.definition, tool.executor);
-      }
-      log.info("Registered AI tools", { count: allTools.length });
+    // Register AI tools (requires ai:tools permission)
+    const tools = buildTimeblockingTools(this.store, () => ({
+      workDayStart: this.settings.get<string>("workDayStart") ?? "09:00",
+      workDayEnd: this.settings.get<string>("workDayEnd") ?? "17:00",
+      defaultDurationMinutes: parseInt(this.settings.get<string>("defaultDurationMinutes") ?? "30", 10),
+    }));
+    const autoScheduleTools = buildAutoScheduleTools(this.store, () => ({
+      workDayStart: this.settings.get<string>("workDayStart") ?? "09:00",
+      workDayEnd: this.settings.get<string>("workDayEnd") ?? "17:00",
+      defaultDurationMinutes: parseInt(this.settings.get<string>("defaultDurationMinutes") ?? "30", 10),
+      gridIntervalMinutes: parseInt(this.settings.get<string>("gridIntervalMinutes") ?? "15", 10),
+    }));
+    const allTools = [...tools, ...autoScheduleTools];
+    for (const tool of allTools) {
+      this.app.ai.registerTool(tool.definition, tool.executor);
     }
+    log.info("Registered AI tools", { count: allTools.length });
 
     log.info("Timeblocking plugin loaded");
   }

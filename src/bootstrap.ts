@@ -97,6 +97,8 @@ export function bootstrap(dbPath?: string): AppServices {
     pluginDir,
     {
       taskService,
+      projectService,
+      tagService,
       eventBus,
       settingsManager,
       commandRegistry,
