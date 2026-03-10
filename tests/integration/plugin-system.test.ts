@@ -291,7 +291,14 @@ describe("Plugin System Integration", () => {
       const { taskService, projectService, tagService, eventBus, storage } = createTestServices();
       const api = createPluginAPI({
         pluginId: "test",
-        permissions: ["task:read", "task:write", "project:read", "tag:read", "commands", "storage"] as Permission[],
+        permissions: [
+          "task:read",
+          "task:write",
+          "project:read",
+          "tag:read",
+          "commands",
+          "storage",
+        ] as Permission[],
         taskService,
         projectService,
         tagService,
@@ -342,7 +349,9 @@ describe("Plugin System Integration", () => {
 
       // All methods exist (no undefined) but throw with helpful messages
       expect(() => api.tasks.list()).toThrow(/requires the "task:read" permission/);
-      expect(() => api.tasks.create({ title: "test" })).toThrow(/requires the "task:write" permission/);
+      expect(() => api.tasks.create({ title: "test" })).toThrow(
+        /requires the "task:write" permission/,
+      );
       expect(() => api.tasks.get("id")).toThrow(/requires the "task:read" permission/);
       expect(() => api.tasks.update("id", {})).toThrow(/requires the "task:write" permission/);
       expect(() => api.tasks.complete("id")).toThrow(/requires the "task:write" permission/);
@@ -351,17 +360,29 @@ describe("Plugin System Integration", () => {
       expect(() => api.projects.list()).toThrow(/requires the "project:read" permission/);
       expect(() => api.projects.get("id")).toThrow(/requires the "project:read" permission/);
       expect(() => api.projects.create("test")).toThrow(/requires the "project:write" permission/);
-      expect(() => api.projects.update("id", {})).toThrow(/requires the "project:write" permission/);
+      expect(() => api.projects.update("id", {})).toThrow(
+        /requires the "project:write" permission/,
+      );
       expect(() => api.projects.delete("id")).toThrow(/requires the "project:write" permission/);
       expect(() => api.tags.list()).toThrow(/requires the "tag:read" permission/);
       expect(() => api.tags.create("test")).toThrow(/requires the "tag:write" permission/);
       expect(() => api.tags.delete("id")).toThrow(/requires the "tag:write" permission/);
-      expect(() => api.commands.register({ id: "x", name: "x", callback: () => {} })).toThrow(/requires the "commands" permission/);
-      expect(() => api.ui.addSidebarPanel({ id: "x", title: "x", icon: "x" })).toThrow(/requires the "ui:panel" permission/);
-      expect(() => api.ui.addView({ id: "x", name: "x", icon: "x" })).toThrow(/requires the "ui:view" permission/);
-      expect(() => api.ui.addStatusBarItem({ id: "x", text: "x", icon: "x" })).toThrow(/requires the "ui:status" permission/);
+      expect(() => api.commands.register({ id: "x", name: "x", callback: () => {} })).toThrow(
+        /requires the "commands" permission/,
+      );
+      expect(() => api.ui.addSidebarPanel({ id: "x", title: "x", icon: "x" })).toThrow(
+        /requires the "ui:panel" permission/,
+      );
+      expect(() => api.ui.addView({ id: "x", name: "x", icon: "x" })).toThrow(
+        /requires the "ui:view" permission/,
+      );
+      expect(() => api.ui.addStatusBarItem({ id: "x", text: "x", icon: "x" })).toThrow(
+        /requires the "ui:status" permission/,
+      );
       expect(() => api.storage.get("key")).toThrow(/requires the "storage" permission/);
-      expect(() => api.network.fetch("http://example.com")).toThrow(/requires the "network" permission/);
+      expect(() => api.network.fetch("http://example.com")).toThrow(
+        /requires the "network" permission/,
+      );
     });
 
     it("should throw when accessing events without task:read permission", () => {
@@ -379,7 +400,9 @@ describe("Plugin System Integration", () => {
         settingDefinitions: [],
       });
 
-      expect(() => api.events.on("task:create", () => {})).toThrow(/requires the "task:read" permission/);
+      expect(() => api.events.on("task:create", () => {})).toThrow(
+        /requires the "task:read" permission/,
+      );
     });
   });
 

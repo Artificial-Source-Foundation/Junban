@@ -24,13 +24,7 @@ export interface AppState {
 
 const AppStateContext = createContext<AppState | null>(null);
 
-export function AppStateProvider({
-  value,
-  children,
-}: {
-  value: AppState;
-  children: ReactNode;
-}) {
+export function AppStateProvider({ value, children }: { value: AppState; children: ReactNode }) {
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
 }
 

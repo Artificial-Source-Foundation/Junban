@@ -24,7 +24,10 @@ interface ViewNavigationProps {
   onNavigate: (view: string, id?: string) => void;
   // Items & order
   orderedSidebarItems: string[];
-  navItemMap: Map<string, { id: string; label: string; icon: LucideIcon | string; countKey?: "inbox" | "today" }>;
+  navItemMap: Map<
+    string,
+    { id: string; label: string; icon: LucideIcon | string; countKey?: "inbox" | "today" }
+  >;
   countMap: Record<string, number | undefined>;
   // Plugin views
   viewsBySlot: { navigation: ViewInfo[]; tools: ViewInfo[]; workspace: ViewInfo[] };
@@ -45,7 +48,12 @@ interface ViewNavigationProps {
   favoriteViewsExpanded: boolean;
   setFavoriteViewsExpanded: (v: boolean) => void;
   // Favorites
-  favoriteNavItems: Array<{ id: string; label: string; icon: LucideIcon | string; countKey?: "inbox" | "today" }>;
+  favoriteNavItems: Array<{
+    id: string;
+    label: string;
+    icon: LucideIcon | string;
+    countKey?: "inbox" | "today";
+  }>;
   // Filters
   savedFilters: Array<{ id: string; name: string; query: string; color?: string }>;
   selectedFilterId?: string | null;
