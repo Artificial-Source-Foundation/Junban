@@ -95,8 +95,8 @@ export function PluginsTab() {
               <h3 className="text-sm font-semibold text-on-surface">Restricted Mode is ON</h3>
               <p className="text-xs text-on-surface-muted mt-1">
                 Community plugins are disabled for security. Only built-in extensions can be
-                enabled. Community plugins can execute arbitrary code — only enable this if you trust
-                your plugin sources.
+                enabled. Community plugins can execute arbitrary code — only enable this if you
+                trust your plugin sources.
               </p>
               <button
                 onClick={() => setShowSafetyDialog(true)}
@@ -239,9 +239,7 @@ export function PluginsTab() {
           <div className="bg-surface rounded-xl shadow-2xl max-w-sm w-full mx-4 border border-border p-5">
             <div className="flex items-center gap-3 mb-3">
               <ShieldAlert size={24} className="text-warning" />
-              <h3 className="text-base font-semibold text-on-surface">
-                Enable community plugins?
-              </h3>
+              <h3 className="text-base font-semibold text-on-surface">Enable community plugins?</h3>
             </div>
             <p className="text-sm text-on-surface-muted mb-4">
               Community plugins are created by third-party developers and can run arbitrary code on

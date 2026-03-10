@@ -28,13 +28,10 @@ export function OnboardingModal({ open, onComplete, onRequestOpenSettings }: Onb
     if (step > 0) setStep((s) => s - 1);
   }, [step]);
 
-  const handleThemeSelect = useCallback(
-    (themeId: ThemeId) => {
-      setSelectedTheme(themeId);
-      themeManager.setTheme(themeId);
-    },
-    [],
-  );
+  const handleThemeSelect = useCallback((themeId: ThemeId) => {
+    setSelectedTheme(themeId);
+    themeManager.setTheme(themeId);
+  }, []);
 
   const handleAccentSelect = useCallback(
     (color: string) => {
@@ -60,7 +57,15 @@ export function OnboardingModal({ open, onComplete, onRequestOpenSettings }: Onb
     if (wantsAI) {
       onRequestOpenSettings?.("ai");
     }
-  }, [selectedPreset, selectedTheme, selectedAccent, wantsAI, updateSetting, onComplete, onRequestOpenSettings]);
+  }, [
+    selectedPreset,
+    selectedTheme,
+    selectedAccent,
+    wantsAI,
+    updateSetting,
+    onComplete,
+    onRequestOpenSettings,
+  ]);
 
   if (!open) return null;
 

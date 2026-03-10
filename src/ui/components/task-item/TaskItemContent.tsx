@@ -1,9 +1,4 @@
-import {
-  Calendar,
-  Clock,
-  Repeat,
-  Bell,
-} from "lucide-react";
+import { Calendar, Clock, Repeat, Bell } from "lucide-react";
 import type { Task } from "../../../core/types.js";
 import { FrogIcon, getDreadLevelColor } from "../DreadLevelSelector.js";
 import { formatRecurrenceLabel } from "../RecurrencePicker.js";

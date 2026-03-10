@@ -66,9 +66,7 @@ export function StepTheme({
               }`}
               style={{ backgroundColor: color }}
             >
-              {selectedAccent === color && (
-                <Check size={14} className="text-white drop-shadow" />
-              )}
+              {selectedAccent === color && <Check size={14} className="text-white drop-shadow" />}
             </button>
           ))}
         </div>

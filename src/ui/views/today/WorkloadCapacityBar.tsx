@@ -1,12 +1,6 @@
 import { formatDuration } from "./today-utils.js";
 
-export function WorkloadCapacityBar({
-  planned,
-  capacity,
-}: {
-  planned: number;
-  capacity: number;
-}) {
+export function WorkloadCapacityBar({ planned, capacity }: { planned: number; capacity: number }) {
   const pct = Math.min((planned / capacity) * 100, 100);
   const over = planned > capacity;
 

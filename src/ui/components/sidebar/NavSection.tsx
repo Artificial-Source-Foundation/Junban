@@ -3,11 +3,7 @@ import { Plus, Star, Heart, Filter, type LucideIcon } from "lucide-react";
 import type { Project } from "../../../core/types.js";
 import type { PanelInfo, ViewInfo } from "../../api/index.js";
 import { PluginErrorBoundary } from "../../views/PluginView.js";
-import {
-  SortableSection,
-  SectionHeader,
-  renderNavButton,
-} from "./SidebarPrimitives.js";
+import { SortableSection, SectionHeader, renderNavButton } from "./SidebarPrimitives.js";
 import { ProjectTree, ProjectButton } from "./ProjectTree.js";
 
 interface NavSectionRenderProps {
@@ -70,10 +66,7 @@ function renderPluginViewButton(
 }
 
 /** Renders a single sidebar section by its ID. Returns null for unknown section IDs. */
-export function renderSection(
-  itemId: string,
-  props: NavSectionRenderProps,
-): ReactNode {
+export function renderSection(itemId: string, props: NavSectionRenderProps): ReactNode {
   const {
     collapsed,
     currentView,
@@ -265,7 +258,13 @@ export function renderSection(
                   <ul className="space-y-0.5">
                     {viewsBySlot.tools.map((view) => (
                       <li key={`plugin-view-${view.id}`}>
-                        {renderPluginViewButton(view, currentView, selectedPluginViewId, onNavigate, collapsed)}
+                        {renderPluginViewButton(
+                          view,
+                          currentView,
+                          selectedPluginViewId,
+                          onNavigate,
+                          collapsed,
+                        )}
                       </li>
                     ))}
                   </ul>

@@ -295,7 +295,10 @@ export function ViewRenderer({
       }
       case "ai-chat":
         return (
-          <AIChat onOpenSettings={() => handleOpenSettingsTab("ai")} onSelectTask={handleSelectTask} />
+          <AIChat
+            onOpenSettings={() => handleOpenSettingsTab("ai")}
+            onSelectTask={handleSelectTask}
+          />
         );
       case "dopamine-menu":
         return (

@@ -1,11 +1,4 @@
-import {
-  CheckCircle2,
-  AlertTriangle,
-  Flame,
-  Trophy,
-  Lightbulb,
-  FolderX,
-} from "lucide-react";
+import { CheckCircle2, AlertTriangle, Flame, Trophy, Lightbulb, FolderX } from "lucide-react";
 import { PRIORITY_COLORS, PRIORITY_LABELS } from "../ChatTaskResults";
 
 export function WeeklyReviewCard({ data }: { data: Record<string, unknown> }) {

@@ -25,9 +25,7 @@ export function StepPreset({
               key={option.key}
               onClick={() => onPresetSelect(option.key)}
               className={`w-full flex items-center gap-3.5 px-4 py-4 rounded-[14px] border-2 text-left transition-all hover:scale-[1.01] ${
-                isSelected
-                  ? "border-accent"
-                  : "border-border hover:border-on-surface-muted/30"
+                isSelected ? "border-accent" : "border-border hover:border-on-surface-muted/30"
               }`}
             >
               {/* Radio dot */}

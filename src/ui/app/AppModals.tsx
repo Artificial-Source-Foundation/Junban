@@ -161,9 +161,7 @@ export function AppModals({
 }: AppModalsProps) {
   return (
     <>
-      {settingsOpen && (
-        <Settings activeTab={settingsTab ?? undefined} onClose={onCloseSettings} />
-      )}
+      {settingsOpen && <Settings activeTab={settingsTab ?? undefined} onClose={onCloseSettings} />}
       {focusModeOpen && (
         <FocusMode
           tasks={tasks.filter((t) => t.status === "pending")}

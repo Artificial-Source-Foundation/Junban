@@ -13,7 +13,12 @@ import { useQuickCaptureWindow } from "../hooks/useQuickCaptureWindow.js";
 import { api } from "../api/index.js";
 import { toDateKey } from "../../utils/format-date.js";
 import { isTauri } from "../../utils/tauri.js";
-import type { Project as ProjectType, Section, TaskComment, TaskActivity } from "../../core/types.js";
+import type {
+  Project as ProjectType,
+  Section,
+  TaskComment,
+  TaskActivity,
+} from "../../core/types.js";
 import type { View, CalendarMode } from "../hooks/useRouting.js";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "saydo.ui.sidebar.collapsed";

@@ -7,10 +7,7 @@ import type { Task, Project } from "../../../core/types.js";
  * Hook that computes weekly review data from the client-side task list.
  * Returns a callback that calculates the data on demand.
  */
-export function useWeeklyReviewData(
-  tasks: Task[],
-  projects: Project[],
-): () => WeeklyReviewData {
+export function useWeeklyReviewData(tasks: Task[], projects: Project[]): () => WeeklyReviewData {
   return useCallback(() => {
     const now = new Date();
     const day = now.getDay();

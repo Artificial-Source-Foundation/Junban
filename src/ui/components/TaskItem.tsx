@@ -114,12 +114,7 @@ export const TaskItem = React.memo(function TaskItem({
     ? `hover:bg-priority-${task.priority}/15`
     : "hover:bg-on-surface-muted/15";
 
-  const rowClassName = getRowClassName(
-    !!isMultiSelected,
-    isSelected,
-    task.status,
-    task.priority,
-  );
+  const rowClassName = getRowClassName(!!isMultiSelected, isSelected, task.status, task.priority);
 
   return (
     <div
@@ -259,11 +254,7 @@ export const TaskItem = React.memo(function TaskItem({
       />
 
       {/* Hover action buttons */}
-      <TaskItemActions
-        task={task}
-        onSelect={onSelect}
-        onUpdateDueDate={onUpdateDueDate}
-      />
+      <TaskItemActions task={task} onSelect={onSelect} onUpdateDueDate={onUpdateDueDate} />
     </div>
   );
 });

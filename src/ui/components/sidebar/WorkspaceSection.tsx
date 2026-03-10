@@ -20,9 +20,7 @@ export function WorkspaceSection({
   onOpenSettings,
 }: WorkspaceSectionProps) {
   return (
-    <div
-      className={`shrink-0 border-t border-border/60 ${collapsed ? "pt-2 pb-3" : "pt-3 pb-3"}`}
-    >
+    <div className={`shrink-0 border-t border-border/60 ${collapsed ? "pt-2 pb-3" : "pt-3 pb-3"}`}>
       {!collapsed && (
         <h3 className="text-[11px] font-semibold text-on-surface-muted uppercase tracking-wider mb-1 px-3">
           Workspace

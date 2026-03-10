@@ -40,10 +40,7 @@ export function DateTimeSection() {
           />
         </SettingRow>
 
-        <SettingRow
-          label="Date format"
-          description={dateFormatPreview(settings.date_format, now)}
-        >
+        <SettingRow label="Date format" description={dateFormatPreview(settings.date_format, now)}>
           <SettingSelect
             value={settings.date_format}
             onChange={(v) => updateSetting("date_format", v)}

@@ -32,10 +32,7 @@ export function TaskDefaultsSection() {
           <Toggle
             enabled={settings.confirm_delete === "true"}
             onToggle={() =>
-              updateSetting(
-                "confirm_delete",
-                settings.confirm_delete === "true" ? "false" : "true",
-              )
+              updateSetting("confirm_delete", settings.confirm_delete === "true" ? "false" : "true")
             }
           />
         </SettingRow>

@@ -16,18 +16,19 @@ interface UseAppHandlersParams {
   handleCreateTask: (data: ParsedTaskInput) => void;
   handleSelectTask: (id: string) => void;
   selectedTask: Task | null | undefined;
-  showToast: (
-    message: string,
-    action?: { label: string; onClick: () => void },
-  ) => void;
+  showToast: (message: string, action?: { label: string; onClick: () => void }) => void;
   playSound: (sound: SoundEvent) => void;
   fetchProjects: () => void;
   fetchSections: (projectId: string) => void;
   fetchCommentsAndActivity: (taskId: string) => void;
   refreshTasks: () => void;
   setAddTaskTrigger: React.Dispatch<React.SetStateAction<number>>;
-  setTaskComments: React.Dispatch<React.SetStateAction<import("../../core/types.js").TaskComment[]>>;
-  setTaskActivity: React.Dispatch<React.SetStateAction<import("../../core/types.js").TaskActivity[]>>;
+  setTaskComments: React.Dispatch<
+    React.SetStateAction<import("../../core/types.js").TaskComment[]>
+  >;
+  setTaskActivity: React.Dispatch<
+    React.SetStateAction<import("../../core/types.js").TaskActivity[]>
+  >;
   setFocusedTaskId: (id: string | null) => void;
   selectedTaskId: string | null;
   tasks: Task[];
@@ -318,4 +319,3 @@ export function useAppHandlers({
     handleDeleteComment,
   };
 }
-
