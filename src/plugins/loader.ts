@@ -177,6 +177,15 @@ export class PluginLoader {
 
     logger.info(`Loading plugin: ${pluginId}`);
 
+    // Block community plugins when restricted mode is on
+    if (!loaded.builtin) {
+      const setting = this.services.queries.getAppSetting("community_plugins_enabled");
+      if (setting?.value !== "true") {
+        logger.info(`Community plugins disabled, skipping "${pluginId}"`);
+        return;
+      }
+    }
+
     // Check permissions
     const approvedPermissions = this.services.queries.getPluginPermissions(pluginId);
     const requestedPermissions = (loaded.manifest.permissions ?? []) as Permission[];

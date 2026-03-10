@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react";
-import { Puzzle, Search } from "lucide-react";
+import { Puzzle, Search, ShieldCheck, ShieldAlert } from "lucide-react";
 import { usePluginContext } from "../../context/PluginContext.js";
+import { useGeneralSettings } from "../../context/SettingsContext.js";
 import { PermissionDialog } from "../../components/PermissionDialog.js";
 import { api, type PluginInfo } from "../../api/index.js";
 import { PluginCard } from "../../components/PluginCard.js";
 import { PluginBrowser } from "../../components/PluginBrowser.js";
+import { Toggle } from "./components.js";
 
 export function PluginsTab() {
   const {
@@ -15,11 +17,15 @@ export function PluginsTab() {
     refreshStatusBar,
     refreshCommands,
   } = usePluginContext();
+  const { settings, updateSetting } = useGeneralSettings();
   const [expandedPlugin, setExpandedPlugin] = useState<string | null>(null);
   const [permissionPlugin, setPermissionPlugin] = useState<PluginInfo | null>(null);
   const [toggling, setToggling] = useState<Set<string>>(new Set());
   const [browserOpen, setBrowserOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSafetyDialog, setShowSafetyDialog] = useState(false);
+
+  const isRestricted = settings.community_plugins_enabled !== "true";
 
   const builtinPlugins = useMemo(() => {
     const builtin = plugins.filter((p) => p.builtin);
@@ -53,6 +59,12 @@ export function PluginsTab() {
   };
 
   const handleToggleBuiltin = async (pluginId: string) => {
+    const plugin = plugins.find((p) => p.id === pluginId);
+    // Show permission dialog when enabling a built-in plugin that has permissions and isn't already enabled
+    if (plugin && !plugin.enabled && plugin.permissions.length > 0) {
+      setPermissionPlugin(plugin);
+      return;
+    }
     setToggling((prev) => new Set(prev).add(pluginId));
     try {
       await api.togglePlugin(pluginId);
@@ -74,6 +86,29 @@ export function PluginsTab() {
 
   return (
     <>
+      {/* Restricted Mode Banner */}
+      {isRestricted && (
+        <div className="mb-4 p-4 rounded-lg border border-warning/30 bg-warning/5">
+          <div className="flex items-start gap-3">
+            <ShieldCheck size={20} className="text-warning mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-on-surface">Restricted Mode is ON</h3>
+              <p className="text-xs text-on-surface-muted mt-1">
+                Community plugins are disabled for security. Only built-in extensions can be
+                enabled. Community plugins can execute arbitrary code — only enable this if you trust
+                your plugin sources.
+              </p>
+              <button
+                onClick={() => setShowSafetyDialog(true)}
+                className="mt-2 text-xs font-medium text-accent hover:underline"
+              >
+                Turn off Restricted Mode
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Search */}
       <div className="relative max-w-md mb-6">
         <Search
@@ -114,8 +149,32 @@ export function PluginsTab() {
       {/* Community Plugins */}
       {communityPlugins.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-lg font-semibold mb-3 text-on-surface">Community Plugins</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-medium text-on-surface">Community Plugins</h3>
+              <p className="text-xs text-on-surface-muted">
+                Third-party extensions from the plugin registry
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-on-surface-muted">
+                {settings.community_plugins_enabled === "true" ? "Enabled" : "Restricted"}
+              </span>
+              <Toggle
+                enabled={settings.community_plugins_enabled === "true"}
+                onToggle={() => {
+                  if (settings.community_plugins_enabled === "true") {
+                    updateSetting("community_plugins_enabled", "false");
+                  } else {
+                    setShowSafetyDialog(true);
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <div
+            className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${isRestricted ? "opacity-50 pointer-events-none" : ""}`}
+          >
             {communityPlugins.map((plugin) => (
               <PluginCard
                 key={plugin.id}
@@ -127,6 +186,7 @@ export function PluginsTab() {
                 }
                 onRequestApproval={() => setPermissionPlugin(plugin)}
                 onRevoke={() => handleRevoke(plugin.id)}
+                isRestricted={isRestricted}
               />
             ))}
           </div>
@@ -171,6 +231,41 @@ export function PluginsTab() {
           onApprove={handleApprove}
           onCancel={() => setPermissionPlugin(null)}
         />
+      )}
+
+      {/* Safety Confirmation Dialog */}
+      {showSafetyDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-surface rounded-xl shadow-2xl max-w-sm w-full mx-4 border border-border p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <ShieldAlert size={24} className="text-warning" />
+              <h3 className="text-base font-semibold text-on-surface">
+                Enable community plugins?
+              </h3>
+            </div>
+            <p className="text-sm text-on-surface-muted mb-4">
+              Community plugins are created by third-party developers and can run arbitrary code on
+              your machine. Only enable plugins from sources you trust.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowSafetyDialog(false)}
+                className="px-4 py-2 text-sm font-medium text-on-surface-secondary hover:bg-surface-tertiary rounded-lg"
+              >
+                Keep Restricted
+              </button>
+              <button
+                onClick={() => {
+                  updateSetting("community_plugins_enabled", "true");
+                  setShowSafetyDialog(false);
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-warning hover:bg-warning/90 rounded-lg"
+              >
+                I understand, enable
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

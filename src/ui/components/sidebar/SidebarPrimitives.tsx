@@ -88,6 +88,7 @@ export const NAV_FEATURE_MAP: Record<string, keyof GeneralSettings> = {
   matrix: "feature_matrix",
   stats: "feature_stats",
   someday: "feature_someday",
+  "dopamine-menu": "feature_dopamine_menu",
 };
 
 export function SortableNavItem({ id, children }: { id: string; children: ReactNode }) {

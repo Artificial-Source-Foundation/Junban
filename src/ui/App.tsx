@@ -1020,6 +1020,7 @@ function AppContent() {
             setOnboardingOpen(false);
             api.setAppSetting("onboarding_completed", "true");
           }}
+          onRequestOpenSettings={(tab) => handleOpenSettingsTab(tab as SettingsTab)}
         />
         {toast && (
           <Toast

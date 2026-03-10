@@ -47,9 +47,11 @@ export interface GeneralSettings {
   quick_capture_enabled: "true" | "false";
   eat_the_frog_enabled: "true" | "false";
   eat_the_frog_morning_only: "true" | "false";
+  feature_dopamine_menu: "true" | "false";
+  community_plugins_enabled: "true" | "false";
 }
 
-const DEFAULT_SETTINGS: GeneralSettings = {
+export const DEFAULT_SETTINGS: GeneralSettings = {
   accent_color: "#3b82f6",
   density: "default",
   font_size: "default",
@@ -72,29 +74,31 @@ const DEFAULT_SETTINGS: GeneralSettings = {
   feature_kanban: "true",
   feature_deadlines: "true",
   feature_duration: "true",
-  feature_someday: "true",
+  feature_someday: "false",
   feature_comments: "true",
-  feature_stats: "true",
-  feature_chords: "true",
-  feature_cancelled: "true",
-  feature_matrix: "true",
-  feature_calendar: "true",
-  feature_filters_labels: "true",
-  feature_completed: "true",
+  feature_stats: "false",
+  feature_chords: "false",
+  feature_cancelled: "false",
+  feature_matrix: "false",
+  feature_calendar: "false",
+  feature_filters_labels: "false",
+  feature_completed: "false",
   sidebar_nav_order: "",
   sidebar_favorite_views: "",
   sidebar_section_order: "",
   daily_capacity_minutes: "480",
-  nudge_enabled: "true",
-  nudge_overdue_alert: "true",
-  nudge_deadline_approaching: "true",
-  nudge_stale_tasks: "true",
-  nudge_empty_today: "true",
-  nudge_overloaded_day: "true",
+  nudge_enabled: "false",
+  nudge_overdue_alert: "false",
+  nudge_deadline_approaching: "false",
+  nudge_stale_tasks: "false",
+  nudge_empty_today: "false",
+  nudge_overloaded_day: "false",
   quick_capture_hotkey: "CmdOrCtrl+Shift+Space",
   quick_capture_enabled: "true",
-  eat_the_frog_enabled: "true",
-  eat_the_frog_morning_only: "true",
+  eat_the_frog_enabled: "false",
+  eat_the_frog_morning_only: "false",
+  feature_dopamine_menu: "false",
+  community_plugins_enabled: "false",
 };
 
 const SETTING_KEYS = Object.keys(DEFAULT_SETTINGS) as (keyof GeneralSettings)[];

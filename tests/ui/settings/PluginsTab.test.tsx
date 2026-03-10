@@ -4,6 +4,8 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 vi.mock("lucide-react", () => ({
   Puzzle: (props: any) => <svg data-testid="puzzle-icon" {...props} />,
   Search: (props: any) => <svg data-testid="search-icon" {...props} />,
+  ShieldCheck: (props: any) => <svg data-testid="shield-check-icon" {...props} />,
+  ShieldAlert: (props: any) => <svg data-testid="shield-alert-icon" {...props} />,
 }));
 
 const mockRefreshPlugins = vi.fn().mockResolvedValue(undefined);
@@ -74,6 +76,22 @@ vi.mock("../../../src/ui/components/PluginBrowser.js", () => ({
 
 vi.mock("../../../src/ui/components/PermissionDialog.js", () => ({
   PermissionDialog: () => <div data-testid="permission-dialog">Permission Dialog</div>,
+}));
+
+vi.mock("../../../src/ui/context/SettingsContext.js", () => ({
+  useGeneralSettings: () => ({
+    settings: { community_plugins_enabled: "false" },
+    loaded: true,
+    updateSetting: vi.fn(),
+  }),
+}));
+
+vi.mock("../../../src/ui/views/settings/components.js", () => ({
+  Toggle: ({ enabled, onToggle }: any) => (
+    <button data-testid="toggle-component" onClick={onToggle}>
+      {enabled ? "on" : "off"}
+    </button>
+  ),
 }));
 
 import { PluginsTab } from "../../../src/ui/views/settings/PluginsTab.js";

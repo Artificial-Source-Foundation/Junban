@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Shield } from "lucide-react";
+import { ChevronDown, ChevronUp, Lock, Shield } from "lucide-react";
 import type { PluginInfo } from "../../api/index.js";
 import { GradientBanner } from "./gradient-utils.js";
 import { PluginSettings } from "./PluginSettingsPanel.js";
@@ -16,6 +16,8 @@ export interface SettingsCardProps {
   // Community specific
   onRequestApproval?: () => void;
   onRevoke?: () => void;
+  /** When true, community plugin interactive elements are disabled */
+  isRestricted?: boolean;
 }
 
 export function SettingsPluginCard({
@@ -26,6 +28,7 @@ export function SettingsPluginCard({
   onToggle,
   onRequestApproval,
   onRevoke,
+  isRestricted,
 }: SettingsCardProps) {
   const isBuiltin = plugin.builtin;
   const isPending = !plugin.enabled && plugin.permissions.length > 0 && !isBuiltin;
@@ -124,8 +127,16 @@ export function SettingsPluginCard({
               </div>
             )}
 
+            {/* Restricted mode notice */}
+            {isRestricted && !isBuiltin && (
+              <p className="mt-2 text-xs text-warning flex items-center gap-1">
+                <Lock size={10} />
+                Enable community plugins first
+              </p>
+            )}
+
             {/* Approval / Revoke buttons for community plugins */}
-            {isPending && onRequestApproval && (
+            {isPending && !isRestricted && onRequestApproval && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();

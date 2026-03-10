@@ -213,6 +213,19 @@ export function pluginRoutes(services: AppServices): Hono {
   app.post("/:id/permissions/approve", async (c) => {
     await ensurePlugins();
     const pluginId = c.req.param("id");
+
+    // Block approving community plugins when restricted mode is on
+    const plugin = services.pluginLoader.get(pluginId);
+    if (plugin && !plugin.builtin) {
+      const setting = services.storage.getAppSetting("community_plugins_enabled");
+      if (setting?.value !== "true") {
+        return c.json(
+          { error: "Community plugins are disabled. Enable them in Settings > Plugins." },
+          403,
+        );
+      }
+    }
+
     const body = await c.req.json();
     const { permissions } = body as { permissions: string[] };
     await services.pluginLoader.approveAndLoad(pluginId, permissions);
@@ -295,6 +308,17 @@ export function pluginRoutes(services: AppServices): Hono {
     const plugin = services.pluginLoader.get(pluginId);
     if (!plugin) {
       return c.json({ error: "Plugin not found" }, 404);
+    }
+
+    // Block enabling community plugins when restricted mode is on
+    if (!plugin.enabled && !plugin.builtin) {
+      const setting = services.storage.getAppSetting("community_plugins_enabled");
+      if (setting?.value !== "true") {
+        return c.json(
+          { error: "Community plugins are disabled. Enable them in Settings > Plugins." },
+          403,
+        );
+      }
     }
 
     if (plugin.enabled) {

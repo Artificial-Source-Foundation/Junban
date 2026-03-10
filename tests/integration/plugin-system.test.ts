@@ -223,7 +223,8 @@ describe("Plugin System Integration", () => {
       });
 
       await loader.discover();
-      // Pre-approve permissions so the plugin loads
+      // Enable community plugins and pre-approve permissions so the plugin loads
+      storage.setAppSetting("community_plugins_enabled", "true");
       storage.setPluginPermissions("test-plugin", ["task:read", "commands", "ui:status"]);
       await loader.load("test-plugin");
 
@@ -273,6 +274,7 @@ describe("Plugin System Integration", () => {
       });
 
       await loader.discover();
+      storage.setAppSetting("community_plugins_enabled", "true");
       storage.setPluginPermissions("test-plugin", ["task:read", "commands", "ui:status"]);
       await loader.load("test-plugin");
 
@@ -643,7 +645,8 @@ describe("Plugin System Integration", () => {
         queries: storage,
       });
 
-      // Pre-approve and discover + load
+      // Enable community plugins, pre-approve and discover + load
+      storage.setAppSetting("community_plugins_enabled", "true");
       storage.setPluginPermissions("test-plugin", ["task:read", "commands", "ui:status"]);
       await loader.loadAll();
       expect(loader.getAll().filter((p) => p.enabled)).toHaveLength(1);

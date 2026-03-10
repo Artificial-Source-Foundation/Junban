@@ -115,6 +115,7 @@ export function ViewNavigation({
 
   const renderSection = (itemId: string): ReactNode => {
     if (itemId === "favorite-views") {
+      if (favoriteNavItems.length === 0) return null;
       return (
         <SortableSection key={itemId} id={itemId}>
           {(dragListeners) => (
@@ -150,6 +151,7 @@ export function ViewNavigation({
       );
     }
     if (itemId === "favorites") {
+      if (favoriteProjects.length === 0) return null;
       return (
         <SortableSection key={itemId} id={itemId}>
           {(dragListeners) => (
@@ -220,6 +222,7 @@ export function ViewNavigation({
       );
     }
     if (itemId === "my-views") {
+      if (savedFilters.length === 0) return null;
       return (
         <SortableSection key={itemId} id={itemId}>
           {(dragListeners) => (
@@ -255,6 +258,7 @@ export function ViewNavigation({
       );
     }
     if (itemId === "tools") {
+      if (panels.length === 0 && viewsBySlot.tools.length === 0) return null;
       return (
         <SortableSection key={itemId} id={itemId}>
           {(dragListeners) => (
