@@ -8,8 +8,8 @@ import {
   Minus,
   Layers,
   Rocket,
-  MessageSquare,
-  Lightbulb,
+  Bot,
+  Type,
   Command,
   Puzzle,
   Check,
@@ -25,16 +25,16 @@ interface OnboardingModalProps {
 
 const TOTAL_STEPS = 5;
 
-/** Subset of accent colors from the full palette — visually distinct picks. */
+/** Subset of accent colors — visually distinct, matching the design. */
 const ACCENT_COLORS = [
-  "#db4035", // Red
-  "#ff9933", // Orange
-  "#fad000", // Yellow
-  "#299438", // Emerald
-  "#158fad", // Teal
-  "#14aaf5", // Sky Blue
-  "#4073ff", // Blue
-  "#884dff", // Grape
+  "#3b82f6", // Blue (default)
+  "#8B5CF6", // Purple
+  "#EC4899", // Pink
+  "#F59E0B", // Amber
+  "#10B981", // Emerald
+  "#EF4444", // Red
+  "#F97316", // Orange
+  "#06B6D4", // Cyan
 ] as const;
 
 type Preset = "minimal" | "standard" | "power";
@@ -117,29 +117,45 @@ const THEME_OPTIONS: {
   id: "light" | "dark" | "nord";
   label: string;
   icon: typeof Sun;
-  bgClass: string;
-  barClasses: string[];
+  iconColor: string;
+  cardBg: string;
+  labelColor: string;
+  mockBg: string;
+  barColor: string;
+  accentBar: string;
 }[] = [
   {
     id: "light",
     label: "Light",
     icon: Sun,
-    bgClass: "bg-white",
-    barClasses: ["bg-gray-200", "bg-gray-300", "bg-gray-200"],
+    iconColor: "text-amber-400",
+    cardBg: "bg-white",
+    labelColor: "text-gray-900",
+    mockBg: "bg-gray-100",
+    barColor: "bg-gray-300",
+    accentBar: "bg-blue-500",
   },
   {
     id: "dark",
     label: "Dark",
     icon: Moon,
-    bgClass: "bg-gray-800",
-    barClasses: ["bg-gray-600", "bg-gray-700", "bg-gray-600"],
+    iconColor: "text-violet-400",
+    cardBg: "bg-[#1E1E2E]",
+    labelColor: "text-gray-200",
+    mockBg: "bg-[#2A2A3C]",
+    barColor: "bg-gray-600",
+    accentBar: "bg-violet-400",
   },
   {
     id: "nord",
     label: "Nord",
     icon: Snowflake,
-    bgClass: "bg-[#2e3440]",
-    barClasses: ["bg-[#4c566a]", "bg-[#434c5e]", "bg-[#4c566a]"],
+    iconColor: "text-[#88C0D0]",
+    cardBg: "bg-[#2E3440]",
+    labelColor: "text-[#ECEFF4]",
+    mockBg: "bg-[#3B4252]",
+    barColor: "bg-[#4C566A]",
+    accentBar: "bg-[#88C0D0]",
   },
 ];
 
@@ -200,9 +216,9 @@ export function OnboardingModal({ open, onComplete, onRequestOpenSettings }: Onb
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-lg mx-4 bg-surface rounded-xl shadow-2xl border border-border animate-scale-fade-in p-6">
+      <div className="w-full max-w-lg mx-4 bg-surface rounded-[20px] shadow-2xl border border-border animate-scale-fade-in px-9 py-8">
         {/* Progress dots */}
-        <div className="flex justify-center gap-2 mb-6">
+        <div className="flex justify-center gap-2 mb-8">
           {Array.from({ length: TOTAL_STEPS }, (_, i) => (
             <div
               key={i}
@@ -229,59 +245,59 @@ export function OnboardingModal({ open, onComplete, onRequestOpenSettings }: Onb
         {step === 3 && <StepAI onSetWantsAI={setWantsAI} onNext={handleNext} />}
         {step === 4 && <StepReady />}
 
-        {/* Actions */}
-        <div className="flex justify-between mt-8">
-          {step === 0 ? (
-            <div />
-          ) : step === 3 ? (
-            <button
-              onClick={handleBack}
-              className="px-4 py-2 text-sm text-on-surface-muted hover:text-on-surface transition-colors"
-            >
-              Back
-            </button>
-          ) : (
-            <button
-              onClick={handleBack}
-              className="px-4 py-2 text-sm text-on-surface-muted hover:text-on-surface transition-colors"
-            >
-              Back
-            </button>
-          )}
-
+        {/* Actions — Step 0: centered button, Steps 1-2: Back/Next, Step 3: own buttons, Step 4: centered finish */}
+        <div className="flex justify-between items-center mt-8">
           {step === 0 && (
-            <button
-              onClick={handleNext}
-              className="px-5 py-2 text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
-            >
-              Get Started
-            </button>
+            <>
+              <div />
+              <button
+                onClick={handleNext}
+                className="px-8 py-2.5 text-sm font-semibold bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors"
+              >
+                Get Started
+              </button>
+              <div />
+            </>
           )}
-          {step === 1 && (
-            <button
-              onClick={handleNext}
-              className="px-5 py-2 text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
-            >
-              Next
-            </button>
-          )}
-          {step === 2 && (
-            <button
-              onClick={handleNext}
-              className="px-5 py-2 text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
-            >
-              Next
-            </button>
+          {(step === 1 || step === 2) && (
+            <>
+              <button
+                onClick={handleBack}
+                className="px-4 py-2 text-sm text-on-surface-muted hover:text-on-surface transition-colors"
+              >
+                Back
+              </button>
+              <button
+                onClick={handleNext}
+                className="px-6 py-2.5 text-sm font-semibold bg-accent text-white rounded-[10px] hover:bg-accent/90 transition-colors"
+              >
+                Next
+              </button>
+            </>
           )}
           {/* Step 3 has its own buttons inside StepAI */}
-          {step === 3 && <div />}
+          {step === 3 && (
+            <>
+              <button
+                onClick={handleBack}
+                className="px-4 py-2 text-sm text-on-surface-muted hover:text-on-surface transition-colors"
+              >
+                Back
+              </button>
+              <div />
+            </>
+          )}
           {step === 4 && (
-            <button
-              onClick={handleFinish}
-              className="px-5 py-2 text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
-            >
-              Start using Saydo
-            </button>
+            <>
+              <div />
+              <button
+                onClick={handleFinish}
+                className="px-8 py-2.5 text-[15px] font-semibold bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors"
+              >
+                Start using Saydo
+              </button>
+              <div />
+            </>
           )}
         </div>
       </div>
@@ -293,14 +309,14 @@ export function OnboardingModal({ open, onComplete, onRequestOpenSettings }: Onb
 
 function StepWelcome() {
   return (
-    <div className="text-center">
-      <div className="flex justify-center mb-4">
-        <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center shadow-[0_0_24px_rgba(var(--accent-rgb,59,130,246),0.2)]">
-          <Sparkles size={32} className="text-accent" />
-        </div>
+    <div className="flex flex-col items-center text-center">
+      <div className="w-[72px] h-[72px] rounded-2xl bg-accent/10 flex items-center justify-center mb-6">
+        <Sparkles size={36} className="text-accent" />
       </div>
-      <h2 className="text-lg font-semibold text-on-surface">Welcome to Saydo</h2>
-      <p className="text-sm text-on-surface-muted mt-2">
+      <h2 className="text-2xl font-bold text-on-surface font-[Plus_Jakarta_Sans,sans-serif]">
+        Welcome to Saydo
+      </h2>
+      <p className="text-[15px] text-on-surface-muted mt-2 max-w-xs">
         Your task manager. Simple, smart, yours.
       </p>
     </div>
@@ -320,10 +336,15 @@ function StepTheme({
 }) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-on-surface text-center mb-4">Pick your look</h2>
+      <h2 className="text-[22px] font-bold text-on-surface text-center font-[Plus_Jakarta_Sans,sans-serif]">
+        Pick your look
+      </h2>
+      <p className="text-sm text-on-surface-muted text-center mt-1 mb-6">
+        Choose a theme and accent color
+      </p>
 
       {/* Theme cards */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+      <div className="flex gap-3 justify-center mb-5">
         {THEME_OPTIONS.map((theme) => {
           const Icon = theme.icon;
           const isSelected = selectedTheme === theme.id;
@@ -331,27 +352,19 @@ function StepTheme({
             <button
               key={theme.id}
               onClick={() => onThemeSelect(theme.id)}
-              className={`flex-1 rounded-xl border-2 p-3 transition-all hover:scale-[1.02] ${
+              className={`w-[130px] rounded-2xl border-2 p-3 flex flex-col items-center justify-center gap-2 transition-all hover:scale-[1.02] ${theme.cardBg} ${
                 isSelected
                   ? "border-accent shadow-md"
-                  : "border-border hover:border-on-surface-muted/30"
+                  : "border-transparent hover:border-on-surface-muted/20"
               }`}
             >
-              {/* Mini preview */}
-              <div
-                className={`${theme.bgClass} rounded-lg p-3 mb-2 h-[72px] flex flex-col justify-center gap-1.5`}
-              >
-                {theme.barClasses.map((barClass, i) => (
-                  <div
-                    key={i}
-                    className={`${barClass} rounded h-2`}
-                    style={{ width: `${85 - i * 15}%` }}
-                  />
-                ))}
-              </div>
-              <div className="flex items-center justify-center gap-1.5 text-sm text-on-surface">
-                <Icon size={14} />
-                <span>{theme.label}</span>
+              <Icon size={28} className={theme.iconColor} />
+              <span className={`text-sm font-semibold ${theme.labelColor}`}>{theme.label}</span>
+              {/* Mini mock with 3 bars */}
+              <div className={`w-[90px] ${theme.mockBg} rounded-lg p-1.5 flex flex-col gap-1`}>
+                <div className={`${theme.barColor} rounded-sm h-1.5 w-full`} />
+                <div className={`${theme.barColor} rounded-sm h-1.5 w-[65%]`} />
+                <div className={`${theme.accentBar} rounded-sm h-1.5 w-[45%]`} />
               </div>
             </button>
           );
@@ -360,17 +373,17 @@ function StepTheme({
 
       {/* Accent color picker */}
       <div>
-        <p className="text-sm text-on-surface-muted mb-2 text-center">Accent color</p>
-        <div className="flex items-center justify-center gap-2 flex-wrap">
+        <p className="text-[13px] font-medium text-on-surface-muted mb-2.5">Accent color</p>
+        <div className="flex items-center gap-2.5 flex-wrap">
           {ACCENT_COLORS.map((color) => (
             <button
               key={color}
               onClick={() => onAccentSelect(color)}
               aria-label={`Accent color ${color}`}
-              className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+              className={`rounded-full flex items-center justify-center transition-all ${
                 selectedAccent === color
-                  ? "ring-2 ring-offset-2 ring-offset-surface ring-on-surface"
-                  : "hover:scale-110"
+                  ? "w-8 h-8 ring-2 ring-offset-2 ring-offset-surface ring-current"
+                  : "w-7 h-7 hover:scale-110"
               }`}
               style={{ backgroundColor: color }}
             >
@@ -394,9 +407,12 @@ function StepPreset({
 }) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-on-surface text-center mb-4">
+      <h2 className="text-[22px] font-bold text-on-surface text-center font-[Plus_Jakarta_Sans,sans-serif]">
         How much do you want to see?
       </h2>
+      <p className="text-sm text-on-surface-muted text-center mt-1 mb-6">
+        You can always change this in Settings
+      </p>
       <div className="space-y-3">
         {PRESET_OPTIONS.map((option) => {
           const Icon = option.icon;
@@ -405,31 +421,30 @@ function StepPreset({
             <button
               key={option.key}
               onClick={() => onPresetSelect(option.key)}
-              className={`w-full flex items-start gap-3 p-3 rounded-xl border-2 text-left transition-all hover:scale-[1.01] ${
+              className={`w-full flex items-center gap-3.5 px-4 py-4 rounded-[14px] border-2 text-left transition-all hover:scale-[1.01] ${
                 isSelected
-                  ? "border-accent bg-accent/5"
+                  ? "border-accent"
                   : "border-border hover:border-on-surface-muted/30"
               }`}
             >
               {/* Radio dot */}
               <div
-                className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                  isSelected ? "border-accent" : "border-on-surface-muted/40"
+                className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                  isSelected
+                    ? "border-[6px] border-accent bg-white"
+                    : "border-2 border-on-surface-muted/30 bg-white"
                 }`}
-              >
-                {isSelected && <div className="w-2 h-2 rounded-full bg-accent" />}
+              />
+
+              <div className="flex-1 min-w-0">
+                <p className="text-[15px] font-semibold text-on-surface">{option.label}</p>
+                <p className="text-[13px] text-on-surface-muted mt-0.5">{option.description}</p>
               </div>
 
-              <div className="flex items-start gap-2 min-w-0">
-                <Icon
-                  size={18}
-                  className={`mt-0.5 flex-shrink-0 ${isSelected ? "text-accent" : "text-on-surface-muted"}`}
-                />
-                <div>
-                  <p className="text-sm font-medium text-on-surface">{option.label}</p>
-                  <p className="text-xs text-on-surface-muted mt-0.5">{option.description}</p>
-                </div>
-              </div>
+              <Icon
+                size={20}
+                className={`flex-shrink-0 ${isSelected ? "text-accent" : "text-on-surface-muted"}`}
+              />
             </button>
           );
         })}
@@ -446,36 +461,42 @@ function StepAI({
   onNext: () => void;
 }) {
   return (
-    <div className="text-center">
-      <h2 className="text-lg font-semibold text-on-surface mb-1">AI Assistant</h2>
-      <p className="text-sm text-on-surface-muted mb-5">
-        Saydo has a built-in AI that can help manage your tasks. You can set this up now or later in
-        Settings.
+    <div>
+      <h2 className="text-[22px] font-bold text-on-surface text-center font-[Plus_Jakarta_Sans,sans-serif]">
+        AI Assistant
+      </h2>
+      <p className="text-sm text-on-surface-muted text-center mt-1 mb-6 leading-relaxed">
+        Saydo has a built-in AI that can help manage your tasks. Set this up now or later in Settings.
       </p>
 
-      {/* Decorative AI chat preview */}
-      <div className="mx-auto max-w-[280px] rounded-xl border border-border bg-surface-secondary p-3 mb-6">
-        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
-          <MessageSquare size={14} className="text-accent" />
-          <span className="text-xs font-medium text-on-surface-muted">AI Chat</span>
-        </div>
-        <div className="space-y-2 text-left">
-          <div className="bg-accent/10 rounded-lg px-2.5 py-1.5 text-xs text-on-surface w-fit">
-            Plan my day
+      {/* Chat preview — bubble style matching design */}
+      <div className="rounded-[14px] bg-surface-secondary p-4 mb-6 space-y-2.5">
+        {/* Bot message */}
+        <div className="flex items-start gap-2">
+          <div className="w-7 h-7 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
+            <Bot size={16} className="text-white" />
           </div>
-          <div className="bg-surface rounded-lg px-2.5 py-1.5 text-xs text-on-surface-muted ml-auto w-fit max-w-[200px]">
-            Here are your top 3 tasks for today...
+          <div className="bg-surface rounded-tl-sm rounded-tr-xl rounded-br-xl rounded-bl-xl px-3.5 py-2.5 max-w-[280px]">
+            <p className="text-[13px] text-on-surface leading-snug">
+              Good morning! You have 3 tasks due today. Want me to help prioritize them?
+            </p>
+          </div>
+        </div>
+        {/* User message */}
+        <div className="flex justify-end">
+          <div className="bg-accent rounded-tl-xl rounded-tr-sm rounded-br-xl rounded-bl-xl px-3.5 py-2.5">
+            <p className="text-[13px] text-white">Yes, plan my day!</p>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2.5">
         <button
           onClick={() => {
             onSetWantsAI(true);
             onNext();
           }}
-          className="px-5 py-2 text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
+          className="w-full py-2.5 text-sm font-semibold bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors"
         >
           I&apos;ll configure it now
         </button>
@@ -484,7 +505,7 @@ function StepAI({
             onSetWantsAI(false);
             onNext();
           }}
-          className="px-4 py-2 text-sm text-on-surface-muted hover:text-on-surface transition-colors"
+          className="w-full py-2.5 text-sm font-medium text-on-surface-muted bg-surface-secondary rounded-xl hover:bg-surface-tertiary transition-colors"
         >
           Set up later
         </button>
@@ -496,8 +517,8 @@ function StepAI({
 function StepReady() {
   const tips = [
     {
-      icon: Lightbulb,
-      text: "Type naturally: \"buy milk tomorrow p1 #groceries\"",
+      icon: Type,
+      text: 'Type naturally: "buy milk tomorrow p1 #groceries"',
     },
     {
       icon: Command,
@@ -510,26 +531,26 @@ function StepReady() {
   ];
 
   return (
-    <div className="text-center">
-      <div className="flex justify-center mb-4">
-        <div className="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center">
-          <CheckCircle2 size={32} className="text-green-500" />
-        </div>
+    <div className="flex flex-col items-center text-center">
+      <div className="w-[72px] h-[72px] rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-5">
+        <CheckCircle2 size={36} className="text-emerald-500" />
       </div>
-      <h2 className="text-lg font-semibold text-on-surface">You&apos;re all set!</h2>
-      <p className="text-sm text-on-surface-muted mt-2 mb-5">
+      <h2 className="text-2xl font-bold text-on-surface font-[Plus_Jakarta_Sans,sans-serif]">
+        You&apos;re all set!
+      </h2>
+      <p className="text-sm text-on-surface-muted mt-1.5 mb-6 max-w-xs leading-relaxed">
         Start adding tasks. Discover more features anytime in Settings.
       </p>
-      <div className="space-y-2">
+      <div className="w-full space-y-2">
         {tips.map((tip) => {
           const Icon = tip.icon;
           return (
             <div
               key={tip.text}
-              className="flex items-center gap-2.5 p-2.5 rounded-lg bg-surface-secondary text-left"
+              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-[10px] bg-surface-secondary text-left"
             >
-              <Icon size={16} className="text-accent flex-shrink-0" />
-              <span className="text-xs text-on-surface">{tip.text}</span>
+              <Icon size={18} className="text-accent flex-shrink-0" />
+              <span className="text-xs text-on-surface-secondary">{tip.text}</span>
             </div>
           );
         })}
