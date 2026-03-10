@@ -60,12 +60,12 @@ export function Calendar({
   return (
     <div className="flex flex-col h-full -m-3 md:-m-6">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-border bg-surface shrink-0">
-        <div className="flex items-center gap-3">
-          <CalendarRange size={22} className="text-accent" />
-          <h1 className="text-lg font-semibold text-on-surface">{nav.periodLabel}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 md:px-6 py-3 border-b border-border bg-surface shrink-0">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <CalendarRange size={22} className="text-accent shrink-0" />
+          <h1 className="text-base md:text-lg font-semibold text-on-surface truncate">{nav.periodLabel}</h1>
           {nav.mode === "day" && taskCount > 0 && (
-            <span className="text-xs text-on-surface-muted bg-surface-secondary px-2 py-0.5 rounded-full">
+            <span className="text-xs text-on-surface-muted bg-surface-secondary px-2 py-0.5 rounded-full shrink-0">
               {taskCount} task{taskCount !== 1 ? "s" : ""}
             </span>
           )}
@@ -80,17 +80,17 @@ export function Calendar({
             value={nav.mode}
             onChange={nav.setMode}
           />
-          <div className="flex items-center gap-1 ml-2">
+          <div className="flex items-center gap-1 ml-1 md:ml-2">
             <button
               onClick={nav.goPrev}
               aria-label={`Previous ${nav.mode}`}
-              className="p-1.5 rounded-lg hover:bg-surface-secondary transition-colors text-on-surface-muted hover:text-on-surface"
+              className="p-2 md:p-1.5 rounded-lg hover:bg-surface-secondary transition-colors text-on-surface-muted hover:text-on-surface"
             >
               <ChevronLeft size={18} />
             </button>
             <button
               onClick={nav.goToday}
-              className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
+              className={`px-3 py-1.5 md:py-1 text-sm font-medium rounded-lg transition-colors ${
                 nav.isCurrentPeriod
                   ? "bg-accent/10 text-accent"
                   : "hover:bg-surface-secondary text-on-surface-muted hover:text-on-surface"
@@ -101,7 +101,7 @@ export function Calendar({
             <button
               onClick={nav.goNext}
               aria-label={`Next ${nav.mode}`}
-              className="p-1.5 rounded-lg hover:bg-surface-secondary transition-colors text-on-surface-muted hover:text-on-surface"
+              className="p-2 md:p-1.5 rounded-lg hover:bg-surface-secondary transition-colors text-on-surface-muted hover:text-on-surface"
             >
               <ChevronRight size={18} />
             </button>

@@ -185,7 +185,7 @@ export function TaskDetailPanel({
       onClick={onClose}
     >
       <div
-        className="bg-surface shadow-xl border border-border flex flex-col fixed bottom-0 left-0 right-0 h-[90vh] rounded-t-xl md:relative md:inset-auto md:rounded-lg md:w-full md:max-w-4xl md:h-[85vh] md:mx-4 animate-slide-up-fade md:animate-scale-fade-in"
+        className="bg-surface shadow-xl border border-border flex flex-col fixed bottom-0 left-0 right-0 h-[85vh] max-h-[calc(100vh-var(--height-bottom-nav))] rounded-t-xl md:relative md:inset-auto md:rounded-lg md:w-full md:max-w-4xl md:h-[85vh] md:max-h-[85vh] md:mx-4 animate-slide-up-fade md:animate-scale-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -208,7 +208,7 @@ export function TaskDetailPanel({
         {/* Two-column body */}
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           {/* Left column -- main content */}
-          <div className="flex-1 overflow-auto p-4 md:p-6 space-y-4">
+          <div className="flex-1 overflow-auto p-3 md:p-6 space-y-4">
             <input
               type="text"
               value={title}

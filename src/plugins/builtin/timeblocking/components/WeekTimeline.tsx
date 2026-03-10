@@ -39,6 +39,11 @@ function formatColumnHeader(date: Date): string {
   return `${dayName} ${date.getDate()}`;
 }
 
+function formatColumnHeaderShort(date: Date): string {
+  const dayName = date.toLocaleDateString("en-US", { weekday: "narrow" });
+  return `${dayName} ${date.getDate()}`;
+}
+
 function isWeekend(date: Date): boolean {
   const day = date.getDay();
   return day === 0 || day === 6;
@@ -105,16 +110,16 @@ export function WeekTimeline({
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
       {/* Column headers */}
-      <div className="flex border-b border-border bg-surface flex-shrink-0">
+      <div className="flex border-b border-border bg-surface flex-shrink-0 overflow-x-auto">
         {/* Spacer for hour labels */}
-        <div className="w-14 flex-shrink-0" />
+        <div className="w-10 sm:w-14 flex-shrink-0" />
         {columns.map(({ date, dateStr }) => {
           const today = isToday(date);
           const weekend = isWeekend(date);
           return (
             <div
               key={dateStr}
-              className={`flex-1 min-w-[120px] px-2 py-2 text-center text-sm font-medium border-l border-border ${
+              className={`flex-1 min-w-[80px] sm:min-w-[100px] md:min-w-[120px] px-1 sm:px-2 py-2 text-center text-xs sm:text-sm font-medium border-l border-border ${
                 today
                   ? "bg-accent/10 text-accent"
                   : weekend
@@ -123,21 +128,22 @@ export function WeekTimeline({
               }`}
               data-testid={`column-header-${dateStr}`}
             >
-              {formatColumnHeader(date)}
+              <span className="sm:hidden">{formatColumnHeaderShort(date)}</span>
+              <span className="hidden sm:inline">{formatColumnHeader(date)}</span>
             </div>
           );
         })}
       </div>
 
       {/* Scrollable grid area */}
-      <div ref={containerRef} className="flex-1 overflow-auto">
-        <div className="relative flex" style={{ height: totalHeight, minWidth: `${columns.length * 120 + 56}px` }}>
+      <div ref={containerRef} className="flex-1 overflow-auto touch-pan-x touch-pan-y">
+        <div className="relative flex" style={{ height: totalHeight, minWidth: `${columns.length * 80 + 40}px` }}>
           {/* Hour labels column */}
-          <div className="w-14 flex-shrink-0 relative" aria-hidden="true">
+          <div className="w-10 sm:w-14 flex-shrink-0 relative" aria-hidden="true">
             {hourLabels.map(({ hour, top }) => (
               <div
                 key={hour}
-                className="absolute right-1 text-xs text-on-surface-muted -translate-y-1/2"
+                className="absolute right-1 text-[10px] sm:text-xs text-on-surface-muted -translate-y-1/2"
                 style={{ top }}
               >
                 {formatHour(hour)}

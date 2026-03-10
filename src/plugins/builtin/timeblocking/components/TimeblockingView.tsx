@@ -203,33 +203,32 @@ export function TimeblockingView() {
       />
 
       {/* Navigation bar */}
-      <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-surface flex-shrink-0">
+      <div className="flex items-center flex-wrap gap-1.5 sm:gap-3 px-2 sm:px-4 py-2 border-b border-border bg-surface flex-shrink-0">
         <button
           onClick={goToPrevious}
-          className="p-1 rounded hover:bg-surface-secondary text-on-surface-secondary transition-colors"
+          className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 p-1 rounded hover:bg-surface-secondary text-on-surface-secondary transition-colors flex items-center justify-center"
           aria-label="Previous day"
         >
           <ChevronLeft size={18} />
         </button>
         <button
           onClick={goToToday}
-          className="px-3 py-1 text-sm font-medium rounded-md bg-surface-secondary hover:bg-surface-tertiary text-on-surface transition-colors"
+          className="min-h-[44px] sm:min-h-0 px-3 py-1 text-sm font-medium rounded-md bg-surface-secondary hover:bg-surface-tertiary text-on-surface transition-colors"
         >
           Today
         </button>
         <button
           onClick={goToNext}
-          className="p-1 rounded hover:bg-surface-secondary text-on-surface-secondary transition-colors"
+          className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 p-1 rounded hover:bg-surface-secondary text-on-surface-secondary transition-colors flex items-center justify-center"
           aria-label="Next day"
         >
           <ChevronRight size={18} />
         </button>
 
-        <span className="text-sm text-on-surface-secondary flex-1 text-center" data-testid="date-range-label">
+        <span className="text-xs sm:text-sm text-on-surface-secondary flex-1 text-center min-w-0 truncate" data-testid="date-range-label">
           {formatDateRange(selectedDate, dayCount)}
         </span>
 
-        {/* Focus timer for active block */}
         {activeBlock && (
           <FocusTimer
             block={activeBlock}
@@ -238,13 +237,12 @@ export function TimeblockingView() {
           />
         )}
 
-        {/* View mode selector */}
         <div className="flex items-center gap-0.5 bg-surface-secondary rounded-md p-0.5" data-testid="view-mode-selector">
           {VIEW_MODE_LABELS.map(({ value, label }) => (
             <button
               key={value}
               onClick={() => setDayCount(value)}
-              className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+              className={`min-h-[44px] sm:min-h-0 px-2 sm:px-2.5 py-1 text-xs font-medium rounded transition-colors ${
                 dayCount === value
                   ? "bg-accent text-white"
                   : "text-on-surface-secondary hover:text-on-surface"
@@ -256,11 +254,10 @@ export function TimeblockingView() {
           ))}
         </div>
 
-        {/* Auto-schedule button */}
         <button
           onClick={autoScheduleHook.generatePreview}
           disabled={autoScheduleHook.preview !== null}
-          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="min-h-[44px] sm:min-h-0 flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Auto-schedule tasks"
           data-testid="auto-schedule-btn"
           title="Auto-schedule pending tasks into available time gaps"
@@ -270,7 +267,6 @@ export function TimeblockingView() {
           <span className="hidden sm:inline">Auto-schedule</span>
         </button>
 
-        {/* Settings popover */}
         <SettingsPopover
           workDayStart={workDayStart}
           workDayEnd={workDayEnd}

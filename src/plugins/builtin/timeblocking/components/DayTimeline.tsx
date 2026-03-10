@@ -112,11 +112,11 @@ export function DayTimeline({
           style={{ height: totalHeight }}
         >
           {/* Hour labels column */}
-          <div className="w-16 flex-shrink-0 relative" aria-hidden="true">
+          <div className="w-10 sm:w-14 md:w-16 flex-shrink-0 relative" aria-hidden="true">
             {hourLabels.map(({ hour, top }) => (
               <div
                 key={hour}
-                className="absolute right-2 text-xs text-on-surface-muted -translate-y-1/2"
+                className="absolute right-1 sm:right-2 text-[10px] sm:text-xs text-on-surface-muted -translate-y-1/2"
                 style={{ top }}
               >
                 {formatHour(hour)}
@@ -126,7 +126,7 @@ export function DayTimeline({
 
           {/* Proposed block ghosts from auto-scheduler */}
           {proposedBlocks && proposedBlocks.length > 0 && (
-            <div className="absolute left-16 right-0 top-0 bottom-0 pointer-events-none z-20">
+            <div className="absolute left-10 sm:left-14 md:left-16 right-0 top-0 bottom-0 pointer-events-none z-20">
               <ProposedBlockOverlay
                 proposed={proposedBlocks.filter((p) => p.date === dateStr)}
                 workDayStart={workDayStart}

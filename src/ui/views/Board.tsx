@@ -163,7 +163,7 @@ function BoardColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`min-w-[280px] max-w-[320px] bg-surface-secondary rounded-lg p-3 flex flex-col flex-shrink-0 transition-colors duration-150 ${
+      className={`w-full md:min-w-[280px] md:max-w-[320px] bg-surface-secondary rounded-lg p-3 flex flex-col flex-shrink-0 transition-colors duration-150 ${
         isOver ? "ring-2 ring-accent/50 bg-accent/5" : ""
       }`}
     >
@@ -281,7 +281,7 @@ export function Board({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2">
+      <div className="flex flex-col md:flex-row gap-4 md:overflow-x-auto pb-4 -mx-2 px-2 md:snap-x md:snap-mandatory">
         {/* "No section" column */}
         <BoardColumn
           columnId="__no_section__"

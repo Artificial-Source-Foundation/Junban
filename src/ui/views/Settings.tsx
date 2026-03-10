@@ -207,12 +207,12 @@ export function Settings({ activeTab: initialTab, onClose }: SettingsProps) {
     if (mobileSelectedTab !== null) {
       const tabMeta = TABS.find((t) => t.id === mobileSelectedTab);
       return (
-        <div className="fixed inset-0 z-50 bg-surface flex flex-col">
+        <div className="fixed inset-0 z-50 bg-surface flex flex-col pb-[var(--height-bottom-nav)]">
           <div className="flex items-center gap-3 px-4 py-3 border-b border-border flex-shrink-0">
             <button
               onClick={handleMobileBack}
               aria-label="Back to settings"
-              className="p-1.5 -ml-1.5 rounded-md text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface transition-colors"
+              className="p-2.5 -ml-1.5 rounded-md text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -225,12 +225,12 @@ export function Settings({ activeTab: initialTab, onClose }: SettingsProps) {
 
     // Index page
     return (
-      <div className="fixed inset-0 z-50 bg-surface flex flex-col">
+      <div className="fixed inset-0 z-50 bg-surface flex flex-col pb-[var(--height-bottom-nav)]">
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border flex-shrink-0">
           <button
             onClick={onClose}
             aria-label="Close settings"
-            className="p-1.5 -ml-1.5 rounded-md text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface transition-colors"
+            className="p-2.5 -ml-1.5 rounded-md text-on-surface-secondary hover:bg-surface-tertiary hover:text-on-surface transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>

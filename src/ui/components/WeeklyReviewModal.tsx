@@ -133,10 +133,10 @@ export function WeeklyReviewModal({ open, onClose, data }: WeeklyReviewModalProp
     >
       <div
         ref={containerRef}
-        className="w-full max-w-2xl mx-4 max-h-[90vh] bg-surface rounded-xl shadow-2xl border border-border animate-scale-fade-in flex flex-col"
+        className="w-full max-w-2xl mx-3 sm:mx-auto max-h-[90vh] bg-surface rounded-xl shadow-2xl border border-border animate-scale-fade-in flex flex-col"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-3">
+        <div className="flex items-center justify-between px-4 pt-4 pb-3 sm:px-6 sm:pt-5">
           <div>
             <h2 className="text-lg font-semibold text-on-surface">Weekly Review</h2>
             <p className="text-xs text-on-surface-muted">
@@ -145,7 +145,7 @@ export function WeeklyReviewModal({ open, onClose, data }: WeeklyReviewModalProp
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-on-surface-muted hover:bg-surface-secondary transition-colors"
+            className="p-2.5 sm:p-1.5 rounded-lg text-on-surface-muted hover:bg-surface-secondary transition-colors"
             aria-label="Close"
           >
             <X size={18} />
@@ -153,7 +153,7 @@ export function WeeklyReviewModal({ open, onClose, data }: WeeklyReviewModalProp
         </div>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-auto px-6 pb-6 space-y-5">
+        <div className="flex-1 overflow-auto px-4 pb-4 sm:px-6 sm:pb-6 space-y-5">
           {/* Summary stat cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" data-testid="summary-stats">
             <StatCard
@@ -353,7 +353,7 @@ function StatCard({
   value: number | string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-surface-secondary">
+    <div className="flex flex-col items-center gap-1 p-2.5 sm:p-3 rounded-xl bg-surface-secondary">
       {icon}
       <span className="text-xl font-bold text-on-surface tabular-nums">{value}</span>
       <span className="text-[10px] text-on-surface-muted uppercase tracking-wider">{label}</span>

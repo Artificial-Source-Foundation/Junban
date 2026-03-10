@@ -144,7 +144,7 @@ export function Stats({ tasks }: StatsProps) {
       </div>
 
       {/* Stats cards grid */}
-      <div className="grid grid-cols-2 gap-3 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
         {/* Completed Today */}
         <div className="rounded-xl border border-border bg-surface-secondary p-4">
           <div className="flex items-center gap-2 mb-2">
@@ -207,7 +207,7 @@ export function Stats({ tasks }: StatsProps) {
       {/* Bar chart: Last 7 days */}
       <div>
         <h2 className="text-sm font-semibold text-on-surface mb-3">Last 7 Days</h2>
-        <div className="flex items-end justify-between gap-2 h-[152px] px-1">
+        <div className="flex items-end justify-between gap-1 sm:gap-2 h-[140px] sm:h-[152px] px-1">
           {dailyCounts.map((day) => (
             <div key={day.key} className="flex-1 flex flex-col items-center gap-1">
               {/* Count label */}
@@ -245,7 +245,7 @@ export function Stats({ tasks }: StatsProps) {
           Estimation Accuracy
         </h2>
         {accuracyStats ? (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="rounded-xl border border-border bg-surface-secondary p-3 text-center">
               <p className="text-xl font-bold text-on-surface">{accuracyStats.accuracy}%</p>
               <p className="text-xs text-on-surface-muted">Accuracy</p>

@@ -110,7 +110,7 @@ export function AIChatPanel({
   // ── View Mode ──
   if (isView) {
     return (
-      <aside className="w-full h-full flex bg-surface relative">
+      <aside className="w-full h-full flex bg-surface relative pb-[var(--height-bottom-nav)] md:pb-0">
         {/* Chat History sidebar */}
         {showHistory && sessions.length > 0 && (
           <ChatHistory
@@ -231,7 +231,7 @@ export function AIChatPanel({
       };
   return (
     <PanelWrapper
-      className="w-full h-full md:w-80 md:h-auto border-l-0 md:border-l border-border flex flex-col bg-surface"
+      className="w-full h-full pb-[var(--height-bottom-nav)] md:pb-0 md:w-80 md:h-auto border-l-0 md:border-l border-border flex flex-col bg-surface"
       {...panelMotionProps}
     >
       {/* Header */}
@@ -281,7 +281,7 @@ export function AIChatPanel({
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-auto p-4 space-y-3">
+      <div className="flex-1 overflow-auto px-3 py-3 md:p-4 space-y-3">
         {messages.length === 0 && (
           <WelcomeScreen mode="panel" onSend={handleSubmit} isStreaming={isStreaming} />
         )}

@@ -98,7 +98,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(function ChatI
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask about your tasks..."
-          className="min-w-0 flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-surface text-on-surface placeholder-on-surface-muted focus:outline-none focus:ring-2 focus:ring-accent"
+          className="min-w-0 flex-1 px-3 py-2.5 text-sm border border-border rounded-lg bg-surface text-on-surface placeholder-on-surface-muted focus:outline-none focus:ring-2 focus:ring-accent"
         />
         <VoiceButton onResult={onVoiceResult} disabled={isStreaming} voice={voice} />
         {showCallButton && (
@@ -107,7 +107,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(function ChatI
             onClick={onStartCall}
             disabled={isStreaming}
             title="Start voice call"
-            className="shrink-0 px-2 py-2 text-sm rounded-lg border border-border text-on-surface-muted hover:bg-surface-secondary disabled:opacity-50 transition-colors"
+            className="shrink-0 px-2.5 py-2.5 text-sm rounded-lg border border-border text-on-surface-muted hover:bg-surface-secondary disabled:opacity-50 transition-colors"
           >
             <Phone size={16} />
           </button>
@@ -115,7 +115,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(function ChatI
         <button
           type="submit"
           disabled={isStreaming || !input.trim()}
-          className="shrink-0 px-3 py-2 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="shrink-0 px-3 py-2.5 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <Send size={16} />
         </button>

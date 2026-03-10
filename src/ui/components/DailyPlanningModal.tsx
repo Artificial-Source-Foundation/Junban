@@ -117,7 +117,7 @@ export function DailyPlanningModal({
     switch (step) {
       case 0:
         return (
-          <div className="space-y-2 max-h-64 overflow-auto">
+          <div className="space-y-2 max-h-48 sm:max-h-64 overflow-auto">
             {overdueTasks.length === 0 ? (
               <p className="text-sm text-on-surface-muted text-center py-4">
                 No overdue tasks. You're all caught up!
@@ -160,7 +160,7 @@ export function DailyPlanningModal({
 
       case 1:
         return (
-          <div className="space-y-2 max-h-64 overflow-auto">
+          <div className="space-y-2 max-h-48 sm:max-h-64 overflow-auto">
             {todayTasks.length === 0 ? (
               <p className="text-sm text-on-surface-muted text-center py-4">
                 No tasks scheduled for today yet.
@@ -256,7 +256,7 @@ export function DailyPlanningModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-lg mx-4 bg-surface rounded-xl shadow-2xl border border-border animate-scale-fade-in p-6">
+      <div className="w-full max-w-full sm:max-w-lg mx-3 sm:mx-4 bg-surface rounded-xl shadow-2xl border border-border animate-scale-fade-in p-4 sm:p-6">
         {/* Progress dots */}
         <div className="flex justify-center gap-2 mb-6">
           {STEPS.map((_, i) => (
@@ -287,21 +287,21 @@ export function DailyPlanningModal({
           {step > 0 ? (
             <button
               onClick={() => setStep((s) => s - 1)}
-              className="px-4 py-2 text-sm text-on-surface-muted hover:text-on-surface transition-colors"
+              className="px-4 py-2.5 text-sm text-on-surface-muted hover:text-on-surface transition-colors min-h-[44px]"
             >
               Back
             </button>
           ) : (
             <button
               onClick={onComplete}
-              className="px-4 py-2 text-sm text-on-surface-muted hover:text-on-surface transition-colors"
+              className="px-4 py-2.5 text-sm text-on-surface-muted hover:text-on-surface transition-colors min-h-[44px]"
             >
               Skip
             </button>
           )}
           <button
             onClick={isLast ? handleFinish : () => setStep((s) => s + 1)}
-            className="px-5 py-2 text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
+            className="px-5 py-2.5 text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors min-h-[44px]"
           >
             {isLast ? "Start My Day" : "Next"}
           </button>

@@ -312,7 +312,7 @@ export function TimelineColumn({
   return (
     <div
       ref={containerRef}
-      className="flex-1 relative border-l border-border min-w-[120px]"
+      className="flex-1 relative border-l border-border min-w-[80px] sm:min-w-[100px] md:min-w-[120px]"
       style={{ height: totalHeight }}
       onClick={handleTimelineClick}
       onDoubleClick={handleDoubleClick}

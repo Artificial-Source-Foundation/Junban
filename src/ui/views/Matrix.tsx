@@ -96,7 +96,7 @@ function DraggableTaskCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex items-center gap-2 bg-surface rounded-md px-2.5 py-1.5 border border-border text-sm cursor-pointer transition-all ${
+      className={`group flex items-center gap-2 bg-surface rounded-md px-2.5 py-2.5 md:py-1.5 border border-border text-sm cursor-pointer transition-all min-h-[44px] md:min-h-0 ${
         isDragging ? "opacity-30" : ""
       } ${isSelected ? "ring-1 ring-accent bg-accent/5" : "hover:shadow-sm"}`}
       onClick={() => onSelect(task.id)}
@@ -136,7 +136,7 @@ function DroppableQuadrant({
   return (
     <div
       ref={setNodeRef}
-      className={`rounded-lg border p-3 flex flex-col min-h-[200px] transition-colors ${config.bgClass} ${config.borderClass} ${
+      className={`rounded-lg border p-2 md:p-3 flex flex-col min-h-[150px] md:min-h-[200px] transition-colors ${config.bgClass} ${config.borderClass} ${
         isOver ? "ring-2 ring-accent" : ""
       }`}
     >
