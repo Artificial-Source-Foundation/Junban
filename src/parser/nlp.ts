@@ -10,6 +10,42 @@ function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+const DATE_SHORTHANDS: [RegExp, string][] = [
+  // Multi-word shorthands first (longer matches before shorter)
+  [/\bnxt\s+wk\b/gi, "next week"],
+  [/\bnxt\s+mon\b/gi, "next Monday"],
+  [/\bnxt\s+tue\b/gi, "next Tuesday"],
+  [/\bnxt\s+wed\b/gi, "next Wednesday"],
+  [/\bnxt\s+thu\b/gi, "next Thursday"],
+  [/\bnxt\s+fri\b/gi, "next Friday"],
+  [/\bnxt\s+sat\b/gi, "next Saturday"],
+  [/\bnxt\s+sun\b/gi, "next Sunday"],
+  // Single-word shorthands
+  [/\btod\b/gi, "today"],
+  [/\btom\b/gi, "tomorrow"],
+  [/\byd\b/gi, "yesterday"],
+  [/\bnw\b/gi, "now"],
+  [/\bmon\b/gi, "Monday"],
+  [/\btue\b/gi, "Tuesday"],
+  [/\bwed\b/gi, "Wednesday"],
+  [/\bthu\b/gi, "Thursday"],
+  [/\bfri\b/gi, "Friday"],
+  [/\bsat\b/gi, "Saturday"],
+  [/\bsun\b/gi, "Sunday"],
+  [/\beod\b/gi, "end of day"],
+  [/\beow\b/gi, "end of week"],
+  [/\beom\b/gi, "end of month"],
+];
+
+/** Expand shorthand date abbreviations (tod, tom, mon, etc.) to full words for chrono-node. */
+export function expandDateShorthands(input: string): string {
+  let result = input;
+  for (const [pattern, replacement] of DATE_SHORTHANDS) {
+    result = result.replace(pattern, replacement);
+  }
+  return result;
+}
+
 /**
  * Extract date/time from natural language input.
  * Uses chrono-node for parsing.
@@ -18,19 +54,71 @@ function escapeRegExp(text: string): string {
  *  "tomorrow at 3pm" → { date: <tomorrow 15:00>, hasTime: true }
  *  "next Friday" → { date: <next Friday>, hasTime: false }
  *  "in 2 hours" → { date: <now + 2h>, hasTime: true }
+ *  "tod" → { date: <today>, hasTime: false }
+ *  "tom" → { date: <tomorrow>, hasTime: false }
  */
 export function parseDate(input: string, referenceDate?: Date): ParsedDate | null {
-  const results = chrono.parse(input, referenceDate ?? new Date());
+  const expanded = expandDateShorthands(input);
+  const results = chrono.parse(expanded, referenceDate ?? new Date());
   if (results.length === 0) return null;
 
   const result = results[0];
   const hasTime = result.start.isCertain("hour");
 
+  // Map the matched range back to the original input (shorthands may differ in length)
+  const originalText = input.substring(result.index, result.index + findOriginalLength(input, expanded, result.index, result.text.length));
+
   return {
     date: result.start.date(),
     hasTime,
-    text: result.text,
+    text: originalText || result.text,
   };
+}
+
+/** Find the length of the original text that corresponds to an expanded match. */
+function findOriginalLength(original: string, expanded: string, expandedStart: number, expandedLen: number): number {
+  // If no expansion happened, lengths match directly
+  if (original === expanded) return expandedLen;
+
+  // Build a character mapping from expanded positions back to original positions
+  let origPos = 0;
+  let expPos = 0;
+  const origPositions: number[] = [];
+
+  while (expPos < expanded.length && origPos <= original.length) {
+    origPositions[expPos] = origPos;
+    // Check if a shorthand expansion starts here by comparing divergence
+    if (original[origPos] === expanded[expPos]) {
+      origPos++;
+      expPos++;
+    } else {
+      // Find which shorthand was expanded at this position
+      let matched = false;
+      for (const [pattern, replacement] of DATE_SHORTHANDS) {
+        const origSlice = original.substring(origPos);
+        const m = origSlice.match(new RegExp("^" + pattern.source, "i"));
+        if (m && expanded.substring(expPos, expPos + replacement.length) === replacement) {
+          // Map all expanded positions to the original shorthand range
+          for (let i = 0; i < replacement.length; i++) {
+            origPositions[expPos + i] = origPos;
+          }
+          origPos += m[0].length;
+          expPos += replacement.length;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        origPos++;
+        expPos++;
+      }
+    }
+  }
+  origPositions[expanded.length] = original.length;
+
+  const origStart = origPositions[expandedStart] ?? expandedStart;
+  const origEnd = origPositions[expandedStart + expandedLen] ?? (origStart + expandedLen);
+  return origEnd - origStart;
 }
 
 /** Remove the date/time portion from input text, returning the remaining string. */
