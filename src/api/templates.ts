@@ -1,5 +1,10 @@
 import { Hono } from "hono";
 import type { AppServices } from "../bootstrap.js";
+import {
+  CreateTemplateInput,
+  UpdateTemplateInput,
+  InstantiateTemplateInput,
+} from "../core/types.js";
 
 export function templateRoutes(services: AppServices): Hono {
   const app = new Hono();
@@ -13,7 +18,14 @@ export function templateRoutes(services: AppServices): Hono {
   // POST /templates
   app.post("/", async (c) => {
     const body = await c.req.json();
-    const template = await services.templateService.create(body);
+    const parsed = CreateTemplateInput.safeParse(body);
+    if (!parsed.success) {
+      return c.json(
+        { error: "Validation failed", details: parsed.error.flatten() },
+        400,
+      );
+    }
+    const template = await services.templateService.create(parsed.data);
     return c.json(template, 201);
   });
 
@@ -21,7 +33,17 @@ export function templateRoutes(services: AppServices): Hono {
   app.post("/:id/instantiate", async (c) => {
     const id = c.req.param("id");
     const body = await c.req.json();
-    const task = await services.templateService.instantiate(id, body.variables);
+    const parsed = InstantiateTemplateInput.safeParse(body);
+    if (!parsed.success) {
+      return c.json(
+        { error: "Validation failed", details: parsed.error.flatten() },
+        400,
+      );
+    }
+    const task = await services.templateService.instantiate(
+      id,
+      parsed.data.variables,
+    );
     return c.json(task, 201);
   });
 
@@ -29,7 +51,14 @@ export function templateRoutes(services: AppServices): Hono {
   app.patch("/:id", async (c) => {
     const id = c.req.param("id");
     const body = await c.req.json();
-    const template = await services.templateService.update(id, body);
+    const parsed = UpdateTemplateInput.safeParse(body);
+    if (!parsed.success) {
+      return c.json(
+        { error: "Validation failed", details: parsed.error.flatten() },
+        400,
+      );
+    }
+    const template = await services.templateService.update(id, parsed.data);
     return c.json(template);
   });
 

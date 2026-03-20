@@ -1,0 +1,219 @@
+{
+  "round": 4,
+  "focus": "API input validation audit — gaps remaining after round 3 Zod additions",
+  "timestamp": "2026-03-20",
+  "summary": "Round 3 added Zod validation to tasks (create/update), projects (create/update), and tags (create). 11 API files reviewed. 15 findings identified across comments, sections, templates, plugins, AI, voice, and settings routes.",
+  "findings": [
+    {
+      "id": "R4-01",
+      "severity": "high",
+      "category": "missing-validation",
+      "file": "src/api/comments.ts",
+      "line": 10,
+      "title": "PATCH /comments/:id — no validation on body.content",
+      "detail": "body.content is cast with `as string` without any validation. A null, object, or excessively long string would be stored directly. No Zod schema, no type check, no length limit.",
+      "recommendation": "Add z.object({ content: z.string().min(1).max(10000) }).safeParse(body) guard."
+    },
+    {
+      "id": "R4-02",
+      "severity": "high",
+      "category": "missing-validation",
+      "file": "src/api/tasks.ts",
+      "line": 216,
+      "title": "POST /tasks/:id/comments — no validation on body.content",
+      "detail": "Inline comment creation at line 222 casts body.content as string without validation. Same issue as R4-01 but on the tasks route.",
+      "recommendation": "Validate body.content with Zod before inserting."
+    },
+    {
+      "id": "R4-03",
+      "severity": "high",
+      "category": "missing-validation",
+      "file": "src/api/sections.ts",
+      "line": 26,
+      "title": "POST /sections — no validation on section create body",
+      "detail": "Raw body passed directly to services.sectionService.create(body) without any schema validation. Attacker can inject arbitrary fields.",
+      "recommendation": "Define CreateSectionInput Zod schema (name: string, projectId: string) and validate."
+    },
+    {
+      "id": "R4-04",
+      "severity": "high",
+      "category": "missing-validation",
+      "file": "src/api/sections.ts",
+      "line": 34,
+      "title": "PATCH /sections/:id — no validation on section update body",
+      "detail": "Raw body passed directly to services.sectionService.update(id, body) without validation.",
+      "recommendation": "Define UpdateSectionInput Zod schema and validate."
+    },
+    {
+      "id": "R4-05",
+      "severity": "medium",
+      "category": "missing-validation",
+      "file": "src/api/sections.ts",
+      "line": 9,
+      "title": "POST /sections/reorder — no validation on orderedIds",
+      "detail": "orderedIds destructured from body without checking it is an array of strings or enforcing a length limit. Could pass non-array or oversized array.",
+      "recommendation": "Add z.object({ orderedIds: z.array(z.string()).max(500) }).safeParse(body)."
+    },
+    {
+      "id": "R4-06",
+      "severity": "high",
+      "category": "missing-validation",
+      "file": "src/api/templates.ts",
+      "line": 15,
+      "title": "POST /templates — no validation on template create body",
+      "detail": "Raw body passed to services.templateService.create(body). CreateTemplateInput Zod schema exists in core/types.ts but is NOT used in the route handler.",
+      "recommendation": "Import CreateTemplateInput and use safeParse like tasks/projects routes."
+    },
+    {
+      "id": "R4-07",
+      "severity": "high",
+      "category": "missing-validation",
+      "file": "src/api/templates.ts",
+      "line": 31,
+      "title": "PATCH /templates/:id — no validation on template update body",
+      "detail": "Raw body passed to services.templateService.update(id, body). UpdateTemplateInput Zod schema exists but is not used.",
+      "recommendation": "Import UpdateTemplateInput and validate."
+    },
+    {
+      "id": "R4-08",
+      "severity": "medium",
+      "category": "missing-validation",
+      "file": "src/api/templates.ts",
+      "line": 23,
+      "title": "POST /templates/:id/instantiate — no validation on body.variables",
+      "detail": "body.variables passed through without type checking. Could be any type.",
+      "recommendation": "Validate variables is a record of string keys and string values."
+    },
+    {
+      "id": "R4-09",
+      "severity": "medium",
+      "category": "missing-validation",
+      "file": "src/api/settings.ts",
+      "line": 115,
+      "title": "PUT /settings/:key — body.value cast as string without validation",
+      "detail": "body.value is cast with `as string` and stored directly. No type check that value is actually a string, no length limit. A malicious client could store very large strings or non-string types.",
+      "recommendation": "Add z.object({ value: z.string().max(10000) }).safeParse(body)."
+    },
+    {
+      "id": "R4-10",
+      "severity": "medium",
+      "category": "missing-validation",
+      "file": "src/api/tasks.ts",
+      "line": 75,
+      "title": "POST /tasks/bulk/update — changes object not validated",
+      "detail": "ids array is length-checked but `changes` is passed through to updateMany without Zod validation. Should be validated against UpdateTaskInput.",
+      "recommendation": "Parse changes through UpdateTaskInput.safeParse()."
+    },
+    {
+      "id": "R4-11",
+      "severity": "medium",
+      "category": "missing-validation",
+      "file": "src/api/tasks.ts",
+      "line": 85,
+      "title": "POST /tasks/reorder — orderedIds not validated",
+      "detail": "orderedIds is destructured and passed to reorder() without checking it's an array of strings or enforcing size limits.",
+      "recommendation": "Add z.object({ orderedIds: z.array(z.string()).max(1000) }).safeParse(body)."
+    },
+    {
+      "id": "R4-12",
+      "severity": "medium",
+      "category": "missing-validation",
+      "file": "src/api/tasks.ts",
+      "line": 92,
+      "title": "POST /tasks/import — imported tasks not validated per-item before processing",
+      "detail": "importedTasks is iterated and fields used without schema validation. While individual create() calls may catch some issues, there's no upfront validation that importedTasks is an array or that each item has required fields.",
+      "recommendation": "Validate importedTasks is an array and each item matches an import schema."
+    },
+    {
+      "id": "R4-13",
+      "severity": "medium",
+      "category": "missing-validation",
+      "file": "src/api/tasks.ts",
+      "line": 193,
+      "title": "POST /tasks/:id/relations — body.relatedTaskId and body.type not validated",
+      "detail": "body.relatedTaskId and body.type used directly without validation. type defaults to 'blocks' but accepts any string.",
+      "recommendation": "Add z.object({ relatedTaskId: z.string(), type: z.enum(['blocks']).default('blocks') }).safeParse(body)."
+    },
+    {
+      "id": "R4-14",
+      "severity": "medium",
+      "category": "missing-validation",
+      "file": "src/api/plugins.ts",
+      "line": 149,
+      "title": "POST /plugins/timeblocking/rpc — open RPC bridge with minimal validation",
+      "detail": "The RPC endpoint accepts a method name and args array. While method is switch-cased, individual args are cast with `as string` without validation. Arbitrary data can be passed as args to store methods like createBlock/updateBlock.",
+      "recommendation": "Add per-method Zod validation for args, or at minimum validate args is an array."
+    },
+    {
+      "id": "R4-15",
+      "severity": "low",
+      "category": "ssrf-protection",
+      "file": "src/api/plugins.ts",
+      "line": 118,
+      "title": "SSRF filter over-blocks 172.x range — blocks legitimate 172.0-172.15 and 172.32-172.255",
+      "detail": "The check `hostname.startsWith('172.')` blocks all 172.x.x.x addresses, but RFC 1918 private range is only 172.16.0.0-172.31.255.255. This is overly broad (blocks legitimate public IPs) but not a security vulnerability — it's defense-in-depth being too aggressive. Noted as low severity since it's a correctness issue not a security gap.",
+      "recommendation": "Refine to check 172.16-172.31 specifically, or accept the over-broad block as intentional defense-in-depth."
+    }
+  ],
+  "validation_status_by_route": {
+    "src/api/tasks.ts": {
+      "POST /tasks": "VALIDATED (CreateTaskInput)",
+      "PATCH /tasks/:id": "VALIDATED (UpdateTaskInput)",
+      "POST /tasks/bulk/complete": "PARTIAL (ids array-checked, no string validation)",
+      "POST /tasks/bulk/delete": "PARTIAL (ids array-checked, no string validation)",
+      "POST /tasks/bulk/update": "PARTIAL (ids array-checked, changes NOT validated)",
+      "POST /tasks/reorder": "NOT VALIDATED",
+      "POST /tasks/import": "NOT VALIDATED",
+      "POST /tasks/:id/relations": "NOT VALIDATED",
+      "POST /tasks/:id/comments": "NOT VALIDATED"
+    },
+    "src/api/projects.ts": {
+      "POST /projects": "VALIDATED (CreateProjectInput)",
+      "PATCH /projects/:id": "VALIDATED (UpdateProjectInput)"
+    },
+    "src/api/tags.ts": {
+      "POST /tags": "VALIDATED (CreateTagInput)"
+    },
+    "src/api/comments.ts": {
+      "PATCH /comments/:id": "NOT VALIDATED"
+    },
+    "src/api/sections.ts": {
+      "POST /sections": "NOT VALIDATED",
+      "PATCH /sections/:id": "NOT VALIDATED",
+      "POST /sections/reorder": "NOT VALIDATED"
+    },
+    "src/api/templates.ts": {
+      "POST /templates": "NOT VALIDATED (schema exists but unused)",
+      "PATCH /templates/:id": "NOT VALIDATED (schema exists but unused)",
+      "POST /templates/:id/instantiate": "NOT VALIDATED"
+    },
+    "src/api/settings.ts": {
+      "PUT /settings/:key": "PARTIAL (allowlist on key, no validation on value)"
+    },
+    "src/api/plugins.ts": {
+      "POST /plugins/install": "PARTIAL (URL validated, pluginId not validated)",
+      "POST /plugins/timeblocking/rpc": "PARTIAL (method switch-cased, args not validated)",
+      "PUT /plugins/:id/settings": "NOT VALIDATED",
+      "POST /plugins/:id/permissions/approve": "VALIDATED (permissions array checked against VALID_PERMISSIONS)"
+    },
+    "src/api/ai.ts": {
+      "PUT /ai/config": "NOT VALIDATED (type assertions only)",
+      "POST /ai/chat": "PARTIAL (message presence checked, no length limit)",
+      "PUT /ai/sessions/:id/title": "NOT VALIDATED",
+      "PUT /ai/memories/:id": "NOT VALIDATED"
+    },
+    "src/api/voice.ts": {
+      "POST /voice/synthesize": "PARTIAL (field whitelist, no type validation)",
+      "POST /voice/inworld-synthesize": "PARTIAL (field whitelist, no type validation)"
+    },
+    "src/api/stats.ts": "READ-ONLY (no JSON body parsing)"
+  },
+  "round3_validation_review": {
+    "verdict": "correct_and_complete",
+    "notes": "The Zod schemas for CreateTaskInput, UpdateTaskInput, CreateProjectInput, UpdateProjectInput, and CreateTagInput are well-defined with appropriate constraints (min/max lengths, enum types, nullable/optional modifiers). The safeParse + 400 error pattern is correctly implemented in all three route files."
+  },
+  "sensitive_settings_redaction": {
+    "verdict": "correct",
+    "notes": "isSensitiveKey() checks for 'api_key', 'token', 'secret', 'password' substrings. GET /settings/:key redacts with '[REDACTED]'. WRITABLE_SETTING_KEYS allowlist excludes ai_api_key and ai_oauth_token, so sensitive values can only be written through the dedicated PUT /ai/config endpoint. The AI config GET endpoint returns hasApiKey (boolean) and hasOAuthToken (boolean) instead of raw values."
+  }
+}

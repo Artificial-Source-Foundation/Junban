@@ -1,5 +1,8 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import { api } from "../api/index.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger("settings");
 
 export interface GeneralSettings {
   accent_color: string;
@@ -217,7 +220,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setLoaded(true);
       })
       .catch((err) => {
-        console.warn("[settings] Failed to load settings, using defaults:", err);
+        log.warn("Failed to load settings, using defaults", {
+          error: err instanceof Error ? err.message : String(err),
+        });
         if (mounted) setLoaded(true);
       });
     return () => {
@@ -237,9 +242,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         if (key === "font_family") applyFontFamily(value as GeneralSettings["font_family"]);
         return next;
       });
-      api
-        .setAppSetting(key, String(value))
-        .catch((err: unknown) => console.error("[settings] Failed to persist setting:", key, err));
+      api.setAppSetting(key, String(value)).catch((err: unknown) =>
+        log.error("Failed to persist setting", {
+          key,
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
     },
     [],
   );

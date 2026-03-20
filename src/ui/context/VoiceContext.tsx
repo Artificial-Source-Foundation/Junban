@@ -131,7 +131,12 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
       ttsProvider
         .getVoices()
         .then(setTTSVoices)
-        .catch(() => setTTSVoices([]));
+        .catch((err: unknown) => {
+          log.warn("Failed to fetch TTS voices", {
+            error: err instanceof Error ? err.message : String(err),
+          });
+          setTTSVoices([]);
+        });
     } else {
       setTTSVoices([]);
     }
@@ -143,7 +148,12 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
       ttsProvider
         .getModels()
         .then(setTTSModels)
-        .catch(() => setTTSModels([]));
+        .catch((err: unknown) => {
+          log.warn("Failed to fetch TTS models", {
+            error: err instanceof Error ? err.message : String(err),
+          });
+          setTTSModels([]);
+        });
     } else {
       setTTSModels([]);
     }
@@ -291,11 +301,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return (
-    <VoiceContext.Provider value={value}>
-      {children}
-    </VoiceContext.Provider>
-  );
+  return <VoiceContext.Provider value={value}>{children}</VoiceContext.Provider>;
 }
 
 export function useVoiceContext(): VoiceContextValue {

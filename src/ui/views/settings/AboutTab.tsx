@@ -209,8 +209,7 @@ export function AboutTab() {
         .catch(() => 0),
     ]).then(([storageInfo, taskCount, pluginCount]) => {
       setSystemInfo({
-        storage:
-          (storageInfo as { mode: string }).mode === "markdown" ? "Markdown" : "SQLite",
+        storage: (storageInfo as { mode: string }).mode === "markdown" ? "Markdown" : "SQLite",
         tasks: taskCount,
         plugins: pluginCount,
         os,

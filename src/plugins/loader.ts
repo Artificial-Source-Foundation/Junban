@@ -14,6 +14,7 @@ import type { IStorage } from "../storage/interface.js";
 import type { LLMProviderRegistry } from "../ai/provider/registry.js";
 import type { ToolRegistry } from "../ai/tools/registry.js";
 import { createLogger } from "../utils/logger.js";
+import { NotFoundError, ValidationError } from "../core/errors.js";
 
 const logger = createLogger("plugin-loader");
 
@@ -167,7 +168,7 @@ export class PluginLoader {
   async load(pluginId: string): Promise<void> {
     const loaded = this.plugins.get(pluginId);
     if (!loaded) {
-      throw new Error(`Plugin "${pluginId}" not found`);
+      throw new NotFoundError("Plugin", pluginId);
     }
 
     if (loaded.enabled) {
@@ -251,7 +252,7 @@ export class PluginLoader {
       const PluginClass = module.default;
 
       if (!PluginClass || typeof PluginClass !== "function") {
-        throw new Error(`Plugin "${pluginId}" does not have a default export class`);
+        throw new ValidationError(`Plugin "${pluginId}" does not have a default export class`);
       }
 
       // Instantiate and wire up
@@ -411,7 +412,7 @@ export class PluginLoader {
   remove(pluginId: string): void {
     const loaded = this.plugins.get(pluginId);
     if (loaded?.builtin) {
-      throw new Error(`Cannot remove built-in extension "${pluginId}"`);
+      throw new ValidationError(`Cannot remove built-in extension "${pluginId}"`);
     }
     this.plugins.delete(pluginId);
     logger.info(`Removed plugin "${pluginId}" from loader`);

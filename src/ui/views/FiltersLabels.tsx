@@ -2,6 +2,9 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { SlidersHorizontal, Tag, ChevronDown, ChevronRight, Plus, X, Filter } from "lucide-react";
 import { api } from "../api/index.js";
 import type { Task } from "../../core/types.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger("filters");
 
 interface SavedFilter {
   id: string;
@@ -49,14 +52,20 @@ export function FiltersLabels({ tasks, onNavigateToFilter }: FiltersLabelsProps)
     api
       .listTags()
       .then(setTags)
-      .catch((err: unknown) => console.error("[filters] Failed to load tags:", err));
+      .catch((err: unknown) =>
+        log.error("Failed to load tags", {
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
   }, []);
 
   const persistFilters = useCallback((filters: SavedFilter[]) => {
     setSavedFilters(filters);
-    api
-      .setAppSetting(SAVED_FILTERS_KEY, JSON.stringify(filters))
-      .catch((err: unknown) => console.error("[filters] Failed to persist filters:", err));
+    api.setAppSetting(SAVED_FILTERS_KEY, JSON.stringify(filters)).catch((err: unknown) =>
+      log.error("Failed to persist filters", {
+        error: err instanceof Error ? err.message : String(err),
+      }),
+    );
   }, []);
 
   const handleAddFilter = () => {

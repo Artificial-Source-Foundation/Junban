@@ -17,6 +17,7 @@ import type {
 } from "../../types.js";
 import { classifyProviderError, type StreamErrorData } from "../../errors.js";
 import { DEFAULT_CAPABILITIES } from "../../core/capabilities.js";
+import { fetchWithTimeout } from "./fetch-utils.js";
 
 // ── Message/tool conversion helpers ──
 
@@ -180,22 +181,6 @@ export interface OpenAICompatConfig {
   unloadModel?: (modelKey: string, config: AIProviderConfig) => Promise<void>;
   /** Whether this provider supports OAuth-based authentication. */
   supportsOAuth?: boolean;
-}
-
-const FETCH_TIMEOUT_MS = 5000;
-
-async function fetchWithTimeout(
-  url: string,
-  init?: RequestInit,
-  timeoutMs = FETCH_TIMEOUT_MS,
-): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 /** Default OpenAI-compatible model discovery via GET /v1/models. */

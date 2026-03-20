@@ -58,6 +58,5 @@ export const PROJECT_COLOR_LABELS: Record<string, string> = {
 /** Default base URL for LM Studio's OpenAI-compatible API. */
 export const DEFAULT_LMSTUDIO_BASE_URL = "http://localhost:1234/v1";
 
-export const COMMAND_PALETTE_HOTKEY = "Ctrl+K";
-export const MAX_TASK_TITLE_LENGTH = 500;
-export const MAX_DESCRIPTION_LENGTH = 10000;
+/** Default base URL for Ollama's native API (without /v1 suffix). */
+export const DEFAULT_OLLAMA_BASE_URL = "http://localhost:11434";

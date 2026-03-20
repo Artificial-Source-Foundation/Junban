@@ -1,6 +1,10 @@
 import { Hono } from "hono";
 import type { AppServices } from "../bootstrap.js";
-import { CreateTaskInput, UpdateTaskInput } from "../core/types.js";
+import {
+  CreateTaskInput,
+  UpdateTaskInput,
+  CommentContentInput,
+} from "../core/types.js";
 
 export function taskRoutes(services: AppServices): Hono {
   const app = new Hono();
@@ -214,12 +218,19 @@ export function taskRoutes(services: AppServices): Hono {
   app.post("/:id/comments", async (c) => {
     const taskId = decodeURIComponent(c.req.param("id"));
     const body = await c.req.json();
+    const parsed = CommentContentInput.safeParse(body);
+    if (!parsed.success) {
+      return c.json(
+        { error: "Validation failed", details: parsed.error.flatten() },
+        400,
+      );
+    }
     const { generateId } = await import("../utils/ids.js");
     const now = new Date().toISOString();
     const comment = {
       id: generateId(),
       taskId,
-      content: body.content as string,
+      content: parsed.data.content,
       createdAt: now,
       updatedAt: now,
     };

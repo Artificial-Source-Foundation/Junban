@@ -9,23 +9,9 @@ import type { ModelDescriptor } from "../../core/capabilities.js";
 import type { AIProviderConfig } from "../../types.js";
 import { DEFAULT_CAPABILITIES } from "../../core/capabilities.js";
 import { DEFAULT_LMSTUDIO_BASE_URL } from "../../../config/defaults.js";
+import { fetchWithTimeout } from "./fetch-utils.js";
 
-const FETCH_TIMEOUT_MS = 5000;
 const LOAD_TIMEOUT_MS = 120_000;
-
-async function fetchWithTimeout(
-  url: string,
-  init?: RequestInit,
-  timeoutMs = FETCH_TIMEOUT_MS,
-): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timeout);
-  }
-}
 
 function getLMStudioHost(baseUrl: string): string {
   return baseUrl.replace(/\/v1\/?$/, "");

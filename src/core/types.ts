@@ -139,6 +139,27 @@ export const CreateSectionInput = z.object({
 });
 export type CreateSectionInput = z.infer<typeof CreateSectionInput>;
 
+export const UpdateSectionInput = z.object({
+  name: z.string().min(1).max(200).optional(),
+  isCollapsed: z.boolean().optional(),
+});
+export type UpdateSectionInput = z.infer<typeof UpdateSectionInput>;
+
+export const ReorderInput = z.object({
+  orderedIds: z.array(z.string().min(1)).max(500),
+});
+export type ReorderInput = z.infer<typeof ReorderInput>;
+
+export const CommentContentInput = z.object({
+  content: z.string().min(1).max(10000),
+});
+export type CommentContentInput = z.infer<typeof CommentContentInput>;
+
+export const InstantiateTemplateInput = z.object({
+  variables: z.record(z.string(), z.string()).optional(),
+});
+export type InstantiateTemplateInput = z.infer<typeof InstantiateTemplateInput>;
+
 export interface TaskComment {
   id: string;
   taskId: string;

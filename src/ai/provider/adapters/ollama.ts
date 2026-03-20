@@ -7,21 +7,11 @@ import type { LLMProviderPlugin } from "../interface.js";
 import type { ModelDescriptor } from "../../core/capabilities.js";
 import type { AIProviderConfig } from "../../types.js";
 import { DEFAULT_CAPABILITIES } from "../../core/capabilities.js";
-
-const FETCH_TIMEOUT_MS = 5000;
-
-async function fetchWithTimeout(url: string, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { signal: controller.signal });
-  } finally {
-    clearTimeout(timeout);
-  }
-}
+import { DEFAULT_OLLAMA_BASE_URL } from "../../../config/defaults.js";
+import { fetchWithTimeout } from "./fetch-utils.js";
 
 async function discoverOllamaModels(config: AIProviderConfig): Promise<ModelDescriptor[]> {
-  const baseUrl = config.baseUrl ?? "http://localhost:11434";
+  const baseUrl = config.baseUrl ?? DEFAULT_OLLAMA_BASE_URL;
   // Strip /v1 suffix if present (user might pass the OpenAI-compat URL)
   const host = baseUrl.replace(/\/v1\/?$/, "");
   const res = await fetchWithTimeout(`${host}/api/tags`);
@@ -40,7 +30,7 @@ export const ollamaPlugin: LLMProviderPlugin = createOpenAICompatPlugin({
   displayName: "Ollama (local)",
   needsApiKey: false,
   defaultModel: "llama3.2",
-  defaultBaseUrl: "http://localhost:11434/v1",
+  defaultBaseUrl: `${DEFAULT_OLLAMA_BASE_URL}/v1`,
   showBaseUrl: true,
   fakeApiKey: "ollama",
   discoverModels: discoverOllamaModels,

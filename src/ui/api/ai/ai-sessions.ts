@@ -7,6 +7,9 @@ import {
 } from "../helpers.js";
 import type { AIChatMessage, ChatSessionInfo } from "./ai-types.js";
 import { deserializeChatMessages } from "../../../ai/message-utils.js";
+import { createLogger } from "../../../utils/logger.js";
+
+const log = createLogger("ai-sessions");
 
 export async function listChatSessions(): Promise<ChatSessionInfo[]> {
   if (useDirectServices()) {
@@ -55,11 +58,11 @@ export async function switchChatSession(sessionId: string): Promise<AIChatMessag
     // Fire-and-forget memory extraction from current session
     const currentSession = svc.chatManager.getSession();
     if (currentSession) {
-      currentSession
-        .extractMemories()
-        .catch((err: unknown) =>
-          console.warn("[ai-sessions] Memory extraction failed:", err),
-        );
+      currentSession.extractMemories().catch((err: unknown) =>
+        log.warn("Memory extraction failed", {
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
     }
     const providerSetting = svc.storage.getAppSetting("ai_provider");
     if (!providerSetting?.value) return [];
@@ -119,11 +122,11 @@ export async function createNewChatSession(): Promise<string> {
     // Fire-and-forget memory extraction from current session
     const currentSession = svc.chatManager.getSession();
     if (currentSession) {
-      currentSession
-        .extractMemories()
-        .catch((err: unknown) =>
-          console.warn("[ai-sessions] Memory extraction failed:", err),
-        );
+      currentSession.extractMemories().catch((err: unknown) =>
+        log.warn("Memory extraction failed", {
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
     }
     // Clear current session without deleting from DB
     svc.chatManager.setSession(null);

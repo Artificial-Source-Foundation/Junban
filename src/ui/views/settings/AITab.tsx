@@ -153,9 +153,7 @@ export function AITab() {
           setAvailableModels(models);
           setModelsFailed(false);
         })
-        .catch((err: unknown) =>
-          console.warn("[settings:ai] Failed to fetch models:", err),
-        );
+        .catch((err: unknown) => console.warn("[settings:ai] Failed to fetch models:", err));
     }
   };
 

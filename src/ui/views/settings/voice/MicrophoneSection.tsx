@@ -62,8 +62,8 @@ export function MicrophoneSection({
         }
         status.addEventListener("change", changeHandler);
       })
-      .catch(() => {
-        // permissions.query not supported for microphone in some browsers
+      .catch((err: unknown) => {
+        console.warn("[microphone] Failed to query microphone permission:", err);
       });
 
     return () => {

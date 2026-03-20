@@ -7,7 +7,7 @@ import type { EventBus } from "./event-bus.js";
 import { filterTasks } from "./filters.js";
 import { sortByPriority } from "./priorities.js";
 import { generateId } from "../utils/ids.js";
-import { NotFoundError } from "./errors.js";
+import { NotFoundError, ValidationError } from "./errors.js";
 import { getNextOccurrence } from "./recurrence.js";
 import { createLogger } from "../utils/logger.js";
 
@@ -510,7 +510,7 @@ export class TaskService {
 
     // Cycle detection: would relatedTaskId transitively block taskId?
     if (this.wouldCreateCycle(taskId, relatedTaskId)) {
-      throw new Error("Cannot create relation: would create a cycle");
+      throw new ValidationError("Cannot create relation: would create a cycle");
     }
 
     this.queries.insertTaskRelation({ taskId, relatedTaskId, type });
