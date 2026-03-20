@@ -1,0 +1,76 @@
+{
+  "round": 8,
+  "checks": [
+    {
+      "name": "CORS restricted to localhost",
+      "status": "PASS",
+      "details": "ALLOWED_ORIGINS array in src/server.ts contains only localhost:4822, localhost:5173, 127.0.0.1:5173, localhost:4173, 127.0.0.1:4173, tauri://localhost, https://tauri.localhost. No wildcard '*'."
+    },
+    {
+      "name": "Test-reset endpoint guarded",
+      "status": "PASS",
+      "details": "Route registered only inside `if (process.env.NODE_ENV === 'test' || process.env.E2E_MODE === 'true')` block at line 86 of src/server.ts."
+    },
+    {
+      "name": "Security headers middleware present",
+      "status": "PASS",
+      "details": "secureHeaders imported from 'hono/secure-headers' and applied globally via app.use('*', secureHeaders()) at line 44."
+    },
+    {
+      "name": "Body-size limit present",
+      "status": "PASS",
+      "details": "bodyLimit imported from 'hono/body-limit' and applied globally (10MB) via app.use('*', bodyLimit(...)) at line 47."
+    },
+    {
+      "name": "Zod validation on API routes",
+      "status": "PASS",
+      "details": "safeParse found in all 6 API route files: tasks.ts (3 calls), projects.ts (2), tags.ts (1), comments.ts (1), sections.ts (3), templates.ts (3). Total 13 validation points."
+    },
+    {
+      "name": "Settings redaction",
+      "status": "PASS",
+      "details": "src/api/settings.ts returns '[REDACTED]' for sensitive settings at line 103."
+    },
+    {
+      "name": "Plugin ID validation",
+      "status": "PASS",
+      "details": "validatePluginId() function at line 16 of src/plugins/installer.ts uses VALID_PLUGIN_ID regex. Called in both install() (line 37) and uninstall() (line 162) methods."
+    },
+    {
+      "name": "Context providers use useMemo",
+      "status": "PASS",
+      "details": "useMemo confirmed in all 6 context files: SettingsContext.tsx (line 256), AIContext.tsx (line 122), PluginContext.tsx (line 111), VoiceContext.tsx (lines 116, 267), TaskContext.tsx (line 202), UndoContext.tsx (line 81)."
+    },
+    {
+      "name": "useToday hook imported in TaskItem.tsx and Today.tsx",
+      "status": "PASS",
+      "details": "TaskItem.tsx imports useToday at line 13, uses it at line 60. Today.tsx imports useToday at line 3, uses it at line 59."
+    },
+    {
+      "name": "message-utils.ts is imported (not dead)",
+      "status": "PASS",
+      "details": "deserializeChatMessages imported in 3 consumer files: src/ui/api/ai/ai-sessions.ts, src/api/ai.ts, src/ai/chat.ts."
+    },
+    {
+      "name": "task-extraction-patterns.ts is imported (not dead)",
+      "status": "PASS",
+      "details": "Imported in 2 files: src/ui/components/ExtractTasksModal.tsx and src/ai/tools/builtin/extract-tasks-from-text.ts."
+    },
+    {
+      "name": "fetchWithTimeout is shared (not duplicated)",
+      "status": "PASS",
+      "details": "Single definition in src/ai/provider/adapters/fetch-utils.ts. Imported by 3 adapters: lmstudio.ts, ollama.ts, openai-compat.ts. No duplicate implementations."
+    },
+    {
+      "name": "DEFAULT_LMSTUDIO_BASE_URL is used",
+      "status": "PASS",
+      "details": "Defined in src/config/defaults.ts, used in 3 files: src/ai/provider/adapters/lmstudio.ts, src/api/ai.ts, src/ui/api/ai/ai-providers.ts."
+    },
+    {
+      "name": "DEFAULT_OLLAMA_BASE_URL is used",
+      "status": "PASS",
+      "details": "Defined in src/config/defaults.ts, used in src/ai/provider/adapters/ollama.ts."
+    }
+  ],
+  "all_pass": true
+}
