@@ -151,6 +151,14 @@ export function pluginRoutes(services: AppServices): Hono {
     const body = await c.req.json();
     const { method, args } = body as { method: string; args: unknown[] };
 
+    // Validate top-level shape
+    if (typeof method !== "string" || !method) {
+      return c.json({ error: "method must be a non-empty string" }, 400);
+    }
+    if (!Array.isArray(args)) {
+      return c.json({ error: "args must be an array" }, 400);
+    }
+
     const plugin = services.pluginLoader.getAll().find((p) => p.manifest.id === "timeblocking");
     if (!plugin || !plugin.enabled) {
       return c.json({ error: "Timeblocking plugin not loaded" }, 404);
@@ -163,49 +171,118 @@ export function pluginRoutes(services: AppServices): Hono {
       return c.json({ error: "Timeblocking store not available" }, 500);
     }
 
+    // Arg validation helpers
+    const expectString = (i: number, name: string): string | Response => {
+      if (typeof args[i] !== "string" || !(args[i] as string)) {
+        return c.json({ error: `${name} (args[${i}]) must be a non-empty string` }, 400);
+      }
+      return args[i] as string;
+    };
+    const expectOptionalString = (i: number): string | undefined => {
+      if (args[i] === undefined || args[i] === null) return undefined;
+      return typeof args[i] === "string" ? (args[i] as string) : undefined;
+    };
+    const expectObject = (i: number, name: string): Record<string, unknown> | Response => {
+      if (typeof args[i] !== "object" || args[i] === null || Array.isArray(args[i])) {
+        return c.json({ error: `${name} (args[${i}]) must be an object` }, 400);
+      }
+      return args[i] as Record<string, unknown>;
+    };
+    const expectStringArray = (i: number, name: string): string[] | Response => {
+      if (!Array.isArray(args[i]) || !(args[i] as unknown[]).every((v) => typeof v === "string")) {
+        return c.json({ error: `${name} (args[${i}]) must be an array of strings` }, 400);
+      }
+      return args[i] as string[];
+    };
+    // Returns the response if validation failed (i.e. result is a Response)
+    const isEarlyReturn = (v: unknown): v is Response =>
+      v !== null && typeof v === "object" && typeof (v as Response).status === "number" && typeof (v as Response).json === "function";
+
     let result: unknown;
     switch (method) {
-      case "listBlocks":
-        result = store.listBlocks(args[0] as string | undefined);
+      case "listBlocks": {
+        const date = expectOptionalString(0);
+        result = store.listBlocks(date);
         break;
-      case "listBlocksInRange":
-        result = store.listBlocksInRange(args[0] as string, args[1] as string);
+      }
+      case "listBlocksInRange": {
+        const start = expectString(0, "startDate");
+        if (isEarlyReturn(start)) return start;
+        const end = expectString(1, "endDate");
+        if (isEarlyReturn(end)) return end;
+        result = store.listBlocksInRange(start, end);
         break;
-      case "listSlots":
-        result = store.listSlots(args[0] as string | undefined);
+      }
+      case "listSlots": {
+        const date = expectOptionalString(0);
+        result = store.listSlots(date);
         break;
-      case "listSlotsInRange":
-        result = store.listSlotsInRange(args[0] as string, args[1] as string);
+      }
+      case "listSlotsInRange": {
+        const start = expectString(0, "startDate");
+        if (isEarlyReturn(start)) return start;
+        const end = expectString(1, "endDate");
+        if (isEarlyReturn(end)) return end;
+        result = store.listSlotsInRange(start, end);
         break;
-      case "createBlock":
-        result = await store.createBlock(args[0]);
+      }
+      case "createBlock": {
+        const input = expectObject(0, "block input");
+        if (isEarlyReturn(input)) return input;
+        result = await store.createBlock(input);
         break;
-      case "updateBlock":
-        result = await store.updateBlock(args[0] as string, args[1]);
+      }
+      case "updateBlock": {
+        const id = expectString(0, "blockId");
+        if (isEarlyReturn(id)) return id;
+        const updates = expectObject(1, "block updates");
+        if (isEarlyReturn(updates)) return updates;
+        result = await store.updateBlock(id, updates);
         break;
-      case "deleteBlock":
-        result = await store.deleteBlock(args[0] as string);
+      }
+      case "deleteBlock": {
+        const id = expectString(0, "blockId");
+        if (isEarlyReturn(id)) return id;
+        result = await store.deleteBlock(id);
         break;
-      case "createSlot":
-        result = await store.createSlot(args[0]);
+      }
+      case "createSlot": {
+        const input = expectObject(0, "slot input");
+        if (isEarlyReturn(input)) return input;
+        result = await store.createSlot(input);
         break;
-      case "addTaskToSlot":
-        result = await store.addTaskToSlot(args[0] as string, args[1] as string);
+      }
+      case "addTaskToSlot": {
+        const slotId = expectString(0, "slotId");
+        if (isEarlyReturn(slotId)) return slotId;
+        const taskId = expectString(1, "taskId");
+        if (isEarlyReturn(taskId)) return taskId;
+        result = await store.addTaskToSlot(slotId, taskId);
         break;
-      case "reorderSlotTasks":
-        result = await store.reorderSlotTasks(args[0] as string, args[1] as string[]);
+      }
+      case "reorderSlotTasks": {
+        const slotId = expectString(0, "slotId");
+        if (isEarlyReturn(slotId)) return slotId;
+        const taskIds = expectStringArray(1, "taskIds");
+        if (isEarlyReturn(taskIds)) return taskIds;
+        result = await store.reorderSlotTasks(slotId, taskIds);
         break;
+      }
       case "getSettings": {
-        const key = args[0] as string;
+        const key = expectString(0, "settingKey");
+        if (isEarlyReturn(key)) return key;
         const definitions = plugin.manifest.settings ?? [];
         const val = services.settingsManager.get("timeblocking", key, definitions);
         result = val;
         break;
       }
       case "setSettings": {
-        const sKey = args[0] as string;
-        const sVal = args[1] as string;
-        await services.settingsManager.set("timeblocking", sKey, sVal);
+        const sKey = expectString(0, "settingKey");
+        if (isEarlyReturn(sKey)) return sKey;
+        if (args[1] === undefined) {
+          return c.json({ error: "settingValue (args[1]) is required" }, 400);
+        }
+        await services.settingsManager.set("timeblocking", sKey, args[1]);
         result = { ok: true };
         break;
       }
