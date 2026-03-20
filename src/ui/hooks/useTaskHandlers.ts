@@ -21,10 +21,7 @@ export function useTaskHandlers(
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   // O(1) task lookups instead of O(n) per lookup
-  const taskMap = useMemo(
-    () => new Map(state.tasks.map((t) => [t.id, t])),
-    [state.tasks],
-  );
+  const taskMap = useMemo(() => new Map(state.tasks.map((t) => [t.id, t])), [state.tasks]);
 
   // Adapter: bridges TaskContext methods to the ActionAPI shape expected by action creators.
   // The action creators call through this, getting both the API call AND local state dispatch.
@@ -206,7 +203,7 @@ export function useTaskHandlers(
     }
   }, []);
 
-  const selectedTask = selectedTaskId ? taskMap.get(selectedTaskId) ?? null : null;
+  const selectedTask = selectedTaskId ? (taskMap.get(selectedTaskId) ?? null) : null;
 
   return {
     selectedTaskId,

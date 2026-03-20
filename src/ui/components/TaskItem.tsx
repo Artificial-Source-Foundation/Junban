@@ -86,8 +86,7 @@ export const TaskItem = React.memo(function TaskItem({
   }, [task.status]);
 
   const priority = task.priority ? getPriority(task.priority) : null;
-  const isOverdue =
-    task.dueDate && task.status === "pending" && task.dueDate.split("T")[0] < today;
+  const isOverdue = task.dueDate && task.status === "pending" && task.dueDate.split("T")[0] < today;
 
   const handleClick = (e: React.MouseEvent) => {
     if (onMultiSelect && (e.ctrlKey || e.metaKey || e.shiftKey)) {

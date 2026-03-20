@@ -20,9 +20,7 @@ export function SoundSection() {
   const volume = parseInt(settings.sound_volume, 10) || 0;
 
   const handlePreview = (event: SoundEvent) => {
-    previewSound(event, volume / 100).catch((err) =>
-      console.warn("[sound] Preview failed:", err),
-    );
+    previewSound(event, volume / 100).catch((err) => console.warn("[sound] Preview failed:", err));
   };
 
   return (

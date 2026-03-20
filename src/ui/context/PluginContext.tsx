@@ -1,4 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import {
   api,
   type PluginInfo,
@@ -137,11 +145,7 @@ export function PluginProvider({ children }: { children: React.ReactNode }) {
     ],
   );
 
-  return (
-    <PluginContext.Provider value={value}>
-      {children}
-    </PluginContext.Provider>
-  );
+  return <PluginContext.Provider value={value}>{children}</PluginContext.Provider>;
 }
 
 export function usePluginContext() {

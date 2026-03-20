@@ -20,10 +20,7 @@ export function templateRoutes(services: AppServices): Hono {
     const body = await c.req.json();
     const parsed = CreateTemplateInput.safeParse(body);
     if (!parsed.success) {
-      return c.json(
-        { error: "Validation failed", details: parsed.error.flatten() },
-        400,
-      );
+      return c.json({ error: "Validation failed", details: parsed.error.flatten() }, 400);
     }
     const template = await services.templateService.create(parsed.data);
     return c.json(template, 201);
@@ -35,15 +32,9 @@ export function templateRoutes(services: AppServices): Hono {
     const body = await c.req.json();
     const parsed = InstantiateTemplateInput.safeParse(body);
     if (!parsed.success) {
-      return c.json(
-        { error: "Validation failed", details: parsed.error.flatten() },
-        400,
-      );
+      return c.json({ error: "Validation failed", details: parsed.error.flatten() }, 400);
     }
-    const task = await services.templateService.instantiate(
-      id,
-      parsed.data.variables,
-    );
+    const task = await services.templateService.instantiate(id, parsed.data.variables);
     return c.json(task, 201);
   });
 
@@ -53,10 +44,7 @@ export function templateRoutes(services: AppServices): Hono {
     const body = await c.req.json();
     const parsed = UpdateTemplateInput.safeParse(body);
     if (!parsed.success) {
-      return c.json(
-        { error: "Validation failed", details: parsed.error.flatten() },
-        400,
-      );
+      return c.json({ error: "Validation failed", details: parsed.error.flatten() }, 400);
     }
     const template = await services.templateService.update(id, parsed.data);
     return c.json(template);

@@ -174,11 +174,7 @@ export function AIProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return (
-    <AIContext.Provider value={value}>
-      {children}
-    </AIContext.Provider>
-  );
+  return <AIContext.Provider value={value}>{children}</AIContext.Provider>;
 }
 
 export function useAIContext(): AIContextValue {

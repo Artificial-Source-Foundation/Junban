@@ -9,7 +9,11 @@ interface TaskItemActionsProps {
   onUpdateDueDate?: (taskId: string, dueDate: string | null) => void;
 }
 
-export const TaskItemActions = React.memo(function TaskItemActions({ task, onSelect, onUpdateDueDate }: TaskItemActionsProps) {
+export const TaskItemActions = React.memo(function TaskItemActions({
+  task,
+  onSelect,
+  onUpdateDueDate,
+}: TaskItemActionsProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   return (

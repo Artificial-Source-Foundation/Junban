@@ -11,10 +11,7 @@ export function commentRoutes(services: AppServices): Hono {
     const body = await c.req.json();
     const parsed = CommentContentInput.safeParse(body);
     if (!parsed.success) {
-      return c.json(
-        { error: "Validation failed", details: parsed.error.flatten() },
-        400,
-      );
+      return c.json({ error: "Validation failed", details: parsed.error.flatten() }, 400);
     }
     services.storage.updateTaskComment(commentId, {
       content: parsed.data.content,

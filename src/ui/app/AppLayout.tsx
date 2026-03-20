@@ -194,7 +194,11 @@ export function AppLayout({
       </a>
       <div className="flex flex-1 overflow-hidden">
         <div className="hidden md:flex">
-          <ErrorBoundary fallback={<div className="p-4 text-sm text-on-surface-secondary">Sidebar failed to load.</div>}>
+          <ErrorBoundary
+            fallback={
+              <div className="p-4 text-sm text-on-surface-secondary">Sidebar failed to load.</div>
+            }
+          >
             <Sidebar
               currentView={currentView}
               onNavigate={handleNavigate}
@@ -308,9 +312,7 @@ export function AppLayout({
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <ErrorBoundary
           fallback={
-            <div className="p-4 text-sm text-on-surface-secondary">
-              Sidebar failed to load.
-            </div>
+            <div className="p-4 text-sm text-on-surface-secondary">Sidebar failed to load.</div>
           }
         >
           <Sidebar

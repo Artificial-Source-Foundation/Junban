@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  type ReactNode,
+} from "react";
 import { api } from "../api/index.js";
 import { createLogger } from "../../utils/logger.js";
 
@@ -253,7 +261,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <SettingsContext.Provider value={useMemo(() => ({ settings, loaded, updateSetting }), [settings, loaded, updateSetting])}>
+    <SettingsContext.Provider
+      value={useMemo(
+        () => ({ settings, loaded, updateSetting }),
+        [settings, loaded, updateSetting],
+      )}
+    >
       <div className={loaded ? "opacity-100" : "opacity-0"}>{children}</div>
     </SettingsContext.Provider>
   );

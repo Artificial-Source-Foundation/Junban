@@ -196,7 +196,10 @@ export function pluginRoutes(services: AppServices): Hono {
     };
     // Returns the response if validation failed (i.e. result is a Response)
     const isEarlyReturn = (v: unknown): v is Response =>
-      v !== null && typeof v === "object" && typeof (v as Response).status === "number" && typeof (v as Response).json === "function";
+      v !== null &&
+      typeof v === "object" &&
+      typeof (v as Response).status === "number" &&
+      typeof (v as Response).json === "function";
 
     let result: unknown;
     switch (method) {
