@@ -13,7 +13,10 @@ export function DailyBriefingSection() {
         if (energyVal) setEnergy(energyVal);
         setLoaded(true);
       })
-      .catch(() => setLoaded(true));
+      .catch((err) => {
+        console.warn("[settings] Failed to load daily briefing settings:", err);
+        setLoaded(true);
+      });
   }, []);
 
   const handleToggle = async (checked: boolean) => {

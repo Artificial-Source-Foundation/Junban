@@ -71,13 +71,16 @@ export function PluginView({ viewId, viewInfo }: PluginViewProps) {
   const isReact = viewInfo?.contentType === "react";
 
   // Lazily resolve built-in React components that couldn't be serialized via REST.
-  // Retries on failure since the plugin server may not be ready yet.
+  // Retries with exponential backoff since the plugin server may not be ready yet.
+  const [resolveError, setResolveError] = useState<string | null>(null);
   useEffect(() => {
     if (!isReact || viewInfo?.component) return;
     if (!viewInfo?.pluginId) return;
 
+    const MAX_RETRIES = 10;
     let cancelled = false;
     let retryTimer: ReturnType<typeof setTimeout>;
+    let retryCount = 0;
 
     const attempt = () => {
       resolveBuiltinComponent(viewInfo.pluginId)
@@ -85,11 +88,28 @@ export function PluginView({ viewId, viewInfo }: PluginViewProps) {
           if (!cancelled && component) {
             setResolvedComponent(() => component);
           } else if (!cancelled && !component) {
-            retryTimer = setTimeout(attempt, 1000);
+            retryCount++;
+            if (retryCount >= MAX_RETRIES) {
+              setResolveError(
+                `Plugin "${viewInfo.pluginId}" component could not be resolved after ${MAX_RETRIES} attempts.`,
+              );
+              return;
+            }
+            const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 16000);
+            retryTimer = setTimeout(attempt, delay);
           }
         })
         .catch(() => {
-          if (!cancelled) retryTimer = setTimeout(attempt, 1000);
+          if (cancelled) return;
+          retryCount++;
+          if (retryCount >= MAX_RETRIES) {
+            setResolveError(
+              `Plugin "${viewInfo.pluginId}" component failed to load after ${MAX_RETRIES} attempts.`,
+            );
+            return;
+          }
+          const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 16000);
+          retryTimer = setTimeout(attempt, delay);
         });
     };
     attempt();
@@ -137,6 +157,11 @@ export function PluginView({ viewId, viewInfo }: PluginViewProps) {
         <PluginComponent />
       </PluginErrorBoundary>
     );
+  }
+
+  // React view failed to resolve after max retries
+  if (isReact && !PluginComponent && resolveError) {
+    return <div className="p-6 text-error text-sm">{resolveError}</div>;
   }
 
   // React view still loading its component

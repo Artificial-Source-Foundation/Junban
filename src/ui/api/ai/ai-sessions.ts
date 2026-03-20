@@ -6,6 +6,7 @@ import {
   getServices,
 } from "../helpers.js";
 import type { AIChatMessage, ChatSessionInfo } from "./ai-types.js";
+import { deserializeChatMessages } from "../../../ai/message-utils.js";
 
 export async function listChatSessions(): Promise<ChatSessionInfo[]> {
   if (useDirectServices()) {
@@ -100,22 +101,7 @@ export async function switchChatSession(sessionId: string): Promise<AIChatMessag
       providerName: providerSetting.value as string,
     });
 
-    const restoredMessages: {
-      role: "user" | "assistant" | "tool";
-      content: string;
-      toolCallId?: string;
-      toolCalls?: any;
-    }[] = [];
-    for (const row of rows) {
-      if (row.role === "system") continue;
-      restoredMessages.push({
-        role: row.role as "user" | "assistant" | "tool",
-        content: row.content,
-        ...(row.toolCallId ? { toolCallId: row.toolCallId } : {}),
-        ...(row.toolCalls ? { toolCalls: JSON.parse(row.toolCalls) } : {}),
-      });
-    }
-    session.restoreMessages(restoredMessages);
+    session.restoreMessages(deserializeChatMessages(rows));
 
     svc.chatManager.setSession(session);
     return session.getMessages() as AIChatMessage[];

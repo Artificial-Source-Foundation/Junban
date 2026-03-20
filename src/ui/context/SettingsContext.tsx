@@ -193,6 +193,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState(false);
 
   // Load all settings on mount
+  // TODO: PERF-301 — Replace 52 individual api.getAppSetting() calls with a single
+  // batch endpoint (GET /api/settings) that returns all settings as a JSON object.
+  // Requires adding the endpoint in src/api/settings.ts and a corresponding
+  // api.getAllSettings() helper in src/ui/api/settings.ts.
   useEffect(() => {
     let mounted = true;
     Promise.all(SETTING_KEYS.map((key) => api.getAppSetting(key)))
@@ -212,7 +216,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         applyFontFamily(next.font_family);
         setLoaded(true);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.warn("[settings] Failed to load settings, using defaults:", err);
         if (mounted) setLoaded(true);
       });
     return () => {

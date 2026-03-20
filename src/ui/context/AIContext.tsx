@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useMemo,
   type ReactNode,
 } from "react";
 import { api, type AIConfigInfo, type AIChatMessage, type ChatSessionInfo } from "../api/index.js";
@@ -118,35 +119,63 @@ export function AIProvider({ children }: { children: ReactNode }) {
     [refreshConfig],
   );
 
+  const value = useMemo(
+    () => ({
+      config,
+      messages,
+      isStreaming,
+      isConfigured,
+      sendMessage,
+      clearChat,
+      restoreMessages,
+      updateConfig,
+      refreshConfig,
+      retryLastMessage,
+      voiceCallActive,
+      setVoiceCallMode,
+      dataMutationCount,
+      focusedTaskId,
+      setFocusedTaskId,
+      editAndResend,
+      regenerateLastResponse,
+      sessions,
+      activeSessionId,
+      createNewSession,
+      switchSession,
+      deleteSession,
+      renameSession,
+      refreshSessions,
+    }),
+    [
+      config,
+      messages,
+      isStreaming,
+      isConfigured,
+      sendMessage,
+      clearChat,
+      restoreMessages,
+      updateConfig,
+      refreshConfig,
+      retryLastMessage,
+      voiceCallActive,
+      setVoiceCallMode,
+      dataMutationCount,
+      focusedTaskId,
+      setFocusedTaskId,
+      editAndResend,
+      regenerateLastResponse,
+      sessions,
+      activeSessionId,
+      createNewSession,
+      switchSession,
+      deleteSession,
+      renameSession,
+      refreshSessions,
+    ],
+  );
+
   return (
-    <AIContext.Provider
-      value={{
-        config,
-        messages,
-        isStreaming,
-        isConfigured,
-        sendMessage,
-        clearChat,
-        restoreMessages,
-        updateConfig,
-        refreshConfig,
-        retryLastMessage,
-        voiceCallActive,
-        setVoiceCallMode,
-        dataMutationCount,
-        focusedTaskId,
-        setFocusedTaskId,
-        editAndResend,
-        regenerateLastResponse,
-        sessions,
-        activeSessionId,
-        createNewSession,
-        switchSession,
-        deleteSession,
-        renameSession,
-        refreshSessions,
-      }}
-    >
+    <AIContext.Provider value={value}>
       {children}
     </AIContext.Provider>
   );

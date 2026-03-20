@@ -1,5 +1,6 @@
 import { useRef, useEffect } from "react";
 import { AIChatPanel } from "../components/AIChatPanel.js";
+import { ErrorBoundary } from "../components/ErrorBoundary.js";
 import { useAIContext } from "../context/AIContext.js";
 import { api } from "../api/index.js";
 
@@ -39,12 +40,20 @@ export function AIChat({ onOpenSettings, onSelectTask }: AIChatViewProps) {
 
   return (
     <div className="h-full w-full">
-      <AIChatPanel
-        onClose={() => {}}
-        onOpenSettings={onOpenSettings}
-        onSelectTask={onSelectTask}
-        mode="view"
-      />
+      <ErrorBoundary
+        fallback={
+          <div className="flex items-center justify-center h-full text-on-surface-secondary">
+            AI Chat encountered an error. Please try refreshing.
+          </div>
+        }
+      >
+        <AIChatPanel
+          onClose={() => {}}
+          onOpenSettings={onOpenSettings}
+          onSelectTask={onSelectTask}
+          mode="view"
+        />
+      </ErrorBoundary>
     </div>
   );
 }

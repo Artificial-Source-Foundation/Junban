@@ -4,6 +4,7 @@
  */
 
 import type { ToolRegistry } from "../registry.js";
+import { ACTION_VERBS, LIST_PREFIX } from "../../../parser/task-extraction-patterns.js";
 
 /** Shape returned by the LLM when parsing text for tasks. */
 interface ExtractedTask {
@@ -219,21 +220,14 @@ function heuristicExtract(text: string): ExtractedTask[] {
     .filter(Boolean);
   const tasks: ExtractedTask[] = [];
 
-  // Common action verbs that indicate a task
-  const actionVerbs =
-    /^(review|send|update|create|schedule|prepare|follow[\s-]?up|contact|call|email|write|fix|implement|deploy|check|set[\s-]?up|complete|finalize|submit|organize|plan|discuss|investigate|research|design|test|build|draft|arrange|confirm|approve|cancel|assign|notify|share|clean|move|order|book|coordinate)/i;
-
-  // Patterns that indicate list items
-  const listPrefix = /^(?:[-*+]|\d+[.)]\s*|(?:TODO|ACTION|AI|TASK)[:\s]+)/i;
-
   for (const line of lines) {
     // Remove list prefix
-    const cleaned = line.replace(listPrefix, "").trim();
+    const cleaned = line.replace(LIST_PREFIX, "").trim();
     if (!cleaned || cleaned.length < 5) continue;
 
     // Check if line looks like a task (starts with verb or was a list item)
-    const wasListItem = listPrefix.test(line);
-    const startsWithVerb = actionVerbs.test(cleaned);
+    const wasListItem = LIST_PREFIX.test(line);
+    const startsWithVerb = ACTION_VERBS.test(cleaned);
 
     if (wasListItem || startsWithVerb) {
       // Ensure title starts with a capital letter

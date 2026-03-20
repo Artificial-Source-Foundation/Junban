@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
+import { bodyLimit } from "hono/body-limit";
 import { serve } from "@hono/node-server";
 import { bootstrap } from "./bootstrap.js";
 import { loadEnv } from "./config/env.js";
@@ -41,6 +42,9 @@ const app = new Hono();
 
 // Security headers
 app.use("*", secureHeaders());
+
+// Global body-size limit (10MB default; voice routes override to 25MB)
+app.use("*", bodyLimit({ maxSize: 10 * 1024 * 1024 }));
 
 // CORS middleware — restrict to localhost origins only
 const ALLOWED_ORIGINS = [
@@ -121,7 +125,6 @@ serve(
   },
   (info) => {
     logger.info(`API server listening on port ${info.port}`);
-    console.log(`API server listening on port ${info.port}`);
   },
 );
 

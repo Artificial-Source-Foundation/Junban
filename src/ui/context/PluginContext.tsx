@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   api,
   type PluginInfo,
@@ -108,22 +108,37 @@ export function PluginProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [refreshStatusBar, refreshPanels]);
 
+  const value = useMemo(
+    () => ({
+      plugins,
+      commands,
+      statusBarItems,
+      panels,
+      views,
+      refreshPlugins,
+      refreshCommands,
+      refreshStatusBar,
+      refreshPanels,
+      refreshViews,
+      executeCommand,
+    }),
+    [
+      plugins,
+      commands,
+      statusBarItems,
+      panels,
+      views,
+      refreshPlugins,
+      refreshCommands,
+      refreshStatusBar,
+      refreshPanels,
+      refreshViews,
+      executeCommand,
+    ],
+  );
+
   return (
-    <PluginContext.Provider
-      value={{
-        plugins,
-        commands,
-        statusBarItems,
-        panels,
-        views,
-        refreshPlugins,
-        refreshCommands,
-        refreshStatusBar,
-        refreshPanels,
-        refreshViews,
-        executeCommand,
-      }}
-    >
+    <PluginContext.Provider value={value}>
       {children}
     </PluginContext.Provider>
   );

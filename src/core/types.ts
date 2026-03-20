@@ -77,6 +77,25 @@ export interface Tag {
   color: string;
 }
 
+export const CreateProjectInput = z.object({
+  name: z.string().min(1).max(200),
+  color: z.string().max(50).optional(),
+  icon: z.string().max(100).nullable().optional(),
+  parentId: z.string().nullable().optional(),
+  isFavorite: z.boolean().optional().default(false),
+  viewStyle: z.enum(["list", "board", "calendar"]).optional().default("list"),
+});
+export type CreateProjectInput = z.infer<typeof CreateProjectInput>;
+
+export const UpdateProjectInput = CreateProjectInput.partial();
+export type UpdateProjectInput = z.infer<typeof UpdateProjectInput>;
+
+export const CreateTagInput = z.object({
+  name: z.string().min(1).max(100),
+  color: z.string().max(50).optional(),
+});
+export type CreateTagInput = z.infer<typeof CreateTagInput>;
+
 export const CreateTemplateInput = z.object({
   name: z.string().min(1).max(200),
   title: z.string().min(1).max(500),

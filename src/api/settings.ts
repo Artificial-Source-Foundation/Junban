@@ -75,6 +75,14 @@ const WRITABLE_SETTING_KEYS = new Set([
   "saved_filters",
 ]);
 
+/** Keys that contain sensitive values — redact on read */
+const SENSITIVE_KEY_PATTERNS = ["api_key", "token", "secret", "password"];
+
+function isSensitiveKey(key: string): boolean {
+  const lower = key.toLowerCase();
+  return SENSITIVE_KEY_PATTERNS.some((pattern) => lower.includes(pattern));
+}
+
 export function settingsRoutes(services: AppServices): Hono {
   const app = new Hono();
 
@@ -90,6 +98,10 @@ export function settingsRoutes(services: AppServices): Hono {
   // GET /settings/:key
   app.get("/:key", async (c) => {
     const key = decodeURIComponent(c.req.param("key"));
+    if (isSensitiveKey(key)) {
+      const row = services.storage.getAppSetting(key);
+      return c.json({ value: row?.value ? "[REDACTED]" : null });
+    }
     const row = services.storage.getAppSetting(key);
     return c.json({ value: row?.value ?? null });
   });

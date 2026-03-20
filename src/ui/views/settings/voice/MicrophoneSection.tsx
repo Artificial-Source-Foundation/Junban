@@ -49,6 +49,9 @@ export function MicrophoneSection({
     };
 
     let permStatus: PermissionStatus | null = null;
+    const changeHandler = () => {
+      if (permStatus) handleChange(permStatus);
+    };
     navigator.permissions
       .query({ name: "microphone" as PermissionName })
       .then((status) => {
@@ -57,7 +60,7 @@ export function MicrophoneSection({
         if (status.state === "granted") {
           refreshMicrophones();
         }
-        status.addEventListener("change", () => handleChange(status));
+        status.addEventListener("change", changeHandler);
       })
       .catch(() => {
         // permissions.query not supported for microphone in some browsers
@@ -65,7 +68,7 @@ export function MicrophoneSection({
 
     return () => {
       if (permStatus) {
-        permStatus.onchange = null;
+        permStatus.removeEventListener("change", changeHandler);
       }
     };
   }, [refreshMicrophones]);

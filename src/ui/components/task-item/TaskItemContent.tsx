@@ -1,3 +1,4 @@
+import React from "react";
 import { Calendar, Clock, Repeat, Bell } from "lucide-react";
 import type { Task } from "../../../core/types.js";
 import { FrogIcon, getDreadLevelColor } from "../DreadLevelSelector.js";
@@ -16,7 +17,7 @@ interface TaskItemContentProps {
   expanded?: boolean;
 }
 
-export function TaskItemContent({
+export const TaskItemContent = React.memo(function TaskItemContent({
   task,
   isOverdue,
   hasDuration,
@@ -131,4 +132,4 @@ export function TaskItemContent({
       )}
     </div>
   );
-}
+});

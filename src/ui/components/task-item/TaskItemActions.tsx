@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Calendar, Pencil } from "lucide-react";
 import type { Task } from "../../../core/types.js";
 import { DatePicker } from "../DatePicker.js";
@@ -9,7 +9,7 @@ interface TaskItemActionsProps {
   onUpdateDueDate?: (taskId: string, dueDate: string | null) => void;
 }
 
-export function TaskItemActions({ task, onSelect, onUpdateDueDate }: TaskItemActionsProps) {
+export const TaskItemActions = React.memo(function TaskItemActions({ task, onSelect, onUpdateDueDate }: TaskItemActionsProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   return (
@@ -48,4 +48,4 @@ export function TaskItemActions({ task, onSelect, onUpdateDueDate }: TaskItemAct
       )}
     </div>
   );
-}
+});

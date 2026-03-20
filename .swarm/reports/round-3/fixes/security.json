@@ -1,0 +1,69 @@
+{
+  "round": 3,
+  "focus": "Security fixes — input validation, body-size limit, sensitive settings redaction",
+  "date": "2026-03-20",
+  "fixes": [
+    {
+      "id": "FIX-SEC-01",
+      "addresses": ["SEC-R3-01", "SEC-R3-11", "SEC-R3-12"],
+      "severity": "high",
+      "title": "Add Zod validation to task, project, and tag API routes",
+      "description": "Added .safeParse() calls at the API boundary for POST/PATCH handlers in tasks, projects, and tags. Created new Zod schemas (CreateProjectInput, UpdateProjectInput, CreateTagInput) in src/core/types.ts. All route handlers now validate request bodies and return 400 with structured error details on validation failure.",
+      "files_changed": [
+        "src/core/types.ts",
+        "src/api/tasks.ts",
+        "src/api/projects.ts",
+        "src/api/tags.ts"
+      ],
+      "details": {
+        "tasks.ts": "POST / validates with CreateTaskInput.safeParse(); PATCH /:id validates with UpdateTaskInput.safeParse()",
+        "projects.ts": "POST / validates with CreateProjectInput.safeParse(); PATCH /:id validates with UpdateProjectInput.safeParse()",
+        "tags.ts": "POST / validates with CreateTagInput.safeParse()",
+        "types.ts": "Added CreateProjectInput (name max 200, color max 50, icon max 100, viewStyle enum, isFavorite bool), UpdateProjectInput (partial), CreateTagInput (name min 1 max 100, color max 50)"
+      }
+    },
+    {
+      "id": "FIX-SEC-02",
+      "addresses": ["SEC-R3-02"],
+      "severity": "high",
+      "title": "Add global body-size limit middleware (10MB)",
+      "description": "Added Hono's built-in bodyLimit middleware globally to src/server.ts with a 10MB max. This prevents memory exhaustion from oversized request bodies. The voice transcribe route already has its own 25MB limit via Content-Length checking.",
+      "files_changed": ["src/server.ts"],
+      "details": {
+        "import": "import { bodyLimit } from 'hono/body-limit'",
+        "middleware": "app.use('*', bodyLimit({ maxSize: 10 * 1024 * 1024 }))"
+      }
+    },
+    {
+      "id": "FIX-SEC-03",
+      "addresses": ["SEC-R3-17"],
+      "severity": "low",
+      "title": "Redact sensitive settings on GET /api/settings/:key",
+      "description": "Added a SENSITIVE_KEY_PATTERNS list and isSensitiveKey() check to the settings GET endpoint. Keys containing 'api_key', 'token', 'secret', or 'password' now return '[REDACTED]' if a value exists, or null if not set. This prevents leaking AI API keys and OAuth tokens through the generic settings endpoint.",
+      "files_changed": ["src/api/settings.ts"],
+      "details": {
+        "patterns": ["api_key", "token", "secret", "password"],
+        "behavior": "Returns { value: '[REDACTED]' } if value exists, { value: null } if not set"
+      }
+    }
+  ],
+  "deferred": [
+    {
+      "id": "SEC-R3-03",
+      "reason": "Plugin sandbox is an architectural issue requiring vm module, worker_threads, or separate process isolation. Not fixable with a route-level patch."
+    },
+    {
+      "id": "SEC-R3-19",
+      "reason": "Rate limiting requires infrastructure decisions (in-memory vs Redis, per-user vs global). Deferred as this is a localhost-first app."
+    },
+    {
+      "id": "SEC-R3-14",
+      "reason": "SSRF IPv6 and DNS rebinding are edge cases for a localhost application. Plugin install URL checks are already present for common private ranges."
+    }
+  ],
+  "verification": {
+    "typecheck": "pass (pre-existing AppLayout.tsx error from separate round-2 changes; no new errors introduced)",
+    "lint": "pass (0 errors in changed files; 2 pre-existing errors in src/api/ai.ts from separate changes)",
+    "tests": "pass — 2469 tests in 202 files, all green"
+  }
+}

@@ -21,7 +21,9 @@ export function useSoundEffect() {
       if (settings[EVENT_SETTING_KEY[event]] !== "true") return;
       const volume = parseInt(settings.sound_volume, 10);
       if (isNaN(volume) || volume <= 0) return;
-      playSoundRaw(event, volume / 100).catch(() => {});
+      playSoundRaw(event, volume / 100).catch((err) =>
+        console.warn("[sound] Playback failed:", err),
+      );
     },
     [settings],
   );

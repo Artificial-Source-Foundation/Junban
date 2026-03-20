@@ -194,28 +194,30 @@ export function AppLayout({
       </a>
       <div className="flex flex-1 overflow-hidden">
         <div className="hidden md:flex">
-          <Sidebar
-            currentView={currentView}
-            onNavigate={handleNavigate}
-            onOpenSettings={handleOpenSettings}
-            projects={projects}
-            selectedProjectId={selectedProjectId}
-            panels={panels}
-            pluginViews={pluginViews}
-            selectedPluginViewId={selectedPluginViewId}
-            collapsed={sidebarCollapsed}
-            onToggleCollapsed={onToggleSidebar}
-            projectTaskCounts={projectTaskCounts}
-            projectCompletedCounts={projectCompletedCounts}
-            onAddTask={handleAddTask}
-            onSearch={() => setSearchOpen(true)}
-            inboxCount={inboxTaskCount}
-            todayCount={todayTaskCount}
-            onOpenProjectModal={() => setProjectModalOpen(true)}
-            builtinPluginIds={builtinPluginIds}
-            savedFilters={savedFilters}
-            selectedFilterId={selectedFilterId}
-          />
+          <ErrorBoundary fallback={<div className="p-4 text-sm text-on-surface-secondary">Sidebar failed to load.</div>}>
+            <Sidebar
+              currentView={currentView}
+              onNavigate={handleNavigate}
+              onOpenSettings={handleOpenSettings}
+              projects={projects}
+              selectedProjectId={selectedProjectId}
+              panels={panels}
+              pluginViews={pluginViews}
+              selectedPluginViewId={selectedPluginViewId}
+              collapsed={sidebarCollapsed}
+              onToggleCollapsed={onToggleSidebar}
+              projectTaskCounts={projectTaskCounts}
+              projectCompletedCounts={projectCompletedCounts}
+              onAddTask={handleAddTask}
+              onSearch={() => setSearchOpen(true)}
+              inboxCount={inboxTaskCount}
+              todayCount={todayTaskCount}
+              onOpenProjectModal={() => setProjectModalOpen(true)}
+              builtinPluginIds={builtinPluginIds}
+              savedFilters={savedFilters}
+              selectedFilterId={selectedFilterId}
+            />
+          </ErrorBoundary>
         </div>
         <main
           id="main-content"
@@ -304,39 +306,47 @@ export function AppLayout({
       </div>
 
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Sidebar
-          currentView={currentView}
-          onNavigate={handleNavigate}
-          onOpenSettings={() => {
-            setDrawerOpen(false);
-            handleOpenSettings();
-          }}
-          projects={projects}
-          selectedProjectId={selectedProjectId}
-          panels={panels}
-          pluginViews={pluginViews}
-          selectedPluginViewId={selectedPluginViewId}
-          collapsed={false}
-          projectTaskCounts={projectTaskCounts}
-          projectCompletedCounts={projectCompletedCounts}
-          onAddTask={() => {
-            setDrawerOpen(false);
-            handleAddTask();
-          }}
-          onSearch={() => {
-            setDrawerOpen(false);
-            setSearchOpen(true);
-          }}
-          inboxCount={inboxTaskCount}
-          todayCount={todayTaskCount}
-          onOpenProjectModal={() => {
-            setDrawerOpen(false);
-            setProjectModalOpen(true);
-          }}
-          builtinPluginIds={builtinPluginIds}
-          savedFilters={savedFilters}
-          selectedFilterId={selectedFilterId}
-        />
+        <ErrorBoundary
+          fallback={
+            <div className="p-4 text-sm text-on-surface-secondary">
+              Sidebar failed to load.
+            </div>
+          }
+        >
+          <Sidebar
+            currentView={currentView}
+            onNavigate={handleNavigate}
+            onOpenSettings={() => {
+              setDrawerOpen(false);
+              handleOpenSettings();
+            }}
+            projects={projects}
+            selectedProjectId={selectedProjectId}
+            panels={panels}
+            pluginViews={pluginViews}
+            selectedPluginViewId={selectedPluginViewId}
+            collapsed={false}
+            projectTaskCounts={projectTaskCounts}
+            projectCompletedCounts={projectCompletedCounts}
+            onAddTask={() => {
+              setDrawerOpen(false);
+              handleAddTask();
+            }}
+            onSearch={() => {
+              setDrawerOpen(false);
+              setSearchOpen(true);
+            }}
+            inboxCount={inboxTaskCount}
+            todayCount={todayTaskCount}
+            onOpenProjectModal={() => {
+              setDrawerOpen(false);
+              setProjectModalOpen(true);
+            }}
+            builtinPluginIds={builtinPluginIds}
+            savedFilters={savedFilters}
+            selectedFilterId={selectedFilterId}
+          />
+        </ErrorBoundary>
       </MobileDrawer>
 
       {isMobile && (
@@ -354,39 +364,41 @@ export function AppLayout({
       )}
 
       {selectedTask && currentView !== "task" && (
-        <TaskDetailPanel
-          task={selectedTask}
-          allTasks={tasks}
-          onUpdate={handleUpdateTask}
-          onDelete={handleDeleteTask}
-          onClose={handleCloseDetail}
-          onIndent={handleIndent}
-          onOutdent={handleOutdent}
-          onSelect={handleSelectTask}
-          onAddSubtask={handleAddSubtask}
-          onToggleSubtask={handleToggleTask}
-          onReorder={handleReorder}
-          onNavigatePrev={
-            selectedTaskIdx > 0
-              ? () => handleSelectTask(visibleTasks[selectedTaskIdx - 1].id)
-              : undefined
-          }
-          onNavigateNext={
-            selectedTaskIdx >= 0 && selectedTaskIdx < visibleTasks.length - 1
-              ? () => handleSelectTask(visibleTasks[selectedTaskIdx + 1].id)
-              : undefined
-          }
-          onOpenFullPage={(id) => handleNavigate("task", id)}
-          hasPrev={selectedTaskIdx > 0}
-          hasNext={selectedTaskIdx >= 0 && selectedTaskIdx < visibleTasks.length - 1}
-          projectName={selectedTaskProjectName}
-          availableTags={availableTags}
-          comments={taskComments}
-          activity={taskActivity}
-          onAddComment={handleAddComment}
-          onUpdateComment={handleUpdateComment}
-          onDeleteComment={handleDeleteComment}
-        />
+        <ErrorBoundary>
+          <TaskDetailPanel
+            task={selectedTask}
+            allTasks={tasks}
+            onUpdate={handleUpdateTask}
+            onDelete={handleDeleteTask}
+            onClose={handleCloseDetail}
+            onIndent={handleIndent}
+            onOutdent={handleOutdent}
+            onSelect={handleSelectTask}
+            onAddSubtask={handleAddSubtask}
+            onToggleSubtask={handleToggleTask}
+            onReorder={handleReorder}
+            onNavigatePrev={
+              selectedTaskIdx > 0
+                ? () => handleSelectTask(visibleTasks[selectedTaskIdx - 1].id)
+                : undefined
+            }
+            onNavigateNext={
+              selectedTaskIdx >= 0 && selectedTaskIdx < visibleTasks.length - 1
+                ? () => handleSelectTask(visibleTasks[selectedTaskIdx + 1].id)
+                : undefined
+            }
+            onOpenFullPage={(id) => handleNavigate("task", id)}
+            hasPrev={selectedTaskIdx > 0}
+            hasNext={selectedTaskIdx >= 0 && selectedTaskIdx < visibleTasks.length - 1}
+            projectName={selectedTaskProjectName}
+            availableTags={availableTags}
+            comments={taskComments}
+            activity={taskActivity}
+            onAddComment={handleAddComment}
+            onUpdateComment={handleUpdateComment}
+            onDeleteComment={handleDeleteComment}
+          />
+        </ErrorBoundary>
       )}
 
       {children}

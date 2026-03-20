@@ -13,7 +13,10 @@ export function CustomInstructionsSection() {
         if (val) setInstructions(val);
         setLoaded(true);
       })
-      .catch(() => setLoaded(true));
+      .catch((err) => {
+        console.warn("[settings] Failed to load custom instructions:", err);
+        setLoaded(true);
+      });
   }, []);
 
   const handleSave = async () => {

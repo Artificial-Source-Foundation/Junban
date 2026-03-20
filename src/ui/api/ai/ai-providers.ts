@@ -6,6 +6,7 @@ import {
   getServices,
 } from "../helpers.js";
 import type { AIProviderInfo, ModelDiscoveryInfo } from "./ai-types.js";
+import { DEFAULT_LMSTUDIO_BASE_URL } from "../../../config/defaults.js";
 
 export async function listAIProviders(): Promise<AIProviderInfo[]> {
   if (useDirectServices()) {
@@ -63,7 +64,7 @@ export async function loadModel(
       const { loadLMStudioModel } = await import("../../../ai/model-discovery.js");
       await loadLMStudioModel(
         modelKey,
-        baseUrl || baseUrlSetting?.value || "http://localhost:1234/v1",
+        baseUrl || baseUrlSetting?.value || DEFAULT_LMSTUDIO_BASE_URL,
         apiKeySetting?.value,
       );
     }
@@ -91,7 +92,7 @@ export async function unloadModel(
       const { unloadLMStudioModel } = await import("../../../ai/model-discovery.js");
       await unloadLMStudioModel(
         modelKey,
-        baseUrl || baseUrlSetting?.value || "http://localhost:1234/v1",
+        baseUrl || baseUrlSetting?.value || DEFAULT_LMSTUDIO_BASE_URL,
         apiKeySetting?.value,
       );
     }

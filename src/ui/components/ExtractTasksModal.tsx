@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { FileText, Loader2, Check, AlertCircle } from "lucide-react";
 import { useFocusTrap } from "../hooks/useFocusTrap.js";
 import type { Project } from "../../core/types.js";
+import { ACTION_VERBS, LIST_PREFIX } from "../../parser/task-extraction-patterns.js";
 
 /** A single extracted task for preview and selection. */
 interface ExtractedTaskItem {
@@ -37,13 +38,6 @@ const PRIORITY_LABELS: Record<number, { label: string; className: string }> = {
   3: { label: "P3", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
   4: { label: "P4", className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400" },
 };
-
-/** Action verbs that indicate a task. */
-const ACTION_VERBS =
-  /^(review|send|update|create|schedule|prepare|follow[\s-]?up|contact|call|email|write|fix|implement|deploy|check|set[\s-]?up|complete|finalize|submit|organize|plan|discuss|investigate|research|design|test|build|draft|arrange|confirm|approve|cancel|assign|notify|share|clean|move|order|book|coordinate)/i;
-
-/** Patterns that indicate list items. */
-const LIST_PREFIX = /^(?:[-*+]|\d+[.)]\s*|(?:TODO|ACTION|AI|TASK)[:\s]+)/i;
 
 /**
  * Heuristic extraction of tasks from unstructured text.

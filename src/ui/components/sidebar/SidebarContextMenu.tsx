@@ -83,7 +83,9 @@ export function useSidebarContextMenu({
       icon: <Link size={14} />,
       onClick: () => {
         const url = `${window.location.origin}${window.location.pathname}#/${itemId}`;
-        navigator.clipboard.writeText(url).catch(() => {});
+        navigator.clipboard.writeText(url).catch((err) =>
+          console.warn("[clipboard] Copy failed:", err),
+        );
       },
     });
 

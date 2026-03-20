@@ -106,7 +106,7 @@ export function AddProjectModal({ open, onClose, onSubmit, projects }: AddProjec
     onClose();
   };
 
-  const isCustomColor = !DEFAULT_PROJECT_COLORS.includes(color as any);
+  const isCustomColor = !(DEFAULT_PROJECT_COLORS as readonly string[]).includes(color);
 
   return (
     <div

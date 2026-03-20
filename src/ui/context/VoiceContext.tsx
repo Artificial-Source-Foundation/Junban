@@ -254,26 +254,45 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     setIsSpeaking(false);
   }, []);
 
+  const value = useMemo(
+    () => ({
+      settings,
+      updateSettings,
+      registry,
+      sttProvider,
+      ttsProvider,
+      ttsVoices,
+      ttsModels,
+      isListening,
+      isTranscribing,
+      isSpeaking,
+      startListening,
+      stopListening,
+      speak,
+      cancelSpeech,
+      transcribeAudio,
+    }),
+    [
+      settings,
+      updateSettings,
+      registry,
+      sttProvider,
+      ttsProvider,
+      ttsVoices,
+      ttsModels,
+      isListening,
+      isTranscribing,
+      isSpeaking,
+      startListening,
+      stopListening,
+      speak,
+      cancelSpeech,
+      transcribeAudio,
+    ],
+  );
+
   return (
-    <VoiceContext.Provider
-      value={{
-        settings,
-        updateSettings,
-        registry,
-        sttProvider,
-        ttsProvider,
-        ttsVoices,
-        ttsModels,
-        isListening,
-        isTranscribing,
-        isSpeaking,
-        startListening,
-        stopListening,
-        speak,
-        cancelSpeech,
-        transcribeAudio,
-      }}
-    >
+    <VoiceContext.Provider value={value}>
       {children}
     </VoiceContext.Provider>
   );

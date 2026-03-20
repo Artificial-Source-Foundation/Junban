@@ -57,14 +57,22 @@ export const TaskItem = React.memo(function TaskItem({
 }: TaskItemProps) {
   const { settings } = useGeneralSettings();
   const [animClass, setAnimClass] = useState("");
+  const [showBurst, setShowBurst] = useState(false);
   const prevStatusRef = useRef(task.status);
+  const reducedMotion = useReducedMotion();
 
+  // Handle animation class and completion burst in a single effect (merged PERF-320)
   useEffect(() => {
     if (prevStatusRef.current === "pending" && task.status === "completed") {
       setAnimClass("animate-task-complete");
-      const timer = setTimeout(() => setAnimClass(""), 600);
+      setShowBurst(true);
+      const animTimer = setTimeout(() => setAnimClass(""), 600);
+      const burstTimer = setTimeout(() => setShowBurst(false), 600);
       prevStatusRef.current = task.status;
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(animTimer);
+        clearTimeout(burstTimer);
+      };
     }
     if (prevStatusRef.current === "completed" && task.status === "pending") {
       setAnimClass("animate-task-revive");
@@ -93,19 +101,6 @@ export const TaskItem = React.memo(function TaskItem({
   const durationEnabled = settings.feature_duration !== "false";
   const hasDuration = durationEnabled && task.estimatedMinutes != null && task.estimatedMinutes > 0;
   const formattedDuration = hasDuration ? formatDuration(task.estimatedMinutes!) : "";
-
-  // Priority-based circle colors
-  const reducedMotion = useReducedMotion();
-  const [showBurst, setShowBurst] = useState(false);
-
-  // Trigger burst on completion
-  useEffect(() => {
-    if (prevStatusRef.current === "pending" && task.status === "completed") {
-      setShowBurst(true);
-      const timer = setTimeout(() => setShowBurst(false), 600);
-      return () => clearTimeout(timer);
-    }
-  }, [task.status]);
 
   const priorityColorClass = task.priority
     ? `border-priority-${task.priority}`

@@ -53,7 +53,7 @@ export function useGlobalShortcut(
 
     return () => {
       cancelled = true;
-      unregisterFn?.().catch(() => {});
+      unregisterFn?.().catch((err) => console.warn("[shortcut] Unregister failed:", err));
     };
   }, [shortcut, enabled]);
 }

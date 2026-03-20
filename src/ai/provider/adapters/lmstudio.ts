@@ -8,6 +8,7 @@ import type { LLMProviderPlugin } from "../interface.js";
 import type { ModelDescriptor } from "../../core/capabilities.js";
 import type { AIProviderConfig } from "../../types.js";
 import { DEFAULT_CAPABILITIES } from "../../core/capabilities.js";
+import { DEFAULT_LMSTUDIO_BASE_URL } from "../../../config/defaults.js";
 
 const FETCH_TIMEOUT_MS = 5000;
 const LOAD_TIMEOUT_MS = 120_000;
@@ -48,7 +49,7 @@ interface LMStudioModel {
 }
 
 async function discoverLMStudioModels(config: AIProviderConfig): Promise<ModelDescriptor[]> {
-  const baseUrl = config.baseUrl ?? "http://localhost:1234/v1";
+  const baseUrl = config.baseUrl ?? DEFAULT_LMSTUDIO_BASE_URL;
   const host = getLMStudioHost(baseUrl);
   const auth = authHeaders(config.apiKey);
 
@@ -89,7 +90,7 @@ async function discoverLMStudioModels(config: AIProviderConfig): Promise<ModelDe
 }
 
 async function loadLMStudioModel(modelKey: string, config: AIProviderConfig): Promise<void> {
-  const baseUrl = config.baseUrl ?? "http://localhost:1234/v1";
+  const baseUrl = config.baseUrl ?? DEFAULT_LMSTUDIO_BASE_URL;
   const host = getLMStudioHost(baseUrl);
   const auth = authHeaders(config.apiKey);
   const res = await fetchWithTimeout(
@@ -112,7 +113,7 @@ export async function unloadLMStudioModel(
   modelKey: string,
   config: AIProviderConfig,
 ): Promise<void> {
-  const baseUrl = config.baseUrl ?? "http://localhost:1234/v1";
+  const baseUrl = config.baseUrl ?? DEFAULT_LMSTUDIO_BASE_URL;
   const host = getLMStudioHost(baseUrl);
   const auth = authHeaders(config.apiKey);
   const res = await fetchWithTimeout(`${host}/api/v1/models/unload`, {
@@ -132,7 +133,7 @@ export const lmstudioPlugin: LLMProviderPlugin = createOpenAICompatPlugin({
   needsApiKey: false,
   optionalApiKey: true,
   defaultModel: "default",
-  defaultBaseUrl: "http://localhost:1234/v1",
+  defaultBaseUrl: DEFAULT_LMSTUDIO_BASE_URL,
   showBaseUrl: true,
   fakeApiKey: "lm-studio",
   discoverModels: discoverLMStudioModels,

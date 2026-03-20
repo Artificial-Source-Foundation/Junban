@@ -1,0 +1,73 @@
+{
+  "round": 3,
+  "focus": "performance",
+  "timestamp": "2026-03-20",
+  "testResults": {
+    "passed": 2469,
+    "failed": 0,
+    "files": 202
+  },
+  "fixes": [
+    {
+      "id": "PERF-305",
+      "status": "fixed",
+      "title": "PluginContext.Provider value memoized with useMemo",
+      "file": "src/ui/context/PluginContext.tsx",
+      "description": "Wrapped the PluginContext.Provider value object in useMemo with a dependency array covering all 11 properties (plugins, commands, statusBarItems, panels, views, and 6 callbacks). Prevents unnecessary re-renders of all consumers when unrelated state changes."
+    },
+    {
+      "id": "PERF-304",
+      "status": "fixed",
+      "title": "VoiceContext.Provider value memoized with useMemo",
+      "file": "src/ui/context/VoiceContext.tsx",
+      "description": "Wrapped the VoiceContext.Provider value object in useMemo with a dependency array covering all 15 properties. Prevents re-renders of consumers when unrelated voice state changes (e.g., isListening change no longer re-renders components that only read settings)."
+    },
+    {
+      "id": "PERF-303",
+      "status": "fixed",
+      "title": "AIContext.Provider value memoized with useMemo",
+      "file": "src/ui/context/AIContext.tsx",
+      "description": "Added useMemo import and wrapped the AIContext.Provider value object (25 properties) in useMemo with a complete dependency array. Prevents all AI context consumers from re-rendering on every state change."
+    },
+    {
+      "id": "PERF-306",
+      "status": "fixed",
+      "title": "TaskItemContent and TaskItemActions wrapped in React.memo",
+      "files": [
+        "src/ui/components/task-item/TaskItemContent.tsx",
+        "src/ui/components/task-item/TaskItemActions.tsx"
+      ],
+      "description": "Both sub-components of TaskItem are now wrapped in React.memo. TaskItemContent receives 8 props and TaskItemActions receives 3 props, all of which are stable references from the memoized parent TaskItem. This prevents unnecessary re-renders when sibling state changes (e.g., animClass, showBurst)."
+    },
+    {
+      "id": "PERF-320",
+      "status": "fixed",
+      "title": "Merged duplicate useEffect hooks in TaskItem.tsx",
+      "file": "src/ui/components/TaskItem.tsx",
+      "description": "Merged two separate useEffect hooks that both watched task.status into a single effect. The first set animClass and the second set showBurst, both checking the same pending->completed transition. Combined into one effect with two timeouts. Also reordered hook declarations so useState(showBurst) and useReducedMotion() are declared before the effect that uses them."
+    },
+    {
+      "id": "PERF-301",
+      "status": "deferred",
+      "title": "SettingsContext batch endpoint — TODO comment added",
+      "file": "src/ui/context/SettingsContext.tsx",
+      "description": "Added a TODO comment documenting the need for a GET /api/settings batch endpoint to replace 52 individual api.getAppSetting() calls. Requires backend changes in src/api/settings.ts and a new api.getAllSettings() frontend helper. Deferred to avoid scope creep."
+    },
+    {
+      "id": "PERF-302",
+      "status": "deferred",
+      "title": "PluginContext batch API endpoint",
+      "description": "Consolidating 5 separate plugin API calls into a single GET /api/plugins/state endpoint requires backend changes. Deferred."
+    },
+    {
+      "id": "PERF-317",
+      "status": "deferred",
+      "title": "useReducedMotion refactor to dedicated context",
+      "description": "Creating a dedicated ReducedMotionContext to avoid full SettingsContext subscription in every TaskItem. Deferred as it requires a broader refactor of the settings selector pattern."
+    }
+  ],
+  "notesOnPreExistingIssues": {
+    "typecheck": "2 pre-existing errors in lmstudio.ts (missing DEFAULT_LMSTUDIO_BASE_URL) and api/ai.ts (unused ChatMessage import). Not caused by this round's fixes.",
+    "lint": "2 pre-existing errors: unused ChatMessage in src/api/ai.ts and unused ErrorBoundary. 72 warnings. Not caused by this round's fixes."
+  }
+}

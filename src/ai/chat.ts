@@ -8,6 +8,7 @@ import type { IStorage } from "../storage/interface.js";
 import { generateId } from "../utils/ids.js";
 import { AIError, classifyProviderError, type StreamErrorData } from "./errors.js";
 import { createLogger } from "../utils/logger.js";
+import { deserializeChatMessages } from "./message-utils.js";
 import { buildSystemMessage, LOCAL_PROVIDER_TOOLS } from "./chat-prompts.js";
 
 const logger = createLogger("chat");
@@ -479,19 +480,7 @@ export class ChatManager {
       ...options,
     });
 
-    const restoredMessages: ChatMessage[] = [];
-    for (const row of rows) {
-      if (row.role === "system") continue;
-      const msg: ChatMessage = {
-        role: row.role as ChatMessage["role"],
-        content: row.content,
-        ...(row.toolCallId ? { toolCallId: row.toolCallId } : {}),
-        ...(row.toolCalls ? { toolCalls: JSON.parse(row.toolCalls) } : {}),
-      };
-      restoredMessages.push(msg);
-    }
-
-    session.restoreMessages(restoredMessages);
+    session.restoreMessages(deserializeChatMessages(rows));
     this.session = session;
     logger.info("Chat session restored", {
       sessionId: latest.sessionId,

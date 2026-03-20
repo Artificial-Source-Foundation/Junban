@@ -50,7 +50,10 @@ export function PluginBrowser({ open, onClose }: PluginBrowserProps) {
         setStorePlugins(data.plugins ?? []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.warn("[plugins] Failed to load plugin registry:", err);
+        setLoading(false);
+      });
   }, [open]);
 
   // Auto-focus search on open

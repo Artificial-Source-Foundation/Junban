@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import type { AppServices } from "../bootstrap.js";
 import type { ProviderRegistration } from "../ai/provider/registry.js";
-import type { ChatMessage } from "../ai/types.js";
+import { deserializeChatMessages } from "../ai/message-utils.js";
+import { DEFAULT_LMSTUDIO_BASE_URL } from "../config/defaults.js";
 import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger("api:ai");
@@ -146,7 +147,7 @@ export function aiRoutes(services: AppServices): Hono {
       const { loadLMStudioModel } = await import("../ai/model-discovery.js");
       await loadLMStudioModel(
         modelKey,
-        (baseUrlOverride as string) || baseUrlSetting?.value || "http://localhost:1234/v1",
+        baseUrlOverride || baseUrlSetting?.value || DEFAULT_LMSTUDIO_BASE_URL,
         apiKeySetting?.value,
       );
     }
@@ -174,7 +175,7 @@ export function aiRoutes(services: AppServices): Hono {
       const { unloadLMStudioModel } = await import("../ai/model-discovery.js");
       await unloadLMStudioModel(
         modelKey,
-        (baseUrlOverride as string) || baseUrlSetting?.value || "http://localhost:1234/v1",
+        baseUrlOverride || baseUrlSetting?.value || DEFAULT_LMSTUDIO_BASE_URL,
         apiKeySetting?.value,
       );
     }
@@ -407,17 +408,7 @@ export function aiRoutes(services: AppServices): Hono {
       providerName: providerSetting.value as string,
     });
 
-    const restoredMessages: ChatMessage[] = [];
-    for (const row of rows) {
-      if (row.role === "system") continue;
-      restoredMessages.push({
-        role: row.role as "user" | "assistant" | "tool",
-        content: row.content,
-        ...(row.toolCallId ? { toolCallId: row.toolCallId } : {}),
-        ...(row.toolCalls ? { toolCalls: JSON.parse(row.toolCalls) } : {}),
-      });
-    }
-    session.restoreMessages(restoredMessages);
+    session.restoreMessages(deserializeChatMessages(rows));
 
     services.chatManager.setSession(session);
     const messages = session.getMessages();

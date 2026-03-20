@@ -412,7 +412,17 @@ export const registerAIRoutes: RouteRegistrar = (server, getServices) => {
             role: row.role as "user" | "assistant" | "tool",
             content: row.content,
             ...(row.toolCallId ? { toolCallId: row.toolCallId } : {}),
-            ...(row.toolCalls ? { toolCalls: JSON.parse(row.toolCalls) } : {}),
+            ...(row.toolCalls
+              ? {
+                  toolCalls: (() => {
+                    try {
+                      return JSON.parse(row.toolCalls);
+                    } catch {
+                      return undefined;
+                    }
+                  })(),
+                }
+              : {}),
           };
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (session as any).messages.push(msg);

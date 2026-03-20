@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import type { AppServices } from "../bootstrap.js";
+import { CreateTaskInput, UpdateTaskInput } from "../core/types.js";
 
 export function taskRoutes(services: AppServices): Hono {
   const app = new Hono();
@@ -23,7 +24,11 @@ export function taskRoutes(services: AppServices): Hono {
   // POST /tasks — create a task
   app.post("/", async (c) => {
     const body = await c.req.json();
-    const task = await services.taskService.create(body);
+    const parsed = CreateTaskInput.safeParse(body);
+    if (!parsed.success) {
+      return c.json({ error: "Validation failed", details: parsed.error.flatten() }, 400);
+    }
+    const task = await services.taskService.create(parsed.data);
     return c.json(task, 201);
   });
 
@@ -233,7 +238,11 @@ export function taskRoutes(services: AppServices): Hono {
   app.patch("/:id", async (c) => {
     const id = c.req.param("id");
     const body = await c.req.json();
-    const task = await services.taskService.update(id, body);
+    const parsed = UpdateTaskInput.safeParse(body);
+    if (!parsed.success) {
+      return c.json({ error: "Validation failed", details: parsed.error.flatten() }, 400);
+    }
+    const task = await services.taskService.update(id, parsed.data);
     return c.json(task);
   });
 

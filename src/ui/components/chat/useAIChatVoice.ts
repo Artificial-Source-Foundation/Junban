@@ -147,7 +147,7 @@ export function useAIChatVoice({
       lastMsg.content &&
       !(lastMsg as unknown as Record<string, unknown>).isError
     ) {
-      voice.speak(lastMsg.content).catch(() => {});
+      voice.speak(lastMsg.content).catch((err) => console.warn("[voice] TTS failed:", err));
     }
   }, [isStreaming, messages, voice, voiceCall.isCallActive]);
 

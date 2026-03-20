@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import type { AppServices } from "../bootstrap.js";
+import { CreateTagInput } from "../core/types.js";
 
 export function tagRoutes(services: AppServices): Hono {
   const app = new Hono();
@@ -13,7 +14,11 @@ export function tagRoutes(services: AppServices): Hono {
   // POST /tags — create a tag
   app.post("/", async (c) => {
     const body = await c.req.json();
-    const tag = await services.tagService.create(body.name, body.color);
+    const parsed = CreateTagInput.safeParse(body);
+    if (!parsed.success) {
+      return c.json({ error: "Validation failed", details: parsed.error.flatten() }, 400);
+    }
+    const tag = await services.tagService.create(parsed.data.name, parsed.data.color);
     return c.json(tag, 201);
   });
 
