@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs";
 import type { AppServices } from "../bootstrap.js";
+import { VALID_PERMISSIONS } from "../plugins/types.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -257,6 +258,15 @@ export function pluginRoutes(services: AppServices): Hono {
 
     const body = await c.req.json();
     const { permissions } = body as { permissions: string[] };
+    // Validate permissions against known set
+    if (!Array.isArray(permissions)) {
+      return c.json({ error: "permissions must be an array" }, 400);
+    }
+    const validSet = new Set<string>(VALID_PERMISSIONS);
+    const invalid = permissions.filter((p) => !validSet.has(p));
+    if (invalid.length > 0) {
+      return c.json({ error: `Invalid permissions: ${invalid.join(", ")}` }, 400);
+    }
     await services.pluginLoader.approveAndLoad(pluginId, permissions);
     return c.json({ ok: true });
   });

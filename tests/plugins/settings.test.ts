@@ -37,7 +37,7 @@ describe("PluginSettingsManager", () => {
   it("throws for unknown setting with no default", () => {
     const manager = createManager();
     expect(() => manager.get("test-plugin", "nonexistent", DEFINITIONS)).toThrow(
-      "Unknown setting: test-plugin/nonexistent",
+      "Setting not found: test-plugin/nonexistent",
     );
   });
 

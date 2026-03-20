@@ -1,0 +1,210 @@
+{
+  "domain": "quality",
+  "severity_counts": {
+    "critical": 3,
+    "warning": 12,
+    "suggestion": 10
+  },
+  "findings": [
+    {
+      "severity": "critical",
+      "file": "src/storage/markdown/persistence.ts",
+      "line": 374,
+      "issue": "Unprotected JSON.parse on file contents — corrupted _ai_memories.json will crash the app on startup with no recovery path",
+      "recommendation": "Wrap JSON.parse in try/catch, log warning and skip corrupted file rather than crashing",
+      "code_snippet": "const memories = JSON.parse(content);"
+    },
+    {
+      "severity": "critical",
+      "file": "src/plugins/settings.ts",
+      "line": 65,
+      "issue": "Unprotected JSON.parse on database row — corrupted plugin settings will crash PluginSettingsManager.load() with no catch",
+      "recommendation": "Wrap JSON.parse in try/catch, return empty object on parse failure and log a warning",
+      "code_snippet": "const settings: Record<string, unknown> = row ? JSON.parse(row.settings) : {};"
+    },
+    {
+      "severity": "critical",
+      "file": "src/api/ai.ts and src/ai/chat.ts and src/ui/api/ai/ai-sessions.ts",
+      "line": 405,
+      "issue": "Three independent copies of message restoration logic (JSON.parse toolCalls, filter system messages, reconstruct ChatMessage[]) — divergence risk is high since any fix must be applied in 3 places",
+      "recommendation": "Extract a shared `deserializeChatMessages(rows)` utility into src/ai/chat.ts or a new src/ai/message-utils.ts, import from all three consumers",
+      "code_snippet": "...(row.toolCalls ? { toolCalls: JSON.parse(row.toolCalls) } : {})"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/views/PluginView.tsx",
+      "line": 82,
+      "issue": "Infinite retry loop with no backoff or attempt limit — if resolveBuiltinComponent fails or returns null permanently, this retries every 1 second forever, creating unnecessary load",
+      "recommendation": "Add exponential backoff (1s, 2s, 4s...) and a maximum retry count (e.g., 10 attempts), then show an error state",
+      "code_snippet": "retryTimer = setTimeout(attempt, 1000);"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/views/settings/voice/MicrophoneSection.tsx",
+      "line": 60,
+      "issue": "Event listener leak — adds listener via addEventListener('change', () => ...) but cleanup uses `permStatus.onchange = null`, which only removes handlers set via the onchange property, not addEventListener",
+      "recommendation": "Store the handler function in a variable and use removeEventListener('change', handler) in cleanup, or use onchange = handler instead of addEventListener",
+      "code_snippet": "status.addEventListener(\"change\", () => handleChange(status));"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/themes/manager.ts",
+      "line": 17,
+      "issue": "ThemeManager registers a 'change' event listener on MediaQueryList in the constructor but never removes it — since it's a module-level singleton this is a minor leak, but prevents proper teardown in tests",
+      "recommendation": "Add a destroy() method that calls removeEventListener, or store the handler reference for cleanup",
+      "code_snippet": "this.systemThemeQuery.addEventListener(\"change\", () => {"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/views/settings/AboutTab.tsx",
+      "line": 213,
+      "issue": "Unsafe type assertion `(storageInfo as { mode: string }).mode` — the catch fallback returns `{ mode: 'unknown' }` as a plain object but the assertion assumes it always has the full shape, bypassing type safety",
+      "recommendation": "Define an explicit return type for the Promise.all result or use a type guard to check mode property existence",
+      "code_snippet": "(storageInfo as { mode: string }).mode === \"markdown\" ? \"Markdown\" : \"SQLite\""
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/api/ai/ai-sessions.ts",
+      "line": 107,
+      "issue": "Explicit `any` type annotation in message restoration array — `toolCalls?: any` bypasses type checking for tool call data in the frontend session switch path",
+      "recommendation": "Use the proper ToolCall type from ai/types.ts instead of any",
+      "code_snippet": "toolCalls?: any;"
+    },
+    {
+      "severity": "warning",
+      "file": "src/api/plugins.ts",
+      "line": 159,
+      "issue": "Plugin instance accessed via `as any` to reach timeblocking store — tightly couples the API layer to plugin internals without type safety",
+      "recommendation": "Define a typed interface for plugin instances that expose a store (e.g., `PluginWithStore`) or use the plugin API's getStore() method",
+      "code_snippet": "const instance = plugin.instance as any;"
+    },
+    {
+      "severity": "warning",
+      "file": "src/plugins/installer.ts",
+      "line": 50,
+      "issue": "Readable.fromWeb(res.body as any) uses `as any` cast — Node.js ReadableStream vs Web ReadableStream type mismatch",
+      "recommendation": "Use a proper type assertion or conditional check: `Readable.fromWeb(res.body as ReadableStream<Uint8Array>)` if on Node 18+",
+      "code_snippet": "await pipeline(Readable.fromWeb(res.body as any), fileStream);"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/context/SettingsContext.tsx",
+      "line": 215,
+      "issue": "Settings load failure silently caught with no error logging — if the API is unreachable, user gets default settings with no indication that saved preferences were lost",
+      "recommendation": "Add console.warn logging in the catch block to indicate settings load failure",
+      "code_snippet": ".catch(() => {\n        if (mounted) setLoaded(true);\n      });"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/views/settings/ai/DailyBriefingSection.tsx and CustomInstructionsSection.tsx",
+      "line": 16,
+      "issue": "Two settings sections silently swallow load errors with `.catch(() => setLoaded(true))` — user won't know if their AI settings failed to load",
+      "recommendation": "Add console.warn for failed settings loads so debugging is possible",
+      "code_snippet": ".catch(() => setLoaded(true));"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/views/settings/AITab.tsx",
+      "line": 71,
+      "issue": "Model fetch failure silently caught — sets modelsFailed flag but the catch block has no logging, making it hard to diagnose why models fail to load",
+      "recommendation": "Add console.warn in the catch to log the actual error for debugging",
+      "code_snippet": ".catch(() => {\n          setAvailableModels([]);\n          setModelsFailed(true);\n        })"
+    },
+    {
+      "severity": "warning",
+      "file": "src/api/ai.ts",
+      "line": 296,
+      "issue": "Session restore try/catch silently drops errors with only a comment '// Non-critical' — if ChatSession creation fails, the user gets an empty session with no feedback about what went wrong",
+      "recommendation": "Log the error with logger.warn to enable debugging of session restore failures",
+      "code_snippet": "} catch {\n        // Non-critical\n      }"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/components/chat/useAIChatVoice.ts",
+      "line": 150,
+      "issue": "voice.speak() error silently swallowed — if TTS fails, the user gets no feedback that auto-speak didn't work",
+      "recommendation": "Add console.warn to log TTS failures for debugging",
+      "code_snippet": "voice.speak(lastMsg.content).catch(() => {});"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/ui/views/PluginView.tsx",
+      "line": 120,
+      "issue": "Plugin content polling at 500ms/1000ms intervals is aggressive — creates continuous network/API load for any open plugin view even when nothing changes",
+      "recommendation": "Consider using server-sent events (SSE) or a longer polling interval with a manual refresh button. At minimum, add a visibility check to pause polling when tab is hidden",
+      "code_snippet": "const interval = setInterval(fetchContent, isStructured ? 500 : 1000);"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/ui/context/builtin-views.ts",
+      "line": 9,
+      "issue": "4 eslint-disable directives for @typescript-eslint/no-explicit-any in 55 lines — this bridge module has the highest suppression density in the codebase",
+      "recommendation": "Define a PluginComponentType = React.FC<Record<string, unknown>> and use it throughout instead of any",
+      "code_snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/ui/components/ExtractTasksModal.tsx and src/ai/tools/builtin/extract-tasks-from-text.ts",
+      "line": 46,
+      "issue": "Duplicated task extraction regex patterns (LIST_PREFIX and ACTION_VERBS) maintained independently in both files with a comment to stay in sync — fragile manual synchronization",
+      "recommendation": "Extract shared constants to src/utils/task-extraction.ts and import from both consumers",
+      "code_snippet": "const LIST_PREFIX = /^(?:[-*+]|\\d+[.)\\s*|(?:TODO|ACTION|AI|TASK)[:\\s]+)/i;"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/ai/voice/adapters/browser-stt.ts",
+      "line": 32,
+      "issue": "(window as any).SpeechRecognition — Web Speech API types available via @types/dom-speech-recognition but not installed (carried over from round 1, still unresolved)",
+      "recommendation": "Install @types/dom-speech-recognition or add a local type declaration to eliminate 3 `as any` casts",
+      "code_snippet": "(window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/ai/voice/adapters/piper-local-tts.ts",
+      "line": 53,
+      "issue": "4 `as any` casts for piper-tts library API — library types incomplete (carried over from round 1, still unresolved)",
+      "recommendation": "Create a local piper-tts.d.ts type declaration file",
+      "code_snippet": "await tts.download(this.defaultVoice as any, (p) => {"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/ui/app/AppLayout.tsx",
+      "line": 242,
+      "issue": "ErrorBoundary only wraps the main view area — Sidebar, AIChatPanel, and TaskDetailPanel are unprotected; a crash in any of these takes down the entire app (carried over from round 1, still unresolved)",
+      "recommendation": "Wrap Sidebar, AIChatPanel, and TaskDetailPanel each in their own ErrorBoundary",
+      "code_snippet": ""
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/ui/components/AddProjectModal.tsx",
+      "line": 109,
+      "issue": "Color value cast via `as any` — `DEFAULT_PROJECT_COLORS.includes(color as any)` used to work around TypeScript's strict array.includes type checking",
+      "recommendation": "Use a type-safe alternative: `(DEFAULT_PROJECT_COLORS as readonly string[]).includes(color)` or define a type guard",
+      "code_snippet": "const isCustomColor = !DEFAULT_PROJECT_COLORS.includes(color as any);"
+    },
+    {
+      "severity": "suggestion",
+      "file": ".gitignore",
+      "line": 0,
+      "issue": ".swarm/ directory is not gitignored — swarm audit reports will be committed to the repository",
+      "recommendation": "Add `.swarm/` to .gitignore if these are intended to be ephemeral audit artifacts, or keep as-is if they should be tracked",
+      "code_snippet": ""
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/main.ts",
+      "line": 24,
+      "issue": "Stale TODO comment '// TODO: Start UI or CLI based on context' has been present since early development — entry point logic is handled elsewhere now",
+      "recommendation": "Remove the TODO or implement the UI/CLI branching logic if still planned",
+      "code_snippet": "// TODO: Start UI or CLI based on context"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/ui/views/settings/AboutTab.tsx",
+      "line": 201,
+      "issue": "Three separate API calls with individual .catch(() => fallback) in Promise.all — if any fail, the About page shows partial/misleading data (e.g., 0 tasks) without indicating an error occurred",
+      "recommendation": "Track error state and show 'unavailable' instead of '0' when an API call fails",
+      "code_snippet": "api.exportAllData().then((d) => d.tasks.length).catch(() => 0)"
+    }
+  ]
+}

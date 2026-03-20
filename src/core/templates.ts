@@ -91,13 +91,13 @@ export class TemplateService {
     let title = template.title;
     let description = template.description;
 
-    // Replace {{variable}} placeholders
+    // Replace {{variable}} placeholders using string replacement (no regex, avoids ReDoS)
     if (variables) {
       for (const [key, value] of Object.entries(variables)) {
-        const pattern = new RegExp(`\\{\\{${key}\\}\\}`, "g");
-        title = title.replace(pattern, value);
+        const placeholder = `{{${key}}}`;
+        title = title.replaceAll(placeholder, value);
         if (description) {
-          description = description.replace(pattern, value);
+          description = description.replaceAll(placeholder, value);
         }
       }
     }

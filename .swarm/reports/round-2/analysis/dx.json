@@ -1,0 +1,250 @@
+{
+  "domain": "dx",
+  "severity_counts": {
+    "critical": 3,
+    "warning": 14,
+    "suggestion": 13
+  },
+  "findings": [
+    {
+      "severity": "critical",
+      "file": "src/server.ts",
+      "line": 122,
+      "issue": "Residual `console.log` on line 122 still present despite round 1 reporting it as fixed. Duplicates the `logger.info` on line 121.",
+      "recommendation": "Remove line 122 entirely — logger.info already logs the same message.",
+      "code_snippet": "console.log(`API server listening on port ${info.port}`);"
+    },
+    {
+      "severity": "critical",
+      "file": "src/ui/components/ExtractTasksModal.tsx",
+      "line": 46,
+      "issue": "Duplicated regex constant LIST_PREFIX is identical to the one in extract-tasks-from-text.ts line 227. Same for ACTION_VERBS (line 42 vs line 223). Changes to one will silently diverge from the other.",
+      "recommendation": "Extract both `LIST_PREFIX` and `ACTION_VERBS` into a shared module (e.g., `src/parser/task-extraction-patterns.ts`) and import from both files.",
+      "code_snippet": "const LIST_PREFIX = /^(?:[-*+]|\\d+[.)\\]\\s*|(?:TODO|ACTION|AI|TASK)[:\\s]+)/i;"
+    },
+    {
+      "severity": "critical",
+      "file": "src/ui/api/ai/ai-sessions.ts",
+      "line": 107,
+      "issue": "Round 1 reported this as fixed but `toolCalls?: any` is still present. The type should use `AIChatMessage['toolCalls']`.",
+      "recommendation": "Replace `any` with the proper type: `{ id: string; name: string; arguments: string }[]` or `AIChatMessage['toolCalls']`.",
+      "code_snippet": "toolCalls?: any;"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ai/provider/adapters/lmstudio.ts",
+      "line": 135,
+      "issue": "The LM Studio default base URL `http://localhost:1234/v1` is hardcoded in 8 locations across 3 files (lmstudio.ts, api/ai.ts, ui/api/ai/ai-providers.ts). Changing the default requires updating all 8.",
+      "recommendation": "Export `DEFAULT_LMSTUDIO_BASE_URL` from the lmstudio adapter or `config/defaults.ts` and import everywhere.",
+      "code_snippet": "defaultBaseUrl: \"http://localhost:1234/v1\","
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/components/AddProjectModal.tsx",
+      "line": 109,
+      "issue": "`DEFAULT_PROJECT_COLORS.includes(color as any)` — `color` is a `string` but `DEFAULT_PROJECT_COLORS` is `readonly string[]`, so `includes` should accept `string` without casting.",
+      "recommendation": "Remove the `as any` cast. If TypeScript complains about readonly, use a type assertion on the array: `(DEFAULT_PROJECT_COLORS as readonly string[]).includes(color)`.",
+      "code_snippet": "const isCustomColor = !DEFAULT_PROJECT_COLORS.includes(color as any);"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ai/voice/adapters/browser-stt.ts",
+      "line": 61,
+      "issue": "`recognition.onerror = (event: any)` — second `any`-typed event handler in the same file (beyond the `onresult` one flagged in round 1). Both should be addressed together via a `.d.ts` declaration.",
+      "recommendation": "Create `src/types/web-speech.d.ts` declaring `SpeechRecognition`, `SpeechRecognitionEvent`, and `SpeechRecognitionErrorEvent` to eliminate all three `any` casts in this file.",
+      "code_snippet": "recognition.onerror = (event: any) => {"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ai/voice/adapters/browser-stt.ts",
+      "line": 45,
+      "issue": "`(recognition as any).maxAlternatives = 1` — third `any` cast in the same file. A `.d.ts` declaration would fix all three.",
+      "recommendation": "Include `maxAlternatives` in the `SpeechRecognition` interface declaration.",
+      "code_snippet": "(recognition as any).maxAlternatives = 1;"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ai/voice/adapters/piper-local-tts.ts",
+      "line": 53,
+      "issue": "`this.defaultVoice as any` cast when calling `tts.download()`. The piper-tts-web library likely expects a specific voice ID type.",
+      "recommendation": "Check the `@mintplex-labs/piper-tts-web` type exports and use the correct voice ID type, or add a local type declaration.",
+      "code_snippet": "await tts.download(this.defaultVoice as any, (p) => {"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ai/voice/adapters/piper-local-tts.ts",
+      "line": 73,
+      "issue": "`voiceId: voiceId as any` — another cast to work around piper-tts-web typing.",
+      "recommendation": "Same fix as above — use the correct type from the library or a `.d.ts` override.",
+      "code_snippet": "const blob = await tts.predict({ text, voiceId: voiceId as any }, (p) => {"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ai/voice/adapters/whisper-local-stt.ts",
+      "line": 142,
+      "issue": "`progress_callback: (event: any)` — the `@huggingface/transformers` pipeline progress event has a known shape (`{ status: string; progress?: number }`) that could be typed.",
+      "recommendation": "Define an inline type: `(event: { status: string; progress?: number; name?: string }) => void`.",
+      "code_snippet": "progress_callback: (event: any) => {"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/components/sidebar/SidebarPrimitives.tsx",
+      "line": 118,
+      "issue": "`Record<string, any>` used for dnd-kit drag handle listeners. The `@dnd-kit/sortable` package exports `SyntheticListenerMap` type.",
+      "recommendation": "Import `SyntheticListenerMap` from `@dnd-kit/core` and use it instead of `Record<string, any>`.",
+      "code_snippet": "children: (dragHandleListeners: Record<string, any>) => ReactNode;"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/components/sidebar/SidebarPrimitives.tsx",
+      "line": 146,
+      "issue": "Same `Record<string, any>` for drag handle listeners in `SectionHeader`.",
+      "recommendation": "Use `SyntheticListenerMap` from `@dnd-kit/core`.",
+      "code_snippet": "dragHandleListeners?: Record<string, any>;"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/hooks/useSoundEffect.ts",
+      "line": 24,
+      "issue": "Silent `.catch(() => {})` on `playSoundRaw` — audio playback failures are swallowed with no logging.",
+      "recommendation": "Add `console.warn` in the catch: `.catch(e => console.warn('Sound playback failed:', e))`.",
+      "code_snippet": "playSoundRaw(event, volume / 100).catch(() => {});"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/views/settings/general/SoundSection.tsx",
+      "line": 23,
+      "issue": "Silent `.catch(() => {})` on `previewSound` — user gets no feedback if preview fails.",
+      "recommendation": "Log or surface the error.",
+      "code_snippet": "previewSound(event, volume / 100).catch(() => {});"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/components/chat/useAIChatVoice.ts",
+      "line": 150,
+      "issue": "Silent `.catch(() => {})` on `voice.speak()` — TTS errors silently swallowed during voice call mode.",
+      "recommendation": "Log the error: `.catch(e => console.warn('TTS speak failed:', e))`.",
+      "code_snippet": "voice.speak(lastMsg.content).catch(() => {});"
+    },
+    {
+      "severity": "warning",
+      "file": "src/ui/components/chat/useAIChatVoice.ts",
+      "line": 148,
+      "issue": "`(lastMsg as unknown as Record<string, unknown>).isError` — double cast to access an undeclared `isError` field on a chat message.",
+      "recommendation": "Add `isError?: boolean` to the chat message type, or use a type guard.",
+      "code_snippet": "!(lastMsg as unknown as Record<string, unknown>).isError"
+    },
+    {
+      "severity": "warning",
+      "file": "src/api/plugins.ts",
+      "line": 159,
+      "issue": "`plugin.instance as any` — deferred in round 1 but noted again because a `PluginInstance` interface with optional methods would be cleaner than blanket `any`.",
+      "recommendation": "Define a minimal `PluginInstanceMethods` interface with optional `getSettings`, `updateSetting`, etc., and use it in the LoadedPlugin type.",
+      "code_snippet": "const instance = plugin.instance as any;"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/main.ts",
+      "line": 24,
+      "issue": "Stale `// TODO: Start UI or CLI based on context` — the comment has been present since early development but main.ts just exports services now. The server and CLI have their own entry points.",
+      "recommendation": "Remove the stale TODO comment since the architecture has moved past this design.",
+      "code_snippet": "// TODO: Start UI or CLI based on context"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/ai/voice/adapters/piper-local-tts.ts",
+      "line": 103,
+      "issue": "Duplicate code pattern: lines 103-105 and 131-133 both iterate OPFS directory with `(dir as any).keys()` and check `.endsWith(\".onnx\")`. Only the accumulator differs.",
+      "recommendation": "Extract a helper `async function listOPFSEntries(dirName: string): AsyncIterable<string>` to reduce duplication.",
+      "code_snippet": "for await (const name of (dir as any).keys()) {"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/config/defaults.ts",
+      "line": 14,
+      "issue": "Project colors are defined twice — once as an array `DEFAULT_PROJECT_COLORS` and again as a map `PROJECT_COLOR_LABELS`. The label map is not derived from the array, so they could drift.",
+      "recommendation": "Define colors as an array of `{ hex: string; label: string }` objects and derive both the color array and label map from it.",
+      "code_snippet": "export const DEFAULT_PROJECT_COLORS = [...];\nexport const PROJECT_COLOR_LABELS: Record<string, string> = {...};"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/ai/provider/adapters/ollama.ts",
+      "line": 24,
+      "issue": "Ollama default base URL `http://localhost:11434` is hardcoded in two places (line 24 and line 43). Same pattern as the LM Studio URL duplication.",
+      "recommendation": "Extract `DEFAULT_OLLAMA_BASE_URL = \"http://localhost:11434\"` constant.",
+      "code_snippet": "const baseUrl = config.baseUrl ?? \"http://localhost:11434\";"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/ui/components/sidebar/SidebarContextMenu.tsx",
+      "line": 86,
+      "issue": "Silent `.catch(() => {})` on `navigator.clipboard.writeText` — clipboard write can fail in non-secure contexts.",
+      "recommendation": "Show a toast or log: `.catch(() => console.warn('Clipboard write failed'))`.",
+      "code_snippet": "navigator.clipboard.writeText(url).catch(() => {});"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/ui/context/ai/useAISendMessage.ts",
+      "line": 64,
+      "issue": "Silent `.catch(() => {})` on `reader.cancel()` in a safety timeout. While reader cancel rarely fails, logging would aid debugging stuck streams.",
+      "recommendation": "Add minimal logging: `.catch(e => console.warn('Reader cancel failed:', e))`.",
+      "code_snippet": "reader.cancel().catch(() => {});"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/ui/hooks/useGlobalShortcut.ts",
+      "line": 56,
+      "issue": "Silent `.catch(() => {})` on Tauri global shortcut unregister.",
+      "recommendation": "Log the error for debugging: `.catch(e => console.warn('Failed to unregister shortcut:', e))`.",
+      "code_snippet": "unregisterFn?.().catch(() => {});"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/ai/voice/adapters/whisper-local-stt.ts",
+      "line": 21,
+      "issue": "`private pipelineInstance: any = null` — deferred in round 1, but a minimal interface `{ dispose?: () => void; (input: ArrayBuffer, opts?: object): Promise<{ text: string }> }` would be better than `any`.",
+      "recommendation": "Define a `WhisperPipeline` type alias and use it instead of `any`.",
+      "code_snippet": "private pipelineInstance: any = null;"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/plugins/loader.ts",
+      "line": 254,
+      "issue": "`throw new Error(...)` used for plugin validation errors instead of `ValidationError` from `core/errors.ts`. Inconsistent with the rest of the codebase.",
+      "recommendation": "Use `throw new ValidationError(...)` for input validation errors in the plugin loader.",
+      "code_snippet": "throw new Error(`Plugin \"${pluginId}\" does not have a default export class`);"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/plugins/loader.ts",
+      "line": 170,
+      "issue": "`throw new Error('Plugin not found')` should use `NotFoundError` for consistency with core services.",
+      "recommendation": "Use `throw new NotFoundError('Plugin', pluginId)` to match the pattern in TaskService, TemplateService, etc.",
+      "code_snippet": "throw new Error(`Plugin \"${pluginId}\" not found`);"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/plugins/loader.ts",
+      "line": 408,
+      "issue": "Same pattern — `throw new Error(...)` instead of `ValidationError`.",
+      "recommendation": "Use `throw new ValidationError(...)` for consistency.",
+      "code_snippet": "throw new Error(`Cannot remove built-in extension \"${pluginId}\"`);"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/plugins/settings.ts",
+      "line": 29,
+      "issue": "`throw new Error('Unknown setting')` — should use `NotFoundError` for consistency.",
+      "recommendation": "Use `throw new NotFoundError('Setting', `${pluginId}/${settingId}`)` to match the core pattern.",
+      "code_snippet": "throw new Error(`Unknown setting: ${pluginId}/${settingId}`);"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/plugins/command-registry.ts",
+      "line": 46,
+      "issue": "`throw new Error('Command not found')` — should use `NotFoundError`.",
+      "recommendation": "Use `throw new NotFoundError('Command', id)`.",
+      "code_snippet": "throw new Error(`Command \"${id}\" not found`);"
+    }
+  ]
+}

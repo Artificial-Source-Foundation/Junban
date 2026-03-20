@@ -9,6 +9,17 @@ import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger("plugin-installer");
 
+/** Strict plugin ID pattern: lowercase alphanumeric + hyphens only. */
+const VALID_PLUGIN_ID = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
+
+/** Validate pluginId is safe for use in filesystem paths. */
+function validatePluginId(pluginId: string): string | null {
+  if (!pluginId || !VALID_PLUGIN_ID.test(pluginId)) {
+    return `Invalid plugin ID "${pluginId}": must contain only lowercase letters, digits, and hyphens`;
+  }
+  return null;
+}
+
 export interface InstallResult {
   success: boolean;
   error?: string;
@@ -22,6 +33,10 @@ export class PluginInstaller {
 
   /** Download and install a plugin from a tar.gz URL. */
   async install(pluginId: string, downloadUrl: string): Promise<InstallResult> {
+    // Validate pluginId to prevent path traversal
+    const idError = validatePluginId(pluginId);
+    if (idError) return { success: false, error: idError };
+
     const targetDir = path.join(this.pluginDir, pluginId);
 
     // Check if already installed
@@ -44,10 +59,29 @@ export class PluginInstaller {
         return { success: false, error: "Download failed: empty response" };
       }
 
+      // Enforce download size limit (50 MB)
+      const MAX_DOWNLOAD_SIZE = 50 * 1024 * 1024;
+      const contentLength = res.headers.get("content-length");
+      if (contentLength && parseInt(contentLength, 10) > MAX_DOWNLOAD_SIZE) {
+        return {
+          success: false,
+          error: `Plugin archive too large (max ${MAX_DOWNLOAD_SIZE / 1024 / 1024}MB)`,
+        };
+      }
+
       // Write to temp file
       const fileStream = fs.createWriteStream(tempFile);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await pipeline(Readable.fromWeb(res.body as any), fileStream);
+
+      // Verify actual file size after download
+      const fileSize = fs.statSync(tempFile).size;
+      if (fileSize > MAX_DOWNLOAD_SIZE) {
+        return {
+          success: false,
+          error: `Plugin archive too large (max ${MAX_DOWNLOAD_SIZE / 1024 / 1024}MB)`,
+        };
+      }
 
       // Extract — use filter to reject path traversal entries (zip slip)
       fs.mkdirSync(tempExtractDir, { recursive: true });
@@ -124,6 +158,10 @@ export class PluginInstaller {
 
   /** Uninstall a plugin by removing its directory. */
   async uninstall(pluginId: string): Promise<InstallResult> {
+    // Validate pluginId to prevent path traversal
+    const idError = validatePluginId(pluginId);
+    if (idError) return { success: false, error: idError };
+
     const targetDir = path.join(this.pluginDir, pluginId);
 
     if (!fs.existsSync(targetDir)) {

@@ -1,6 +1,7 @@
 import type { SettingDefinition } from "./types.js";
 import type { IStorage } from "../storage/interface.js";
 import { createLogger } from "../utils/logger.js";
+import { NotFoundError } from "../core/errors.js";
 
 const logger = createLogger("plugin-settings");
 
@@ -26,7 +27,7 @@ export class PluginSettingsManager {
       return def.default as T;
     }
 
-    throw new Error(`Unknown setting: ${pluginId}/${settingId}`);
+    throw new NotFoundError("Setting", `${pluginId}/${settingId}`);
   }
 
   /** Get all settings for a plugin. */

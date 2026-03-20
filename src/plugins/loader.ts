@@ -367,6 +367,12 @@ export class PluginLoader {
 
   /** Discover a single plugin by ID (after install). */
   async discoverOne(pluginId: string): Promise<LoadedPlugin | null> {
+    // Validate pluginId to prevent path traversal
+    if (!pluginId || !/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(pluginId)) {
+      logger.warn(`Invalid plugin ID: ${pluginId}`);
+      return null;
+    }
+
     const pluginPath = path.join(this.pluginDir, pluginId);
     const manifestPath = path.join(pluginPath, "manifest.json");
 

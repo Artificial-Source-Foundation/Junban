@@ -1,0 +1,210 @@
+{
+  "domain": "security",
+  "severity_counts": {
+    "critical": 2,
+    "warning": 10,
+    "suggestion": 8
+  },
+  "findings": [
+    {
+      "severity": "critical",
+      "file": "src/plugins/installer.ts",
+      "line": 25,
+      "vulnerability_type": "Path Traversal via Plugin ID",
+      "issue": "The pluginId parameter from the API request body is used directly in path.join(this.pluginDir, pluginId) without sanitization. A pluginId like '../../../etc' or '../../src/server' would resolve outside the plugins directory, allowing file writes to arbitrary locations. The same issue exists in uninstall() at line 127 which calls fs.rmSync with the traversed path, enabling arbitrary directory deletion.",
+      "recommendation": "Validate pluginId against a strict pattern (e.g., /^[a-z0-9-]+$/) and verify the resolved path starts with pluginDir. Apply the same validation in loader.ts discoverOne() at line 370.",
+      "code_snippet": "const targetDir = path.join(this.pluginDir, pluginId);\n// ... later:\nfs.renameSync(manifestDir, targetDir);",
+      "cwe": "CWE-22"
+    },
+    {
+      "severity": "critical",
+      "file": "src/api/ai.ts",
+      "line": 128,
+      "vulnerability_type": "SSRF via Model Load/Unload Endpoints",
+      "issue": "POST /ai/providers/:name/models/load and /unload accept a baseUrl in the request body with no validation (unlike GET /providers/:name/models which has baseUrl validation). The baseUrl is passed to loadLMStudioModel/unloadLMStudioModel which make POST requests to arbitrary URLs. An attacker can target internal services, cloud metadata endpoints (169.254.169.254), or exfiltrate API keys via the Authorization header sent with the request.",
+      "recommendation": "Apply the same baseUrl validation from the GET /providers/:name/models endpoint (localhost or known provider domains only) to the load and unload endpoints.",
+      "code_snippet": "const { model: modelKey, baseUrl: baseUrlOverride } = body as { model: string; baseUrl?: string };\n// No validation on baseUrlOverride\nawait loadLMStudioModel(modelKey, (baseUrlOverride as string) || baseUrlSetting?.value || \"http://localhost:1234/v1\", apiKeySetting?.value);",
+      "cwe": "CWE-918"
+    },
+    {
+      "severity": "warning",
+      "file": "src/core/templates.ts",
+      "line": 97,
+      "vulnerability_type": "ReDoS via Template Variable Keys",
+      "issue": "Template instantiation constructs a regex from user-supplied variable keys using new RegExp(`\\\\{\\\\{${key}\\\\}\\\\}`, 'g'). If a variable key contains regex metacharacters (e.g., '(a+)+'), this creates a vulnerable regex that can be exploited for denial of service.",
+      "recommendation": "Escape regex metacharacters in the key using a function like escapeRegExp() (already exists in src/parser/nlp.ts), or use string.replaceAll() instead of regex-based replacement.",
+      "code_snippet": "const pattern = new RegExp(`\\\\{\\\\{${key}\\\\}\\\\}`, \"g\");\ntitle = title.replace(pattern, value);",
+      "cwe": "CWE-1333"
+    },
+    {
+      "severity": "warning",
+      "file": "src/api/voice.ts",
+      "line": 39,
+      "vulnerability_type": "Unvalidated Request Body Forwarding",
+      "issue": "POST /voice/synthesize forwards the entire JSON request body to the Groq TTS API without validation. An attacker can send arbitrary JSON payloads to Groq's API through this proxy, potentially abusing API quota, sending oversized requests, or exploiting any Groq-side vulnerabilities. Same pattern at line 70 for Inworld TTS.",
+      "recommendation": "Validate the request body structure (extract only expected fields like 'model', 'input', 'voice') before forwarding to the external API. Add request body size limits.",
+      "code_snippet": "const body = await c.req.json();\nconst groqRes = await fetch(\"https://api.groq.com/openai/v1/audio/speech\", {\n  method: \"POST\",\n  headers: { Authorization: `Bearer ${apiKey}`, \"Content-Type\": \"application/json\" },\n  body: JSON.stringify(body),\n});",
+      "cwe": "CWE-20"
+    },
+    {
+      "severity": "warning",
+      "file": "src/api/voice.ts",
+      "line": 13,
+      "vulnerability_type": "Unbounded Request Body Size",
+      "issue": "POST /voice/transcribe reads the entire request body as an ArrayBuffer (audio data) with no size limit. An attacker can send a multi-gigabyte payload to exhaust server memory, causing denial of service. The audio buffer is held entirely in memory before forwarding.",
+      "recommendation": "Add a Content-Length check before reading the body. Reject requests larger than a reasonable limit (e.g., 25MB, matching Groq's limit).",
+      "code_snippet": "const bodyBuffer = await c.req.arrayBuffer();",
+      "cwe": "CWE-770"
+    },
+    {
+      "severity": "warning",
+      "file": "src/storage/markdown/metadata-ops.ts",
+      "line": 76,
+      "vulnerability_type": "Path Traversal via Plugin ID in Markdown Backend",
+      "issue": "savePluginSettings constructs a file path using the pluginId directly: path.join(idx.basePath, '_plugins', `${pluginId}.yaml`). A malicious pluginId like '../../../etc/cron.d/exploit' could write YAML files to arbitrary filesystem locations.",
+      "recommendation": "Validate pluginId against a strict alphanumeric+dash pattern. Verify the resolved path is within the expected _plugins directory.",
+      "code_snippet": "const filePath = path.join(idx.basePath, \"_plugins\", `${pluginId}.yaml`);",
+      "cwe": "CWE-22"
+    },
+    {
+      "severity": "warning",
+      "file": "src/api/plugins.ts",
+      "line": 258,
+      "vulnerability_type": "Missing Permission Array Validation",
+      "issue": "POST /plugins/:id/permissions/approve accepts a permissions array from the request body and passes it directly to approveAndLoad(). There is no validation that the array contains valid permission strings. Arbitrary strings could be stored as approved permissions, potentially bypassing future permission checks if new permissions are added.",
+      "recommendation": "Validate the permissions array against the known set of 15 permissions defined in the plugin system (task:read, task:write, etc.).",
+      "code_snippet": "const { permissions } = body as { permissions: string[] };\nawait services.pluginLoader.approveAndLoad(pluginId, permissions);",
+      "cwe": "CWE-20"
+    },
+    {
+      "severity": "warning",
+      "file": "src/plugins/installer.ts",
+      "line": 39,
+      "vulnerability_type": "No Download Size Limit",
+      "issue": "The plugin installer downloads archives with no size limit. A malicious plugin registry entry could point to a multi-gigabyte file, exhausting disk space in the temp directory and potentially the plugins directory. The download streams directly to disk but there is no check on Content-Length or accumulated bytes.",
+      "recommendation": "Check the Content-Length header and abort if it exceeds a reasonable limit (e.g., 50MB). Also track accumulated bytes during streaming and abort if exceeded.",
+      "code_snippet": "const res = await fetch(downloadUrl);\n// No size check\nconst fileStream = fs.createWriteStream(tempFile);\nawait pipeline(Readable.fromWeb(res.body as any), fileStream);",
+      "cwe": "CWE-400"
+    },
+    {
+      "severity": "warning",
+      "file": "src/api/ai.ts",
+      "line": 405,
+      "vulnerability_type": "Deserialization of Untrusted Data",
+      "issue": "When switching chat sessions, toolCalls are restored via JSON.parse(row.toolCalls) without schema validation. While data originates from the local DB, a corrupted or tampered database could inject unexpected structures into the chat session's message array, potentially causing type confusion in downstream tool execution logic.",
+      "recommendation": "Validate parsed toolCalls against a Zod schema matching the expected ToolCall structure before injecting into the restored session.",
+      "code_snippet": "...(row.toolCalls ? { toolCalls: JSON.parse(row.toolCalls) } : {})",
+      "cwe": "CWE-502"
+    },
+    {
+      "severity": "warning",
+      "file": "src/api/tasks.ts",
+      "line": 78,
+      "vulnerability_type": "Unbounded Batch Import",
+      "issue": "POST /tasks/import iterates over an unbounded array of tasks from the request body, creating each one sequentially. A request with millions of task objects would block the event loop for an extended period and could exhaust database storage. No limit on array size or request body size.",
+      "recommendation": "Enforce a maximum batch size (e.g., 1000 tasks per import request). Add request body size limit middleware.",
+      "code_snippet": "const { tasks: importedTasks } = await c.req.json();\nfor (const t of importedTasks) {\n  await services.taskService.create({...});",
+      "cwe": "CWE-770"
+    },
+    {
+      "severity": "warning",
+      "file": "src/api/tasks.ts",
+      "line": 50,
+      "vulnerability_type": "Unbounded Bulk Operations",
+      "issue": "POST /tasks/bulk/complete, /bulk/delete, and /bulk/update accept an unbounded ids array. Passing thousands of IDs could cause excessive database operations. The deleteMany endpoint is particularly dangerous as it permanently destroys data with no undo mechanism at the API level.",
+      "recommendation": "Enforce a maximum batch size for bulk operations (e.g., 500 IDs). Consider requiring confirmation for bulk delete of more than N items.",
+      "code_snippet": "const { ids } = await c.req.json();\nawait services.taskService.deleteMany(ids);",
+      "cwe": "CWE-770"
+    },
+    {
+      "severity": "warning",
+      "file": "src/api/voice.ts",
+      "line": 89,
+      "vulnerability_type": "Unchecked Null Dereference in Stream",
+      "issue": "The Inworld TTS streaming proxy uses non-null assertion on inworldRes.body! without checking. While the ok check above makes this unlikely to be null, if the response has no body (e.g., 204-like success), this will throw an unhandled error that crashes the stream handler.",
+      "recommendation": "Add an explicit null check for inworldRes.body before creating the ReadableStream.",
+      "code_snippet": "const reader = inworldRes.body!.getReader();",
+      "cwe": "CWE-476"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/server.ts",
+      "line": 40,
+      "vulnerability_type": "Missing Request Body Size Limit",
+      "issue": "The Hono server has no global request body size limit. Any endpoint accepting JSON or binary data can receive arbitrarily large payloads, risking memory exhaustion. This affects all 32 c.req.json() call sites across the API.",
+      "recommendation": "Add Hono body-limit middleware (e.g., app.use('*', bodyLimit({ maxSize: 10 * 1024 * 1024 }))) to enforce a global maximum request body size. Use a larger limit specifically for voice/transcribe.",
+      "code_snippet": "const app = new Hono();\n// No body size limit middleware",
+      "cwe": "CWE-770"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/api/ai.ts",
+      "line": 419,
+      "vulnerability_type": "Insecure Direct Object Reference",
+      "issue": "DELETE /ai/sessions/:id and other session endpoints accept a sessionId from the URL and perform operations without verifying ownership. In the current single-user model this is fine, but if multi-user support is ever added, any user could delete another's chat sessions.",
+      "recommendation": "Document the single-user assumption. If multi-user is added, associate sessions with user IDs and verify ownership.",
+      "code_snippet": "const sessionId = decodeURIComponent(c.req.param(\"id\"));\nservices.storage.deleteChatSession(sessionId);",
+      "cwe": "CWE-639"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/api/ai.ts",
+      "line": 175,
+      "vulnerability_type": "Chat Message Length Unbounded",
+      "issue": "POST /ai/chat accepts a message string of unlimited length. An extremely long message (megabytes of text) would be sent to the AI provider, burning API credits and potentially hitting provider-side limits that produce unhelpful errors.",
+      "recommendation": "Enforce a maximum message length (e.g., 100KB) before forwarding to the AI provider.",
+      "code_snippet": "const message = body.message as string;\nif (!message) { return c.json({ error: \"message is required\" }, 400); }",
+      "cwe": "CWE-770"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/api/plugins.ts",
+      "line": 300,
+      "vulnerability_type": "Unrestricted Plugin Settings Value",
+      "issue": "PUT /plugins/:id/settings accepts any key-value pair and stores it. The key is not validated against the plugin's manifest settings definitions, allowing storage of arbitrary data under any key. This could be used to pollute the settings namespace.",
+      "recommendation": "Validate the key against the plugin's manifest.settings definitions before storing. Reject unknown setting keys.",
+      "code_snippet": "const { key, value } = body as { key: string; value: unknown };\nawait services.settingsManager.set(pluginId, key, value);",
+      "cwe": "CWE-20"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/server.ts",
+      "line": 65,
+      "vulnerability_type": "Error Message Information Disclosure",
+      "issue": "The global error handler returns the raw error message in the JSON response body. For 500 errors, this could leak internal implementation details (stack traces, file paths, database errors) to the client.",
+      "recommendation": "For 500 errors, return a generic 'Internal server error' message. Log the full error server-side. Only expose specific messages for 400/404 errors.",
+      "code_snippet": "const message = err instanceof Error ? err.message : \"Internal server error\";\nreturn c.json({ error: message }, status);",
+      "cwe": "CWE-209"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/api/plugins.ts",
+      "line": 131,
+      "vulnerability_type": "Plugin Dir Uses process.cwd()",
+      "issue": "The plugin install and uninstall endpoints resolve the plugins directory via path.resolve(process.cwd(), 'plugins'). If the server is started from a different working directory, this resolves to the wrong location, potentially creating plugin directories in unexpected filesystem locations.",
+      "recommendation": "Use __dirname-relative path resolution (like was fixed for sources.json in round 1) or pass the configured PLUGIN_DIR from env.",
+      "code_snippet": "const installer = new PluginInstaller(path.resolve(process.cwd(), \"plugins\"));",
+      "cwe": "CWE-426"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/api/ai.ts",
+      "line": 81,
+      "vulnerability_type": "OAuth Token Stored Without Encryption",
+      "issue": "PUT /ai/config stores OAuth tokens in plaintext via setAppSetting('ai_oauth_token', oauthToken). OAuth tokens are long-lived credentials that should be protected at rest, similar to API keys. This was not flagged in round 1 which focused on API keys.",
+      "recommendation": "Store OAuth tokens using the same mechanism as API keys. When at-rest encryption is implemented for API keys, include OAuth tokens.",
+      "code_snippet": "if (oauthToken) services.storage.setAppSetting(\"ai_oauth_token\", oauthToken);",
+      "cwe": "CWE-312"
+    },
+    {
+      "severity": "suggestion",
+      "file": "src/plugins/loader.ts",
+      "line": 370,
+      "vulnerability_type": "Path Traversal via Plugin ID in Loader",
+      "issue": "discoverOne() uses pluginId directly in path.join(this.pluginDir, pluginId) to construct the plugin path. While this is called after install, the pluginId comes from the API request and could contain path traversal sequences to read manifest.json from arbitrary directories.",
+      "recommendation": "Validate pluginId before use. Ensure the resolved path starts with pluginDir.",
+      "code_snippet": "const pluginPath = path.join(this.pluginDir, pluginId);\nconst manifestPath = path.join(pluginPath, \"manifest.json\");",
+      "cwe": "CWE-22"
+    }
+  ]
+}

@@ -69,6 +69,11 @@ export function loadPluginSettings(
 }
 
 export function savePluginSettings(idx: MarkdownIndexes, pluginId: string, settings: string): void {
+  // Validate pluginId to prevent path traversal
+  if (!pluginId || !/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(pluginId)) {
+    throw new StorageError(`Invalid plugin ID: ${pluginId}`);
+  }
+
   const now = new Date().toISOString();
   const row: PluginSettingsRow = { pluginId, settings, updatedAt: now };
   idx.pluginSettingsMap.set(pluginId, row);

@@ -7,6 +7,24 @@ import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger("api:ai");
 
+/** Validate baseUrl — only allow localhost or known provider domains. */
+function isAllowedBaseUrl(baseUrl: string): boolean {
+  try {
+    const parsed = new URL(baseUrl);
+    if (!["http:", "https:"].includes(parsed.protocol)) return false;
+    const host = parsed.hostname.toLowerCase();
+    const isLocalhost = host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+    const isKnownProvider =
+      host.endsWith(".openai.com") ||
+      host.endsWith(".anthropic.com") ||
+      host.endsWith(".openrouter.ai") ||
+      host.endsWith(".groq.com");
+    return isLocalhost || isKnownProvider;
+  } catch {
+    return false;
+  }
+}
+
 export function aiRoutes(services: AppServices): Hono {
   const app = new Hono();
 
@@ -90,25 +108,8 @@ export function aiRoutes(services: AppServices): Hono {
       const baseUrlOverride = c.req.query("baseUrl");
 
       // Validate baseUrl override — only allow HTTP(S) on localhost or known provider domains
-      if (baseUrlOverride) {
-        try {
-          const parsed = new URL(baseUrlOverride);
-          if (!["http:", "https:"].includes(parsed.protocol)) {
-            return c.json({ models: [] });
-          }
-          const host = parsed.hostname.toLowerCase();
-          const isLocalhost = host === "localhost" || host === "127.0.0.1" || host === "[::1]";
-          const isKnownProvider =
-            host.endsWith(".openai.com") ||
-            host.endsWith(".anthropic.com") ||
-            host.endsWith(".openrouter.ai") ||
-            host.endsWith(".groq.com");
-          if (!isLocalhost && !isKnownProvider) {
-            return c.json({ models: [] });
-          }
-        } catch {
-          return c.json({ models: [] });
-        }
+      if (baseUrlOverride && !isAllowedBaseUrl(baseUrlOverride)) {
+        return c.json({ models: [] });
       }
 
       const apiKeySetting = services.storage.getAppSetting("ai_api_key");
@@ -133,6 +134,11 @@ export function aiRoutes(services: AppServices): Hono {
       model: string;
       baseUrl?: string;
     };
+    // Validate baseUrl override to prevent SSRF
+    if (baseUrlOverride && !isAllowedBaseUrl(baseUrlOverride)) {
+      return c.json({ error: "Invalid baseUrl" }, 400);
+    }
+
     const baseUrlSetting = services.storage.getAppSetting("ai_base_url");
     const apiKeySetting = services.storage.getAppSetting("ai_api_key");
 
@@ -155,6 +161,12 @@ export function aiRoutes(services: AppServices): Hono {
       model: string;
       baseUrl?: string;
     };
+
+    // Validate baseUrl override to prevent SSRF
+    if (baseUrlOverride && !isAllowedBaseUrl(baseUrlOverride)) {
+      return c.json({ error: "Invalid baseUrl" }, 400);
+    }
+
     const baseUrlSetting = services.storage.getAppSetting("ai_base_url");
     const apiKeySetting = services.storage.getAppSetting("ai_api_key");
 

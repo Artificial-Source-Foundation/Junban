@@ -73,7 +73,9 @@ app.onError((err, c) => {
     status = 400;
   }
   logger.error(`API error: ${message}`);
-  return c.json({ error: message }, status);
+  // Only expose specific error messages for client errors; hide internal details for 500s
+  const clientMessage = status === 500 ? "Internal server error" : message;
+  return c.json({ error: clientMessage }, status);
 });
 
 // POST /api/test-reset — delete all data (for E2E tests only)

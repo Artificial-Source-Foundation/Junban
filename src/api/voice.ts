@@ -1,5 +1,8 @@
 import { Hono } from "hono";
 
+/** Maximum audio upload size (25 MB, matching Groq's limit). */
+const MAX_AUDIO_SIZE = 25 * 1024 * 1024;
+
 export function voiceRoutes(): Hono {
   const app = new Hono();
 
@@ -10,7 +13,16 @@ export function voiceRoutes(): Hono {
       return c.json({ error: "Missing API key" }, 401);
     }
 
+    // Reject oversized audio uploads
+    const contentLength = c.req.header("content-length");
+    if (contentLength && parseInt(contentLength, 10) > MAX_AUDIO_SIZE) {
+      return c.json({ error: "Request body too large (max 25MB)" }, 413);
+    }
+
     const bodyBuffer = await c.req.arrayBuffer();
+    if (bodyBuffer.byteLength > MAX_AUDIO_SIZE) {
+      return c.json({ error: "Request body too large (max 25MB)" }, 413);
+    }
     const contentType = c.req.header("content-type") ?? "application/octet-stream";
 
     const groqRes = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
@@ -37,13 +49,21 @@ export function voiceRoutes(): Hono {
     }
 
     const body = await c.req.json();
+    // Whitelist only expected fields before forwarding
+    const sanitizedBody = {
+      model: body.model,
+      input: body.input,
+      voice: body.voice,
+      ...(body.response_format ? { response_format: body.response_format } : {}),
+      ...(body.speed ? { speed: body.speed } : {}),
+    };
     const groqRes = await fetch("https://api.groq.com/openai/v1/audio/speech", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(sanitizedBody),
     });
 
     if (!groqRes.ok) {
@@ -68,13 +88,19 @@ export function voiceRoutes(): Hono {
     }
 
     const body = await c.req.json();
+    // Whitelist only expected fields before forwarding
+    const sanitizedBody = {
+      ...(body.text ? { text: body.text } : {}),
+      ...(body.voice ? { voice: body.voice } : {}),
+      ...(body.output_spec ? { output_spec: body.output_spec } : {}),
+    };
     const inworldRes = await fetch("https://api.inworld.ai/tts/v1/voice:stream", {
       method: "POST",
       headers: {
         Authorization: `Basic ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(sanitizedBody),
     });
 
     if (!inworldRes.ok) {
@@ -86,7 +112,10 @@ export function voiceRoutes(): Hono {
     }
 
     // Parse NDJSON stream and decode base64 audio chunks
-    const reader = inworldRes.body!.getReader();
+    if (!inworldRes.body) {
+      return c.json({ error: "Empty response from Inworld" }, 502);
+    }
+    const reader = inworldRes.body.getReader();
     const decoder = new TextDecoder();
     let ndjsonBuf = "";
 

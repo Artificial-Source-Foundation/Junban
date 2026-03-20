@@ -48,6 +48,9 @@ export function taskRoutes(services: AppServices): Hono {
   // POST /tasks/bulk/complete
   app.post("/bulk/complete", async (c) => {
     const { ids } = await c.req.json();
+    if (!Array.isArray(ids) || ids.length > 500) {
+      return c.json({ error: "ids must be an array with at most 500 items" }, 400);
+    }
     const tasks = await services.taskService.completeMany(ids);
     return c.json(tasks);
   });
@@ -55,6 +58,9 @@ export function taskRoutes(services: AppServices): Hono {
   // POST /tasks/bulk/delete
   app.post("/bulk/delete", async (c) => {
     const { ids } = await c.req.json();
+    if (!Array.isArray(ids) || ids.length > 500) {
+      return c.json({ error: "ids must be an array with at most 500 items" }, 400);
+    }
     await services.taskService.deleteMany(ids);
     return c.json({ ok: true });
   });
@@ -62,6 +68,9 @@ export function taskRoutes(services: AppServices): Hono {
   // POST /tasks/bulk/update
   app.post("/bulk/update", async (c) => {
     const { ids, changes } = await c.req.json();
+    if (!Array.isArray(ids) || ids.length > 500) {
+      return c.json({ error: "ids must be an array with at most 500 items" }, 400);
+    }
     const tasks = await services.taskService.updateMany(ids, changes);
     return c.json(tasks);
   });
