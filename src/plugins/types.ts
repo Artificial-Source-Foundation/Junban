@@ -42,7 +42,7 @@ export const PluginManifest = z.object({
   author: z.string(),
   description: z.string(),
   main: z.string(),
-  minSaydoVersion: z.string(),
+  minJunbanVersion: z.string(),
   targetApiVersion: z.string().optional(),
   icon: z.string().optional(),
   permissions: z.array(z.string()).optional().default([]),

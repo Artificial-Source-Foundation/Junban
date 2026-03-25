@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to ASF Saydo are documented in this file.
+All notable changes to ASF Junban are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -31,7 +31,7 @@ First stable public release. 37 sprints, 1930+ tests, 251 features shipped.
 - **Plugin system** — Obsidian-style: manifest validation, sandboxed execution, lifecycle hooks, command/panel/view registration, per-plugin settings and storage, community registry
 - **Built-in Pomodoro plugin** — example plugin demonstrating the full API
 - **MCP server** — 34 tools, 8 resources, 3 prompts exposed over stdio for Claude Desktop and custom AI agents
-- **CLI companion** — `saydo add`, `saydo list`, `saydo done`, `saydo edit`, `saydo delete`
+- **CLI companion** — `junban add`, `junban list`, `junban done`, `junban edit`, `junban delete`
 - **Views** — Inbox, Today, Upcoming, Project, Board (Kanban), Calendar (month/week/day/agenda), Eisenhower Matrix, Stats dashboard, Completed, Cancelled, Someday, Filters & Labels, individual task pages
 - **UI features** — command palette (Ctrl+K), global search, keyboard-first navigation, drag-and-drop reordering, bulk operations, focus mode, responsive mobile UI (bottom nav, drawer, FAB), markdown descriptions
 - **Settings** — 10 tabs: general, appearance, features, AI, voice, plugins, templates, keyboard shortcuts, data, about
@@ -45,7 +45,7 @@ First stable public release. 37 sprints, 1930+ tests, 251 features shipped.
 
 ### Changed
 
-- Rebranded from "ASF Docket" to "ASF Saydo" (Sprint 23) — all identifiers, DB filenames, localStorage keys, CLI commands updated
+- Rebranded from "ASF Docket" to "ASF Junban" (Sprint 23) — all identifiers, DB filenames, localStorage keys, CLI commands updated
 - Replaced raw `AppServices.queries` with `IStorage` abstraction (Sprint 11) for dual-backend support
 - Structured logger (`createLogger`) replaces raw `console.log` across voice subsystem
 
@@ -57,4 +57,4 @@ First stable public release. 37 sprints, 1930+ tests, 251 features shipped.
 - Voice call mode prevents duplicate auto-speak via `voiceCallActiveRef`
 - Markdown backend sorts YAML frontmatter keys alphabetically for git-friendly diffs
 
-[1.0.0]: https://github.com/ASF-GROUP/Saydo/releases/tag/v1.0.0
+[1.0.0]: https://github.com/ASF-GROUP/Junban/releases/tag/v1.0.0

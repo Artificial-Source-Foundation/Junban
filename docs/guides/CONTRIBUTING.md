@@ -1,6 +1,6 @@
-# Contributing to ASF Saydo
+# Contributing to ASF Junban
 
-Thank you for considering contributing to Saydo! This guide covers everything you need to get started.
+Thank you for considering contributing to Junban! This guide covers everything you need to get started.
 
 ## Getting Started
 
@@ -155,8 +155,8 @@ To add your plugin to the community registry:
 2. **Ensure your plugin has**:
    - A valid `manifest.json`
    - A README with description, installation, and usage
-   - No bundled dependencies that duplicate Saydo's (React, etc.)
-   - Tested on the latest Saydo version
+   - No bundled dependencies that duplicate Junban's (React, etc.)
+   - Tested on the latest Junban version
 3. **Submit a PR** that adds your plugin to `sources.json`:
 
 ```json
@@ -166,9 +166,9 @@ To add your plugin to the community registry:
   "description": "Brief description of what it does.",
   "author": "Your Name",
   "version": "1.0.0",
-  "repository": "https://github.com/you/saydo-plugin-name",
+  "repository": "https://github.com/you/junban-plugin-name",
   "tags": ["relevant", "tags"],
-  "minSaydoVersion": "1.0.0"
+  "minJunbanVersion": "1.0.0"
 }
 ```
 

@@ -60,7 +60,7 @@ const DEFAULT_SETTINGS: VoiceSettings = {
   gracePeriodMs: 1500,
 };
 
-const STORAGE_KEY = "saydo-voice-settings";
+const STORAGE_KEY = "junban-voice-settings";
 
 /** Voice setting keys that contain sensitive data (API keys). */
 const VOICE_SENSITIVE_KEYS: (keyof VoiceSettings)[] = ["groqApiKey", "inworldApiKey"];

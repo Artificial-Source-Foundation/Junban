@@ -7,7 +7,7 @@ export function StepWelcome() {
         <Sparkles size={36} className="text-accent" />
       </div>
       <h2 className="text-2xl font-bold text-on-surface font-[Plus_Jakarta_Sans,sans-serif]">
-        Welcome to Saydo
+        Welcome to Junban
       </h2>
       <p className="text-[15px] text-on-surface-muted mt-2 max-w-xs">
         Your task manager. Simple, smart, yours.

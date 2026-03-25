@@ -1,16 +1,16 @@
 import { describe, it, expect } from "vitest";
 import {
   detectFormat,
-  parseSaydoJSON,
+  parseJunbanJSON,
   parseTodoistJSON,
   parseTextImport,
   parseImport,
 } from "../../src/core/import.js";
 
 describe("detectFormat", () => {
-  it("detects Saydo JSON by tasks + version fields", () => {
+  it("detects Junban JSON by tasks + version fields", () => {
     const content = JSON.stringify({ tasks: [], version: "1.0", exportedAt: "2025-01-01" });
-    expect(detectFormat(content)).toBe("saydo-json");
+    expect(detectFormat(content)).toBe("junban-json");
   });
 
   it("detects Todoist JSON by items field", () => {
@@ -31,8 +31,8 @@ describe("detectFormat", () => {
   });
 });
 
-describe("parseSaydoJSON", () => {
-  it("parses a valid Saydo export", () => {
+describe("parseJunbanJSON", () => {
+  it("parses a valid Junban export", () => {
     const data = {
       tasks: [
         {
@@ -58,9 +58,9 @@ describe("parseSaydoJSON", () => {
       version: "1.0",
     };
 
-    const preview = parseSaydoJSON(JSON.stringify(data));
+    const preview = parseJunbanJSON(JSON.stringify(data));
 
-    expect(preview.format).toBe("saydo-json");
+    expect(preview.format).toBe("junban-json");
     expect(preview.tasks).toHaveLength(1);
     expect(preview.tasks[0].title).toBe("Buy groceries");
     expect(preview.tasks[0].description).toBe("Milk and eggs");
@@ -79,7 +79,7 @@ describe("parseSaydoJSON", () => {
       version: "1.0",
     };
 
-    const preview = parseSaydoJSON(JSON.stringify(data));
+    const preview = parseJunbanJSON(JSON.stringify(data));
 
     expect(preview.tasks).toHaveLength(1);
     expect(preview.tasks[0].title).toBe("Simple task");
@@ -96,24 +96,24 @@ describe("parseSaydoJSON", () => {
       version: "1.0",
     };
 
-    const preview = parseSaydoJSON(JSON.stringify(data));
+    const preview = parseJunbanJSON(JSON.stringify(data));
 
     expect(preview.warnings.length).toBeGreaterThan(0);
     expect(preview.warnings[0]).toContain("unknown project ID");
   });
 
   it("returns warnings for invalid JSON", () => {
-    const preview = parseSaydoJSON("not json");
+    const preview = parseJunbanJSON("not json");
     expect(preview.tasks).toHaveLength(0);
     expect(preview.warnings).toHaveLength(1);
     expect(preview.warnings[0]).toContain("Invalid JSON");
   });
 
   it("returns warnings for invalid schema", () => {
-    const preview = parseSaydoJSON(JSON.stringify({ notTasks: true }));
+    const preview = parseJunbanJSON(JSON.stringify({ notTasks: true }));
     expect(preview.tasks).toHaveLength(0);
     expect(preview.warnings).toHaveLength(1);
-    expect(preview.warnings[0]).toContain("Invalid Saydo export format");
+    expect(preview.warnings[0]).toContain("Invalid Junban export format");
   });
 
   it("maps completed status correctly", () => {
@@ -122,7 +122,7 @@ describe("parseSaydoJSON", () => {
       version: "1.0",
     };
 
-    const preview = parseSaydoJSON(JSON.stringify(data));
+    const preview = parseJunbanJSON(JSON.stringify(data));
     expect(preview.tasks[0].status).toBe("completed");
   });
 
@@ -132,7 +132,7 @@ describe("parseSaydoJSON", () => {
       version: "1.0",
     };
 
-    const preview = parseSaydoJSON(JSON.stringify(data));
+    const preview = parseJunbanJSON(JSON.stringify(data));
     expect(preview.tasks[0].status).toBe("pending");
   });
 });
@@ -153,9 +153,9 @@ describe("parseTodoistJSON", () => {
 
     expect(preview.format).toBe("todoist-json");
     expect(preview.tasks).toHaveLength(4);
-    expect(preview.tasks[0].priority).toBe(1); // Todoist 4 → Saydo 1
-    expect(preview.tasks[1].priority).toBe(2); // Todoist 3 → Saydo 2
-    expect(preview.tasks[2].priority).toBe(3); // Todoist 2 → Saydo 3
+    expect(preview.tasks[0].priority).toBe(1); // Todoist 4 → Junban 1
+    expect(preview.tasks[1].priority).toBe(2); // Todoist 3 → Junban 2
+    expect(preview.tasks[2].priority).toBe(3); // Todoist 2 → Junban 3
     expect(preview.tasks[3].priority).toBeNull(); // Todoist 1 → null
   });
 
@@ -301,10 +301,10 @@ describe("parseTextImport", () => {
 });
 
 describe("parseImport", () => {
-  it("auto-detects and parses Saydo JSON", () => {
+  it("auto-detects and parses Junban JSON", () => {
     const data = { tasks: [{ title: "Test" }], version: "1.0" };
     const preview = parseImport(JSON.stringify(data));
-    expect(preview.format).toBe("saydo-json");
+    expect(preview.format).toBe("junban-json");
     expect(preview.tasks).toHaveLength(1);
   });
 

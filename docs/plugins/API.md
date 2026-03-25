@@ -4,7 +4,7 @@
 
 ## 1. Getting Started
 
-A Saydo plugin is a directory with two files:
+A Junban plugin is a directory with two files:
 
 ```
 plugins/my-plugin/
@@ -22,7 +22,7 @@ plugins/my-plugin/
   "author": "Your Name",
   "description": "What this plugin does.",
   "main": "index.ts",
-  "minSaydoVersion": "1.0.0",
+  "minJunbanVersion": "1.0.0",
   "permissions": ["task:read", "commands"]
 }
 ```
@@ -37,13 +37,13 @@ plugins/my-plugin/
 | `author` | `string` | Author name or organization. |
 | `description` | `string` | Brief description (shown in the plugin store). |
 | `main` | `string` | Entry file path relative to the plugin directory. |
-| `minSaydoVersion` | `string` | Minimum Saydo version required. |
+| `minJunbanVersion` | `string` | Minimum Junban version required. |
 
 **Optional fields:**
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `targetApiVersion` | `string` | Plugin API version this plugin targets. If the plugin targets a newer major version than the running Saydo, a warning is logged. |
+| `targetApiVersion` | `string` | Plugin API version this plugin targets. If the plugin targets a newer major version than the running Junban, a warning is logged. |
 | `icon` | `string` | Emoji or icon name for the plugin. |
 | `permissions` | `string[]` | Required permissions (see [Permissions](#2-permissions)). Defaults to `[]`. |
 | `settings` | `SettingDefinition[]` | Plugin settings schema (see [Settings](#9-settings)). |
@@ -75,16 +75,16 @@ export default class MyPlugin extends Plugin {
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `this.app` | `PluginAPI` | The full Saydo API. Every method is always present. Methods you lack permission for throw a clear error. |
+| `this.app` | `PluginAPI` | The full Junban API. Every method is always present. Methods you lack permission for throw a clear error. |
 | `this.settings` | `PluginSettingsAccessor` | Read/write this plugin's settings. |
 
 ### Lifecycle
 
-1. Saydo discovers the plugin directory and validates `manifest.json`.
+1. Junban discovers the plugin directory and validates `manifest.json`.
 2. The user approves the requested permissions.
-3. Saydo calls `onLoad()`. Register everything here.
-4. The plugin is active until the user disables it or Saydo shuts down.
-5. Saydo calls `onUnload()`. Clean up side effects here.
+3. Junban calls `onLoad()`. Register everything here.
+4. The plugin is active until the user disables it or Junban shuts down.
+5. Junban calls `onUnload()`. Clean up side effects here.
 
 ## 2. Permissions
 
@@ -504,7 +504,7 @@ this.app.ui.addView({
 
 - Use `text` for the simplest case -- just showing a string.
 - Use `structured` when you need interactive elements (buttons, progress bars) but want your plugin to work without bundling React. The JSON format supports: `text`, `button`, `progress`, `badge`, `row`, `spacer`, and more.
-- Use `react` when you need full control over rendering. Note that React components only work for built-in plugins that are compiled alongside Saydo. Community plugins distributed as standalone files should use `structured` instead.
+- Use `react` when you need full control over rendering. Note that React components only work for built-in plugins that are compiled alongside Junban. Community plugins distributed as standalone files should use `structured` instead.
 
 ### Status Bar (`ui:status`)
 
@@ -550,7 +550,7 @@ Each setting has: `id`, `name`, `type`, `default`, and optional `description`.
 
 ### Settings UI (Automatic Rendering)
 
-When a plugin declares `settings` in its manifest, Saydo automatically renders a settings form in the plugin settings panel (Settings > Plugins > Your Plugin). No UI code is needed from the plugin author.
+When a plugin declares `settings` in its manifest, Junban automatically renders a settings form in the plugin settings panel (Settings > Plugins > Your Plugin). No UI code is needed from the plugin author.
 
 | Type | Rendered As |
 |------|-------------|

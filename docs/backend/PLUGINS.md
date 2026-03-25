@@ -1,6 +1,6 @@
 # Plugin Subsystem — Internal Documentation
 
-The plugin subsystem (`src/plugins/`) implements Saydo's Obsidian-style plugin system. It handles plugin discovery, manifest validation, permission-gated loading, lifecycle management, and the API surface that plugins interact with. This document is for **Saydo developers** who need to understand or modify the plugin system internals. For plugin authors, see `docs/plugins/API.md`.
+The plugin subsystem (`src/plugins/`) implements Junban's Obsidian-style plugin system. It handles plugin discovery, manifest validation, permission-gated loading, lifecycle management, and the API surface that plugins interact with. This document is for **Junban developers** who need to understand or modify the plugin system internals. For plugin authors, see `docs/plugins/API.md`.
 
 **Total files:** 11 | **Total lines:** ~1,123
 
@@ -64,7 +64,7 @@ Cleanup (unregister commands, UI, AI providers, tools)
 - `PluginManifest` — Zod schema with fields:
   - `id` — lowercase alphanumeric + hyphens (regex: `/^[a-z0-9-]+$/`)
   - `name`, `version`, `author`, `description`, `main` — required strings
-  - `minSaydoVersion` — required string
+  - `minJunbanVersion` — required string
   - `targetApiVersion` — optional semver string for API compatibility checking
   - `permissions` — optional string array (default: `[]`)
   - `settings` — optional array of `SettingDefinition` (default: `[]`)
@@ -135,7 +135,7 @@ Cleanup (unregister commands, UI, AI providers, tools)
 **Purpose:** Abstract base class that all plugins must extend.
 **Key Exports:**
 - `Plugin` — abstract class:
-  - `app: PluginAPI` — the Saydo Plugin API (set by loader before `onLoad()`)
+  - `app: PluginAPI` — the Junban Plugin API (set by loader before `onLoad()`)
   - `settings: PluginSettingsAccessor` — settings accessor (set by loader before `onLoad()`)
   - `abstract onLoad()` — called when the plugin is activated
   - `abstract onUnload()` — called when the plugin is deactivated
@@ -231,7 +231,7 @@ Every API method is always present. Calling without the required permission thro
   - `id`, `name`, `description`, `author`, `version`, `repository` — strings
   - `downloadUrl?` — optional URL for tar.gz download
   - `tags` — string array
-  - `minSaydoVersion` — string
+  - `minJunbanVersion` — string
 - `Registry` — `{ version: number, description?, lastUpdated?, plugins: RegistryEntry[] }`
 - `PluginRegistry` — class (constructor takes `registryPath`):
   - `loadLocal()` — reads and parses a local JSON file

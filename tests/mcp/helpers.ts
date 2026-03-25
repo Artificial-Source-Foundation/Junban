@@ -36,7 +36,7 @@ export async function createMcpTestEnv() {
   };
 
   // Create MCP server
-  const server = new McpServer({ name: "saydo-test", version: "1.0.0" });
+  const server = new McpServer({ name: "junban-test", version: "1.0.0" });
 
   // Register everything
   registerMcpTools(server, toolRegistry, toolContext);

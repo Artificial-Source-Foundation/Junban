@@ -256,7 +256,7 @@ interface ViewInfo { id: string; name: string; icon: string; }
 interface StorePluginInfo {
   id: string; name: string; description: string; author: string;
   version: string; repository: string; downloadUrl?: string;
-  tags: string[]; minSaydoVersion: string; icon?: string;
+  tags: string[]; minJunbanVersion: string; icon?: string;
   downloads?: number; longDescription?: string;
 }
 ```

@@ -1,6 +1,6 @@
 # AGENTS.md — AI Agent Quick-Start Guide
 
-This file helps AI agents (Claude, ChatGPT, Copilot, etc.) navigate the Saydo codebase quickly. Read this first, then dive into the specific docs you need.
+This file helps AI agents (Claude, ChatGPT, Copilot, etc.) navigate the Junban codebase quickly. Read this first, then dive into the specific docs you need.
 
 ## Where to Start
 

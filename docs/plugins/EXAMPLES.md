@@ -1,6 +1,6 @@
 # Plugin Examples
 
-Five progressively complex examples showing how to build Saydo plugins. Each example is complete and working -- you can copy the files directly into your `plugins/` directory.
+Five progressively complex examples showing how to build Junban plugins. Each example is complete and working -- you can copy the files directly into your `plugins/` directory.
 
 ---
 
@@ -18,7 +18,7 @@ A command that logs to the console. The simplest possible plugin.
   "author": "Your Name",
   "description": "A minimal plugin that registers a command.",
   "main": "index.ts",
-  "minSaydoVersion": "1.0.0",
+  "minJunbanVersion": "1.0.0",
   "permissions": ["commands"]
 }
 ```
@@ -34,7 +34,7 @@ export default class HelloWorldPlugin extends Plugin {
       id: "greet",
       name: "Say Hello",
       callback: () => {
-        console.log("Hello from my first Saydo plugin!");
+        console.log("Hello from my first Junban plugin!");
       },
     });
   }
@@ -69,7 +69,7 @@ A status bar item that shows how many pending tasks you have, updated in real ti
   "author": "Your Name",
   "description": "Shows the number of pending tasks in the status bar.",
   "main": "index.ts",
-  "minSaydoVersion": "1.0.0",
+  "minJunbanVersion": "1.0.0",
   "permissions": ["task:read", "ui:status"]
 }
 ```
@@ -164,7 +164,7 @@ A sidebar panel that lists today's tasks, grouped by priority.
   "author": "Your Name",
   "description": "Sidebar panel showing today's tasks grouped by priority.",
   "main": "index.ts",
-  "minSaydoVersion": "1.0.0",
+  "minJunbanVersion": "1.0.0",
   "permissions": ["task:read", "project:read", "ui:panel", "commands"]
 }
 ```
@@ -234,7 +234,7 @@ A command that finds all overdue tasks and adds a configurable tag to them. Demo
   "author": "Your Name",
   "description": "Bulk-tags overdue tasks with a configurable tag.",
   "main": "index.ts",
-  "minSaydoVersion": "1.0.0",
+  "minJunbanVersion": "1.0.0",
   "permissions": ["task:read", "task:write", "tag:write", "commands"],
   "settings": [
     {
@@ -341,7 +341,7 @@ A full plugin with a structured view, status bar, settings, storage, and command
   "author": "ASF",
   "description": "Focus timer with configurable work/break intervals.",
   "main": "index.ts",
-  "minSaydoVersion": "1.0.0",
+  "minJunbanVersion": "1.0.0",
   "permissions": ["task:read", "commands", "ui:status", "ui:view", "storage"],
   "settings": [
     {
@@ -607,7 +607,7 @@ A plugin that uses manifest-defined settings to control its behavior. The settin
   "author": "Your Name",
   "description": "Hides low-priority tasks to help you focus.",
   "main": "index.ts",
-  "minSaydoVersion": "1.0.0",
+  "minJunbanVersion": "1.0.0",
   "permissions": ["task:read", "commands", "ui:status"],
   "settings": [
     {
@@ -708,7 +708,7 @@ export default class FocusModePlugin extends Plugin {
 
 ## Example 7: Plugin with UI View
 
-A plugin that registers a custom view using `structured` content -- a JSON layout rendered by Saydo without needing React.
+A plugin that registers a custom view using `structured` content -- a JSON layout rendered by Junban without needing React.
 
 ### `plugins/project-overview/manifest.json`
 
@@ -720,7 +720,7 @@ A plugin that registers a custom view using `structured` content -- a JSON layou
   "author": "Your Name",
   "description": "A dashboard view showing project stats.",
   "main": "index.ts",
-  "minSaydoVersion": "1.0.0",
+  "minJunbanVersion": "1.0.0",
   "permissions": ["task:read", "project:read", "ui:view"]
 }
 ```

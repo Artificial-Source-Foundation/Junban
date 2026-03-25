@@ -4,9 +4,9 @@
   "name": "Example Plugin",
   "version": "2.0.0",
   "author": "ASF",
-  "description": "A complete example plugin demonstrating the Saydo Plugin API: tasks, projects, tags, events, commands, status bar, and settings.",
+  "description": "A complete example plugin demonstrating the Junban Plugin API: tasks, projects, tags, events, commands, status bar, and settings.",
   "main": "index.ts",
-  "minSaydoVersion": "0.1.0",
+  "minJunbanVersion": "0.1.0",
   "targetApiVersion": "2.0.0",
   "license": "MIT",
   "permissions": [

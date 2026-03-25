@@ -1,6 +1,6 @@
 # Voice Subsystem — Internal Documentation
 
-The voice subsystem (`src/ai/voice/`) implements Saydo's speech-to-text (STT) and text-to-speech (TTS) capabilities. It follows the same provider-plugin pattern as the LLM subsystem: a registry holds provider plugins, each implementing a common interface. Providers range from free browser-native APIs to cloud services (Groq, Inworld AI) and fully local WASM-based models (Whisper, Kokoro, Piper).
+The voice subsystem (`src/ai/voice/`) implements Junban's speech-to-text (STT) and text-to-speech (TTS) capabilities. It follows the same provider-plugin pattern as the LLM subsystem: a registry holds provider plugins, each implementing a common interface. Providers range from free browser-native APIs to cloud services (Groq, Inworld AI) and fully local WASM-based models (Whisper, Kokoro, Piper).
 
 **Total files:** 14 | **Total lines:** 1,388
 

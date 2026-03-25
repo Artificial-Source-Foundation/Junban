@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="public/images/logo-192.png" alt="Saydo logo" width="80" />
+<img src="public/images/logo-192.png" alt="Junban logo" width="80" />
 
-# ASF Saydo
+# ASF Junban
 
 **The task manager that doesn't exist yet.**<br />
 Beautiful and simple out of the box, with a real AI assistant<br />
@@ -11,16 +11,16 @@ and a plugin system so simple that anyone can build features — no coding requi
 Local-first. No accounts. No tracking. Your data stays on your machine.
 
 <p>
-  <a href="https://github.com/ASF-GROUP/Saydo">Home</a> &nbsp;&middot;&nbsp;
+  <a href="https://github.com/ASF-GROUP/Junban">Home</a> &nbsp;&middot;&nbsp;
   <a href="docs/guides/SETUP.md">Setup</a> &nbsp;&middot;&nbsp;
   <a href="docs/guides/ARCHITECTURE.md">Architecture</a> &nbsp;&middot;&nbsp;
   <a href="docs/plugins/API.md">Plugin API</a> &nbsp;&middot;&nbsp;
   <a href="docs/planning/ROADMAP.md">Roadmap</a>
 </p>
 
-[![CI](https://github.com/ASF-GROUP/Saydo/actions/workflows/ci.yml/badge.svg)](https://github.com/ASF-GROUP/Saydo/actions/workflows/ci.yml)
+[![CI](https://github.com/ASF-GROUP/Junban/actions/workflows/ci.yml/badge.svg)](https://github.com/ASF-GROUP/Junban/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/ASF-GROUP/Saydo?style=social)](https://github.com/ASF-GROUP/Saydo/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/ASF-GROUP/Junban?style=social)](https://github.com/ASF-GROUP/Junban/stargazers)
 
 Built by the [AI Strategic Forum (ASF)](https://github.com/ASF-GROUP) community.
 
@@ -29,7 +29,7 @@ Built by the [AI Strategic Forum (ASF)](https://github.com/ASF-GROUP) community.
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="screenshots/today-dark.png" />
   <source media="(prefers-color-scheme: light)" srcset="screenshots/today-light.png" />
-  <img src="screenshots/today-light.png" alt="Saydo — Today view" width="720" />
+  <img src="screenshots/today-light.png" alt="Junban — Today view" width="720" />
 </picture>
 
 </div>
@@ -73,17 +73,17 @@ Built by the [AI Strategic Forum (ASF)](https://github.com/ASF-GROUP) community.
 
 | Platform | Download |
 |----------|----------|
-| **Windows** | [`.exe` installer](https://github.com/ASF-GROUP/Saydo/releases/latest/download/ASF.Saydo_1.0.0_x64-setup.exe) · [`.msi`](https://github.com/ASF-GROUP/Saydo/releases/latest/download/ASF.Saydo_1.0.0_x64_en-US.msi) |
-| **macOS (Apple Silicon)** | [`.dmg`](https://github.com/ASF-GROUP/Saydo/releases/latest/download/ASF.Saydo_1.0.0_aarch64.dmg) |
-| **macOS (Intel)** | [`.dmg`](https://github.com/ASF-GROUP/Saydo/releases/latest/download/ASF.Saydo_1.0.0_x64.dmg) |
-| **Linux (Debian/Ubuntu)** | [`.deb`](https://github.com/ASF-GROUP/Saydo/releases/latest/download/ASF.Saydo_1.0.0_amd64.deb) |
-| **Linux (AppImage)** | [`.AppImage`](https://github.com/ASF-GROUP/Saydo/releases/latest/download/ASF.Saydo_1.0.0_amd64.AppImage) |
+| **Windows** | [`.exe` installer](https://github.com/ASF-GROUP/Junban/releases/latest/download/ASF.Junban_1.0.0_x64-setup.exe) · [`.msi`](https://github.com/ASF-GROUP/Junban/releases/latest/download/ASF.Junban_1.0.0_x64_en-US.msi) |
+| **macOS (Apple Silicon)** | [`.dmg`](https://github.com/ASF-GROUP/Junban/releases/latest/download/ASF.Junban_1.0.0_aarch64.dmg) |
+| **macOS (Intel)** | [`.dmg`](https://github.com/ASF-GROUP/Junban/releases/latest/download/ASF.Junban_1.0.0_x64.dmg) |
+| **Linux (Debian/Ubuntu)** | [`.deb`](https://github.com/ASF-GROUP/Junban/releases/latest/download/ASF.Junban_1.0.0_amd64.deb) |
+| **Linux (AppImage)** | [`.AppImage`](https://github.com/ASF-GROUP/Junban/releases/latest/download/ASF.Junban_1.0.0_amd64.AppImage) |
 
-Or browse all releases: [**GitHub Releases**](https://github.com/ASF-GROUP/Saydo/releases)
+Or browse all releases: [**GitHub Releases**](https://github.com/ASF-GROUP/Junban/releases)
 
-## Why Saydo
+## Why Junban
 
-Most task managers are either too simple (no AI, no extensibility) or too complex (enterprise bloat). Saydo sits in the middle:
+Most task managers are either too simple (no AI, no extensibility) or too complex (enterprise bloat). Junban sits in the middle:
 
 - **Type naturally** — `buy milk tomorrow 3pm p1 #groceries +shopping` just works
 - **Talk to AI** — a sidebar chat that actually sees your tasks, projects, and schedule
@@ -96,7 +96,7 @@ Most task managers are either too simple (no AI, no extensibility) or too comple
 Want to run from source or contribute? See the [local setup guide](docs/guides/SETUP.md), or:
 
 ```bash
-git clone https://github.com/ASF-GROUP/Saydo.git && cd Saydo
+git clone https://github.com/ASF-GROUP/Junban.git && cd Junban
 pnpm install
 cp .env.example .env
 mkdir -p data && pnpm db:migrate
@@ -142,7 +142,7 @@ Full speech-to-text and text-to-speech pipeline with voice activity detection (V
 Obsidian-style plugins — drop a TypeScript file in `plugins/`, no build step.
 
 ```typescript
-import { Plugin } from "@asf-saydo/plugin-api";
+import { Plugin } from "@asf-junban/plugin-api";
 
 export default class MyPlugin extends Plugin {
   async onLoad() {
@@ -170,7 +170,7 @@ Plugins can register commands, add sidebar panels, add views, hook into task eve
 | **Reminders** | Set reminders on any task, get notified when they're due |
 | **Eisenhower Matrix** | Prioritize with the urgent/important quadrant view |
 | **Focus mode** | Distraction-free, keyboard-driven |
-| **CLI companion** | `saydo add`, `saydo list`, `saydo done` from the terminal |
+| **CLI companion** | `junban add`, `junban list`, `junban done` from the terminal |
 | **Themes** | Light / Dark / Nord + accent colors + custom CSS |
 | **Sound effects** | Satisfying audio feedback for task actions |
 | **1930+ tests** | Solid coverage across the entire codebase |
@@ -195,7 +195,7 @@ v1.0 shipped. Desktop app works on Mac, Windows, Linux.
 
 Latest: voice call mode, global search, tag management AI tools, sound effects, comprehensive settings, mobile-responsive UI.
 
-Next milestone: **Saydo Sync** — optional paid cross-device sync.
+Next milestone: **Junban Sync** — optional paid cross-device sync.
 
 ## Docs
 
@@ -216,10 +216,10 @@ See [CONTRIBUTING.md](docs/guides/CONTRIBUTING.md). Run `pnpm check` before subm
 ## Star History
 
 <div align="center">
-  <a href="https://github.com/ASF-GROUP/Saydo/stargazers">
+  <a href="https://github.com/ASF-GROUP/Junban/stargazers">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ASF-GROUP/Saydo&theme=dark&type=Date" />
-      <img src="https://api.star-history.com/svg?repos=ASF-GROUP/Saydo&type=Date" alt="Star History" width="600" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ASF-GROUP/Junban&theme=dark&type=Date" />
+      <img src="https://api.star-history.com/svg?repos=ASF-GROUP/Junban&type=Date" alt="Star History" width="600" />
     </picture>
   </a>
 </div>

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Saydo is a modular TypeScript app with clear separation between core logic, storage, AI, UI, plugins, and CLI. Each layer is isolated and testable.
+Junban is a modular TypeScript app with clear separation between core logic, storage, AI, UI, plugins, and CLI. Each layer is isolated and testable.
 
 ```
 src/
@@ -256,7 +256,7 @@ src/
 │   └── errors.ts            # Error mapping to MCP responses
 │
 ├── cli/                     # CLI companion
-│   ├── index.ts             # Commander.js entry (saydo add/list/done/edit/delete)
+│   ├── index.ts             # Commander.js entry (junban add/list/done/edit/delete)
 │   ├── commands/            # Command handlers
 │   └── formatter.ts         # Terminal output formatting
 │
@@ -296,7 +296,7 @@ EventBus → notify plugins (task:create)
 UI re-renders task list
 ```
 
-Same flow from CLI: `saydo add "buy milk tomorrow p1 #groceries"` → Parser → TaskService → Storage.
+Same flow from CLI: `junban add "buy milk tomorrow p1 #groceries"` → Parser → TaskService → Storage.
 
 Same flow from MCP: external agent calls `create_task` tool → ToolRegistry.execute() → TaskService → Storage.
 
@@ -426,7 +426,7 @@ tags: [groceries]
 Optional description here.
 ```
 
-File structure: `tasks/inbox/`, `tasks/<project>/`, `tasks/.saydo/` for metadata. YAML keys sorted alphabetically for minimal git diffs.
+File structure: `tasks/inbox/`, `tasks/<project>/`, `tasks/.junban/` for metadata. YAML keys sorted alphabetically for minimal git diffs.
 
 ## Storage abstraction
 
@@ -487,13 +487,13 @@ Voice I/O mirrors the LLM provider pattern:
 - **TTS**: `TTSProviderPlugin` — Browser Speech Synthesis, Groq PlayAI, Inworld AI (streaming, model selection), local Kokoro (kokoro-js), local Piper (piper-phonemize + onnxruntime)
 - **VAD**: Voice activity detection via `@ricky0123/vad-web` for hands-free mode
 
-Voice settings stored in localStorage (`saydo-voice-settings`). Cloud TTS providers (Groq, Inworld) are proxied through Vite middleware to avoid CORS and handle auth. Inworld uses the streaming NDJSON endpoint (`/tts/v1/voice:stream`) for lower time-to-first-audio.
+Voice settings stored in localStorage (`junban-voice-settings`). Cloud TTS providers (Groq, Inworld) are proxied through Vite middleware to avoid CORS and handle auth. Inworld uses the streaming NDJSON endpoint (`/tts/v1/voice:stream`) for lower time-to-first-audio.
 
 ## Plugin system
 
 ```
 ┌──────────────────────────────────────┐
-│            Saydo Core                │
+│            Junban Core                │
 │                                      │
 │  ┌────────────────────────────────┐  │
 │  │      Plugin API Surface        │  │

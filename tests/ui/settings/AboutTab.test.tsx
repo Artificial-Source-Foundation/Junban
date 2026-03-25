@@ -39,7 +39,7 @@ describe("AboutTab", () => {
 
   it("renders app name and version", async () => {
     render(<AboutTab />);
-    expect(screen.getByText(/ASF Saydo/)).toBeDefined();
+    expect(screen.getByText(/ASF Junban/)).toBeDefined();
     expect(screen.getByText("v1.0.0")).toBeDefined();
   });
 

@@ -1,6 +1,6 @@
 # Storage Abstraction
 
-The `src/storage/` directory implements Saydo's dual-backend storage architecture. Both SQLite and Markdown backends implement the same `IStorage` interface, allowing the app to swap backends without changing any business logic.
+The `src/storage/` directory implements Junban's dual-backend storage architecture. Both SQLite and Markdown backends implement the same `IStorage` interface, allowing the app to swap backends without changing any business logic.
 
 ## Files
 

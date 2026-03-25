@@ -3,7 +3,7 @@ import { createLogger } from "../../utils/logger.js";
 
 const logger = createLogger("theme");
 
-const STORAGE_KEY = "saydo-theme";
+const STORAGE_KEY = "junban-theme";
 
 /** Theme manager — handles loading and switching between built-in Light/Dark themes. */
 export class ThemeManager {

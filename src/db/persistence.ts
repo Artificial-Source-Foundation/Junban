@@ -1,7 +1,7 @@
 import { readFile, writeFile, exists, mkdir, BaseDirectory } from "@tauri-apps/plugin-fs";
 
-const DB_DIR = "ASF Saydo";
-const DB_FILE = "saydo.db";
+const DB_DIR = "ASF Junban";
+const DB_FILE = "junban.db";
 
 export async function loadDbFile(): Promise<Uint8Array | null> {
   try {

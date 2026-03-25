@@ -1,6 +1,6 @@
 # Database & Storage Documentation
 
-The database layer spans two directories: `src/db/` (SQLite-specific code including Drizzle ORM schema, queries, and migrations) and `src/storage/` (the storage abstraction layer with SQLite and Markdown backends). Together they implement Saydo's local-first data architecture.
+The database layer spans two directories: `src/db/` (SQLite-specific code including Drizzle ORM schema, queries, and migrations) and `src/storage/` (the storage abstraction layer with SQLite and Markdown backends). Together they implement Junban's local-first data architecture.
 
 ---
 
@@ -226,7 +226,7 @@ Defined in `src/db/schema.ts` using Drizzle ORM. Fourteen tables:
 ### `persistence.ts`
 **Path:** `src/db/persistence.ts`
 **Lines:** 23
-**Purpose:** Tauri-specific file persistence for the sql.js database. Loads and saves the database binary to the Tauri AppData directory (`ASF Saydo/saydo.db`).
+**Purpose:** Tauri-specific file persistence for the sql.js database. Loads and saves the database binary to the Tauri AppData directory (`ASF Junban/junban.db`).
 **Key Exports:**
 - `loadDbFile(): Promise<Uint8Array | null>`
 - `saveDbFile(data: Uint8Array): Promise<void>`

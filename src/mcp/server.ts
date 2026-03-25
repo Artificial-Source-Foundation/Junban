@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * ASF Saydo MCP Server — stdio entry point.
+ * ASF Junban MCP Server — stdio entry point.
  *
- * Exposes all Saydo tools, resources, and prompts over the MCP protocol.
+ * Exposes all Junban tools, resources, and prompts over the MCP protocol.
  * Designed for Claude Desktop and other MCP-compatible clients.
  *
  * Usage:
@@ -37,7 +37,7 @@ async function main(): Promise<void> {
 
   // Create MCP server
   const server = new McpServer({
-    name: "saydo",
+    name: "junban",
     version: "1.0.0",
   });
 
@@ -60,6 +60,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  process.stderr.write(`Saydo MCP server error: ${err}\n`);
+  process.stderr.write(`Junban MCP server error: ${err}\n`);
   process.exit(1);
 });

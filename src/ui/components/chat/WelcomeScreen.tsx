@@ -132,11 +132,11 @@ export const WelcomeScreen = memo(function WelcomeScreen({
 
     // Check if already triggered today
     const today = new Date().toISOString().slice(0, 10);
-    const lastBriefing = localStorage.getItem("saydo-last-briefing-date");
+    const lastBriefing = localStorage.getItem("junban-last-briefing-date");
     if (lastBriefing === today) return;
 
     briefingTriggered.current = true;
-    localStorage.setItem("saydo-last-briefing-date", today);
+    localStorage.setItem("junban-last-briefing-date", today);
     onSend("Plan my day");
   }, [briefingEnabled, isStreaming, onSend]);
 

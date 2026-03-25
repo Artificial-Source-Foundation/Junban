@@ -1,13 +1,13 @@
 /**
  * MCP resource registration.
- * Provides read-only access to Saydo data: tasks, projects, tags, and stats.
+ * Provides read-only access to Junban data: tasks, projects, tags, and stats.
  *
  * Static resources:
- *   saydo://tasks/pending, saydo://tasks/today, saydo://tasks/overdue
- *   saydo://projects, saydo://tags, saydo://stats/today
+ *   junban://tasks/pending, junban://tasks/today, junban://tasks/overdue
+ *   junban://projects, junban://tags, junban://stats/today
  *
  * Dynamic resource templates:
- *   saydo://tasks/{taskId}, saydo://projects/{projectId}
+ *   junban://tasks/{taskId}, junban://projects/{projectId}
  */
 
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -43,14 +43,14 @@ export function registerMcpResources(server: McpServer, services: AppServices): 
 
   server.registerResource(
     "pending_tasks",
-    "saydo://tasks/pending",
+    "junban://tasks/pending",
     { description: "All pending tasks", mimeType: "application/json" },
     async () => {
       const tasks = await taskService.list({ status: "pending" });
       return {
         contents: [
           {
-            uri: "saydo://tasks/pending",
+            uri: "junban://tasks/pending",
             mimeType: "application/json",
             text: JSON.stringify(tasks.map(summarizeTask)),
           },
@@ -61,7 +61,7 @@ export function registerMcpResources(server: McpServer, services: AppServices): 
 
   server.registerResource(
     "today_tasks",
-    "saydo://tasks/today",
+    "junban://tasks/today",
     { description: "Tasks due today (including overdue)", mimeType: "application/json" },
     async () => {
       const today = new Date().toISOString().split("T")[0];
@@ -70,7 +70,7 @@ export function registerMcpResources(server: McpServer, services: AppServices): 
       return {
         contents: [
           {
-            uri: "saydo://tasks/today",
+            uri: "junban://tasks/today",
             mimeType: "application/json",
             text: JSON.stringify(todayTasks.map(summarizeTask)),
           },
@@ -81,7 +81,7 @@ export function registerMcpResources(server: McpServer, services: AppServices): 
 
   server.registerResource(
     "overdue_tasks",
-    "saydo://tasks/overdue",
+    "junban://tasks/overdue",
     { description: "Overdue tasks (due before today)", mimeType: "application/json" },
     async () => {
       const today = new Date().toISOString().split("T")[0];
@@ -90,7 +90,7 @@ export function registerMcpResources(server: McpServer, services: AppServices): 
       return {
         contents: [
           {
-            uri: "saydo://tasks/overdue",
+            uri: "junban://tasks/overdue",
             mimeType: "application/json",
             text: JSON.stringify(overdue.map(summarizeTask)),
           },
@@ -101,7 +101,7 @@ export function registerMcpResources(server: McpServer, services: AppServices): 
 
   server.registerResource(
     "all_projects",
-    "saydo://projects",
+    "junban://projects",
     { description: "All non-archived projects", mimeType: "application/json" },
     async () => {
       const projects = await projectService.list();
@@ -109,7 +109,7 @@ export function registerMcpResources(server: McpServer, services: AppServices): 
       return {
         contents: [
           {
-            uri: "saydo://projects",
+            uri: "junban://projects",
             mimeType: "application/json",
             text: JSON.stringify(active),
           },
@@ -120,14 +120,14 @@ export function registerMcpResources(server: McpServer, services: AppServices): 
 
   server.registerResource(
     "all_tags",
-    "saydo://tags",
+    "junban://tags",
     { description: "All tags", mimeType: "application/json" },
     async () => {
       const tags = await tagService.list();
       return {
         contents: [
           {
-            uri: "saydo://tags",
+            uri: "junban://tags",
             mimeType: "application/json",
             text: JSON.stringify(tags),
           },
@@ -138,7 +138,7 @@ export function registerMcpResources(server: McpServer, services: AppServices): 
 
   server.registerResource(
     "today_stats",
-    "saydo://stats/today",
+    "junban://stats/today",
     { description: "Today's productivity stats and current streak", mimeType: "application/json" },
     async () => {
       const todayStat = await statsService.getToday();
@@ -146,7 +146,7 @@ export function registerMcpResources(server: McpServer, services: AppServices): 
       return {
         contents: [
           {
-            uri: "saydo://stats/today",
+            uri: "junban://stats/today",
             mimeType: "application/json",
             text: JSON.stringify({ ...todayStat, currentStreak: streak }),
           },
@@ -159,7 +159,7 @@ export function registerMcpResources(server: McpServer, services: AppServices): 
 
   server.registerResource(
     "task_detail",
-    new ResourceTemplate("saydo://tasks/{taskId}", { list: undefined }),
+    new ResourceTemplate("junban://tasks/{taskId}", { list: undefined }),
     { description: "Single task detail by ID", mimeType: "application/json" },
     async (uri, variables) => {
       const taskId = variables.taskId as string;
@@ -189,7 +189,7 @@ export function registerMcpResources(server: McpServer, services: AppServices): 
 
   server.registerResource(
     "project_detail",
-    new ResourceTemplate("saydo://projects/{projectId}", { list: undefined }),
+    new ResourceTemplate("junban://projects/{projectId}", { list: undefined }),
     { description: "Project detail with its tasks", mimeType: "application/json" },
     async (uri, variables) => {
       const projectId = variables.projectId as string;

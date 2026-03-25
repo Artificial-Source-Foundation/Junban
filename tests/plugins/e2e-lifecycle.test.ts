@@ -20,7 +20,7 @@ import { UIRegistry } from "../../src/plugins/ui-registry.js";
 let tmpDirs: string[] = [];
 
 function makeTmpPluginDir(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "saydo-plugin-test-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "junban-plugin-test-"));
   tmpDirs.push(dir);
   return dir;
 }
@@ -52,7 +52,7 @@ function makeManifest(
     author: "test",
     description: `Test plugin ${id}`,
     main: "index.mjs",
-    minSaydoVersion: "1.0.0",
+    minJunbanVersion: "1.0.0",
     permissions: ["task:read", "task:write", "commands", "settings"],
     ...overrides,
   };

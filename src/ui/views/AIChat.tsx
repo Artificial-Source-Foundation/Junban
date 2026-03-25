@@ -15,7 +15,7 @@ export function AIChat({ onOpenSettings, onSelectTask }: AIChatViewProps) {
   const { config: aiConfig } = useAIContext();
 
   useEffect(() => {
-    const autoManage = window.localStorage.getItem("saydo.ai.auto-manage-lmstudio") === "1";
+    const autoManage = window.localStorage.getItem("junban.ai.auto-manage-lmstudio") === "1";
     if (!autoManage || aiConfig?.provider !== "lmstudio" || !aiConfig.model) return;
 
     // Auto-load model when view mounts

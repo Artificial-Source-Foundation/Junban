@@ -192,7 +192,7 @@ export function useTimeblockingBlocks(params: UseTimeblockingBlocksParams): UseT
 
   const handleTaskClick = useCallback((taskId: string) => {
     // Dispatch custom event for App.tsx to open the task detail panel
-    window.dispatchEvent(new CustomEvent("saydo:open-task-detail", { detail: { taskId } }));
+    window.dispatchEvent(new CustomEvent("junban:open-task-detail", { detail: { taskId } }));
   }, []);
 
   const handleSlotResize = useCallback(

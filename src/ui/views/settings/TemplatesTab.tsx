@@ -25,7 +25,7 @@ const SAMPLE_VALUES: Record<string, string> = {
   user: "Alice",
   date: "2026-03-01",
   version: "2.1.0",
-  ticket: "SAYDO-42",
+  ticket: "JUNBAN-42",
   priority: "high",
   assignee: "Bob",
   team: "Frontend",

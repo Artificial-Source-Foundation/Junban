@@ -38,7 +38,7 @@ vi.mock("../../../src/core/import.js", () => ({
     projects: [],
     tags: [],
     warnings: [],
-    format: "saydo-json",
+    format: "junban-json",
   }),
 }));
 
@@ -59,7 +59,7 @@ import { DataTab } from "../../../src/ui/views/settings/DataTab.js";
 describe("DataTab", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetStorageInfo.mockResolvedValue({ mode: "sqlite", path: "/data/saydo.db" });
+    mockGetStorageInfo.mockResolvedValue({ mode: "sqlite", path: "/data/junban.db" });
     mockExportAllData.mockResolvedValue({ tasks: [], projects: [], tags: [] });
     mockListProjects.mockResolvedValue([]);
   });
@@ -76,7 +76,7 @@ describe("DataTab", () => {
     await waitFor(() => {
       expect(screen.getByText("SQLite")).toBeDefined();
     });
-    expect(screen.getByText("/data/saydo.db")).toBeDefined();
+    expect(screen.getByText("/data/junban.db")).toBeDefined();
   });
 
   it("renders export buttons", async () => {

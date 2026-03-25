@@ -1,5 +1,5 @@
 /**
- * Example Plugin — demonstrates the Saydo Plugin API v2.
+ * Example Plugin — demonstrates the Junban Plugin API v2.
  *
  * This plugin shows how to use:
  * - Task CRUD (list, get, create, update, complete, uncomplete, delete)

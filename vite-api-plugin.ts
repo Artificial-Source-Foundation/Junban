@@ -3,7 +3,7 @@ import { registerRoutes } from "./vite-api-routes/index.js";
 
 export function apiPlugin() {
   return {
-    name: "saydo-api",
+    name: "junban-api",
     configureServer(server: ViteDevServer) {
       // Lazy-load bootstrap to avoid issues with Vite's module resolution
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

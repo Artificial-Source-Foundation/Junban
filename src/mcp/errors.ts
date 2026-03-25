@@ -1,6 +1,6 @@
 /**
  * Error mapping for MCP tool responses.
- * Converts Saydo error classes to MCP-compatible error content.
+ * Converts Junban error classes to MCP-compatible error content.
  */
 
 import { NotFoundError, ValidationError, StorageError } from "../core/errors.js";

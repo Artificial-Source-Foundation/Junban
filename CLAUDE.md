@@ -1,10 +1,10 @@
-# ASF Saydo — Development Guide
+# ASF Junban — Development Guide
 
 ## What Is This
 
 **Build the task manager you've always wanted.**
 
-ASF Saydo is an open-source, AI-native task manager with an Obsidian-style plugin system. Built by the **AI Strategic Forum (ASF)** community. **Simple. Smart. Yours.**
+ASF Junban is an open-source, AI-native task manager with an Obsidian-style plugin system. Built by the **AI Strategic Forum (ASF)** community. **Simple. Smart. Yours.**
 
 It's the task manager that doesn't exist yet — beautiful and simple out of the box, with a real AI assistant (not a gimmick), and a plugin system so simple that anyone can build features through AI-generated code. No coding experience required.
 
@@ -21,10 +21,10 @@ This is the second ASF project, alongside [ASF Sentinel](https://github.com/ASF-
 ## Core Principles
 
 1. **Local-first, private by default** — data lives on the user's machine. Zero network calls by default. No accounts, no telemetry, no analytics.
-2. **AI-native, not AI-bolted-on** — the AI assistant is a core part of the experience: conversational sidebar, voice input, BYOM (Bring Your Own Model). But completely optional — Saydo works perfectly without AI.
+2. **AI-native, not AI-bolted-on** — the AI assistant is a core part of the experience: conversational sidebar, voice input, BYOM (Bring Your Own Model). But completely optional — Junban works perfectly without AI.
 3. **Vibe-code extensible** — the plugin API is designed so anyone can ask Claude or ChatGPT to build a plugin. If the API is too complicated for AI to generate correct code, it's too complicated.
 4. **Minimal by default, powerful when needed** — clean UI out of the box. The app is a canvas — plugins paint the picture.
-5. **Open source (MIT), honest business model** — free forever. Revenue from optional paid sync hosting (Saydo Sync), not dark patterns.
+5. **Open source (MIT), honest business model** — free forever. Revenue from optional paid sync hosting (Junban Sync), not dark patterns.
 6. **No vendor lock-in** — SQLite or Markdown files. Export anytime. Switching away should be trivial.
 
 ## Tech Stack
@@ -262,7 +262,7 @@ plugin(loader): implement sandbox isolation
 ### Running
 ```bash
 pnpm dev           # Dev mode (Vite dev server with HMR, in-browser SQLite)
-pnpm dev:full      # Full dev mode (Vite + Hono API server, shared ./data/saydo.db)
+pnpm dev:full      # Full dev mode (Vite + Hono API server, shared ./data/junban.db)
 pnpm server        # Standalone API server on port 4822
 pnpm build         # Build for production
 pnpm start         # Preview production build
@@ -294,7 +294,7 @@ The AI assistant is a conversational interface that lives in the sidebar:
 Plugin Discovery → Manifest Validation → Sandbox Creation → Lifecycle Hooks
 ```
 - Plugins are directories in `plugins/` with a `manifest.json` and entry file
-- Manifests declare: id, name, version, author, description, minSaydoVersion, permissions
+- Manifests declare: id, name, version, author, description, minJunbanVersion, permissions
 - Plugins run in a sandboxed context with access only to the Plugin API
 - Lifecycle: `onLoad()` → active → `onUnload()`. Plugins can also hook into task events.
 - **Full CRUD APIs**: tasks (list/get/create/update/complete/uncomplete/delete), projects (list/get/create/update/delete), tags (list/create/delete)
@@ -389,7 +389,7 @@ See [AGENTS.md](AGENTS.md) for a quick-start guide on navigating the codebase wi
 
 ```
 docs/
-├── README.md                        # Vision, design principles, why Saydo exists
+├── README.md                        # Vision, design principles, why Junban exists
 ├── guides/                          # Getting started & how-to
 │   ├── ARCHITECTURE.md              # High-level system design & data flow
 │   ├── CONTRIBUTING.md              # How to contribute + sprint methodology

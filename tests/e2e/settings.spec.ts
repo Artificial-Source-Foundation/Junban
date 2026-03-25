@@ -53,7 +53,7 @@ test.describe("Settings modal", () => {
     await expect(page.getByText("Toggle features on or off")).toBeVisible();
 
     await page.getByRole("button", { name: "About", exact: true }).click();
-    await expect(page.getByText("Saydo").first()).toBeVisible();
+    await expect(page.getByText("Junban").first()).toBeVisible();
   });
 });
 

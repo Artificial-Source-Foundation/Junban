@@ -48,7 +48,7 @@ src/ui/index.css               -- Imports all theme CSS, defines animations and 
   - `setTheme(themeId: string): void` -- switch to a theme by ID
   - `toggle(): void` -- toggle between light and dark
   - `listThemes(): Theme[]` -- returns all built-in themes
-- **Persistence:** Uses `localStorage` key `"saydo-theme"`. The `"system"` option removes the key (so system preference is the default).
+- **Persistence:** Uses `localStorage` key `"junban-theme"`. The `"system"` option removes the key (so system preference is the default).
 - **System Theme Detection:** Listens to `prefers-color-scheme: dark` media query. When current theme is `"system"`, responds to OS dark/light mode changes in real time.
 - **Theme Application Logic:**
   1. Remove variant classes (e.g., `"nord"`) from `<html>`

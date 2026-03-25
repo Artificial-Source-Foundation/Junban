@@ -10,7 +10,7 @@ const RegistryEntry = z.object({
   repository: z.string(),
   downloadUrl: z.string().url().optional(),
   tags: z.array(z.string()),
-  minSaydoVersion: z.string(),
+  minJunbanVersion: z.string(),
 });
 
 const _RegistrySchema = z.object({

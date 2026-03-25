@@ -74,7 +74,7 @@ export interface StorePluginInfo {
   repository: string;
   downloadUrl?: string;
   tags: string[];
-  minSaydoVersion: string;
+  minJunbanVersion: string;
   icon?: string;
   downloads?: number;
   longDescription?: string;

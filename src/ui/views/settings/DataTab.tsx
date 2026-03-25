@@ -118,15 +118,15 @@ function DataSection() {
           version: "1.0",
         };
         content = exportJSON(exportData);
-        filename = `saydo-export-${new Date().toISOString().split("T")[0]}.json`;
+        filename = `junban-export-${new Date().toISOString().split("T")[0]}.json`;
         mimeType = "application/json";
       } else if (format === "csv") {
         content = exportCSV(filteredTasks);
-        filename = `saydo-tasks-${new Date().toISOString().split("T")[0]}.csv`;
+        filename = `junban-tasks-${new Date().toISOString().split("T")[0]}.csv`;
         mimeType = "text/csv";
       } else {
         content = exportMarkdown(filteredTasks);
-        filename = `saydo-tasks-${new Date().toISOString().split("T")[0]}.md`;
+        filename = `junban-tasks-${new Date().toISOString().split("T")[0]}.md`;
         mimeType = "text/markdown";
       }
 
@@ -279,7 +279,7 @@ function DataSection() {
               />
             </label>
             <span className="ml-2 text-xs text-on-surface-muted">
-              Supports Saydo JSON, Todoist JSON, and Markdown/text
+              Supports Junban JSON, Todoist JSON, and Markdown/text
             </span>
             {importError && <p className="mt-2 text-xs text-error">{importError}</p>}
           </div>

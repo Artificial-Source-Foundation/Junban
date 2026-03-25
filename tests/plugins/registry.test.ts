@@ -11,7 +11,7 @@ const PLUGINS: RegistryEntry[] = [
     version: "1.0.0",
     repository: "https://github.com/asf/pomodoro",
     tags: ["productivity", "timer"],
-    minSaydoVersion: "0.1.0",
+    minJunbanVersion: "0.1.0",
   },
   {
     id: "kanban",
@@ -21,7 +21,7 @@ const PLUGINS: RegistryEntry[] = [
     version: "1.0.0",
     repository: "https://github.com/asf/kanban",
     tags: ["view", "kanban"],
-    minSaydoVersion: "0.5.0",
+    minJunbanVersion: "0.5.0",
   },
   {
     id: "git-sync",
@@ -31,7 +31,7 @@ const PLUGINS: RegistryEntry[] = [
     version: "1.0.0",
     repository: "https://github.com/asf/git-sync",
     tags: ["sync", "git"],
-    minSaydoVersion: "0.5.0",
+    minJunbanVersion: "0.5.0",
   },
 ];
 

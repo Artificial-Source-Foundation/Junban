@@ -4,7 +4,7 @@
 
 [AI Strategic Forum (ASF)](https://github.com/ASF-GROUP) is a community for AI enthusiasts focused on curated news, long-form analysis, and open-source tools. ASF values accuracy over speed, sources over vibes, and transparency over persuasion.
 
-## What is Saydo?
+## What is Junban?
 
 A task manager that fills a gap: no good open-source option combines a clean UI, real AI integration, a plugin system, and full data ownership.
 
@@ -15,7 +15,7 @@ A task manager that fills a gap: no good open-source option combines a clean UI,
 | Taskwarrior | Terminal-only, steep learning curve |
 | Vikunja / Planka | No plugins, no AI |
 
-Saydo is minimal out of the box. The plugin system is how you add what you need — and it's designed so anyone can ask an AI to generate a working plugin.
+Junban is minimal out of the box. The plugin system is how you add what you need — and it's designed so anyone can ask an AI to generate a working plugin.
 
 ## Design principles
 
@@ -58,9 +58,9 @@ Free forever. Revenue from optional paid sync hosting (like Obsidian Sync), not 
 
 | Tier | Price | What you get |
 |---|---|---|
-| Saydo | Free | Full app, all features, all plugins, local storage |
-| Saydo Sync | Paid (TBD) | ASF-hosted sync for cross-device access |
-| Saydo Enterprise | Paid (future) | Team features, admin controls, SSO |
+| Junban | Free | Full app, all features, all plugins, local storage |
+| Junban Sync | Paid (TBD) | ASF-hosted sync for cross-device access |
+| Junban Enterprise | Paid (future) | Team features, admin controls, SSO |
 
 The core app will never be paywalled.
 

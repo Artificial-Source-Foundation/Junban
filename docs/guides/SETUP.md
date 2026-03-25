@@ -1,6 +1,6 @@
 # Local Development Setup
 
-Step-by-step guide to get ASF Saydo running on your machine.
+Step-by-step guide to get ASF Junban running on your machine.
 
 ## Prerequisites
 
@@ -24,8 +24,8 @@ Rust and Tauri are only needed if you want to build the desktop app. The web UI 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/ASF-GROUP/Saydo.git
-cd Saydo
+git clone https://github.com/ASF-GROUP/Junban.git
+cd Junban
 ```
 
 ### 2. Install Dependencies
@@ -41,7 +41,7 @@ cp .env.example .env
 ```
 
 The defaults work out of the box. Edit `.env` if you want to change:
-- `DB_PATH` — where the SQLite database is stored (default: `./data/saydo.db`)
+- `DB_PATH` — where the SQLite database is stored (default: `./data/junban.db`)
 - `STORAGE_MODE` — `sqlite` (default) or `markdown`
 - `LOG_LEVEL` — `debug`, `info`, `warn`, `error`
 
@@ -136,9 +136,9 @@ Add to your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "saydo": {
+    "junban": {
       "command": "pnpm",
-      "args": ["--dir", "/path/to/saydo", "mcp"]
+      "args": ["--dir", "/path/to/junban", "mcp"]
     }
   }
 }
@@ -157,7 +157,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 
 const transport = new StdioClientTransport({
   command: "pnpm",
-  args: ["--dir", "/path/to/saydo", "mcp"],
+  args: ["--dir", "/path/to/junban", "mcp"],
 });
 const client = new Client({ name: "my-agent", version: "1.0.0" });
 await client.connect(transport);
@@ -216,14 +216,14 @@ Create `plugins/my-plugin/manifest.json`:
   "author": "Your Name",
   "description": "Does something cool",
   "main": "index.ts",
-  "minSaydoVersion": "1.0.0",
+  "minJunbanVersion": "1.0.0",
   "permissions": ["commands"]
 }
 ```
 
 Create `plugins/my-plugin/index.ts`:
 ```typescript
-import { Plugin } from "@asf-saydo/plugin-api";
+import { Plugin } from "@asf-junban/plugin-api";
 
 export default class MyPlugin extends Plugin {
   async onLoad() {

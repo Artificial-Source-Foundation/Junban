@@ -251,8 +251,8 @@ export function useAppHandlers({
       const taskId = (e as CustomEvent).detail?.taskId;
       if (taskId) handleSelectTask(taskId);
     };
-    window.addEventListener("saydo:open-task-detail", handler);
-    return () => window.removeEventListener("saydo:open-task-detail", handler);
+    window.addEventListener("junban:open-task-detail", handler);
+    return () => window.removeEventListener("junban:open-task-detail", handler);
   }, [handleSelectTask]);
 
   // ── Listen for quick-capture-submit events from the capture window (Tauri) ──

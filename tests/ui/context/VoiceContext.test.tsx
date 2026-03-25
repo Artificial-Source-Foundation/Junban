@@ -147,7 +147,7 @@ describe("VoiceContext", () => {
   });
 
   it("loads settings from localStorage on mount", async () => {
-    mockLocalStorage["saydo-voice-settings"] = JSON.stringify({
+    mockLocalStorage["junban-voice-settings"] = JSON.stringify({
       sttProviderId: "groq-stt",
       ttsEnabled: true,
       voiceMode: "vad",
@@ -182,8 +182,8 @@ describe("VoiceContext", () => {
     expect(settings.sttProviderId).toBe("groq-stt");
 
     // Verify localStorage was updated
-    expect(mockLocalStorage["saydo-voice-settings"]).toBeDefined();
-    const stored = JSON.parse(mockLocalStorage["saydo-voice-settings"]);
+    expect(mockLocalStorage["junban-voice-settings"]).toBeDefined();
+    const stored = JSON.parse(mockLocalStorage["junban-voice-settings"]);
     expect(stored.sttProviderId).toBe("groq-stt");
   });
 

@@ -1,5 +1,5 @@
 /**
- * Plugin scaffolding CLI for ASF Saydo.
+ * Plugin scaffolding CLI for ASF Junban.
  *
  * Usage: pnpm plugin:create <plugin-name>
  *
@@ -46,9 +46,9 @@ function manifestTemplate(id: string, displayName: string): string {
     name: displayName,
     version: "1.0.0",
     author: "Your Name",
-    description: "A Saydo plugin",
+    description: "A Junban plugin",
     main: "index.ts",
-    minSaydoVersion: "1.0.0",
+    minJunbanVersion: "1.0.0",
     permissions: ["task:read", "commands"],
     settings: [
       {
@@ -74,7 +74,7 @@ function indexTemplate(id: string, displayName: string): string {
   return `import { Plugin } from "../../src/plugins/lifecycle.js";
 
 /**
- * ${displayName} — a Saydo plugin.
+ * ${displayName} — a Junban plugin.
  *
  * This is the entry point for the plugin. The loader will instantiate
  * this class, inject \`this.app\` (the Plugin API) and \`this.settings\`,
@@ -180,7 +180,7 @@ function main(): void {
   console.log(
     `     - Implement your plugin logic in onLoad()`
   );
-  console.log(`  3. Restart Saydo — the plugin loader will pick it up automatically.`);
+  console.log(`  3. Restart Junban — the plugin loader will pick it up automatically.`);
   console.log(
     `\n  Docs: docs/plugins/API.md\n`
   );

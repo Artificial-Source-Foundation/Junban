@@ -16,7 +16,7 @@ export const MarkdownMessage = memo(function MarkdownMessage({
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       components={components}
-      urlTransform={(url) => (url.startsWith("saydo://task/") ? url : defaultUrlTransform(url))}
+      urlTransform={(url) => (url.startsWith("junban://task/") ? url : defaultUrlTransform(url))}
     >
       {content}
     </ReactMarkdown>
@@ -138,8 +138,8 @@ function createMarkdownComponents(onSelectTask?: (taskId: string) => void): Comp
       return <CollapsibleDetails summary={summaryChild || "Details"}>{rest}</CollapsibleDetails>;
     },
     a: ({ href, children, ...props }) => {
-      if (href && href.startsWith("saydo://task/") && onSelectTask) {
-        const taskId = href.replace("saydo://task/", "");
+      if (href && href.startsWith("junban://task/") && onSelectTask) {
+        const taskId = href.replace("junban://task/", "");
         return (
           <button
             {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}

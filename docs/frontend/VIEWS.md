@@ -201,7 +201,7 @@
   - `onSelectTask?: (taskId: string) => void`
 - **Key Dependencies:** `AIChatPanel.tsx`, `useAIContext`, `api` (loadModel, unloadModel)
 - **Used By:** `App.tsx`
-- **Notes:** Auto-manages LM Studio models when the view is active: loads the configured model on mount and unloads it on unmount, if the `saydo.ai.auto-manage-lmstudio` localStorage flag is set. Renders AIChatPanel with `mode="view"` which changes its layout to fill the full content area instead of appearing as a sidebar panel.
+- **Notes:** Auto-manages LM Studio models when the view is active: loads the configured model on mount and unloads it on unmount, if the `junban.ai.auto-manage-lmstudio` localStorage flag is set. Renders AIChatPanel with `mode="view"` which changes its layout to fill the full content area instead of appearing as a sidebar panel.
 
 ---
 
@@ -411,7 +411,7 @@
 - **Props:** None (reads from `useAIContext`)
 - **Key Dependencies:** `AIContext`, `api` (listAIProviders, fetchModels, loadModel)
 - **Used By:** `Settings.tsx`
-- **Notes:** Provider help text shown below API key input. Model dropdown auto-populated via `fetchModels` API call with 300ms debounce on baseUrl changes. When a model is selected in LM Studio, it auto-loads the model. Supports custom model input with a "Back to model list" toggle. Shows "Connected" or "Not configured" status. LM Studio-specific auto-manage checkbox stores preference in localStorage (`saydo.ai.auto-manage-lmstudio`). Plugin-provided providers shown with "(plugin)" label.
+- **Notes:** Provider help text shown below API key input. Model dropdown auto-populated via `fetchModels` API call with 300ms debounce on baseUrl changes. When a model is selected in LM Studio, it auto-loads the model. Supports custom model input with a "Back to model list" toggle. Shows "Connected" or "Not configured" status. LM Studio-specific auto-manage checkbox stores preference in localStorage (`junban.ai.auto-manage-lmstudio`). Plugin-provided providers shown with "(plugin)" label.
 
 ---
 
@@ -466,7 +466,7 @@
 ### settings/DataTab.tsx
 
 - **Path:** `src/ui/views/settings/DataTab.tsx` (294 lines)
-- **Purpose:** Data management: storage info display, export (JSON/CSV/Markdown), and import (Saydo JSON, Todoist JSON, Markdown/text) with preview step.
+- **Purpose:** Data management: storage info display, export (JSON/CSV/Markdown), and import (Junban JSON, Todoist JSON, Markdown/text) with preview step.
 - **Key Exports:** `DataTab`
 - **Props:** None (uses `api` and `useTaskContext`)
 - **Key Dependencies:** `api` (exportAllData, importTasks, getStorageInfo), `core/export.js` (exportJSON, exportCSV, exportMarkdown), `core/import.js` (parseImport), `TaskContext`

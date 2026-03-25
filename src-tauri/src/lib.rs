@@ -28,7 +28,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("Failed to build ASF Saydo.")
+        .expect("Failed to build ASF Junban.")
         .run(|app, event| {
             if let tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit = event {
                 // Kill the sidecar server process
@@ -48,14 +48,14 @@ pub fn run() {
 /// Spawn the API server as a Node.js child process (release builds only).
 #[cfg(not(debug_assertions))]
 fn spawn_api_server(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-    // Determine the database path: <AppData>/ASF Saydo/saydo.db
+    // Determine the database path: <AppData>/ASF Junban/junban.db
     let app_data_dir = app
         .path()
         .app_data_dir()
         .expect("Failed to resolve app data directory");
-    let db_dir = app_data_dir.join("ASF Saydo");
+    let db_dir = app_data_dir.join("ASF Junban");
     std::fs::create_dir_all(&db_dir).ok();
-    let db_path = db_dir.join("saydo.db");
+    let db_path = db_dir.join("junban.db");
     let db_path_str = db_path.to_string_lossy().to_string();
 
     // Resolve the project root (where package.json and node_modules live).

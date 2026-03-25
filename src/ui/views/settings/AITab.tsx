@@ -82,7 +82,7 @@ export function AITab() {
   const supportsAutoLoad = provider === "lmstudio";
   const [autoManage, setAutoManage] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
-    return window.localStorage.getItem("saydo.ai.auto-manage-lmstudio") === "1";
+    return window.localStorage.getItem("junban.ai.auto-manage-lmstudio") === "1";
   });
 
   const handleProviderChange = async (newProvider: string) => {
@@ -387,7 +387,7 @@ export function AITab() {
                       const checked = e.target.checked;
                       setAutoManage(checked);
                       window.localStorage.setItem(
-                        "saydo.ai.auto-manage-lmstudio",
+                        "junban.ai.auto-manage-lmstudio",
                         checked ? "1" : "0",
                       );
                     }}

@@ -1,6 +1,6 @@
 # AI Subsystem — Internal Documentation
 
-The AI subsystem (`src/ai/`) implements Saydo's conversational AI assistant. It provides a pluggable multi-provider LLM architecture with a middleware pipeline, a tool calling system, and session management. The subsystem is designed so that AI is entirely optional: no AI code runs unless the user configures a provider.
+The AI subsystem (`src/ai/`) implements Junban's conversational AI assistant. It provides a pluggable multi-provider LLM architecture with a middleware pipeline, a tool calling system, and session management. The subsystem is designed so that AI is entirely optional: no AI code runs unless the user configures a provider.
 
 **Total files:** 53 | **Total lines:** ~7,500
 

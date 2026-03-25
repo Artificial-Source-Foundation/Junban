@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const envSchema = z.object({
-  DB_PATH: z.string().default("./data/saydo.db"),
+  DB_PATH: z.string().default("./data/junban.db"),
   STORAGE_MODE: z.enum(["sqlite", "markdown"]).default("sqlite"),
   MARKDOWN_PATH: z.string().default("./tasks/"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),

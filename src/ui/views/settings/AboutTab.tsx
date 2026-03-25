@@ -253,10 +253,10 @@ export function AboutTab() {
       {/* App info */}
       <div>
         <div className="flex items-center gap-3">
-          <img src="/images/logo-192.png" alt="Saydo logo" className="w-12 h-12" />
+          <img src="/images/logo-192.png" alt="Junban logo" className="w-12 h-12" />
           <div>
             <p className="text-sm font-semibold text-on-surface">
-              ASF Saydo{" "}
+              ASF Junban{" "}
               <span className="font-mono text-on-surface-muted font-normal">v{APP_VERSION}</span>
             </p>
             <p className="text-xs text-on-surface-muted">
@@ -318,7 +318,7 @@ export function AboutTab() {
         <h3 className="text-sm font-semibold text-on-surface mb-2">Feedback</h3>
         <div className="flex gap-3">
           <a
-            href="https://github.com/ASF-GROUP/Saydo/issues/new?labels=bug"
+            href="https://github.com/ASF-GROUP/Junban/issues/new?labels=bug"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-surface-secondary transition-colors text-on-surface-secondary"
@@ -327,7 +327,7 @@ export function AboutTab() {
             Report a Bug
           </a>
           <a
-            href="https://github.com/ASF-GROUP/Saydo/issues/new?labels=enhancement"
+            href="https://github.com/ASF-GROUP/Junban/issues/new?labels=enhancement"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-surface-secondary transition-colors text-on-surface-secondary"
@@ -342,7 +342,7 @@ export function AboutTab() {
       <div>
         <h3 className="text-sm font-semibold text-on-surface mb-1">Open Source Credits</h3>
         <p className="text-xs text-on-surface-muted mb-4">
-          Saydo is built on the shoulders of these incredible open-source projects. Huge thanks to
+          Junban is built on the shoulders of these incredible open-source projects. Huge thanks to
           every contributor.
         </p>
 

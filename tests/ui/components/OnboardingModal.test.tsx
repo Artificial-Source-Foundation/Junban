@@ -47,7 +47,7 @@ describe("OnboardingModal", () => {
 
   it("renders welcome step when open", () => {
     render(<OnboardingModal open={true} onComplete={vi.fn()} />);
-    expect(screen.getByText("Welcome to Saydo")).toBeDefined();
+    expect(screen.getByText("Welcome to Junban")).toBeDefined();
   });
 
   it("navigates to theme step on Get Started click", () => {
@@ -67,7 +67,7 @@ describe("OnboardingModal", () => {
     render(<OnboardingModal open={true} onComplete={vi.fn()} />);
     fireEvent.click(screen.getByText("Get Started")); // step 0 -> 1
     fireEvent.click(screen.getByText("Back")); // step 1 -> 0
-    expect(screen.getByText("Welcome to Saydo")).toBeDefined();
+    expect(screen.getByText("Welcome to Junban")).toBeDefined();
   });
 
   it("shows preset options on step 2", () => {
@@ -89,14 +89,14 @@ describe("OnboardingModal", () => {
     expect(screen.getByText("You're all set!")).toBeDefined();
   });
 
-  it("calls onComplete on Start using Saydo", () => {
+  it("calls onComplete on Start using Junban", () => {
     const onComplete = vi.fn();
     render(<OnboardingModal open={true} onComplete={onComplete} />);
     fireEvent.click(screen.getByText("Get Started")); // 0 -> 1
     fireEvent.click(screen.getByText("Next")); // 1 -> 2
     fireEvent.click(screen.getByText("Next")); // 2 -> 3
     fireEvent.click(screen.getByText("Set up later")); // 3 -> 4
-    fireEvent.click(screen.getByText("Start using Saydo"));
+    fireEvent.click(screen.getByText("Start using Junban"));
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 });

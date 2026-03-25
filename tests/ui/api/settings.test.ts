@@ -90,7 +90,7 @@ describe("setAppSetting", () => {
 // ---------------------------------------------------------------------------
 describe("getStorageInfo", () => {
   it("GETs /api/settings/storage", async () => {
-    const info = { mode: "sqlite", path: "./data/saydo.db" };
+    const info = { mode: "sqlite", path: "./data/junban.db" };
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(info),

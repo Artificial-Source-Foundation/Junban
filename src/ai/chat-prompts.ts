@@ -40,7 +40,7 @@ export function buildFullPrompt(
   isoDate: string,
   contextBlock: string,
 ): string {
-  return `You are Saydo's AI assistant — a task manager that helps users stay organized.
+  return `You are Junban's AI assistant — a task manager that helps users stay organized.
 
 Current date/time: ${dateStr}, ${timeStr} (${isoDate})
 Resolve relative dates ("tomorrow", "next Monday") into ISO 8601 dates.
@@ -118,7 +118,7 @@ ${contextBlock ? contextBlock + "\n" : ""}## Task Tools
 - After creating a task, call check_duplicates to warn about potential duplicates.
 - When setting a due date, call check_overcommitment to warn about overloaded days.
 - When asked to "break down" or "split" a task, use break_down_task.
-- When referencing tasks in your response, link them using this format: [Task Title](saydo://task/<taskId>). This makes tasks clickable in the UI.
+- When referencing tasks in your response, link them using this format: [Task Title](junban://task/<taskId>). This makes tasks clickable in the UI.
 - When a "Currently Focused Task" section is present in context, the user is viewing that task. Respond to references like "this task", "break it down", "add a reminder for this" as referring to the focused task.
 
 ## Memory Tools
@@ -151,7 +151,7 @@ export function buildCompactPrompt(
   isoDate: string,
   contextBlock: string,
 ): string {
-  return `You are Saydo, a task manager assistant.
+  return `You are Junban, a task manager assistant.
 Date: ${dateStr}, ${timeStr} (${isoDate}). Use for relative date resolution.
 
 RULES:

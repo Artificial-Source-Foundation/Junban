@@ -395,14 +395,14 @@ Extracted sub-components used by `AIChatPanel.tsx`. Each handles a single concer
 #### MarkdownMessage.tsx
 
 - **Path:** `src/ui/components/chat/MarkdownMessage.tsx` (186 lines)
-- **Purpose:** Renders AI response content as styled Markdown with custom components for code blocks, tables, blockquotes, collapsible details, and `saydo://task/` deep links.
+- **Purpose:** Renders AI response content as styled Markdown with custom components for code blocks, tables, blockquotes, collapsible details, and `junban://task/` deep links.
 - **Key Exports:** `MarkdownMessage` (wrapped in `React.memo`)
 - **Props:**
   - `content: string`
   - `onSelectTask?: (taskId: string) => void`
 - **Key Dependencies:** `react-markdown`, `remark-gfm`, `lucide-react` (Check, Copy, ChevronDown, ChevronRight)
 - **Used By:** `MessageBubble.tsx`
-- **Notes:** Includes `CopyCodeButton` overlay on code blocks (appears on hover). `CollapsibleDetails` replaces native `<details>` with a styled toggle. Links starting with `saydo://task/<id>` render as clickable buttons that call `onSelectTask`. External links open in new tab with `rel="noreferrer noopener"`. Custom URL transform preserves `saydo://` scheme. Includes `extractTextFromChildren` recursive utility for extracting text from React children for the copy button.
+- **Notes:** Includes `CopyCodeButton` overlay on code blocks (appears on hover). `CollapsibleDetails` replaces native `<details>` with a styled toggle. Links starting with `junban://task/<id>` render as clickable buttons that call `onSelectTask`. External links open in new tab with `rel="noreferrer noopener"`. Custom URL transform preserves `junban://` scheme. Includes `extractTextFromChildren` recursive utility for extracting text from React children for the copy button.
 
 ---
 

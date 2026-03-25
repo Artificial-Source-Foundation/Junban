@@ -5,7 +5,7 @@ import path from "node:path";
 import { PluginInstaller } from "../../src/plugins/installer.js";
 
 function createTestPluginDir(): string {
-  return fs.mkdtempSync(path.join(os.tmpdir(), "saydo-test-plugins-"));
+  return fs.mkdtempSync(path.join(os.tmpdir(), "junban-test-plugins-"));
 }
 
 describe("PluginInstaller", () => {

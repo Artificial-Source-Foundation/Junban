@@ -6,7 +6,7 @@ const env = loadEnv();
 setDefaultLogLevel(env.LOG_LEVEL);
 const logger = createLogger("main");
 
-logger.info("ASF Saydo starting...");
+logger.info("ASF Junban starting...");
 
 const services = bootstrap();
 

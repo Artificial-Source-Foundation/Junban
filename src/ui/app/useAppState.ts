@@ -21,7 +21,7 @@ import type {
 } from "../../core/types.js";
 import type { View, CalendarMode } from "../hooks/useRouting.js";
 
-const SIDEBAR_COLLAPSED_STORAGE_KEY = "saydo.ui.sidebar.collapsed";
+const SIDEBAR_COLLAPSED_STORAGE_KEY = "junban.ui.sidebar.collapsed";
 
 /**
  * Encapsulates all app-level UI state, data fetching, and computed values.
@@ -262,56 +262,56 @@ export function useAppState(routing: {
 
   // ── Document title ──
   const appTitle = useMemo(() => {
-    if (focusModeOpen) return "Focus Mode - Saydo";
+    if (focusModeOpen) return "Focus Mode - Junban";
     switch (currentView) {
       case "inbox":
-        return "Inbox - Saydo";
+        return "Inbox - Junban";
       case "today":
-        return "Today - Saydo";
+        return "Today - Junban";
       case "upcoming":
-        return "Upcoming - Saydo";
+        return "Upcoming - Junban";
       case "project": {
         const p = projects.find((p) => p.id === selectedProjectId);
-        return p ? `${p.name} - Saydo` : "Project - Saydo";
+        return p ? `${p.name} - Junban` : "Project - Junban";
       }
       case "plugin-view": {
         const v = pluginViews.find((v) => v.id === selectedPluginViewId);
-        return v ? `${v.name} - Saydo` : "Custom View - Saydo";
+        return v ? `${v.name} - Junban` : "Custom View - Junban";
       }
       case "task": {
         const t = selectedRouteTaskId
           ? state.tasks.find((tk) => tk.id === selectedRouteTaskId)
           : null;
-        return t ? `${t.title} - Saydo` : "Task - Saydo";
+        return t ? `${t.title} - Junban` : "Task - Junban";
       }
       case "calendar": {
         const m = calendarMode
           ? calendarMode.charAt(0).toUpperCase() + calendarMode.slice(1)
           : "Week";
-        return `Calendar (${m}) - Saydo`;
+        return `Calendar (${m}) - Junban`;
       }
       case "filters-labels":
-        return "Filters & Labels - Saydo";
+        return "Filters & Labels - Junban";
       case "completed":
-        return "Completed - Saydo";
+        return "Completed - Junban";
       case "cancelled":
-        return "Cancelled - Saydo";
+        return "Cancelled - Junban";
       case "someday":
-        return "Someday / Maybe - Saydo";
+        return "Someday / Maybe - Junban";
       case "stats":
-        return "Stats - Saydo";
+        return "Stats - Junban";
       case "matrix":
-        return "Matrix - Saydo";
+        return "Matrix - Junban";
       case "filter": {
         const f = savedFilters.find((f) => f.id === selectedFilterId);
-        return f ? `${f.name} - Saydo` : "Filter - Saydo";
+        return f ? `${f.name} - Junban` : "Filter - Junban";
       }
       case "ai-chat":
-        return "AI Chat - Saydo";
+        return "AI Chat - Junban";
       case "dopamine-menu":
-        return "Quick Wins - Saydo";
+        return "Quick Wins - Junban";
       default:
-        return "Saydo";
+        return "Junban";
     }
   }, [
     focusModeOpen,

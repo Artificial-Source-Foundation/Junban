@@ -13,7 +13,7 @@ export function StepAI({
         AI Assistant
       </h2>
       <p className="text-sm text-on-surface-muted text-center mt-1 mb-6 leading-relaxed">
-        Saydo has a built-in AI that can help manage your tasks. Set this up now or later in
+        Junban has a built-in AI that can help manage your tasks. Set this up now or later in
         Settings.
       </p>
 

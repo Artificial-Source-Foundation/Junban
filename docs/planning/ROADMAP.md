@@ -72,7 +72,7 @@ The Obsidian-style plugin architecture.
 - [x] Sandboxed plugin execution environment
 - [x] Plugin API surface: task read/write, events, commands
 - [x] Plugin UI extension points: sidebar panels, views, status bar
-- [x] Plugin settings system (defined in manifest, managed by Saydo)
+- [x] Plugin settings system (defined in manifest, managed by Junban)
 - [x] Plugin-specific storage (isolated key-value store)
 - [x] Community plugin registry (sources.json)
 - [x] Plugin store view (browse, install, configure, remove)
@@ -133,7 +133,7 @@ External calendar sync via automation connectors (no native OAuth).
 - [ ] Lock block → calendar event (public/private/busy)
 - [ ] Two-way sync via automation platform (pull external events)
 
-## v1.5 — Saydo Sync
+## v1.5 — Junban Sync
 
 Cross-device sync service (paid, optional — like Obsidian Sync).
 
@@ -146,7 +146,7 @@ Cross-device sync service (paid, optional — like Obsidian Sync).
 
 ## v2.0 — Mobile
 
-Native mobile apps + PWA (requires Saydo Sync).
+Native mobile apps + PWA (requires Junban Sync).
 
 - [ ] React Native iOS app
 - [ ] React Native Android app
@@ -156,7 +156,7 @@ Native mobile apps + PWA (requires Saydo Sync).
 
 ## v3.0 — Web App
 
-Full browser-based client (requires Saydo Sync).
+Full browser-based client (requires Junban Sync).
 
 - [ ] Web client (React, same codebase where possible)
 - [ ] Collaborative features (shared projects, team sync)
@@ -221,7 +221,7 @@ Full browser-based client (requires Saydo Sync).
 
 - Calendar sync via automation connectors (n8n, Activepieces, Pipedream, Make) — v1.2
 - CalDAV sync (Nextcloud, iCloud, Google Calendar)
-- Git sync (free alternative to Saydo Sync)
+- Git sync (free alternative to Junban Sync)
 - WebDAV sync (self-hosted)
 - Time tracking with reports
 - Habit tracker with streaks
@@ -262,7 +262,7 @@ Full browser-based client (requires Saydo Sync).
 | S20 | Pluggable LLM Core | 682 |
 | S21 | Voice Integration | 735 |
 | S22 | AI Intelligence Tools | 772 |
-| S23 | Rebrand (Docket → Saydo) | 772 |
+| S23 | Rebrand (Docket → Junban) | 772 |
 | S24 | Local Voice Models | 813 |
 | S25 | Project & Reminder Tools | 857 |
 | S26 | Inworld TTS & Mobile UI | 960 |

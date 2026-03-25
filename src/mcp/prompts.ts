@@ -31,8 +31,8 @@ export function registerMcpPrompts(server: McpServer): void {
               text:
                 `Plan my day. My energy level is ${energy}.\n\n` +
                 `Please:\n` +
-                `1. Read my pending tasks for today (use the saydo://tasks/today resource)\n` +
-                `2. Check for overdue tasks (use the saydo://tasks/overdue resource)\n` +
+                `1. Read my pending tasks for today (use the junban://tasks/today resource)\n` +
+                `2. Check for overdue tasks (use the junban://tasks/overdue resource)\n` +
                 `3. Suggest a prioritized order based on urgency, priority level, and my energy\n` +
                 `4. Flag any tasks that might be overcommitted\n` +
                 `5. Suggest time blocks if tasks have estimated durations`,
@@ -62,7 +62,7 @@ export function registerMcpPrompts(server: McpServer): void {
               text:
                 `Review my day for ${date}.\n\n` +
                 `Please:\n` +
-                `1. Check today's stats (use the saydo://stats/today resource)\n` +
+                `1. Check today's stats (use the junban://stats/today resource)\n` +
                 `2. List tasks I completed today\n` +
                 `3. List tasks still pending that were due today\n` +
                 `4. Summarize my productivity and streak\n` +

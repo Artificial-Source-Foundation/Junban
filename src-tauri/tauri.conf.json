@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json",
-  "productName": "ASF Saydo",
+  "productName": "ASF Junban",
   "version": "1.0.0",
-  "identifier": "com.asf.saydo",
+  "identifier": "com.asf.junban",
   "build": {
     "beforeDevCommand": "pnpm dev:full",
     "beforeBuildCommand": "pnpm build",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "ASF Saydo",
+        "title": "ASF Junban",
         "width": 1200,
         "height": 800,
         "minWidth": 800,
@@ -63,7 +63,7 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://github.com/ASF-GROUP/Saydo/releases/latest/download/latest.json"
+        "https://github.com/ASF-GROUP/Junban/releases/latest/download/latest.json"
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE3NzQ3QUYyQkZCNjhENTYKUldSV2piYS84bnAwcHpEMFVNSEplM2JXWk0vVlBqOC90WWF1NCsyQWRNbk8vUGNyY21DbkhDMVYK"
     }

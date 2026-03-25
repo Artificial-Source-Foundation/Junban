@@ -142,7 +142,7 @@ This document covers two directories: `src/utils/` (shared utility modules) and 
 **Environment Variables:**
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `DB_PATH` | string | `./data/saydo.db` | SQLite database file path |
+| `DB_PATH` | string | `./data/junban.db` | SQLite database file path |
 | `STORAGE_MODE` | `"sqlite" \| "markdown"` | `"sqlite"` | Storage backend |
 | `MARKDOWN_PATH` | string | `./tasks/` | Base directory for Markdown storage |
 | `LOG_LEVEL` | `"debug" \| "info" \| "warn" \| "error"` | `"info"` | Logging threshold |

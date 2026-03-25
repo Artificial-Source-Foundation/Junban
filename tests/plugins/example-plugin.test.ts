@@ -1,5 +1,5 @@
 /**
- * Example plugin test — demonstrates how to test a Saydo plugin.
+ * Example plugin test — demonstrates how to test a Junban plugin.
  *
  * This file serves as both a working test suite and documentation for plugin
  * authors. It covers:

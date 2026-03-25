@@ -18,7 +18,7 @@ export interface ImportPreview {
   projects: string[];
   tags: string[];
   warnings: string[];
-  format: "saydo-json" | "todoist-json" | "markdown";
+  format: "junban-json" | "todoist-json" | "markdown";
 }
 
 export interface ImportResult {
@@ -33,7 +33,7 @@ export function detectFormat(content: string): ImportFormat {
   try {
     const parsed = JSON.parse(content);
     if (typeof parsed === "object" && parsed !== null) {
-      if ("tasks" in parsed && "version" in parsed) return "saydo-json";
+      if ("tasks" in parsed && "version" in parsed) return "junban-json";
       if ("items" in parsed) return "todoist-json";
     }
   } catch {
@@ -43,13 +43,13 @@ export function detectFormat(content: string): ImportFormat {
 }
 
 // Zod schema matching ExportData from export.ts
-const SaydoTagSchema = z.object({
+const JunbanTagSchema = z.object({
   id: z.string(),
   name: z.string(),
   color: z.string(),
 });
 
-const SaydoProjectSchema = z.object({
+const JunbanProjectSchema = z.object({
   id: z.string(),
   name: z.string(),
   color: z.string(),
@@ -59,7 +59,7 @@ const SaydoProjectSchema = z.object({
   createdAt: z.string().optional(),
 });
 
-const SaydoTaskSchema = z.object({
+const JunbanTaskSchema = z.object({
   id: z.string().optional(),
   title: z.string(),
   description: z.string().nullable().optional(),
@@ -70,41 +70,41 @@ const SaydoTaskSchema = z.object({
   completedAt: z.string().nullable().optional(),
   projectId: z.string().nullable().optional(),
   recurrence: z.string().nullable().optional(),
-  tags: z.array(SaydoTagSchema).optional(),
+  tags: z.array(JunbanTagSchema).optional(),
   sortOrder: z.number().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
 
-const SaydoExportSchema = z.object({
-  tasks: z.array(SaydoTaskSchema),
-  projects: z.array(SaydoProjectSchema).optional(),
-  tags: z.array(SaydoTagSchema).optional(),
+const JunbanExportSchema = z.object({
+  tasks: z.array(JunbanTaskSchema),
+  projects: z.array(JunbanProjectSchema).optional(),
+  tags: z.array(JunbanTagSchema).optional(),
   exportedAt: z.string().optional(),
   version: z.string(),
 });
 
-/** Parse a Saydo JSON export file. */
-export function parseSaydoJSON(json: string): ImportPreview {
+/** Parse a Junban JSON export file. */
+export function parseJunbanJSON(json: string): ImportPreview {
   const warnings: string[] = [];
 
   let raw: unknown;
   try {
     raw = JSON.parse(json);
   } catch {
-    return { tasks: [], projects: [], tags: [], warnings: ["Invalid JSON"], format: "saydo-json" };
+    return { tasks: [], projects: [], tags: [], warnings: ["Invalid JSON"], format: "junban-json" };
   }
 
-  const result = SaydoExportSchema.safeParse(raw);
+  const result = JunbanExportSchema.safeParse(raw);
   if (!result.success) {
     return {
       tasks: [],
       projects: [],
       tags: [],
       warnings: [
-        `Invalid Saydo export format: ${result.error.issues[0]?.message ?? "unknown error"}`,
+        `Invalid Junban export format: ${result.error.issues[0]?.message ?? "unknown error"}`,
       ],
-      format: "saydo-json",
+      format: "junban-json",
     };
   }
 
@@ -139,10 +139,10 @@ export function parseSaydoJSON(json: string): ImportPreview {
   ];
   const tags = [...new Set(tasks.flatMap((t) => t.tagNames))];
 
-  return { tasks, projects, tags, warnings, format: "saydo-json" };
+  return { tasks, projects, tags, warnings, format: "junban-json" };
 }
 
-/** Map Todoist priority (4=urgent, 1=none) to Saydo priority (1=urgent, 4=low). */
+/** Map Todoist priority (4=urgent, 1=none) to Junban priority (1=urgent, 4=low). */
 function mapTodoistPriority(todoistPriority: number): number | null {
   const map: Record<number, number | null> = { 4: 1, 3: 2, 2: 3, 1: null };
   return map[todoistPriority] ?? null;
@@ -306,8 +306,8 @@ export function parseTextImport(text: string): ImportPreview {
 export function parseImport(content: string, format?: ImportFormat): ImportPreview {
   const detected = format ?? detectFormat(content);
   switch (detected) {
-    case "saydo-json":
-      return parseSaydoJSON(content);
+    case "junban-json":
+      return parseJunbanJSON(content);
     case "todoist-json":
       return parseTodoistJSON(content);
     case "markdown":

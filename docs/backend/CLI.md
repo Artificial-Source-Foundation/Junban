@@ -1,6 +1,6 @@
 # CLI Module Documentation
 
-The `src/cli/` directory implements the Saydo CLI companion tool. It uses Commander.js for command registration and shares the same core services as the UI through the `bootstrap()` function.
+The `src/cli/` directory implements the Junban CLI companion tool. It uses Commander.js for command registration and shares the same core services as the UI through the `bootstrap()` function.
 
 ---
 
@@ -32,11 +32,11 @@ CLI Entry (index.ts)
 **Used By:** Invoked directly via `pnpm cli`
 
 **Registered Commands:**
-- `saydo add <description>` -- add a new task
-- `saydo list` -- list tasks with filters
-- `saydo done <id>` -- complete a task
-- `saydo edit <id>` -- edit a task
-- `saydo delete <id>` -- delete a task
+- `junban add <description>` -- add a new task
+- `junban list` -- list tasks with filters
+- `junban done <id>` -- complete a task
+- `junban edit <id>` -- edit a task
+- `junban delete <id>` -- delete a task
 
 ---
 
@@ -51,10 +51,10 @@ CLI Entry (index.ts)
 
 **Usage:**
 ```bash
-saydo add "buy milk tomorrow p1 #groceries"
+junban add "buy milk tomorrow p1 #groceries"
 # Output: Created: buy milk P1 #groceries due 2/21/2026 [abc12345]
 
-saydo add "deploy to production" --json
+junban add "deploy to production" --json
 # Output: { "id": "...", "title": "deploy to production", ... }
 ```
 
@@ -74,22 +74,22 @@ saydo add "deploy to production" --json
 
 **Usage:**
 ```bash
-saydo list
+junban list
 # Lists all pending tasks
 
-saydo list --today
+junban list --today
 # Lists tasks due today
 
-saydo list --project work
+junban list --project work
 # Lists tasks in the "work" project
 
-saydo list --tag urgent
+junban list --tag urgent
 # Lists tasks tagged "urgent"
 
-saydo list --search "deploy"
+junban list --search "deploy"
 # Searches tasks by title/description
 
-saydo list --json
+junban list --json
 # Output as JSON array
 ```
 
@@ -113,10 +113,10 @@ saydo list --json
 
 **Usage:**
 ```bash
-saydo done abc12345
+junban done abc12345
 # Output: Completed: buy milk [abc12345]
 
-saydo done abc12345 --json
+junban done abc12345 --json
 # Output: { "id": "...", "status": "completed", ... }
 ```
 
@@ -136,16 +136,16 @@ saydo done abc12345 --json
 
 **Usage:**
 ```bash
-saydo edit abc12345 --title "buy organic milk"
+junban edit abc12345 --title "buy organic milk"
 # Output: Updated: buy organic milk [abc12345]
 
-saydo edit abc12345 --priority 2
+junban edit abc12345 --priority 2
 # Sets priority to P2
 
-saydo edit abc12345 --due "next friday"
+junban edit abc12345 --due "next friday"
 # NLP-parsed due date
 
-saydo edit abc12345 --description "From the farmer's market"
+junban edit abc12345 --description "From the farmer's market"
 ```
 
 **Options:**
@@ -168,10 +168,10 @@ saydo edit abc12345 --description "From the farmer's market"
 
 **Usage:**
 ```bash
-saydo delete abc12345
+junban delete abc12345
 # Output: Deleted: buy milk [abc12345]
 
-saydo delete abc12345 --json
+junban delete abc12345 --json
 # Output: { "deleted": true, "id": "...", "title": "buy milk" }
 ```
 

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ============================================================================
-# Saydo — Install from Source
+# Junban — Install from Source
 # ============================================================================
 # Interactive installer that lets you choose what to build and install.
 #
@@ -11,9 +11,9 @@ set -euo pipefail
 #   Web      — Standalone web server (Node.js only, no Rust needed)
 #
 # Files installed (all in $HOME, no sudo for the app itself):
-#   ~/.local/bin/saydo                                    (desktop binary)
-#   ~/.local/share/applications/saydo.desktop             (desktop entry)
-#   ~/.local/share/icons/hicolor/128x128/apps/saydo.png   (icon)
+#   ~/.local/bin/junban                                    (desktop binary)
+#   ~/.local/share/applications/junban.desktop             (desktop entry)
+#   ~/.local/share/icons/hicolor/128x128/apps/junban.png   (icon)
 #
 # To uninstall: ./uninstall.sh
 # ============================================================================
@@ -50,7 +50,7 @@ NON_INTERACTIVE=false
 # ============================================================================
 show_help() {
     cat << EOF
-${BOLD}Saydo — Install from Source${NC} v${VERSION}
+${BOLD}Junban — Install from Source${NC} v${VERSION}
 
 ${BOLD}USAGE:${NC}
     ./install.sh [OPTIONS]
@@ -155,12 +155,12 @@ DISTRO=$(detect_distro)
 echo ""
 echo -e "${CYAN}${BOLD}╔═══════════════════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}${BOLD}║                                                           ║${NC}"
-echo -e "${CYAN}${BOLD}║       ${GREEN} ____                    _                ${CYAN}          ║${NC}"
-echo -e "${CYAN}${BOLD}║       ${GREEN}/ ___|   __ _  _   _   __| |  ___          ${CYAN}          ║${NC}"
-echo -e "${CYAN}${BOLD}║       ${GREEN}\\___ \\  / _\` || | | | / _\` | / _ \\         ${CYAN}          ║${NC}"
-echo -e "${CYAN}${BOLD}║       ${GREEN} ___) || (_| || |_| || (_| || (_) |        ${CYAN}          ║${NC}"
-echo -e "${CYAN}${BOLD}║       ${GREEN}|____/  \\__,_| \\__, | \\__,_| \\___/         ${CYAN}          ║${NC}"
-echo -e "${CYAN}${BOLD}║       ${GREEN}                |___/                      ${CYAN}          ║${NC}"
+echo -e "${CYAN}${BOLD}║       ${GREEN} ___                 _                    ${CYAN}          ║${NC}"
+echo -e "${CYAN}${BOLD}║       ${GREEN}|_  |               | |                   ${CYAN}          ║${NC}"
+echo -e "${CYAN}${BOLD}║       ${GREEN}  | | _   _   _ __  | |__    __ _  _ __   ${CYAN}          ║${NC}"
+echo -e "${CYAN}${BOLD}║       ${GREEN}  | || | | | | '_ \\ | '_ \\  / _\` || '_ \\  ${CYAN}          ║${NC}"
+echo -e "${CYAN}${BOLD}║       ${GREEN}/\\__/ /| |_| | | | | || |_) || (_| || | | | ${CYAN}          ║${NC}"
+echo -e "${CYAN}${BOLD}║       ${GREEN}\\____/  \\__,_| |_| |_||_.__/  \\__,_||_| |_| ${CYAN}          ║${NC}"
 echo -e "${CYAN}${BOLD}║                                                           ║${NC}"
 echo -e "${CYAN}${BOLD}║         The task manager that doesn't exist yet           ║${NC}"
 echo -e "${CYAN}${BOLD}║                                                           ║${NC}"
@@ -388,7 +388,7 @@ print_success "Dependencies ready"
 # ============================================================================
 if [[ "$INSTALL_WEB" == "true" ]]; then
     echo ""
-    print_step "Building Saydo web server..."
+    print_step "Building Junban web server..."
 
     if [[ "$DRY_RUN" == "true" ]]; then
         print_dry "Would run: pnpm build"
@@ -400,21 +400,21 @@ if [[ "$INSTALL_WEB" == "true" ]]; then
 
     echo ""
     print_step "Installing web server launcher to ~/.local/bin..."
-    print_info "Launcher: ~/.local/bin/saydo-web"
+    print_info "Launcher: ~/.local/bin/junban-web"
 
     if [[ "$DRY_RUN" == "true" ]]; then
-        print_dry "Would create launcher script at ~/.local/bin/saydo-web"
+        print_dry "Would create launcher script at ~/.local/bin/junban-web"
     else
         mkdir -p "$HOME/.local/bin"
-        cat > "$HOME/.local/bin/saydo-web" << LAUNCHER
+        cat > "$HOME/.local/bin/junban-web" << LAUNCHER
 #!/usr/bin/env bash
-# Saydo Web Server launcher
+# Junban Web Server launcher
 cd "$SCRIPT_DIR"
 exec node --import tsx src/server.ts "\$@"
 LAUNCHER
-        chmod +x "$HOME/.local/bin/saydo-web"
+        chmod +x "$HOME/.local/bin/junban-web"
         print_success "Web server launcher installed"
-        print_info "Run: saydo-web (starts on port 4822)"
+        print_info "Run: junban-web (starts on port 4822)"
     fi
 fi
 
@@ -423,7 +423,7 @@ fi
 # ============================================================================
 if [[ "$INSTALL_DESKTOP" == "true" ]]; then
     echo ""
-    print_step "Building Saydo desktop app (this may take a few minutes)..."
+    print_step "Building Junban desktop app (this may take a few minutes)..."
 
     if [[ "$DRY_RUN" == "true" ]]; then
         print_dry "Would run: pnpm tauri build"
@@ -443,7 +443,7 @@ if [[ "$INSTALL_DESKTOP" == "true" ]]; then
 
         RELEASE_DIR="$SCRIPT_DIR/target/release"
         BINARY_NAME=""
-        for name in saydo asf-saydo "ASF Saydo" "asf_saydo"; do
+        for name in junban asf-junban "ASF Junban" "asf_junban"; do
             if [[ -f "$RELEASE_DIR/$name" ]]; then
                 BINARY_NAME="$name"
                 break
@@ -468,26 +468,26 @@ if [[ "$INSTALL_DESKTOP" == "true" ]]; then
 
         echo ""
         print_step "Installing desktop app to ~/.local (no sudo needed)..."
-        print_info "Binary:  ~/.local/bin/saydo"
-        print_info "Desktop: ~/.local/share/applications/saydo.desktop"
-        print_info "Icon:    ~/.local/share/icons/hicolor/128x128/apps/saydo.png"
+        print_info "Binary:  ~/.local/bin/junban"
+        print_info "Desktop: ~/.local/share/applications/junban.desktop"
+        print_info "Icon:    ~/.local/share/icons/hicolor/128x128/apps/junban.png"
 
         if [[ "$DRY_RUN" == "true" ]]; then
-            print_dry "Would copy binary to ~/.local/bin/saydo"
+            print_dry "Would copy binary to ~/.local/bin/junban"
             print_dry "Would create desktop entry"
             print_dry "Would install icon"
         else
             # Binary
             mkdir -p "$HOME/.local/bin"
-            cp "$RELEASE_DIR/$BINARY_NAME" "$HOME/.local/bin/saydo"
-            chmod +x "$HOME/.local/bin/saydo"
+            cp "$RELEASE_DIR/$BINARY_NAME" "$HOME/.local/bin/junban"
+            chmod +x "$HOME/.local/bin/junban"
             print_success "Binary installed"
 
             # Icon
             if [[ -f "$ICON_SRC" ]]; then
                 ICON_DIR="$HOME/.local/share/icons/hicolor/128x128/apps"
                 mkdir -p "$ICON_DIR"
-                cp "$ICON_SRC" "$ICON_DIR/saydo.png"
+                cp "$ICON_SRC" "$ICON_DIR/junban.png"
                 print_success "Icon installed"
             else
                 print_warning "Icon not found — skipping"
@@ -495,12 +495,12 @@ if [[ "$INSTALL_DESKTOP" == "true" ]]; then
 
             # Desktop entry
             mkdir -p "$HOME/.local/share/applications"
-            cat > "$HOME/.local/share/applications/saydo.desktop" << EOF
+            cat > "$HOME/.local/share/applications/junban.desktop" << EOF
 [Desktop Entry]
-Name=Saydo
+Name=Junban
 Comment=The task manager that doesn't exist yet
-Exec=$HOME/.local/bin/saydo
-Icon=saydo
+Exec=$HOME/.local/bin/junban
+Icon=junban
 Terminal=false
 Type=Application
 Categories=Office;ProjectManagement;
@@ -539,15 +539,15 @@ echo -e "${GREEN}${BOLD}╚═════════════════�
 echo ""
 
 if [[ "$INSTALL_DESKTOP" == "true" && -n "${BINARY_NAME:-}" ]]; then
-    echo -e "  ${GREEN}✓${NC} Saydo Desktop App"
+    echo -e "  ${GREEN}✓${NC} Junban Desktop App"
     if [[ "$DRY_RUN" == "false" ]]; then
-        echo -e "    ${DIM}Launch from your app menu or run: saydo${NC}"
+        echo -e "    ${DIM}Launch from your app menu or run: junban${NC}"
     fi
 fi
 if [[ "$INSTALL_WEB" == "true" ]]; then
-    echo -e "  ${GREEN}✓${NC} Saydo Web Server"
+    echo -e "  ${GREEN}✓${NC} Junban Web Server"
     if [[ "$DRY_RUN" == "false" ]]; then
-        echo -e "    ${DIM}Run: saydo-web (starts on port 4822)${NC}"
+        echo -e "    ${DIM}Run: junban-web (starts on port 4822)${NC}"
     fi
 fi
 

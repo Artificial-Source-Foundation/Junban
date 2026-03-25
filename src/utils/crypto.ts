@@ -12,7 +12,7 @@
  */
 
 const ENC_PREFIX = "enc:v1:";
-const SALT = "saydo-aes256-v1";
+const SALT = "junban-aes256-v1";
 const PBKDF2_ITERATIONS = 100_000;
 const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
@@ -28,15 +28,15 @@ export function isEncryptedValue(value: string): boolean {
 function getDeviceSeed(): string {
   // Browser: use a stable-enough identifier
   if (typeof globalThis.crypto?.subtle !== "undefined" && typeof navigator !== "undefined") {
-    return navigator.userAgent + "saydo-encryption-key";
+    return navigator.userAgent + "junban-encryption-key";
   }
   // Node.js: use hostname + username for a machine-specific seed
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const os = require("node:os");
-    return (os.hostname() as string) + (os.userInfo().username as string) + "saydo-encryption-key";
+    return (os.hostname() as string) + (os.userInfo().username as string) + "junban-encryption-key";
   } catch {
-    return "saydo-fallback-device-seed";
+    return "junban-fallback-device-seed";
   }
 }
 

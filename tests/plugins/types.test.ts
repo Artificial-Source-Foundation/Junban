@@ -9,7 +9,7 @@ describe("PluginManifest schema", () => {
     author: "Test Author",
     description: "A test plugin",
     main: "index.ts",
-    minSaydoVersion: "0.1.0",
+    minJunbanVersion: "0.1.0",
   };
 
   it("accepts a valid minimal manifest", () => {

@@ -201,7 +201,7 @@ function AppContent() {
   const handleReminder = useCallback(
     (task: { id: string; title: string }) => {
       if (typeof Notification !== "undefined" && Notification.permission === "granted")
-        new Notification("Saydo Reminder", { body: task.title });
+        new Notification("Junban Reminder", { body: task.title });
       playSound("reminder");
       showToast(`Reminder: ${task.title}`, {
         label: "View",

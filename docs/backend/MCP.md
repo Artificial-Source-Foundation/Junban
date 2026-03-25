@@ -1,6 +1,6 @@
 # MCP Server — Internal Documentation
 
-The MCP (Model Context Protocol) server (`src/mcp/`) exposes Saydo's task management capabilities to external AI agents and apps. Any MCP-compatible client — Claude Desktop, personal assistants, other ASF apps, or custom agents — can manage tasks, projects, tags, and get productivity insights over a local stdio connection.
+The MCP (Model Context Protocol) server (`src/mcp/`) exposes Junban's task management capabilities to external AI agents and apps. Any MCP-compatible client — Claude Desktop, personal assistants, other ASF apps, or custom agents — can manage tasks, projects, tags, and get productivity insights over a local stdio connection.
 
 **Total files:** 7 | **Total lines:** ~300
 
@@ -38,9 +38,9 @@ This starts the server on stdio (JSON-RPC). For Claude Desktop, add to `claude_d
 ```json
 {
   "mcpServers": {
-    "saydo": {
+    "junban": {
       "command": "pnpm",
-      "args": ["--dir", "/path/to/saydo", "mcp"]
+      "args": ["--dir", "/path/to/junban", "mcp"]
     }
   }
 }
@@ -54,7 +54,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 
 const transport = new StdioClientTransport({
   command: "pnpm",
-  args: ["--dir", "/path/to/saydo", "mcp"],
+  args: ["--dir", "/path/to/junban", "mcp"],
 });
 
 const client = new Client({ name: "my-agent", version: "1.0.0" });
@@ -67,7 +67,7 @@ await client.callTool({
 });
 
 // Read today's tasks
-const today = await client.readResource({ uri: "saydo://tasks/today" });
+const today = await client.readResource({ uri: "junban://tasks/today" });
 ```
 
 ---
@@ -114,7 +114,7 @@ const today = await client.readResource({ uri: "saydo://tasks/today" });
 
 ### `errors.ts`
 **Path:** `src/mcp/errors.ts`
-**Purpose:** Maps Saydo error classes to MCP error responses with `isError: true`.
+**Purpose:** Maps Junban error classes to MCP error responses with `isError: true`.
 **Key Exports:**
 - `toMcpError(err)` — returns `{ content: [{ type: "text", text }], isError: true }`
 
@@ -143,19 +143,19 @@ All 34 tools from `ToolRegistry` are exposed as MCP tools with identical names, 
 
 | URI | Description | Returns |
 |-----|-------------|---------|
-| `saydo://tasks/pending` | All pending tasks | Array of task summaries (id, title, status, priority, dueDate, projectId, tags, estimatedMinutes) |
-| `saydo://tasks/today` | Tasks due today (includes overdue) | Array of task summaries |
-| `saydo://tasks/overdue` | Overdue tasks (due before today) | Array of task summaries |
-| `saydo://projects` | All non-archived projects | Array of project objects |
-| `saydo://tags` | All tags | Array of tag objects (id, name, color) |
-| `saydo://stats/today` | Today's productivity stats | Stats object + currentStreak |
+| `junban://tasks/pending` | All pending tasks | Array of task summaries (id, title, status, priority, dueDate, projectId, tags, estimatedMinutes) |
+| `junban://tasks/today` | Tasks due today (includes overdue) | Array of task summaries |
+| `junban://tasks/overdue` | Overdue tasks (due before today) | Array of task summaries |
+| `junban://projects` | All non-archived projects | Array of project objects |
+| `junban://tags` | All tags | Array of tag objects (id, name, color) |
+| `junban://stats/today` | Today's productivity stats | Stats object + currentStreak |
 
 ### Dynamic Resource Templates
 
 | URI Template | Description | Returns |
 |--------------|-------------|---------|
-| `saydo://tasks/{taskId}` | Single task detail | Full task object (all fields) |
-| `saydo://projects/{projectId}` | Project with its tasks | Project object + tasks array |
+| `junban://tasks/{taskId}` | Single task detail | Full task object (all fields) |
+| `junban://projects/{projectId}` | Project with its tasks | Project object + tasks array |
 
 ---
 

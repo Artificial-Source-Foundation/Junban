@@ -1,6 +1,6 @@
 # Core Module Documentation
 
-The `src/core/` directory contains the heart of the Saydo application: task management logic, service classes, event infrastructure, and data types. All files in this directory are framework-agnostic and shared by both the UI and CLI.
+The `src/core/` directory contains the heart of the Junban application: task management logic, service classes, event infrastructure, and data types. All files in this directory are framework-agnostic and shared by both the UI and CLI.
 
 ---
 
@@ -179,11 +179,11 @@ The `src/core/` directory contains the heart of the Saydo application: task mana
 ### `import.ts`
 **Path:** `src/core/import.ts`
 **Lines:** 316
-**Purpose:** Imports task data from multiple formats: Saydo JSON exports, Todoist JSON exports, and Markdown/plain text. Provides format auto-detection and a preview step before committing imports.
+**Purpose:** Imports task data from multiple formats: Junban JSON exports, Todoist JSON exports, and Markdown/plain text. Provides format auto-detection and a preview step before committing imports.
 **Key Exports:**
 - `ImportedTask`, `ImportPreview`, `ImportResult`, `ImportFormat` -- types
 - `detectFormat(content: string): ImportFormat`
-- `parseSaydoJSON(json: string): ImportPreview`
+- `parseJunbanJSON(json: string): ImportPreview`
 - `parseTodoistJSON(json: string): ImportPreview`
 - `parseTextImport(text: string): ImportPreview`
 - `parseImport(content: string, format?: ImportFormat): ImportPreview`

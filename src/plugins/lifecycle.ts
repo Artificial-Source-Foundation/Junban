@@ -3,12 +3,12 @@ import type { PluginAPI, PluginSettingsAccessor } from "./api.js";
 
 /**
  * Plugin base class — all plugins extend this.
- * Provides access to the Saydo API and plugin settings.
+ * Provides access to the Junban API and plugin settings.
  *
  * `app` and `settings` are set by the loader before calling `onLoad()`.
  */
 export abstract class Plugin {
-  /** The Saydo Plugin API — provides access to tasks, commands, UI, events, and storage. */
+  /** The Junban Plugin API — provides access to tasks, commands, UI, events, and storage. */
   app!: PluginAPI;
 
   /** Accessor for this plugin's settings (manifest-defined defaults + user overrides). */

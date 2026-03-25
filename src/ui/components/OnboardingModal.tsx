@@ -149,7 +149,7 @@ export function OnboardingModal({ open, onComplete, onRequestOpenSettings }: Onb
                 onClick={handleFinish}
                 className="px-8 py-2.5 text-[15px] font-semibold bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors"
               >
-                Start using Saydo
+                Start using Junban
               </button>
               <div />
             </>

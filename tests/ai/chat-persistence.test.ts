@@ -249,7 +249,7 @@ describe("Context Injection", () => {
 
     const msg = manager.buildSystemMessage({ taskService, projectService }, contextBlock);
     expect(msg.content).toContain("Total pending tasks: 5");
-    expect(msg.content).toContain("Saydo");
+    expect(msg.content).toContain("Junban");
   });
 
   it("system message includes date and time", () => {

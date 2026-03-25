@@ -2,7 +2,7 @@
 
 ## Overview
 
-Saydo is a local-first application. By default, no data leaves the user's machine. The primary security concerns are:
+Junban is a local-first application. By default, no data leaves the user's machine. The primary security concerns are:
 
 1. **Plugin sandboxing** — community plugins must not be able to harm the host system
 2. **Data integrity** — task data must not be corrupted or lost
@@ -88,7 +88,7 @@ Plugins run in a restricted JavaScript context with controlled access:
 | Add views | `ui:view` | Full-page views in the app |
 | Add status bar items | `ui:status` | Bottom status bar |
 | Plugin storage | `storage` | Isolated key-value store per plugin |
-| Plugin settings | `settings` | Defined in manifest, managed by Saydo |
+| Plugin settings | `settings` | Defined in manifest, managed by Junban |
 | HTTP requests | `network` | Prompted per-domain, user must approve |
 
 ### What Plugins CANNOT Access
@@ -139,16 +139,16 @@ Plugins receive a proxy object with only the methods their permissions allow. At
 
 ## Data Privacy
 
-### What Saydo Stores
+### What Junban Stores
 
 | Data | Location | Encrypted |
 |------|----------|-----------|
-| Tasks, projects, tags | `data/saydo.db` or `tasks/*.md` | No (local files) |
-| Plugin settings | `data/saydo.db` | No |
-| App settings | `data/saydo.db` | No |
-| Plugin storage | `data/saydo.db` | No |
+| Tasks, projects, tags | `data/junban.db` or `tasks/*.md` | No (local files) |
+| Plugin settings | `data/junban.db` | No |
+| App settings | `data/junban.db` | No |
+| Plugin storage | `data/junban.db` | No |
 
-### What Saydo Does NOT Do
+### What Junban Does NOT Do
 
 - **No telemetry**: Zero analytics, crash reports, or usage tracking
 - **No network calls**: The core app makes no network requests (plugins can, with permission)
@@ -179,7 +179,7 @@ When sync plugins are available, they must:
 
 ### Dependencies
 
-Saydo uses a minimal dependency set. Each dependency was chosen intentionally:
+Junban uses a minimal dependency set. Each dependency was chosen intentionally:
 
 | Dependency | Purpose | Risk Mitigation |
 |------------|---------|----------------|
@@ -202,7 +202,7 @@ Saydo uses a minimal dependency set. Each dependency was chosen intentionally:
 
 ## Reporting Vulnerabilities
 
-If you discover a security vulnerability in Saydo:
+If you discover a security vulnerability in Junban:
 
 1. **Do NOT open a public issue**
 2. Email security concerns to the ASF maintainers (see repository for contact)
