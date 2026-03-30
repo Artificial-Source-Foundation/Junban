@@ -198,17 +198,42 @@ describe("fetchAvailableModels", () => {
     expect(models).toEqual([]);
   });
 
-  it("fetches openrouter models", async () => {
+  it("fetches openrouter models (filtered to tool-capable, sorted by price)", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () =>
         Promise.resolve({
-          data: [{ id: "anthropic/claude-sonnet-4-5-20250929" }, { id: "openai/gpt-4o" }],
+          data: [
+            {
+              id: "some/no-tools",
+              name: "No Tools Model",
+              pricing: { prompt: "0.001", completion: "0.001" },
+              supported_parameters: ["temperature"],
+            },
+            {
+              id: "cheap/model",
+              name: "Cheap Model",
+              pricing: { prompt: "0.000001", completion: "0.000001" },
+              supported_parameters: ["tools", "temperature"],
+            },
+            {
+              id: "expensive/model",
+              name: "Expensive Model",
+              pricing: { prompt: "0.00003", completion: "0.00006" },
+              supported_parameters: ["tools", "temperature"],
+            },
+          ],
         }),
     });
 
     const models = await fetchAvailableModels("openrouter", { apiKey: "sk-or-test" });
-    expect(ids(models)).toEqual(["anthropic/claude-sonnet-4-5-20250929", "openai/gpt-4o"]);
+    // Only tool-capable models returned
+    expect(ids(models)).toEqual(["expensive/model", "cheap/model"]);
+    // Non-tool model filtered out
+    expect(ids(models)).not.toContain("some/no-tools");
+    // Sorted by price descending (expensive first = more capable)
+    expect(models[0].label).toBe("Expensive Model");
+    expect(models[1].label).toBe("Cheap Model");
   });
 
   it("returns empty array for openrouter without api key", async () => {
