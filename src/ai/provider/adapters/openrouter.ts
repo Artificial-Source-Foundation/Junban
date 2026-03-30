@@ -22,9 +22,19 @@ interface OpenRouterModel {
   supported_parameters?: string[];
 }
 
+/** Strip provider prefix from OpenRouter's display name (e.g. "OpenAI: GPT-4.1" → "GPT-4.1"). */
+function cleanLabel(name: string): string {
+  const colonIdx = name.indexOf(": ");
+  return colonIdx >= 0 ? name.slice(colonIdx + 2) : name;
+}
+
+/** Keywords in model ID or name that indicate non-chat models. */
+const EXCLUDED_PATTERNS =
+  /image|vision-preview|research|router|safeguard|oss-\d|embed|tts|whisper/i;
+
 /**
- * Fetch models from OpenRouter, filter to tool-capable only,
- * and sort by prompt price descending (higher price ≈ more capable).
+ * Fetch models from OpenRouter, filter to tool-capable chat models only,
+ * and sort alphabetically.
  */
 async function discoverOpenRouterModels(config: AIProviderConfig): Promise<ModelDescriptor[]> {
   const apiKey = config.authType === "oauth" ? (config.oauthToken ?? "") : (config.apiKey ?? "");
@@ -47,12 +57,14 @@ async function discoverOpenRouterModels(config: AIProviderConfig): Promise<Model
           m.supported_parameters != null &&
           m.supported_parameters.includes("tools") &&
           !m.id.includes(":free") &&
-          !m.id.includes(":extended"),
+          !m.id.includes(":extended") &&
+          !EXCLUDED_PATTERNS.test(m.id) &&
+          !EXCLUDED_PATTERNS.test(m.name),
       )
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => cleanLabel(a.name).localeCompare(cleanLabel(b.name)))
       .map((m) => ({
         id: m.id,
-        label: m.name,
+        label: cleanLabel(m.name),
         capabilities: { ...DEFAULT_CAPABILITIES },
         loaded: true,
       }));
