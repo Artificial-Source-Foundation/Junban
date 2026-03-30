@@ -42,8 +42,7 @@ describe("crypto", () => {
     });
 
     it("encrypts and decrypts a long API key", async () => {
-      const plaintext =
-        "sk-proj-abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      const plaintext = "sk-proj-abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       const encrypted = await encryptValue(plaintext);
       const decrypted = await decryptValue(encrypted);
       expect(decrypted).toBe(plaintext);

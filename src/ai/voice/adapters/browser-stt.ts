@@ -28,8 +28,7 @@ export class BrowserSTTProvider implements STTProviderPlugin {
   /** Start live recognition from the microphone. Returns a promise with the transcript. */
   startLiveRecognition(opts?: STTOptions): Promise<string> {
     return new Promise((resolve, reject) => {
-      const SpeechRecognitionCtor =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognitionCtor) {
         reject(new Error("SpeechRecognition not supported in this browser"));
         return;

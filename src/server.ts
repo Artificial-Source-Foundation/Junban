@@ -118,7 +118,7 @@ app.route("/api/voice", voiceRoutes());
 app.get("/api/health", (c) => c.json({ ok: true }));
 
 // Start the server
-serve(
+const server = serve(
   {
     fetch: app.fetch,
     port: API_PORT,
@@ -127,5 +127,34 @@ serve(
     logger.info(`API server listening on port ${info.port}`);
   },
 );
+
+// Graceful shutdown
+async function shutdown(signal: string) {
+  logger.info(`${signal} received, shutting down...`);
+  try {
+    await services.pluginLoader.unloadAll();
+  } catch (err) {
+    logger.error(`Plugin unload error: ${err instanceof Error ? err.message : err}`);
+  }
+  server.close(() => {
+    logger.info("Server closed");
+    process.exit(0);
+  });
+  // Force exit after 5s if graceful shutdown stalls
+  setTimeout(() => process.exit(1), 5000).unref();
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
+
+process.on("uncaughtException", (err) => {
+  logger.error(`Uncaught exception: ${err.message}`);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason) => {
+  logger.error(`Unhandled rejection: ${reason}`);
+  process.exit(1);
+});
 
 export { app, services };

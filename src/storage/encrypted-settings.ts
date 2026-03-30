@@ -23,10 +23,7 @@ export function isSensitiveSetting(key: string): boolean {
  * Read a setting, decrypting if it's a sensitive key with an encrypted value.
  * Non-encrypted values for sensitive keys are returned as-is (migration support).
  */
-export async function getSecureSetting(
-  storage: IStorage,
-  key: string,
-): Promise<string | null> {
+export async function getSecureSetting(storage: IStorage, key: string): Promise<string | null> {
   const row = storage.getAppSetting(key);
   if (!row?.value) return null;
 

@@ -167,9 +167,9 @@ describe("TaskService", () => {
     });
 
     it("throws NotFoundError for non-existent task", async () => {
-      await expect(
-        taskService.update("missing-id", { title: "Nope" }),
-      ).rejects.toThrow(NotFoundError);
+      await expect(taskService.update("missing-id", { title: "Nope" })).rejects.toThrow(
+        NotFoundError,
+      );
     });
 
     it("emits task:update event", async () => {
@@ -401,9 +401,7 @@ describe("TaskService", () => {
     it("throws NotFoundError when adding relation to non-existent task", async () => {
       const taskA = await taskService.create({ title: "Exists" });
 
-      await expect(
-        taskService.addRelation(taskA.id, "nonexistent"),
-      ).rejects.toThrow(NotFoundError);
+      await expect(taskService.addRelation(taskA.id, "nonexistent")).rejects.toThrow(NotFoundError);
     });
 
     it("throws ValidationError on cycle detection", async () => {
@@ -415,9 +413,7 @@ describe("TaskService", () => {
       await taskService.addRelation(taskB.id, taskC.id); // B blocks C
 
       // C blocks A would create a cycle: A -> B -> C -> A
-      await expect(
-        taskService.addRelation(taskC.id, taskA.id),
-      ).rejects.toThrow(ValidationError);
+      await expect(taskService.addRelation(taskC.id, taskA.id)).rejects.toThrow(ValidationError);
     });
 
     it("removes a relation", async () => {

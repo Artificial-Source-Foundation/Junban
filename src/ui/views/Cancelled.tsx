@@ -91,7 +91,7 @@ export function Cancelled({ tasks, projects, onSelectTask, onRestoreTask }: Canc
     for (const group of grouped) {
       rows.push({ type: "header", date: group.date });
       for (const task of group.tasks) {
-        const project = task.projectId ? projectMap.get(task.projectId) ?? null : null;
+        const project = task.projectId ? (projectMap.get(task.projectId) ?? null) : null;
         rows.push({ type: "task", task, project });
       }
     }
@@ -194,9 +194,7 @@ function CancelledTaskRow({
         </span>
       )}
       {dateField && (
-        <span className="text-xs text-on-surface-muted flex-shrink-0">
-          {formatTime(dateField)}
-        </span>
+        <span className="text-xs text-on-surface-muted flex-shrink-0">{formatTime(dateField)}</span>
       )}
       {onRestoreTask && (
         <button

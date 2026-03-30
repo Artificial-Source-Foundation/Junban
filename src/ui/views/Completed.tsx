@@ -90,7 +90,7 @@ export function Completed({ tasks, projects, onSelectTask }: CompletedProps) {
     for (const group of grouped) {
       rows.push({ type: "header", date: group.date });
       for (const task of group.tasks) {
-        const project = task.projectId ? projectMap.get(task.projectId) ?? null : null;
+        const project = task.projectId ? (projectMap.get(task.projectId) ?? null) : null;
         rows.push({ type: "task", task, project });
       }
     }
@@ -279,11 +279,7 @@ function VirtualizedCompletedRows({
                 transform: `translateY(${virtualRow.start}px)`,
               }}
             >
-              <CompletedTaskRow
-                task={row.task}
-                project={row.project}
-                onSelectTask={onSelectTask}
-              />
+              <CompletedTaskRow task={row.task} project={row.project} onSelectTask={onSelectTask} />
             </div>
           );
         })}

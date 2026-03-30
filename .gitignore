@@ -65,4 +65,8 @@ docs/development/
 # Dev / E2E test screenshots (except README screenshots)
 *.png
 !screenshots/*.png
+
+# Dev tool artifacts
 .claude/worktrees/
+.swarm/
+.mcp.json
