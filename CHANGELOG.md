@@ -7,12 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned — v1.1 (Timeblocking Plugin)
+### Added
 
-- Plugin system: React component rendering for interactive plugin views
-- Plugin system: `network` permission wiring
-- Timeblocking plugin (Akiflow-inspired): drag-and-drop day/week timeline, time blocks, time slots (task containers), recurring blocks, split view, replan undone tasks
-- Calendar integration via automation connectors (n8n, Activepieces, Pipedream) — deferred to v1.2
+- **DevOps hardening** — graceful shutdown (SIGTERM/SIGINT) with plugin unload, uncaught exception handlers, Husky + lint-staged pre-commit hooks, `.nvmrc` for Node 22, Dependabot config, `.github/SECURITY.md` vulnerability reporting policy
+- **OpenRouter model filtering** — model dropdown dynamically filters to tool-capable models only (via `supported_parameters.includes("tools")`), sorted alphabetically with clean display names
+- **API key encryption** — AES-256-GCM encryption for API keys at rest
+- **Plugin system** — production-ready loader, sandbox, CLI scaffolding, lifecycle tests, API docs
+- **Swarm audit** — 10-round automated code quality audit with all fixes applied
+
+### Changed
+
+- Removed `.swarm/` audit artifacts and `.mcp.json` from git tracking
+- Updated all README screenshots to reflect current UI state
 
 ## [1.0.0] — 2026-02-28
 

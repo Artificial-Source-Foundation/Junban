@@ -266,7 +266,7 @@ pnpm dev:full      # Full dev mode (Vite + Hono API server, shared ./data/junban
 pnpm server        # Standalone API server on port 4822
 pnpm build         # Build for production
 pnpm start         # Preview production build
-pnpm check         # Lint + typecheck + test
+pnpm check         # Lint + format check + typecheck + test
 pnpm cli           # Run CLI companion
 pnpm mcp           # Start MCP server (for external AI agents)
 ```

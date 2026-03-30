@@ -176,12 +176,12 @@ Full browser-based client (requires Junban Sync).
 | Plugin System | 21/21 | 0 | Complete |
 | AI Assistant | 55/67 | 12 | 12 providers, 38 MCP tools, OAuth, ideas pending |
 | Storage & Data | 13/13 | 0 | Complete |
-| Testing | 10/10 | 0 | 202 test files, 2455 tests |
-| Hardening & Quality | 17/17 | 0 | Complete |
+| Testing | 10/10 | 0 | 208 test files, 2613 tests |
+| Hardening & Quality | 22/22 | 0 | Complete (+ DevOps hardening) |
 | Frontend Enhancements | 25/25 | 0 | Complete |
 | QA — Bugs | 17/17 | 0 | Complete |
 | Documentation | 15/15 | 0 | Complete |
-| **Total** | **263/277** | **14** | **95% complete** |
+| **Total** | **268/277** | **9** | **97% complete** |
 
 ### What's Fully Done
 
@@ -196,12 +196,15 @@ Full browser-based client (requires Junban Sync).
 - MCP server: 38 tools + 8 resources + 3 prompts (Claude Desktop integration)
 - CLI companion with 5 commands
 - Tauri desktop app scaffold + auto-updater + global quick capture
-- CI/CD pipeline (GitHub Actions)
+- CI/CD pipeline (GitHub Actions) + Husky pre-commit hooks + Dependabot
+- DevOps: graceful shutdown, uncaught exception handlers, `.nvmrc`, security policy
+- API key encryption at rest (AES-256-GCM)
+- OpenRouter dynamic model filtering (tool-capable only)
 - Design token system, accessibility audit, performance optimization
 - Kanban board, calendar views, matrix view, stats dashboard
 - Task comments, activity tracking, daily/weekly review rituals
 - Responsive mobile UI, sound effects, saved filters
-- 202 test files, 2455 passing tests (including 33+ Playwright E2E spec files)
+- 208 test files, 2613 passing tests (including 33+ Playwright E2E spec files)
 
 ### Ideas (need scoping)
 
@@ -235,7 +238,7 @@ Full browser-based client (requires Junban Sync).
 
 ## Sprint History
 
-51 sprints completed across ~23 months of development.
+52 sprints completed across ~23 months of development.
 
 | Sprint | Theme | Tests |
 |--------|-------|-------|
@@ -290,6 +293,7 @@ Full browser-based client (requires Junban Sync).
 | S49 | AI Auto-scheduling | 2386 |
 | S50 | Clean Slate + 7 New Providers + OAuth | 2455 |
 | S51 | Module Decomposition III (DX-15–25) | 2455 |
+| S52 | Production Readiness + DevOps Hardening | 2613 |
 
 ### Known Technical Debt
 
