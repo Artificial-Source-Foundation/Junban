@@ -25,11 +25,11 @@ export function SidebarHeader({
       <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
         {!collapsed ? (
           <div className="flex items-center gap-2">
-            <img src="/images/logo.svg" alt="Junban logo" className="w-6 h-6" />
+            <img src="/images/logo.webp" alt="Junban logo" className="w-6 h-6" />
             <h2 className="text-base font-bold text-on-surface tracking-tight">Junban</h2>
           </div>
         ) : (
-          <img src="/images/logo.svg" alt="Junban logo" className="w-6 h-6" />
+          <img src="/images/logo.webp" alt="Junban logo" className="w-6 h-6" />
         )}
         {onToggleCollapsed && !collapsed && (
           <button
