@@ -1,10 +1,5 @@
-import {
-  useDirectServices,
-  BASE,
-  handleResponse,
-  handleVoidResponse,
-  getServices,
-} from "../helpers.js";
+import { useDirectServices, BASE, handleResponse, handleVoidResponse } from "../helpers.js";
+import { getServices } from "../direct-services.js";
 import type { AiMemoryRow } from "../../../storage/interface.js";
 
 export async function getAiMemories(): Promise<AiMemoryRow[]> {

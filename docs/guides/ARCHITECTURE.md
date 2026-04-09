@@ -210,7 +210,7 @@ src/
 │   │       ├── VoiceButton.tsx, TypingIndicator.tsx, MessageActions.tsx
 │   │       ├── SuggestedActions.tsx, WelcomeScreen.tsx
 │   │
-│   ├── views/               # Main views (17 views + 10 settings tabs)
+│   ├── views/               # Main application views and settings tabs
 │   │   ├── Inbox.tsx        # All unscheduled tasks + QueryBar
 │   │   ├── Today.tsx        # Tasks due today + workload capacity bar
 │   │   ├── Upcoming.tsx     # Tasks grouped by due date
@@ -343,7 +343,9 @@ Response in chat + task list updated
 ### Plugin loading
 
 ```
-App startup → Plugin Loader scans plugins/ → validate manifests (Zod)
+App startup → eager plugin + plugin-view registry hydration
+  │
+  ├─ deferred command/status/panel hydration (idle-or-timeout scheduler)
   │
   ▼
 For each plugin: create sandbox → inject filtered API → call onLoad()
@@ -361,23 +363,23 @@ Active — receives events, renders UI, responds to commands
 
 **tasks**
 
-| Column | Type | Notes |
-|---|---|---|
-| id | TEXT (PK) | nanoid |
-| title | TEXT | required |
-| description | TEXT | nullable |
-| status | TEXT | "pending" / "completed" / "cancelled" |
-| priority | INTEGER | 1-4, nullable |
-| dueDate | TEXT | ISO timestamp, nullable |
-| dueTime | INTEGER | 0/1 — whether due date has a time component |
-| completedAt | TEXT | ISO timestamp, nullable |
-| projectId | TEXT (FK) | → projects, nullable |
-| parentId | TEXT (FK) | → tasks (self-ref for subtasks), nullable |
-| recurrence | TEXT | RRULE-like, nullable |
-| remindAt | TEXT | ISO timestamp, nullable |
-| sortOrder | INTEGER | manual sort position |
-| createdAt | TEXT | ISO timestamp |
-| updatedAt | TEXT | ISO timestamp |
+| Column      | Type      | Notes                                       |
+| ----------- | --------- | ------------------------------------------- |
+| id          | TEXT (PK) | nanoid                                      |
+| title       | TEXT      | required                                    |
+| description | TEXT      | nullable                                    |
+| status      | TEXT      | "pending" / "completed" / "cancelled"       |
+| priority    | INTEGER   | 1-4, nullable                               |
+| dueDate     | TEXT      | ISO timestamp, nullable                     |
+| dueTime     | INTEGER   | 0/1 — whether due date has a time component |
+| completedAt | TEXT      | ISO timestamp, nullable                     |
+| projectId   | TEXT (FK) | → projects, nullable                        |
+| parentId    | TEXT (FK) | → tasks (self-ref for subtasks), nullable   |
+| recurrence  | TEXT      | RRULE-like, nullable                        |
+| remindAt    | TEXT      | ISO timestamp, nullable                     |
+| sortOrder   | INTEGER   | manual sort position                        |
+| createdAt   | TEXT      | ISO timestamp                               |
+| updatedAt   | TEXT      | ISO timestamp                               |
 
 **projects** — id, name, color, icon, parentId (self-ref), isFavorite, viewStyle (list/board/calendar), sortOrder, archived, createdAt
 
@@ -458,24 +460,24 @@ Supported: OpenAI, Anthropic, OpenRouter, Ollama, LM Studio, any OpenAI-compatib
 
 The AI has access to 34 structured tools:
 
-| Tool | Category |
-|---|---|
-| task-crud (create/read/update/complete/delete) | Task CRUD |
-| query-tasks (search, filter) | Task CRUD |
-| project-crud (create/list/get/update/delete) | Project CRUD |
-| reminder-tools (list/set/snooze/dismiss) | Reminders |
-| tag-crud (list/add/remove tags) | Tag Management |
-| break_down_task | Productivity |
-| check_duplicates | Productivity |
-| check_overcommitment | Productivity |
-| daily-planning (plan_my_day, daily_review) | Planning |
-| productivity-stats | Analytics |
-| bulk-operations | Batch Operations |
-| memory-tools | AI Memory |
-| analyze-patterns | Intelligence |
-| analyze-workload | Intelligence |
-| smart-organize | Intelligence |
-| energy-recommendations | Intelligence |
+| Tool                                           | Category         |
+| ---------------------------------------------- | ---------------- |
+| task-crud (create/read/update/complete/delete) | Task CRUD        |
+| query-tasks (search, filter)                   | Task CRUD        |
+| project-crud (create/list/get/update/delete)   | Project CRUD     |
+| reminder-tools (list/set/snooze/dismiss)       | Reminders        |
+| tag-crud (list/add/remove tags)                | Tag Management   |
+| break_down_task                                | Productivity     |
+| check_duplicates                               | Productivity     |
+| check_overcommitment                           | Productivity     |
+| daily-planning (plan_my_day, daily_review)     | Planning         |
+| productivity-stats                             | Analytics        |
+| bulk-operations                                | Batch Operations |
+| memory-tools                                   | AI Memory        |
+| analyze-patterns                               | Intelligence     |
+| analyze-workload                               | Intelligence     |
+| smart-organize                                 | Intelligence     |
+| energy-recommendations                         | Intelligence     |
 
 Tools are registered in `ToolRegistry` (`createDefaultToolRegistry()`). Plugins can register additional tools. All tools are also exposed via the MCP server for external agents (see [MCP.md](../backend/MCP.md)).
 
@@ -537,10 +539,10 @@ No Redux or Zustand — React Context + core services handle the data flow for v
 
 ## Key tech choices
 
-| Choice | Why |
-|---|---|
-| **Tauri** (not Electron) | ~5MB binary vs ~150MB. Uses system webview, not bundled Chromium. |
+| Choice                               | Why                                                                                            |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| **Tauri** (not Electron)             | ~5MB binary vs ~150MB. Uses system webview, not bundled Chromium.                              |
 | **SQLite + Drizzle** (not IndexedDB) | Fast queries, complex filters, type-safe. Schema is Postgres-compatible for future server use. |
-| **React + Tailwind** | Largest ecosystem (plugin authors know it), fast prototyping, easy theming. |
-| **chrono-node** | Best JS library for natural language date parsing. |
-| **Commander.js** | Industry standard for Node CLIs. CLI shares core logic with UI. |
+| **React + Tailwind**                 | Largest ecosystem (plugin authors know it), fast prototyping, easy theming.                    |
+| **chrono-node**                      | Best JS library for natural language date parsing.                                             |
+| **Commander.js**                     | Industry standard for Node CLIs. CLI shares core logic with UI.                                |

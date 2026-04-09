@@ -4,8 +4,8 @@ import {
   buildApiUrl,
   handleResponse,
   handleVoidResponse,
-  getServices,
 } from "../helpers.js";
+import { getServices } from "../direct-services.js";
 import type { AIProviderInfo, ModelDiscoveryInfo } from "./ai-types.js";
 import { DEFAULT_LMSTUDIO_BASE_URL } from "../../../config/defaults.js";
 

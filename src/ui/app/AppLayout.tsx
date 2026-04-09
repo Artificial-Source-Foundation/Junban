@@ -2,7 +2,7 @@ import { lazy, Suspense, type ReactNode } from "react";
 import { ErrorBoundary } from "../components/ErrorBoundary.js";
 import { Sidebar } from "../components/Sidebar.js";
 import { Breadcrumb, type BreadcrumbItem } from "../components/Breadcrumb.js";
-import { SkeletonTaskList } from "../components/Skeleton.js";
+import { ViewSkeleton } from "../components/Skeleton.js";
 import { AppStateProvider, type AppState } from "../context/AppStateContext.js";
 import { ViewRenderer } from "./ViewRenderer.js";
 import type {
@@ -253,8 +253,8 @@ export function AppLayout({
                 />
               </Suspense>
             )}
-            {loading ? (
-              <SkeletonTaskList />
+            {loading && tasks.length === 0 ? (
+              <ViewSkeleton view={currentView} />
             ) : error ? (
               <p role="alert" className="text-error">
                 Error: {error}

@@ -90,15 +90,21 @@ describe("useAppShortcuts", () => {
   });
 
   it("loads custom bindings from settings", async () => {
-    const bindings = { undo: "ctrl+y" };
-    mockGetAppSetting.mockResolvedValue(JSON.stringify(bindings));
+    vi.useFakeTimers();
+    try {
+      const bindings = { undo: "ctrl+y" };
+      mockGetAppSetting.mockResolvedValue(JSON.stringify(bindings));
 
-    renderHook(() => useAppShortcuts(setCommandPaletteOpen, undo, redo));
+      renderHook(() => useAppShortcuts(setCommandPaletteOpen, undo, redo));
+      await vi.advanceTimersByTimeAsync(1200);
 
-    // Wait for async getAppSetting to resolve
-    await vi.waitFor(() => {
-      expect(mockLoadCustomBindings).toHaveBeenCalledWith(bindings);
-    });
+      // Wait for async getAppSetting to resolve
+      await vi.waitFor(() => {
+        expect(mockLoadCustomBindings).toHaveBeenCalledWith(bindings);
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("adds keydown event listener on mount", () => {

@@ -8,7 +8,8 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
-import { api, type AIConfigInfo, type AIChatMessage, type ChatSessionInfo } from "../api/index.js";
+import * as api from "../api/ai.js";
+import type { AIConfigInfo, AIChatMessage, ChatSessionInfo } from "../api/ai.js";
 import { useTaskContext } from "./TaskContext.js";
 import type { AIContextValue } from "./ai/ai-context-types.js";
 import { useAISendMessage } from "./ai/useAISendMessage.js";
@@ -31,6 +32,7 @@ export function AIProvider({ children }: { children: ReactNode }) {
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
   const voiceCallActiveRef = useRef(false);
   const lastUserMessageRef = useRef<string>("");
+  const mountedRef = useRef(true);
   const { refreshTasks } = useTaskContext();
 
   // Dynamic check: provider is configured if it has an API key or doesn't need one
@@ -48,14 +50,54 @@ export function AIProvider({ children }: { children: ReactNode }) {
   const refreshConfig = useCallback(async () => {
     try {
       const cfg = await api.getAIConfig();
-      setConfig(cfg);
+      if (mountedRef.current) {
+        setConfig(cfg);
+      }
     } catch {
       // Non-critical
     }
   }, []);
 
   useEffect(() => {
-    refreshConfig();
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const run = () => {
+      void refreshConfig();
+    };
+
+    let idleHandle: number | null = null;
+    let timeoutHandle: ReturnType<typeof globalThis.setTimeout> | null = null;
+    let didRun = false;
+
+    const runOnce = () => {
+      if (didRun) return;
+      didRun = true;
+      if (timeoutHandle !== null) {
+        globalThis.clearTimeout(timeoutHandle);
+        timeoutHandle = null;
+      }
+      run();
+    };
+
+    timeoutHandle = globalThis.setTimeout(runOnce, 300);
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleHandle = window.requestIdleCallback(runOnce, { timeout: 1500 });
+    }
+
+    return () => {
+      if (idleHandle !== null && typeof window !== "undefined" && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleHandle);
+      }
+      if (timeoutHandle !== null) {
+        globalThis.clearTimeout(timeoutHandle);
+      }
+    };
   }, [refreshConfig]);
 
   const refreshSessions = useCallback(async () => {

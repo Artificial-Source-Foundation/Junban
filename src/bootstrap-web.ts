@@ -7,9 +7,7 @@ import { TemplateService } from "./core/templates.js";
 import { SectionService } from "./core/sections.js";
 import { StatsService } from "./core/stats.js";
 import { EventBus } from "./core/event-bus.js";
-import type { ChatManager } from "./ai/chat.js";
-import type { LLMProviderRegistry } from "./ai/provider/registry.js";
-import type { ToolRegistry } from "./ai/tools/registry.js";
+import type { WebAIRuntime } from "./bootstrap-web-ai-runtime.js";
 import { PluginSettingsManager } from "./plugins/settings.js";
 import { CommandRegistry } from "./plugins/command-registry.js";
 import { UIRegistry } from "./plugins/ui-registry.js";
@@ -37,12 +35,6 @@ export interface WebAppServices {
   storage: IStorage;
   getAIRuntime: () => Promise<WebAIRuntime>;
   save: () => void;
-}
-
-export interface WebAIRuntime {
-  chatManager: ChatManager;
-  aiProviderRegistry: LLMProviderRegistry;
-  toolRegistry: ToolRegistry;
 }
 
 function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
@@ -79,16 +71,13 @@ export async function bootstrapWeb(): Promise<WebAppServices> {
     if (aiRuntimePending) return aiRuntimePending;
 
     aiRuntimePending = (async () => {
-      const { ChatManager } = await import("./ai/chat.js");
-      const { createDefaultRegistry } = await import("./ai/provider.js");
-      const { createDefaultToolRegistry } = await import("./ai/tool-registry.js");
-      aiRuntime = {
-        chatManager: new ChatManager(),
-        aiProviderRegistry: createDefaultRegistry(),
-        toolRegistry: createDefaultToolRegistry(),
-      };
-      aiRuntimePending = null;
-      return aiRuntime;
+      try {
+        const { createWebAIRuntime } = await import("./bootstrap-web-ai-runtime.js");
+        aiRuntime = await createWebAIRuntime();
+        return aiRuntime;
+      } finally {
+        aiRuntimePending = null;
+      }
     })();
 
     return aiRuntimePending;

@@ -166,34 +166,34 @@ Full browser-based client (requires Junban Sync).
 
 ## Current Status
 
-| Area                        | Done        | Remaining | Status                                              |
-| --------------------------- | ----------- | --------- | --------------------------------------------------- |
-| Foundation & Infrastructure | 16/16       | 0         | Complete                                            |
-| Core — Task CRUD            | 19/19       | 0         | Complete                                            |
-| Parser & NLP                | 8/8         | 0         | Complete                                            |
-| UI — Views & Components     | 41/41       | 0         | Complete                                            |
-| CLI                         | 7/8         | 1         | Fuzzy picker idea                                   |
-| Plugin System               | 21/21       | 0         | Complete                                            |
-| AI Assistant                | 55/67       | 12        | 12 providers, 40 AI/MCP tools, OAuth, ideas pending |
-| Storage & Data              | 13/13       | 0         | Complete                                            |
-| Testing                     | 10/10       | 0         | 240 automated test/spec files, full E2E green       |
-| Hardening & Quality         | 22/22       | 0         | Complete (+ DevOps hardening)                       |
-| Frontend Enhancements       | 25/25       | 0         | Complete                                            |
-| QA — Bugs                   | 17/17       | 0         | Complete                                            |
-| Documentation               | 15/15       | 0         | Complete                                            |
-| **Total**                   | **269/277** | **8**     | **97% complete**                                    |
+| Area                        | Status         | Notes                                                     |
+| --------------------------- | -------------- | --------------------------------------------------------- |
+| Foundation & Infrastructure | Complete       | Core platform and project scaffolding are stable          |
+| Core — Task CRUD            | Complete       | Task, project, tag, section, and recurrence flows         |
+| Parser & NLP                | Complete       | Natural language task parsing is in place                 |
+| UI — Views & Components     | Complete       | Core desktop UI is feature-rich and mature                |
+| CLI                         | Mostly done    | Core commands shipped; richer picker UX is open           |
+| Plugin System               | Complete       | Sandboxed plugin platform is shipped                      |
+| AI Assistant                | Mature         | Multi-provider AI, voice, MCP, and more ideas             |
+| Storage & Data              | Complete       | SQLite and Markdown storage are both supported            |
+| Testing                     | Complete       | Broad automated coverage with green E2E baseline          |
+| Hardening & Quality         | Complete       | Release, reliability, and DevOps work shipped             |
+| Frontend Enhancements       | Complete       | Advanced views, polish, and mobile responsiveness         |
+| QA — Bugs                   | Complete       | Known bug-fix sweep captured here is complete             |
+| Documentation               | Complete       | Contributor and product docs are in place                 |
+| **Overall**                 | **Late stage** | **Core product is shipped; integrations and sync remain** |
 
 ### What's Fully Done
 
 - Task CRUD with subtasks, templates, recurrence, filters, priorities
 - SQLite + Markdown dual storage backends
-- 100+ React components, 20+ views + 10 settings tabs, 18 hooks, 9+ contexts
-- AI assistant with 40 tools, 12 providers (OpenAI, Anthropic, OpenRouter, Ollama, LM Studio, DeepSeek, Gemini, Mistral, Kimi, DashScope, Groq, ZAI), OpenAI OAuth, chat persistence
+- Large React surface area across reusable components, views, hooks, and contexts
+- AI assistant with multiple providers, built-in tools, OAuth support, and chat persistence
 - Voice I/O: 8 adapters (STT/TTS), VAD, Web Workers, voice call mode
 - Plugin system with sandboxing, permissions, lifecycle, registry
 - Timeblocking plugin: day/week views, DnD, recurrence, AI auto-scheduling
 - Motivation engine: Eat the Frog, Dopamine Menu, Task Jar, Framer Motion animations
-- MCP server: 40 tools + 8 resources + 3 prompts (Claude Desktop integration)
+- MCP server with tool, resource, and prompt support for external agent integration
 - CLI companion with 5 commands
 - Tauri desktop app scaffold + auto-updater + global quick capture
 - CI/CD pipeline (GitHub Actions) + Husky pre-commit hooks + Dependabot
@@ -204,7 +204,7 @@ Full browser-based client (requires Junban Sync).
 - Kanban board, calendar views, matrix view, stats dashboard
 - Task comments, activity tracking, daily/weekly review rituals
 - Responsive mobile UI, sound effects, saved filters
-- 240 automated test/spec files, including 32 Playwright E2E spec files, with full E2E coverage green
+- Extensive automated test coverage, including Playwright end-to-end coverage
 
 ### Ideas (need scoping)
 
@@ -237,7 +237,7 @@ Full browser-based client (requires Junban Sync).
 
 ## Sprint History
 
-52 sprints completed across ~23 months of development.
+Dozens of sprints completed across roughly two years of development.
 
 | Sprint | Theme                                                                 | Tests |
 | ------ | --------------------------------------------------------------------- | ----- |

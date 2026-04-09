@@ -1,7 +1,5 @@
-import { type MouseEvent as ReactMouseEvent } from "react";
-import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
-import type { SensorDescriptor, SensorOptions } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { type MouseEvent as ReactMouseEvent, type ComponentType, useEffect, useState } from "react";
+import type { DragEndEvent } from "@dnd-kit/core";
 import type { LucideIcon } from "lucide-react";
 import type { Project } from "../../../core/types.js";
 import type { PanelInfo, ViewInfo } from "../../api/plugins.js";
@@ -53,7 +51,6 @@ interface ViewNavigationProps {
   // Panels
   panels: PanelInfo[];
   // DnD
-  sensors: SensorDescriptor<SensorOptions>[];
   onDragEnd: (event: DragEndEvent) => void;
   // Context menu
   onNavContextMenu: (e: ReactMouseEvent, itemId: string) => void;
@@ -61,39 +58,39 @@ interface ViewNavigationProps {
   onOpenProjectModal?: () => void;
 }
 
-export function ViewNavigation({
-  collapsed,
-  currentView,
-  selectedProjectId,
-  selectedPluginViewId,
-  onNavigate,
-  orderedSidebarItems,
-  navItemMap,
-  countMap,
-  viewsBySlot,
-  projects,
-  projectTaskCounts,
-  projectCompletedCounts,
-  favoriteProjects,
-  projectsExpanded,
-  setProjectsExpanded,
-  favoritesExpanded,
-  setFavoritesExpanded,
-  toolsExpanded,
-  setToolsExpanded,
-  filtersExpanded,
-  setFiltersExpanded,
-  favoriteViewsExpanded,
-  setFavoriteViewsExpanded,
-  favoriteNavItems,
-  savedFilters,
-  selectedFilterId,
-  panels,
-  sensors,
-  onDragEnd,
-  onNavContextMenu,
-  onOpenProjectModal,
-}: ViewNavigationProps) {
+function ExpandedNavigation(props: ViewNavigationProps) {
+  const {
+    collapsed,
+    currentView,
+    selectedProjectId,
+    selectedPluginViewId,
+    onNavigate,
+    orderedSidebarItems,
+    navItemMap,
+    countMap,
+    viewsBySlot,
+    projects,
+    projectTaskCounts,
+    projectCompletedCounts,
+    favoriteProjects,
+    projectsExpanded,
+    setProjectsExpanded,
+    favoritesExpanded,
+    setFavoritesExpanded,
+    toolsExpanded,
+    setToolsExpanded,
+    filtersExpanded,
+    setFiltersExpanded,
+    favoriteViewsExpanded,
+    setFavoriteViewsExpanded,
+    favoriteNavItems,
+    savedFilters,
+    selectedFilterId,
+    panels,
+    onNavContextMenu,
+    onOpenProjectModal,
+  } = props;
+
   const sectionProps = {
     collapsed,
     currentView,
@@ -124,27 +121,9 @@ export function ViewNavigation({
     onOpenProjectModal,
   };
 
-  if (collapsed) {
-    return (
-      <CollapsedNav
-        orderedSidebarItems={orderedSidebarItems}
-        navItemMap={navItemMap}
-        countMap={countMap}
-        currentView={currentView}
-        selectedProjectId={selectedProjectId}
-        selectedPluginViewId={selectedPluginViewId}
-        onNavigate={onNavigate}
-        onNavContextMenu={onNavContextMenu}
-        projects={projects}
-        viewsBySlot={viewsBySlot}
-        collapsed={collapsed}
-      />
-    );
-  }
-
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-      <SortableContext items={orderedSidebarItems} strategy={verticalListSortingStrategy}>
+    <div data-testid="dnd-context">
+      <div data-testid="sortable-context">
         {orderedSidebarItems.map((itemId) => {
           if (!SECTION_IDS.has(itemId)) {
             const item = navItemMap.get(itemId);
@@ -157,6 +136,7 @@ export function ViewNavigation({
             const navigate = isPluginView
               ? () => onNavigate("plugin-view", pluginViewId)
               : () => onNavigate(item.id);
+
             return (
               <SortableNavItem key={itemId} id={itemId}>
                 {renderNavButton(
@@ -172,9 +152,96 @@ export function ViewNavigation({
               </SortableNavItem>
             );
           }
+
           return renderSection(itemId, sectionProps);
         })}
-      </SortableContext>
-    </DndContext>
+      </div>
+    </div>
   );
 }
+
+export function ViewNavigation(props: ViewNavigationProps) {
+  const [DndNavigation, setDndNavigation] = useState<ComponentType<ViewNavigationProps> | null>(
+    null,
+  );
+  const [shouldLoadDnd, setShouldLoadDnd] = useState(false);
+
+  const triggerDndLoad = () => {
+    if (!props.collapsed) {
+      setShouldLoadDnd(true);
+    }
+  };
+
+  useEffect(() => {
+    if (props.collapsed || shouldLoadDnd || DndNavigation) return;
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const handle = window.requestIdleCallback(
+        () => {
+          setShouldLoadDnd(true);
+        },
+        { timeout: 3200 },
+      );
+
+      return () => {
+        window.cancelIdleCallback(handle);
+      };
+    }
+
+    const timeoutHandle = globalThis.setTimeout(() => {
+      setShouldLoadDnd(true);
+    }, 2000);
+
+    return () => {
+      globalThis.clearTimeout(timeoutHandle);
+    };
+  }, [props.collapsed, shouldLoadDnd, DndNavigation]);
+
+  useEffect(() => {
+    if (props.collapsed || !shouldLoadDnd || DndNavigation) return;
+
+    let cancelled = false;
+    const loadDndNavigation = async () => {
+      const module = await import("./ViewNavigationDnd.js");
+      if (!cancelled) {
+        setDndNavigation(() => module.ViewNavigationDnd);
+      }
+    };
+
+    void loadDndNavigation();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [props.collapsed, shouldLoadDnd, DndNavigation]);
+
+  if (props.collapsed) {
+    return (
+      <CollapsedNav
+        orderedSidebarItems={props.orderedSidebarItems}
+        navItemMap={props.navItemMap}
+        countMap={props.countMap}
+        currentView={props.currentView}
+        selectedProjectId={props.selectedProjectId}
+        selectedPluginViewId={props.selectedPluginViewId}
+        onNavigate={props.onNavigate}
+        onNavContextMenu={props.onNavContextMenu}
+        projects={props.projects}
+        viewsBySlot={props.viewsBySlot}
+        collapsed={props.collapsed}
+      />
+    );
+  }
+
+  if (DndNavigation) {
+    return <DndNavigation {...props} />;
+  }
+
+  return (
+    <div onPointerEnter={triggerDndLoad} onPointerDownCapture={triggerDndLoad}>
+      <ExpandedNavigation {...props} />
+    </div>
+  );
+}
+
+export type { ViewNavigationProps };

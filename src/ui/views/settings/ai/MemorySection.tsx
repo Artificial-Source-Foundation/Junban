@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAIContext } from "../../../../ui/context/AIContext.js";
-import { api } from "../../../../ui/api/index.js";
+import * as api from "../../../../ui/api/ai.js";
 import type { AiMemoryRow } from "../../../../storage/interface.js";
 import { CATEGORY_COLORS } from "./ai-tab-constants.js";
 

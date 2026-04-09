@@ -137,7 +137,7 @@
   - `Ctrl+N` -- Quick add task (if `setQuickAddOpen` provided)
 - **Key Dependencies:** `shortcutManager` singleton, `themeManager`, `api` (getAppSetting for custom bindings)
 - **Used By:** `App.tsx`
-- **Notes:** Registers on mount, unregisters on unmount via the global `keydown` listener. On mount, loads custom keybindings from the `keyboard_shortcuts` app setting. The ShortcutManager handles conflict detection and rebinding. Quick-add has two bindings: `Q` (for quick access when not in an input) and `Ctrl+N` (standard shortcut).
+- **Notes:** Registers on mount, unregisters on unmount via the global `keydown` listener. On mount, loads custom keybindings from the `keyboard_shortcuts` app setting after a short startup delay to avoid contending with initial render work. The ShortcutManager handles conflict detection and rebinding. Quick-add has two bindings: `Q` (for quick access when not in an input) and `Ctrl+N` (standard shortcut).
 
 ---
 
@@ -199,7 +199,7 @@
 - **Return Value:** None (side effect only)
 - **Key Dependencies:** `api` (fetchDueReminders, updateTask)
 - **Used By:** `App.tsx`
-- **Notes:** Uses `setInterval` with configurable polling interval. Tracks already-fired reminders by ID via a ref `Set` to avoid duplicates within the same session. After firing a reminder, calls `api.updateTask` to clear `remindAt` (errors silently caught as non-critical). Runs an initial check on mount.
+- **Notes:** Uses `setInterval` with configurable polling interval. Tracks already-fired reminders by ID via a ref `Set` to avoid duplicates within the same session. After firing a reminder, calls `api.updateTask` to clear `remindAt` (errors silently caught as non-critical). Runs an initial check shortly after mount to keep startup/network contention lower.
 
 ---
 
@@ -287,7 +287,7 @@
 - **Return Value:** `{ activeNudges: Nudge[], dismiss: (id: string) => void }`
 - **Key Dependencies:** `core/nudges.ts` (evaluateNudges), `format-date.ts` (toDateKey), `SettingsContext` (GeneralSettings)
 - **Used By:** `App.tsx`
-- **Notes:** Nudge types: overdue_alert, deadline_approaching, stale_tasks, empty_today, overloaded_day. Each type maps to a `nudge_*` setting key for per-type toggling.
+- **Notes:** Nudge types: `overdue_alert`, `deadline_approaching`, `stale_tasks`, `empty_today`, `overloaded_day`. Each type maps to a corresponding `nudge_*` setting key for per-type toggling. Initial evaluation is deferred to idle time (or a short timeout fallback) to avoid competing with first paint; periodic interval evaluation remains unchanged.
 
 ---
 

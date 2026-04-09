@@ -11,7 +11,7 @@ and a plugin system so simple that anyone can build features — no coding requi
 Local-first. No accounts. No tracking. Your data stays on your machine.
 
 <p>
-  <a href="https://github.com/ASF-GROUP/Junban">Home</a> &nbsp;&middot;&nbsp;
+  <a href="https://github.com/Artificial-Source-Foundation/Junban">Home</a> &nbsp;&middot;&nbsp;
   <a href="docs/guides/SETUP.md">Setup</a> &nbsp;&middot;&nbsp;
   <a href="docs/guides/ARCHITECTURE.md">Architecture</a> &nbsp;&middot;&nbsp;
   <a href="docs/guides/RELEASES.md">Releases</a> &nbsp;&middot;&nbsp;
@@ -19,11 +19,11 @@ Local-first. No accounts. No tracking. Your data stays on your machine.
   <a href="docs/planning/ROADMAP.md">Roadmap</a>
 </p>
 
-[![CI](https://github.com/ASF-GROUP/Junban/actions/workflows/ci.yml/badge.svg)](https://github.com/ASF-GROUP/Junban/actions/workflows/ci.yml)
+[![CI](https://github.com/Artificial-Source-Foundation/Junban/actions/workflows/ci.yml/badge.svg)](https://github.com/Artificial-Source-Foundation/Junban/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/ASF-GROUP/Junban?style=social)](https://github.com/ASF-GROUP/Junban/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/Artificial-Source-Foundation/Junban?style=social)](https://github.com/Artificial-Source-Foundation/Junban/stargazers)
 
-Built by the [AI Strategic Forum (ASF)](https://github.com/ASF-GROUP) community.
+Built by the [AI Strategic Forum (ASF)](https://github.com/Artificial-Source-Foundation) community.
 
 <br />
 
@@ -72,7 +72,7 @@ Built by the [AI Strategic Forum (ASF)](https://github.com/ASF-GROUP) community.
 
 Desktop app for Windows, macOS, and Linux.
 
-👉 **Download from the latest release page:** [github.com/ASF-GROUP/Junban/releases/latest](https://github.com/ASF-GROUP/Junban/releases/latest)
+👉 **Download from the latest release page:** [github.com/Artificial-Source-Foundation/Junban/releases/latest](https://github.com/Artificial-Source-Foundation/Junban/releases/latest)
 
 > We use the release page (instead of hardcoded asset URLs) because installer filenames include the app version.
 
@@ -86,7 +86,7 @@ Desktop app for Windows, macOS, and Linux.
 
 ### Download trust & verification (current)
 
-- Download only from the official [ASF-GROUP/Junban Releases](https://github.com/ASF-GROUP/Junban/releases) page.
+- Download only from the official [Artificial-Source-Foundation/Junban Releases](https://github.com/Artificial-Source-Foundation/Junban/releases) page.
 - Confirm the asset is attached to a published release with notes/tag in this repository.
 - We do not currently publish standalone checksum instructions for manual installs in this README.
 - For desktop installs, in-app updates use Tauri updater metadata from this same Releases source.
@@ -111,7 +111,7 @@ Most task managers are either too simple (no AI, no extensibility) or too comple
 Want to run from source or contribute? See the [local setup guide](docs/guides/SETUP.md), or:
 
 ```bash
-git clone https://github.com/ASF-GROUP/Junban.git && cd Junban
+git clone https://github.com/Artificial-Source-Foundation/Junban.git && cd Junban
 pnpm install
 cp .env.example .env
 mkdir -p data && pnpm db:migrate
@@ -177,18 +177,18 @@ Plugins can register commands, add sidebar panels, add views, hook into task eve
 
 ### And more...
 
-|                                   |                                                              |
-| --------------------------------- | ------------------------------------------------------------ |
-| **Dual storage**                  | SQLite (default) or Markdown files with YAML frontmatter     |
-| **Sub-tasks & templates**         | Break down work, reuse common patterns                       |
-| **Recurring tasks**               | Daily, weekly, monthly — with natural language scheduling    |
-| **Reminders**                     | Set reminders on any task, get notified when they're due     |
-| **Eisenhower Matrix**             | Prioritize with the urgent/important quadrant view           |
-| **Focus mode**                    | Distraction-free, keyboard-driven                            |
-| **CLI companion**                 | `junban add`, `junban list`, `junban done` from the terminal |
-| **Themes**                        | Light / Dark / Nord + accent colors + custom CSS             |
-| **Sound effects**                 | Satisfying audio feedback for task actions                   |
-| **240 automated test/spec files** | Solid coverage across the entire codebase                    |
+|                             |                                                              |
+| --------------------------- | ------------------------------------------------------------ |
+| **Dual storage**            | SQLite (default) or Markdown files with YAML frontmatter     |
+| **Sub-tasks & templates**   | Break down work, reuse common patterns                       |
+| **Recurring tasks**         | Daily, weekly, monthly — with natural language scheduling    |
+| **Reminders**               | Set reminders on any task, get notified when they're due     |
+| **Eisenhower Matrix**       | Prioritize with the urgent/important quadrant view           |
+| **Focus mode**              | Distraction-free, keyboard-driven                            |
+| **CLI companion**           | `junban add`, `junban list`, `junban done` from the terminal |
+| **Themes**                  | Light / Dark / Nord + accent colors + custom CSS             |
+| **Sound effects**           | Satisfying audio feedback for task actions                   |
+| **Automated test coverage** | Solid coverage across the entire codebase                    |
 
 ## Tech stack
 
@@ -210,7 +210,7 @@ v1.0 shipped. Desktop app works on Mac, Windows, Linux.
 
 Latest: voice call mode, global search, tag management AI tools, sound effects, comprehensive settings, mobile-responsive UI.
 
-Next milestone: **Junban Sync** — optional paid cross-device sync.
+Next milestone in the roadmap: **Calendar Integrations**. After that: **Junban Sync** for optional cross-device sync.
 
 ## Docs
 
@@ -232,10 +232,10 @@ See [CONTRIBUTING.md](docs/guides/CONTRIBUTING.md). Run `pnpm check` before subm
 ## Star History
 
 <div align="center">
-  <a href="https://github.com/ASF-GROUP/Junban/stargazers">
+  <a href="https://github.com/Artificial-Source-Foundation/Junban/stargazers">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ASF-GROUP/Junban&theme=dark&type=Date" />
-      <img src="https://api.star-history.com/svg?repos=ASF-GROUP/Junban&type=Date" alt="Star History" width="600" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Artificial-Source-Foundation/Junban&theme=dark&type=Date" />
+      <img src="https://api.star-history.com/svg?repos=Artificial-Source-Foundation/Junban&type=Date" alt="Star History" width="600" />
     </picture>
   </a>
 </div>

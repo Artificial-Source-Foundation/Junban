@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { ChatSessionInfo } from "../../api/index.js";
+import type { ChatSessionInfo } from "../../api/ai.js";
 
 export interface AISessionContextValue {
   sessions: ChatSessionInfo[];

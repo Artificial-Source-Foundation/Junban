@@ -46,7 +46,7 @@ This nesting order still matters because inner providers can depend on outer one
 - **State Management:** Uses `useReducer` with actions: `LOAD_START`, `LOAD_SUCCESS`, `LOAD_ERROR`, `TASK_ADDED`, `TASK_UPDATED`, `TASK_REMOVED`, `TASKS_UPDATED`, `TASKS_REMOVED`
 - **Key Dependencies:** `api` (listTasks, createTask, completeTask, updateTask, deleteTask, completeManyTasks, deleteManyTasks, updateManyTasks)
 - **Used By:** Nearly every view and many components that display or modify tasks. AIContext depends on `refreshTasks` for syncing AI-created tasks.
-- **Notes:** Fetches all tasks on mount via `refreshTasks`. Each CRUD operation dispatches an optimistic update to the reducer and calls the API in the background. Errors are captured via `LOAD_ERROR` dispatches rather than thrown. The `TASKS_UPDATED` and `TASKS_REMOVED` actions use `Map`/`Set` for efficient bulk operations. All callbacks are memoized with `useCallback`, and the context value is wrapped in `useMemo`.
+- **Notes:** Fetches all tasks on mount via `refreshTasks`, but schedules that first refresh just after the initial paint (`requestIdleCallback` with a short timeout or a minimal timer fallback) so the shell can render its skeleton immediately. Each CRUD operation dispatches an optimistic update to the reducer and calls the API in the background. Errors are captured via `LOAD_ERROR` dispatches rather than thrown. The `TASKS_UPDATED` and `TASKS_REMOVED` actions use `Map`/`Set` for efficient bulk operations. All callbacks are memoized with `useCallback`, and the context value is wrapped in `useMemo`.
 
 ---
 
@@ -89,7 +89,7 @@ This nesting order still matters because inner providers can depend on outer one
 - **Safety Timeout:** A 90-second safety timeout (`SAFETY_TIMEOUT_MS`) cancels the stream reader if no `done` event is received, preventing a stuck spinner.
 - **Key Dependencies:** `api` (getAIConfig, updateAIConfig, sendChatMessage, getChatMessages, clearChat, listChatSessions, createNewChatSession, switchChatSession, deleteChatSession, renameChatSession), `useTaskContext` (refreshTasks)
 - **Used By:** `AIChatPanel.tsx`, `AITab.tsx` (settings), `SessionHistory.tsx`, any component tracking `dataMutationCount`
-- **Notes:** Messages are loaded via `restoreMessages` to restore chat history across page refreshes (tool messages are filtered out). The `sendMessage` function handles the full SSE lifecycle: creates user message, opens stream, processes events per round (with `roundFinalized` tracking for multi-round tool use), and creates assistant messages. After the stream ends, a safety-net refresh fires if any mutations were detected. Sessions list is refreshed after every `sendMessage` completes (a new session may have been auto-created). The `isConfigured` check also handles plugin providers (names containing `:`).
+- **Notes:** Messages are loaded via `restoreMessages` to restore chat history across page refreshes (tool messages are filtered out). The `sendMessage` function handles the full SSE lifecycle: creates user message, opens stream, processes events per round (with `roundFinalized` tracking for multi-round tool use), and creates assistant messages. After the stream ends, a safety-net refresh fires if any mutations were detected. Sessions list is refreshed after every `sendMessage` completes (a new session may have been auto-created). The `isConfigured` check also handles plugin providers (names containing `:`). Initial config hydration is deferred with a shared idle-or-timeout startup scheduler to avoid the earliest startup window.
 - **Mounting:** This provider is no longer mounted at the app root. It is wrapped around AI surfaces on demand via `src/ui/context/AIFeatureProvider.tsx` and `src/ui/context/AIVoiceFeatureProviders.tsx`.
 
 ---
@@ -113,10 +113,10 @@ This nesting order still matters because inner providers can depend on outer one
   - `refreshPanels: () => Promise<void>` -- re-fetch panels
   - `refreshViews: () => Promise<void>` -- re-fetch views
   - `executeCommand: (id: string) => Promise<void>` -- execute a command by ID (also refreshes status bar and panels)
-- **Polling:** Status bar items and panels are polled every 1 second via `setInterval` to pick up dynamic updates from running plugins.
+- **Polling:** Status bar items and panels are polled every 30 seconds via `setInterval` to pick up dynamic updates from running plugins.
 - **Key Dependencies:** `api` (listPlugins, listPluginCommands, getStatusBarItems, getPluginPanels, getPluginViews, executePluginCommand)
 - **Used By:** `Sidebar.tsx` (panels, views), `App.tsx` (commands, status bar), `PluginsTab.tsx`, `PluginStoreView.tsx`
-- **Notes:** All data is fetched on mount. The 1-second polling covers status bar and panels for live plugin data. Uses a `mountedRef` to prevent state updates after unmount, avoiding React warnings. The `executeCommand` function automatically refreshes status bar and panels after execution completes.
+- **Notes:** Plugin and plugin-view hydration still run eagerly on mount so plugin-provided start views and sidebar entries are available immediately. Plugin commands, status bar items, and panels are deferred through a shared idle-or-timeout startup scheduler to reduce startup contention while preserving the same eventual data flow. Uses a `mountedRef` to prevent state updates after unmount, avoiding React warnings. The `executeCommand` function automatically refreshes status bar and panels after execution completes.
 
 ---
 
@@ -138,6 +138,9 @@ This nesting order still matters because inner providers can depend on outer one
   - `isListening: boolean` -- STT listening active (set by consumers; context just tracks the flag)
   - `isTranscribing: boolean` -- STT transcription in progress
   - `isSpeaking: boolean` -- TTS playback active
+  - `ensureRegistryLoaded: () => Promise<void>` -- lazily initialize the provider registry when voice features are entered/used
+  - `localProvidersLoaded: boolean` -- whether local voice providers have been registered
+  - `ensureLocalProvidersLoaded: () => Promise<void>` -- lazily register local STT/TTS providers when needed
   - `startListening: () => void` -- set listening state to true
   - `stopListening: () => void` -- set listening state to false
   - `speak: (text: string) => Promise<void>` -- TTS playback (strips markdown, truncates, supports browser and API-based TTS)
@@ -154,7 +157,7 @@ This nesting order still matters because inner providers can depend on outer one
   - `groqApiKey, inworldApiKey` -- provider API keys
 - **Key Dependencies:** `VoiceProviderRegistry` from `ai/voice/registry.js`, `createDefaultVoiceRegistry` from `ai/voice/provider.js`, `BrowserTTSProvider` from `ai/voice/adapters/browser-tts.js`, `playAudioBuffer` from `ai/voice/audio-utils.js`, `localStorage` for persistence
 - **Used By:** `AIChatPanel.tsx`, `VoiceTab.tsx`, `useVoiceCall.ts`, `useVAD.ts`
-- **Notes:** Settings are persisted to `localStorage` under `junban-voice-settings`. The provider registry is rebuilt via `useMemo` when API keys change, avoiding double-creates from `useState`+`useEffect`. Voice list and model list refresh when the TTS provider changes. The `speak` function strips markdown formatting (code blocks, inline code, markdown punctuation), truncates to 5000 chars for browser TTS or 2000 chars for API TTS, and supports both `BrowserTTSProvider.speakDirect()` and API-based `synthesize()` + `playAudioBuffer()`. Cancellation handles both `window.speechSynthesis.cancel()` and audio buffer cancellation via a ref.
+- **Notes:** Settings are persisted to `localStorage` under `junban-voice-settings`. The provider registry and local-provider registration are lazy/on-demand (via `ensureRegistryLoaded` and `ensureLocalProvidersLoaded`) instead of auto-warming on provider mount. Voice list and model list refresh when the TTS provider changes. The `speak` function strips markdown formatting (code blocks, inline code, markdown punctuation), truncates to 5000 chars for browser TTS or 2000 chars for API TTS, and supports both `BrowserTTSProvider.speakDirect()` and API-based `synthesize()` + `playAudioBuffer()`. Cancellation handles both `window.speechSynthesis.cancel()` and audio buffer cancellation via a ref.
 - **Mounting:** This provider is feature-scoped. `src/ui/context/VoiceFeatureProvider.tsx` mounts it for the Voice settings tab, and `src/ui/context/AIVoiceFeatureProviders.tsx` mounts it for AI chat.
 
 ---
@@ -217,7 +220,7 @@ This nesting order still matters because inner providers can depend on outer one
   - `reduce_animations` -> toggles `reduce-motion` class on `<html>`
 - **Key Dependencies:** `api` (getAppSetting, setAppSetting)
 - **Used By:** `GeneralTab.tsx`, `AppearanceTab.tsx`, `DatePicker.tsx`, `useSoundEffect.ts`, `Today.tsx`, `Project.tsx`, and any component that reads user preferences
-- **Notes:** The provider wraps children in a `<div>` that fades in once settings are loaded, preventing flash of unstyled content. All setting values are stored as strings in the backend. The `darkenColor` helper converts hex to HSL, reduces lightness, and converts back. The context is created with default values so `useGeneralSettings()` can be called without a provider (returns defaults).
+- **Notes:** The provider loads settings via one batch fetch on mount, but no longer hides the whole app while waiting. Visual defaults come from `DEFAULT_SETTINGS` plus early theme/bootstrap work in `main.tsx`, then persisted settings replace them as soon as the fetch resolves. All setting values are stored as strings in the backend. The `darkenColor` helper converts hex to HSL, reduces lightness, and converts back. The context is created with default values so `useGeneralSettings()` can be called without a provider (returns defaults).
 
 ---
 

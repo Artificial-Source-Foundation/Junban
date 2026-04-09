@@ -1,10 +1,5 @@
-import {
-  useDirectServices,
-  BASE,
-  handleResponse,
-  handleVoidResponse,
-  getServices,
-} from "../helpers.js";
+import { useDirectServices, BASE, handleResponse, handleVoidResponse } from "../helpers.js";
+import { getServices } from "../direct-services.js";
 import type { AIChatMessage, ChatSessionInfo } from "./ai-types.js";
 import { deserializeChatMessages } from "../../../ai/message-utils.js";
 import { createLogger } from "../../../utils/logger.js";

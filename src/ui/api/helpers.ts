@@ -1,5 +1,4 @@
 import { isTauri } from "../../utils/tauri.js";
-import type { WebAppServices } from "../../bootstrap-web.js";
 
 export { isTauri };
 
@@ -73,21 +72,4 @@ export async function handleVoidResponse(res: Response): Promise<void> {
     }
     throw new Error(message);
   }
-}
-
-// Lazy-loaded services for browser WASM mode (only used when useDirectServices() is true)
-export type WebServices = WebAppServices;
-let _services: WebServices | null = null;
-let _pending: Promise<WebServices> | null = null;
-
-export async function getServices(): Promise<WebServices> {
-  if (_services) return _services;
-  if (_pending) return _pending;
-  _pending = (async () => {
-    const { bootstrapWeb } = await import("../../bootstrap-web.js");
-    _services = await bootstrapWeb();
-    _pending = null;
-    return _services;
-  })();
-  return _pending;
 }

@@ -1,5 +1,5 @@
 import { useCallback, type MutableRefObject, type Dispatch, type SetStateAction } from "react";
-import type { AIChatMessage } from "../../api/index.js";
+import type { AIChatMessage } from "../../api/ai.js";
 
 interface UseAIMessageActionsParams {
   lastUserMessageRef: MutableRefObject<string>;

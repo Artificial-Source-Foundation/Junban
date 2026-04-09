@@ -5,11 +5,11 @@
   "author": "AI Strategic Forum (ASF)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ASF-GROUP/Junban.git"
+    "url": "https://github.com/Artificial-Source-Foundation/Junban.git"
   },
-  "homepage": "https://github.com/ASF-GROUP/Junban",
+  "homepage": "https://github.com/Artificial-Source-Foundation/Junban",
   "bugs": {
-    "url": "https://github.com/ASF-GROUP/Junban/issues"
+    "url": "https://github.com/Artificial-Source-Foundation/Junban/issues"
   },
   "keywords": [
     "task-manager",
@@ -28,8 +28,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "dev:full": "concurrently --kill-others \"node --import tsx src/server.ts\" \"VITE_USE_BACKEND=true vite\"",
-    "server": "node --import tsx src/server.ts",
+    "dev:full": "node scripts/run-with-profile.mjs dev concurrently --kill-others \"node --import tsx src/server.ts\" \"VITE_USE_BACKEND=true vite\"",
+    "server": "node scripts/run-with-profile.mjs dev node --import tsx src/server.ts",
     "build": "tsc && vite build",
     "start": "vite preview",
     "lint": "eslint src/ tests/",
@@ -41,13 +41,13 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "cli": "tsx src/cli/index.ts",
-    "mcp": "tsx src/mcp/server.ts",
+    "db:migrate": "node scripts/run-with-profile.mjs dev tsx src/db/migrate.ts",
+    "cli": "node scripts/run-with-profile.mjs dev tsx src/cli/index.ts",
+    "mcp": "node scripts/run-with-profile.mjs dev tsx src/mcp/server.ts",
     "test:e2e": "npx playwright test",
     "docs:check": "tsx scripts/docs-check.ts",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test",
-    "tauri:dev": "tauri dev",
+    "tauri:dev": "node scripts/run-with-profile.mjs dev tauri dev",
     "tauri:build": "tauri build",
     "release:prepare": "tsx scripts/prepare-release.ts",
     "release:tag": "git tag -a v$(node -p \"require('./package.json').version\") -m \"v$(node -p \"require('./package.json').version\")\" && git push --tags",

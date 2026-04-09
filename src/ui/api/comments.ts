@@ -1,11 +1,6 @@
 import type { TaskComment, TaskActivity } from "../../core/types.js";
-import {
-  useDirectServices,
-  BASE,
-  handleResponse,
-  handleVoidResponse,
-  getServices,
-} from "./helpers.js";
+import { useDirectServices, BASE, handleResponse, handleVoidResponse } from "./helpers.js";
+import { getServices } from "./direct-services.js";
 
 export async function listTaskComments(taskId: string): Promise<TaskComment[]> {
   if (useDirectServices()) {

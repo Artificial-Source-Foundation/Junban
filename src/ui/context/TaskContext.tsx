@@ -205,7 +205,27 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refreshTasks();
+    let idleHandle: number | null = null;
+    let timeoutHandle: ReturnType<typeof globalThis.setTimeout> | null = null;
+
+    const run = () => {
+      void refreshTasks();
+    };
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleHandle = window.requestIdleCallback(run, { timeout: 100 });
+    } else {
+      timeoutHandle = globalThis.setTimeout(run, 16);
+    }
+
+    return () => {
+      if (idleHandle !== null && typeof window !== "undefined" && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleHandle);
+      }
+      if (timeoutHandle !== null) {
+        globalThis.clearTimeout(timeoutHandle);
+      }
+    };
   }, [refreshTasks]);
 
   const contextValue = useMemo(

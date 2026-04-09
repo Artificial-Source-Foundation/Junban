@@ -5,7 +5,7 @@ import { MarkdownMessage } from "./MarkdownMessage.js";
 import { ChatToolResultCard } from "./ChatToolResultCard.js";
 import { ChatTaskCard } from "../ChatTaskCard.js";
 import { MessageActions } from "./MessageActions.js";
-import type { AIChatMessage } from "../../api/index.js";
+import type { AIChatMessage } from "../../api/ai.js";
 
 interface MessageBubbleProps {
   message: AIChatMessage;

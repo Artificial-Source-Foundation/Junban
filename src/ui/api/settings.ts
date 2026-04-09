@@ -1,11 +1,6 @@
 import type { Task, Project } from "../../core/types.js";
-import {
-  useDirectServices,
-  BASE,
-  handleResponse,
-  handleVoidResponse,
-  getServices,
-} from "./helpers.js";
+import { useDirectServices, BASE, handleResponse, handleVoidResponse } from "./helpers.js";
+import { getServices } from "./direct-services.js";
 import { listTasks } from "./tasks.js";
 import { listProjects } from "./projects.js";
 

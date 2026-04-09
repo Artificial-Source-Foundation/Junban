@@ -13,6 +13,39 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // apiPlugin and proxy /api requests to it instead.
 const useBackend = process.env.VITE_USE_BACKEND === "true";
 
+const NON_CRITICAL_MODULEPRELOAD_MARKERS = [
+  "ai-vendors",
+  "ai-adapters",
+  "animations",
+  "dnd-kit",
+  "virtualizer",
+  "markdown",
+  "ai-chat",
+  "aichat",
+  "pluginview",
+  "project",
+  "completed",
+  "cancelled",
+  "someday",
+  "stats",
+  "matrix",
+  "calendar",
+  "filterslabels",
+  "filterview",
+  "taskpage",
+  "dopaminemenu",
+];
+
+function isNonCriticalModulePreload(dep: string): boolean {
+  const fileName = dep.split("/").pop()?.toLowerCase() ?? dep.toLowerCase();
+  return NON_CRITICAL_MODULEPRELOAD_MARKERS.some(
+    (marker) =>
+      fileName.includes(`${marker}-`) ||
+      fileName.startsWith(`${marker}.`) ||
+      fileName === `${marker}.js`,
+  );
+}
+
 export default defineConfig(({ command }) => ({
   plugins: [
     tailwindcss(),
@@ -58,6 +91,15 @@ export default defineConfig(({ command }) => ({
     format: "es",
   },
   build: {
+    modulePreload: {
+      resolveDependencies: (_filename, deps, { hostType }) => {
+        if (hostType !== "html") {
+          return deps;
+        }
+
+        return deps.filter((dep) => !isNonCriticalModulePreload(dep));
+      },
+    },
     rollupOptions: {
       external: ["better-sqlite3"],
       output: {

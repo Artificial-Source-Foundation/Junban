@@ -1,6 +1,6 @@
 import { useState, useCallback, memo } from "react";
 import { Plus, Trash2, MessageSquare, Check, X, Pencil } from "lucide-react";
-import type { ChatSessionInfo } from "../../api/index.js";
+import type { ChatSessionInfo } from "../../api/ai.js";
 
 interface ChatHistoryProps {
   sessions: ChatSessionInfo[];

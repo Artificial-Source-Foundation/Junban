@@ -121,7 +121,7 @@ export const WelcomeScreen = memo(function WelcomeScreen({
   useEffect(() => {
     api
       .getAppSetting("ai_daily_briefing")
-      .then((val) => setBriefingEnabled(val === "on"))
+      .then((val: string | null) => setBriefingEnabled(val === "on"))
       .catch((err: unknown) => console.warn("[chat] Failed to load briefing setting:", err));
   }, []);
 

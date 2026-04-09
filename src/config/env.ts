@@ -1,9 +1,23 @@
 import { z } from "zod";
 
+const PROFILE_DEFAULTS = {
+  daily: {
+    DB_PATH: "./data/junban.db",
+    MARKDOWN_PATH: "./tasks/",
+  },
+  dev: {
+    DB_PATH: "./data/dev/junban.db",
+    MARKDOWN_PATH: "./tasks/dev/",
+  },
+} as const;
+
+const profileSchema = z.enum(["daily", "dev"]);
+
 const envSchema = z.object({
-  DB_PATH: z.string().default("./data/junban.db"),
+  JUNBAN_PROFILE: profileSchema.default("daily"),
+  DB_PATH: z.string(),
   STORAGE_MODE: z.enum(["sqlite", "markdown"]).default("sqlite"),
-  MARKDOWN_PATH: z.string().default("./tasks/"),
+  MARKDOWN_PATH: z.string(),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   PORT: z.coerce.number().default(5173),
   DEFAULT_THEME: z.enum(["light", "dark"]).default("light"),
@@ -21,5 +35,13 @@ const envSchema = z.object({
 export type Env = z.infer<typeof envSchema>;
 
 export function loadEnv(): Env {
-  return envSchema.parse(process.env);
+  const profile = profileSchema.parse(process.env.JUNBAN_PROFILE ?? "daily");
+  const defaults = PROFILE_DEFAULTS[profile];
+
+  return envSchema.parse({
+    ...process.env,
+    JUNBAN_PROFILE: profile,
+    DB_PATH: process.env.DB_PATH ?? defaults.DB_PATH,
+    MARKDOWN_PATH: process.env.MARKDOWN_PATH ?? defaults.MARKDOWN_PATH,
+  });
 }

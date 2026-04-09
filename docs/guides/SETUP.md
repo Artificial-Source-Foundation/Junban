@@ -4,18 +4,18 @@ Step-by-step guide to get ASF Junban running on your machine.
 
 ## Prerequisites
 
-| Tool | Version | Install |
-|------|---------|---------|
-| Node.js | 22+ | [nodejs.org](https://nodejs.org/) or `nvm install 22` |
-| pnpm | 10+ | `npm install -g pnpm` or `corepack enable` |
-| Git | 2.x | [git-scm.com](https://git-scm.com/) |
+| Tool    | Version | Install                                               |
+| ------- | ------- | ----------------------------------------------------- |
+| Node.js | 22+     | [nodejs.org](https://nodejs.org/) or `nvm install 22` |
+| pnpm    | 10+     | `npm install -g pnpm` or `corepack enable`            |
+| Git     | 2.x     | [git-scm.com](https://git-scm.com/)                   |
 
 ### Optional (for desktop app)
 
-| Tool | Version | Install |
-|------|---------|---------|
-| Rust | latest stable | [rustup.rs](https://rustup.rs/) |
-| Tauri CLI | 2.x | `cargo install tauri-cli` |
+| Tool      | Version       | Install                         |
+| --------- | ------------- | ------------------------------- |
+| Rust      | latest stable | [rustup.rs](https://rustup.rs/) |
+| Tauri CLI | 2.x           | `cargo install tauri-cli`       |
 
 Rust and Tauri are only needed if you want to build the desktop app. The web UI runs without them.
 
@@ -24,7 +24,7 @@ Rust and Tauri are only needed if you want to build the desktop app. The web UI 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/ASF-GROUP/Junban.git
+git clone https://github.com/Artificial-Source-Foundation/Junban.git
 cd Junban
 ```
 
@@ -41,6 +41,7 @@ cp .env.example .env
 ```
 
 The defaults work out of the box. Edit `.env` if you want to change:
+
 - `DB_PATH` — where the SQLite database is stored (default: `./data/junban.db`)
 - `STORAGE_MODE` — `sqlite` (default) or `markdown`
 - `LOG_LEVEL` — `debug`, `info`, `warn`, `error`
@@ -71,6 +72,7 @@ buy milk tomorrow at 3pm p1 #groceries +shopping
 ```
 
 Press Enter. The task is created with:
+
 - Title: "buy milk"
 - Due: tomorrow at 3:00 PM
 - Priority: P1 (highest)
@@ -145,6 +147,7 @@ Add to your `claude_desktop_config.json`:
 ```
 
 Restart Claude Desktop. You can now ask Claude to manage your tasks:
+
 - "Create a task to review the PR by Friday"
 - "What's on my plate today?"
 - "Mark the groceries task as done"
@@ -208,6 +211,7 @@ mkdir -p plugins/my-plugin
 ```
 
 Create `plugins/my-plugin/manifest.json`:
+
 ```json
 {
   "id": "my-plugin",
@@ -222,6 +226,7 @@ Create `plugins/my-plugin/manifest.json`:
 ```
 
 Create `plugins/my-plugin/index.ts`:
+
 ```typescript
 import { Plugin } from "@asf-junban/plugin-api";
 
@@ -252,6 +257,7 @@ pnpm db:migrate
 ### Port already in use
 
 Edit `PORT` in `.env` or kill the process using port 5173:
+
 ```bash
 lsof -i :5173 | grep LISTEN
 kill <PID>

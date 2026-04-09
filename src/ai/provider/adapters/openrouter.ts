@@ -80,7 +80,7 @@ export const openrouterPlugin: LLMProviderPlugin = createOpenAICompatPlugin({
   defaultModel: "anthropic/claude-sonnet-4.5",
   defaultBaseUrl: "https://openrouter.ai/api/v1",
   defaultHeaders: {
-    "HTTP-Referer": "https://github.com/ASF-GROUP/Junban",
+    "HTTP-Referer": "https://github.com/Artificial-Source-Foundation/Junban",
     "X-Title": "ASF Junban",
   },
   discoverModels: discoverOpenRouterModels,

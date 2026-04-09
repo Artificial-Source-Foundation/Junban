@@ -3,6 +3,8 @@ import { shortcutManager } from "../shortcutManagerInstance.js";
 import { themeManager } from "../themes/manager.js";
 import { getAppSetting } from "../api/settings.js";
 
+const CUSTOM_BINDINGS_LOAD_DELAY_MS = 1200;
+
 export function useAppShortcuts(
   setCommandPaletteOpen: React.Dispatch<React.SetStateAction<boolean>>,
   undo: () => void,
@@ -101,16 +103,22 @@ export function useAppShortcuts(
       });
     }
 
-    // Load custom bindings from settings
-    getAppSetting("keyboard_shortcuts").then((val) => {
-      if (val) {
-        try {
-          shortcutManager.loadCustomBindings(JSON.parse(val));
-        } catch {
-          // Non-critical
-        }
-      }
-    });
+    // Load custom bindings from settings (deferred so defaults are active immediately)
+    const loadCustomBindings = () => {
+      getAppSetting("keyboard_shortcuts")
+        .then((val) => {
+          if (val) {
+            try {
+              shortcutManager.loadCustomBindings(JSON.parse(val));
+            } catch {
+              // Non-critical
+            }
+          }
+        })
+        .catch(() => {});
+    };
+
+    const timeoutHandle = globalThis.setTimeout(loadCustomBindings, CUSTOM_BINDINGS_LOAD_DELAY_MS);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       shortcutManager.handleKeyDown(e);
@@ -123,6 +131,7 @@ export function useAppShortcuts(
       shortcutManager.unregister("chord-go-today");
       shortcutManager.unregister("chord-go-upcoming");
       shortcutManager.unregister("chord-go-stats");
+      globalThis.clearTimeout(timeoutHandle);
     };
   }, [
     undo,

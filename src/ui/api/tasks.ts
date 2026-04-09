@@ -7,8 +7,8 @@ import {
   buildApiUrl,
   handleResponse,
   handleVoidResponse,
-  getServices,
 } from "./helpers.js";
+import { getServices } from "./direct-services.js";
 
 export async function listTasks(params?: {
   search?: string;

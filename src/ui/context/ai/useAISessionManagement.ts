@@ -1,5 +1,6 @@
 import { useCallback, type Dispatch, type SetStateAction } from "react";
-import { api, type AIChatMessage } from "../../api/index.js";
+import * as api from "../../api/ai.js";
+import type { AIChatMessage } from "../../api/ai.js";
 
 interface UseAISessionManagementParams {
   setMessages: Dispatch<SetStateAction<AIChatMessage[]>>;

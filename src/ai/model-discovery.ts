@@ -4,8 +4,12 @@
  * vite.config.ts and api.ts imports.
  */
 
-import { createDefaultRegistry } from "./provider.js";
 import type { AIProviderConfig } from "./types.js";
+
+async function createRegistry() {
+  const { createDefaultRegistryAsync } = await import("./provider.js");
+  return createDefaultRegistryAsync();
+}
 
 export interface ModelInfo {
   id: string;
@@ -22,7 +26,7 @@ export async function fetchAvailableModels(
   config: { apiKey?: string; baseUrl?: string },
 ): Promise<ModelInfo[]> {
   try {
-    const registry = createDefaultRegistry();
+    const registry = await createRegistry();
     const providerConfig: AIProviderConfig = {
       provider: providerName,
       apiKey: config.apiKey,
@@ -47,7 +51,7 @@ export async function loadLMStudioModel(
   baseUrl: string,
   apiKey?: string,
 ): Promise<string> {
-  const registry = createDefaultRegistry();
+  const registry = await createRegistry();
   const config: AIProviderConfig = {
     provider: "lmstudio",
     baseUrl,

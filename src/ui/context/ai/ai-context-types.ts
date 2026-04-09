@@ -1,4 +1,4 @@
-import type { AIConfigInfo, AIChatMessage, ChatSessionInfo } from "../../api/index.js";
+import type { AIConfigInfo, AIChatMessage, ChatSessionInfo } from "../../api/ai.js";
 
 export interface AIState {
   config: AIConfigInfo | null;

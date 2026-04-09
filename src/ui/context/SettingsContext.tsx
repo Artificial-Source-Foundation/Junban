@@ -263,7 +263,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         [settings, loaded, updateSetting],
       )}
     >
-      <div className={loaded ? "opacity-100" : "opacity-0"}>{children}</div>
+      {children}
     </SettingsContext.Provider>
   );
 }

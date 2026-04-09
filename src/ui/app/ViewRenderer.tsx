@@ -1,56 +1,62 @@
-import { lazy, Suspense } from "react";
-import { motion } from "framer-motion";
-import { AnimatedPresence } from "../components/AnimatedPresence.js";
+import { lazy, Suspense, useEffect } from "react";
 import { ErrorBoundary } from "../components/ErrorBoundary.js";
+import { ViewSkeleton } from "../components/Skeleton.js";
 import { useReducedMotion } from "../components/useReducedMotion.js";
-import { crossfade } from "../utils/animation-variants.js";
 import { useAppState } from "../context/AppStateContext.js";
 import type { UpdateTaskInput } from "../../core/types.js";
 import type { CalendarMode } from "../hooks/useRouting.js";
 import type { SettingsTab } from "../views/settings/types.js";
+import { Inbox } from "../views/Inbox.js";
+import { Today } from "../views/Today.js";
+import { Upcoming } from "../views/Upcoming.js";
 
-const Inbox = lazy(() => import("../views/Inbox.js").then((module) => ({ default: module.Inbox })));
-const PluginView = lazy(() =>
-  import("../views/PluginView.js").then((module) => ({ default: module.PluginView })),
-);
-const Today = lazy(() => import("../views/Today.js").then((module) => ({ default: module.Today })));
-const Upcoming = lazy(() =>
-  import("../views/Upcoming.js").then((module) => ({ default: module.Upcoming })),
-);
-const Project = lazy(() =>
-  import("../views/Project.js").then((module) => ({ default: module.Project })),
-);
-const Completed = lazy(() =>
-  import("../views/Completed.js").then((module) => ({ default: module.Completed })),
-);
-const Cancelled = lazy(() =>
-  import("../views/Cancelled.js").then((module) => ({ default: module.Cancelled })),
-);
-const Someday = lazy(() =>
-  import("../views/Someday.js").then((module) => ({ default: module.Someday })),
-);
-const Stats = lazy(() => import("../views/Stats.js").then((module) => ({ default: module.Stats })));
-const Matrix = lazy(() =>
-  import("../views/Matrix.js").then((module) => ({ default: module.Matrix })),
-);
-const Calendar = lazy(() =>
-  import("../views/Calendar.js").then((module) => ({ default: module.Calendar })),
-);
+const loadPluginView = () => import("../views/PluginView.js");
+const loadProject = () => import("../views/Project.js");
+const loadCompleted = () => import("../views/Completed.js");
+const loadCancelled = () => import("../views/Cancelled.js");
+const loadSomeday = () => import("../views/Someday.js");
+const loadStats = () => import("../views/Stats.js");
+const loadMatrix = () => import("../views/Matrix.js");
+const loadCalendar = () => import("../views/Calendar.js");
+const loadFiltersLabels = () => import("../views/FiltersLabels.js");
+const loadFilterView = () => import("../views/FilterView.js");
+const loadTaskPage = () => import("../views/TaskPage.js");
+const loadAIChat = () => import("../views/AIChat.js");
+const loadDopamineMenu = () => import("../views/DopamineMenu.js");
+
+const PluginView = lazy(() => loadPluginView().then((module) => ({ default: module.PluginView })));
+const Project = lazy(() => loadProject().then((module) => ({ default: module.Project })));
+const Completed = lazy(() => loadCompleted().then((module) => ({ default: module.Completed })));
+const Cancelled = lazy(() => loadCancelled().then((module) => ({ default: module.Cancelled })));
+const Someday = lazy(() => loadSomeday().then((module) => ({ default: module.Someday })));
+const Stats = lazy(() => loadStats().then((module) => ({ default: module.Stats })));
+const Matrix = lazy(() => loadMatrix().then((module) => ({ default: module.Matrix })));
+const Calendar = lazy(() => loadCalendar().then((module) => ({ default: module.Calendar })));
 const FiltersLabels = lazy(() =>
-  import("../views/FiltersLabels.js").then((module) => ({ default: module.FiltersLabels })),
+  loadFiltersLabels().then((module) => ({ default: module.FiltersLabels })),
 );
-const FilterView = lazy(() =>
-  import("../views/FilterView.js").then((module) => ({ default: module.FilterView })),
-);
-const TaskPage = lazy(() =>
-  import("../views/TaskPage.js").then((module) => ({ default: module.TaskPage })),
-);
-const AIChat = lazy(() =>
-  import("../views/AIChat.js").then((module) => ({ default: module.AIChat })),
-);
+const FilterView = lazy(() => loadFilterView().then((module) => ({ default: module.FilterView })));
+const TaskPage = lazy(() => loadTaskPage().then((module) => ({ default: module.TaskPage })));
+const AIChat = lazy(() => loadAIChat().then((module) => ({ default: module.AIChat })));
 const DopamineMenu = lazy(() =>
-  import("../views/DopamineMenu.js").then((module) => ({ default: module.DopamineMenu })),
+  loadDopamineMenu().then((module) => ({ default: module.DopamineMenu })),
 );
+
+const VIEW_PRELOADERS = {
+  "plugin-view": loadPluginView,
+  project: loadProject,
+  completed: loadCompleted,
+  cancelled: loadCancelled,
+  someday: loadSomeday,
+  stats: loadStats,
+  matrix: loadMatrix,
+  calendar: loadCalendar,
+  "filters-labels": loadFiltersLabels,
+  filter: loadFilterView,
+  task: loadTaskPage,
+  "ai-chat": loadAIChat,
+  "dopamine-menu": loadDopamineMenu,
+} as const;
 
 /** Parsed task input from TaskInput / QuickAdd — mirrors useTaskHandlers.handleCreateTask param. */
 export interface ParsedTaskInput {
@@ -133,11 +139,7 @@ export function ViewRenderer({
   } = useAppState();
   const reducedMotion = useReducedMotion();
   const viewKey = `${currentView}-${selectedProjectId ?? ""}-${selectedPluginViewId ?? ""}-${selectedFilterId ?? ""}`;
-  const lazyFallback = (
-    <div className="flex h-full items-center justify-center text-on-surface-secondary">
-      Loading view...
-    </div>
-  );
+  const lazyFallback = <ViewSkeleton view={currentView} />;
   const lazyErrorFallback = (
     <div className="flex h-full items-center justify-center text-error">
       Failed to load this view. Refresh and try again.
@@ -148,6 +150,25 @@ export function ViewRenderer({
       <Suspense fallback={lazyFallback}>{content}</Suspense>
     </ErrorBoundary>
   );
+
+  useEffect(() => {
+    const preloadCurrentView = VIEW_PRELOADERS[currentView as keyof typeof VIEW_PRELOADERS];
+    preloadCurrentView?.();
+
+    const preloadCommonViews = () => {
+      loadCalendar();
+      loadFiltersLabels();
+      loadTaskPage();
+    };
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const idleHandle = window.requestIdleCallback(preloadCommonViews, { timeout: 1200 });
+      return () => window.cancelIdleCallback(idleHandle);
+    }
+
+    const timeoutHandle = globalThis.setTimeout(preloadCommonViews, 250);
+    return () => globalThis.clearTimeout(timeoutHandle);
+  }, [currentView]);
 
   const viewContent = (() => {
     switch (currentView) {
@@ -378,22 +399,9 @@ export function ViewRenderer({
     }
   })();
 
-  if (reducedMotion) {
-    return <>{viewContent}</>;
-  }
-
   return (
-    <AnimatedPresence mode="wait">
-      <motion.div
-        key={viewKey}
-        variants={crossfade}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        className="flex-1 flex flex-col"
-      >
-        {viewContent}
-      </motion.div>
-    </AnimatedPresence>
+    <div key={viewKey} className={`flex-1 flex flex-col ${reducedMotion ? "" : "animate-fade-in"}`}>
+      {viewContent}
+    </div>
   );
 }

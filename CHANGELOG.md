@@ -63,4 +63,4 @@ First stable public release. 37 sprints, 1930+ tests, 251 features shipped.
 - Voice call mode prevents duplicate auto-speak via `voiceCallActiveRef`
 - Markdown backend sorts YAML frontmatter keys alphabetically for git-friendly diffs
 
-[1.0.0]: https://github.com/ASF-GROUP/Junban/releases/tag/v1.0.0
+[1.0.0]: https://github.com/Artificial-Source-Foundation/Junban/releases/tag/v1.0.0

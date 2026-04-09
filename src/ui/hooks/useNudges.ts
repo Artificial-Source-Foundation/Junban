@@ -69,14 +69,33 @@ export function useNudges({
     setNudges(active);
   }, [tasks, enabled, enabledTypes, capacityMinutes]);
 
-  // Evaluate on mount + interval
+  // Defer initial evaluation so it doesn't compete with first paint,
+  // then continue periodic evaluation at the configured interval.
   useEffect(() => {
-    evaluate();
+    if (!enabled) {
+      setNudges([]);
+      return;
+    }
 
-    if (!enabled) return;
+    let idleHandle: number | null = null;
+    let timeoutHandle: ReturnType<typeof globalThis.setTimeout> | null = null;
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleHandle = window.requestIdleCallback(evaluate, { timeout: 600 });
+    } else {
+      timeoutHandle = globalThis.setTimeout(evaluate, 120);
+    }
 
     const timer = setInterval(evaluate, intervalMs);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      if (idleHandle !== null && typeof window !== "undefined" && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleHandle);
+      }
+      if (timeoutHandle !== null) {
+        globalThis.clearTimeout(timeoutHandle);
+      }
+    };
   }, [evaluate, enabled, intervalMs]);
 
   const dismiss = useCallback((id: string) => {

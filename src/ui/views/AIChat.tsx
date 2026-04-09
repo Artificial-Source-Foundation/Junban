@@ -3,7 +3,7 @@ import { ErrorBoundary } from "../components/ErrorBoundary.js";
 import { useAIContext } from "../context/AIContext.js";
 import { AIVoiceFeatureProviders } from "../context/AIVoiceFeatureProviders.js";
 import { useAppState } from "../context/AppStateContext.js";
-import { api } from "../api/index.js";
+import * as api from "../api/ai.js";
 
 const AIChatPanel = lazy(() =>
   import("../components/AIChatPanel.js").then((module) => ({ default: module.AIChatPanel })),

@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { AIConfigInfo } from "../../api/index.js";
+import type { AIConfigInfo } from "../../api/ai.js";
 
 export interface AIConfigContextValue {
   config: AIConfigInfo | null;

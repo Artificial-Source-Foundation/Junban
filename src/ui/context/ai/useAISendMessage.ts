@@ -1,5 +1,6 @@
 import { useCallback, type MutableRefObject, type Dispatch, type SetStateAction } from "react";
-import { api, type AIChatMessage } from "../../api/index.js";
+import * as api from "../../api/ai.js";
+import type { AIChatMessage } from "../../api/ai.js";
 import {
   SAFETY_TIMEOUT_MS,
   TASK_MUTATING_TOOLS,

@@ -61,6 +61,7 @@ export function useAppState(routing: {
   const isMobile = useIsMobile();
   const playSound = useSoundEffect();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const hasDeferredBlockedTaskIdsRef = useRef(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [templateSelectorOpen, setTemplateSelectorOpen] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
@@ -127,8 +128,37 @@ export function useAppState(routing: {
   useEffect(() => {
     fetchProjects();
     fetchTags();
-    fetchBlockedTaskIds();
-  }, [taskCount, fetchProjects, fetchTags, fetchBlockedTaskIds]);
+  }, [taskCount, fetchProjects, fetchTags]);
+
+  useEffect(() => {
+    const run = () => {
+      void fetchBlockedTaskIds();
+    };
+
+    if (hasDeferredBlockedTaskIdsRef.current) {
+      run();
+      return;
+    }
+
+    let idleHandle: number | null = null;
+    let timeoutHandle: ReturnType<typeof globalThis.setTimeout> | null = null;
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleHandle = window.requestIdleCallback(run, { timeout: 1200 });
+    } else {
+      timeoutHandle = globalThis.setTimeout(run, 250);
+    }
+
+    return () => {
+      if (idleHandle !== null && typeof window !== "undefined" && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleHandle);
+      }
+      if (timeoutHandle !== null) {
+        globalThis.clearTimeout(timeoutHandle);
+      }
+      hasDeferredBlockedTaskIdsRef.current = true;
+    };
+  }, [taskCount, fetchBlockedTaskIds]);
   useEffect(() => {
     const handleAIDataMutation = () => {
       fetchProjects();
@@ -142,9 +172,31 @@ export function useAppState(routing: {
     window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, sidebarCollapsed ? "1" : "0");
   }, [sidebarCollapsed]);
   useEffect(() => {
-    getAppSetting("onboarding_completed").then((val) => {
-      if (!val) setOnboardingOpen(true);
-    });
+    const run = () => {
+      getAppSetting("onboarding_completed")
+        .then((val) => {
+          if (!val) setOnboardingOpen(true);
+        })
+        .catch(() => {});
+    };
+
+    let idleHandle: number | null = null;
+    let timeoutHandle: ReturnType<typeof globalThis.setTimeout> | null = null;
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleHandle = window.requestIdleCallback(run, { timeout: 1500 });
+    } else {
+      timeoutHandle = globalThis.setTimeout(run, 300);
+    }
+
+    return () => {
+      if (idleHandle !== null && typeof window !== "undefined" && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleHandle);
+      }
+      if (timeoutHandle !== null) {
+        globalThis.clearTimeout(timeoutHandle);
+      }
+    };
   }, []);
 
   const fetchSavedFilters = useCallback(async () => {
@@ -156,7 +208,27 @@ export function useAppState(routing: {
     }
   }, []);
   useEffect(() => {
-    fetchSavedFilters();
+    const run = () => {
+      void fetchSavedFilters();
+    };
+
+    let idleHandle: number | null = null;
+    let timeoutHandle: ReturnType<typeof globalThis.setTimeout> | null = null;
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleHandle = window.requestIdleCallback(run, { timeout: 1500 });
+    } else {
+      timeoutHandle = globalThis.setTimeout(run, 300);
+    }
+
+    return () => {
+      if (idleHandle !== null && typeof window !== "undefined" && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleHandle);
+      }
+      if (timeoutHandle !== null) {
+        globalThis.clearTimeout(timeoutHandle);
+      }
+    };
   }, [fetchSavedFilters]);
   useEffect(() => {
     setDrawerOpen(false);

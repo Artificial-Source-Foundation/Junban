@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createDefaultRegistry } from "../../src/ai/provider.js";
+import { createDefaultRegistry } from "../../src/ai/provider-node.js";
 import { createOpenAICompatPlugin } from "../../src/ai/provider/adapters/openai-compat.js";
 import { openaiPlugin } from "../../src/ai/provider/adapters/openai.js";
 

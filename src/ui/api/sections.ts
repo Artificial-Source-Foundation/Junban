@@ -1,11 +1,6 @@
 import type { Section } from "../../core/types.js";
-import {
-  useDirectServices,
-  BASE,
-  handleResponse,
-  handleVoidResponse,
-  getServices,
-} from "./helpers.js";
+import { useDirectServices, BASE, handleResponse, handleVoidResponse } from "./helpers.js";
+import { getServices } from "./direct-services.js";
 
 export async function listSections(projectId: string): Promise<Section[]> {
   if (useDirectServices()) {

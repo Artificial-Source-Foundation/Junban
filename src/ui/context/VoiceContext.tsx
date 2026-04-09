@@ -181,26 +181,6 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     }
   }, [registrySignature, settings.groqApiKey, settings.inworldApiKey]);
 
-  useEffect(() => {
-    const shouldWarmRegistry =
-      settings.ttsEnabled ||
-      Boolean(settings.groqApiKey) ||
-      Boolean(settings.inworldApiKey) ||
-      settings.sttProviderId !== "browser-stt" ||
-      settings.ttsProviderId !== "browser-tts";
-
-    if (shouldWarmRegistry) {
-      void ensureRegistryLoaded();
-    }
-  }, [
-    ensureRegistryLoaded,
-    settings.groqApiKey,
-    settings.inworldApiKey,
-    settings.sttProviderId,
-    settings.ttsEnabled,
-    settings.ttsProviderId,
-  ]);
-
   const ensureLocalProvidersLoaded = useCallback(async () => {
     await ensureRegistryLoaded();
     const activeRegistry = registryRef.current;
@@ -223,23 +203,6 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     }
     await localProviderLoadRef.current;
   }, [ensureRegistryLoaded]);
-
-  useEffect(() => {
-    const shouldLoadLocalProviders =
-      settings.voiceMode === "vad" ||
-      settings.sttProviderId === "whisper-local-stt" ||
-      settings.ttsProviderId === "piper-local-tts" ||
-      settings.ttsProviderId === "kokoro-local-tts";
-
-    if (shouldLoadLocalProviders) {
-      void ensureLocalProvidersLoaded();
-    }
-  }, [
-    ensureLocalProvidersLoaded,
-    settings.sttProviderId,
-    settings.ttsProviderId,
-    settings.voiceMode,
-  ]);
 
   const sttProvider = registry.getSTT(settings.sttProviderId);
   const ttsProvider = registry.getTTS(settings.ttsProviderId);

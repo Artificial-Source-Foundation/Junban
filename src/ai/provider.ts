@@ -4,37 +4,78 @@
  */
 
 import { LLMProviderRegistry } from "./provider/registry.js";
+import type { LLMProviderPlugin } from "./provider/interface.js";
 import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger("ai-provider");
-import { openaiPlugin } from "./provider/adapters/openai.js";
-import { anthropicPlugin } from "./provider/adapters/anthropic.js";
-import { openrouterPlugin } from "./provider/adapters/openrouter.js";
-import { ollamaPlugin } from "./provider/adapters/ollama.js";
-import { lmstudioPlugin } from "./provider/adapters/lmstudio.js";
-import { deepseekPlugin } from "./provider/adapters/deepseek.js";
-import { geminiPlugin } from "./provider/adapters/gemini.js";
-import { mistralPlugin } from "./provider/adapters/mistral.js";
-import { kimiPlugin } from "./provider/adapters/kimi.js";
-import { dashscopePlugin } from "./provider/adapters/dashscope.js";
-import { groqPlugin } from "./provider/adapters/groq.js";
-import { zaiPlugin } from "./provider/adapters/zai.js";
 
-/** Create a provider registry with all built-in providers. */
-export function createDefaultRegistry(): LLMProviderRegistry {
-  const registry = new LLMProviderRegistry();
-  registry.register(openaiPlugin);
-  registry.register(anthropicPlugin);
-  registry.register(openrouterPlugin);
-  registry.register(ollamaPlugin);
-  registry.register(lmstudioPlugin);
-  registry.register(deepseekPlugin);
-  registry.register(geminiPlugin);
-  registry.register(mistralPlugin);
-  registry.register(kimiPlugin);
-  registry.register(dashscopePlugin);
-  registry.register(groqPlugin);
-  registry.register(zaiPlugin);
-  logger.info("LLM provider registry initialized", { providers: 12 });
+const BUILTIN_PROVIDER_COUNT = 12;
+
+function registerProviders(
+  registry: LLMProviderRegistry,
+  providers: readonly LLMProviderPlugin[],
+): LLMProviderRegistry {
+  for (const provider of providers) {
+    registry.register(provider);
+  }
+  logger.info("LLM provider registry initialized", { providers: providers.length });
   return registry;
+}
+
+/**
+ * Async variant for browser startup paths.
+ * Loads provider adapter modules lazily to keep startup bundle smaller.
+ */
+export async function createDefaultRegistryAsync(): Promise<LLMProviderRegistry> {
+  const [
+    openai,
+    anthropic,
+    openrouter,
+    ollama,
+    lmstudio,
+    deepseek,
+    gemini,
+    mistral,
+    kimi,
+    dashscope,
+    groq,
+    zai,
+  ] = await Promise.all([
+    import("./provider/adapters/openai.js"),
+    import("./provider/adapters/anthropic.js"),
+    import("./provider/adapters/openrouter.js"),
+    import("./provider/adapters/ollama.js"),
+    import("./provider/adapters/lmstudio.js"),
+    import("./provider/adapters/deepseek.js"),
+    import("./provider/adapters/gemini.js"),
+    import("./provider/adapters/mistral.js"),
+    import("./provider/adapters/kimi.js"),
+    import("./provider/adapters/dashscope.js"),
+    import("./provider/adapters/groq.js"),
+    import("./provider/adapters/zai.js"),
+  ]);
+
+  const providers: LLMProviderPlugin[] = [
+    openai.openaiPlugin,
+    anthropic.anthropicPlugin,
+    openrouter.openrouterPlugin,
+    ollama.ollamaPlugin,
+    lmstudio.lmstudioPlugin,
+    deepseek.deepseekPlugin,
+    gemini.geminiPlugin,
+    mistral.mistralPlugin,
+    kimi.kimiPlugin,
+    dashscope.dashscopePlugin,
+    groq.groqPlugin,
+    zai.zaiPlugin,
+  ];
+
+  if (providers.length !== BUILTIN_PROVIDER_COUNT) {
+    logger.warn("Unexpected built-in provider count", {
+      expected: BUILTIN_PROVIDER_COUNT,
+      actual: providers.length,
+    });
+  }
+
+  return registerProviders(new LLMProviderRegistry(), providers);
 }

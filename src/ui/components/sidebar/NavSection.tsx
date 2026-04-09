@@ -6,6 +6,17 @@ import { PluginErrorBoundary } from "./PluginErrorBoundary.js";
 import { SortableSection, SectionHeader, renderNavButton } from "./SidebarPrimitives.js";
 import { ProjectTree, ProjectButton } from "./ProjectTree.js";
 
+type SectionRenderer = (params: {
+  id: string;
+  children: (dragHandleListeners: Record<string, unknown>) => ReactNode;
+}) => ReactNode;
+
+const defaultSectionRenderer: SectionRenderer = ({ id, children }) => (
+  <SortableSection key={id} id={id}>
+    {(dragListeners) => children(dragListeners)}
+  </SortableSection>
+);
+
 interface NavSectionRenderProps {
   collapsed: boolean;
   currentView: string;
@@ -45,6 +56,7 @@ interface NavSectionRenderProps {
   onNavContextMenu: (e: ReactMouseEvent, itemId: string) => void;
   // Projects
   onOpenProjectModal?: () => void;
+  sectionRenderer?: SectionRenderer;
 }
 
 function renderPluginViewButton(
@@ -95,210 +107,206 @@ export function renderSection(itemId: string, props: NavSectionRenderProps): Rea
     panels,
     onNavContextMenu,
     onOpenProjectModal,
+    sectionRenderer = defaultSectionRenderer,
   } = props;
 
   if (itemId === "favorite-views") {
     if (favoriteNavItems.length === 0) return null;
-    return (
-      <SortableSection key={itemId} id={itemId}>
-        {(dragListeners) => (
-          <>
-            <SectionHeader
-              label="Favorite Views"
-              expanded={favoriteViewsExpanded}
-              onToggle={() => setFavoriteViewsExpanded(!favoriteViewsExpanded)}
-              trailing={<Heart size={11} className="text-on-surface-muted mr-1" />}
-              dragHandleListeners={dragListeners}
-            />
-            {favoriteViewsExpanded && (
-              <ul className="space-y-0.5">
-                {favoriteNavItems.map((item) => (
-                  <li key={`fav-${item.id}`}>
-                    {renderNavButton(
-                      `fav-${item.id}`,
-                      item.label,
-                      item.icon,
-                      currentView === item.id,
-                      () => onNavigate(item.id),
-                      collapsed,
-                      item.countKey ? countMap[item.countKey] : undefined,
-                      (e) => onNavContextMenu(e, item.id),
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
-        )}
-      </SortableSection>
-    );
+    return sectionRenderer({
+      id: itemId,
+      children: (dragListeners) => (
+        <>
+          <SectionHeader
+            label="Favorite Views"
+            expanded={favoriteViewsExpanded}
+            onToggle={() => setFavoriteViewsExpanded(!favoriteViewsExpanded)}
+            trailing={<Heart size={11} className="text-on-surface-muted mr-1" />}
+            dragHandleListeners={dragListeners}
+          />
+          {favoriteViewsExpanded && (
+            <ul className="space-y-0.5">
+              {favoriteNavItems.map((item) => (
+                <li key={`fav-${item.id}`}>
+                  {renderNavButton(
+                    `fav-${item.id}`,
+                    item.label,
+                    item.icon,
+                    currentView === item.id,
+                    () => onNavigate(item.id),
+                    collapsed,
+                    item.countKey ? countMap[item.countKey] : undefined,
+                    (e) => onNavContextMenu(e, item.id),
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      ),
+    });
   }
   if (itemId === "favorites") {
     if (favoriteProjects.length === 0) return null;
-    return (
-      <SortableSection key={itemId} id={itemId}>
-        {(dragListeners) => (
-          <>
-            <SectionHeader
-              label="Favorites"
-              expanded={favoritesExpanded}
-              onToggle={() => setFavoritesExpanded(!favoritesExpanded)}
-              trailing={<Star size={11} className="text-on-surface-muted mr-1" />}
-              dragHandleListeners={dragListeners}
-            />
-            {favoritesExpanded && (
-              <ul className="space-y-0.5">
-                {favoriteProjects.map((project) => (
-                  <li key={project.id}>
-                    <ProjectButton
-                      project={project}
-                      isActive={currentView === "project" && selectedProjectId === project.id}
-                      onNavigate={onNavigate}
-                      projectTaskCounts={projectTaskCounts}
-                      projectCompletedCounts={projectCompletedCounts}
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
-        )}
-      </SortableSection>
-    );
+    return sectionRenderer({
+      id: itemId,
+      children: (dragListeners) => (
+        <>
+          <SectionHeader
+            label="Favorites"
+            expanded={favoritesExpanded}
+            onToggle={() => setFavoritesExpanded(!favoritesExpanded)}
+            trailing={<Star size={11} className="text-on-surface-muted mr-1" />}
+            dragHandleListeners={dragListeners}
+          />
+          {favoritesExpanded && (
+            <ul className="space-y-0.5">
+              {favoriteProjects.map((project) => (
+                <li key={project.id}>
+                  <ProjectButton
+                    project={project}
+                    isActive={currentView === "project" && selectedProjectId === project.id}
+                    onNavigate={onNavigate}
+                    projectTaskCounts={projectTaskCounts}
+                    projectCompletedCounts={projectCompletedCounts}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      ),
+    });
   }
   if (itemId === "projects") {
-    return (
-      <SortableSection key={itemId} id={itemId}>
-        {(dragListeners) => (
-          <>
-            <SectionHeader
-              label="My Projects"
-              expanded={projectsExpanded}
-              onToggle={() => setProjectsExpanded(!projectsExpanded)}
-              trailing={
-                onOpenProjectModal && projectsExpanded ? (
-                  <button
-                    onClick={onOpenProjectModal}
-                    title="New project"
-                    className="p-0.5 rounded text-on-surface-muted hover:text-on-surface-secondary hover:bg-surface-tertiary transition-colors"
-                  >
-                    <Plus size={14} />
-                  </button>
-                ) : undefined
-              }
-              dragHandleListeners={dragListeners}
+    return sectionRenderer({
+      id: itemId,
+      children: (dragListeners) => (
+        <>
+          <SectionHeader
+            label="My Projects"
+            expanded={projectsExpanded}
+            onToggle={() => setProjectsExpanded(!projectsExpanded)}
+            trailing={
+              onOpenProjectModal && projectsExpanded ? (
+                <button
+                  onClick={onOpenProjectModal}
+                  title="New project"
+                  className="p-0.5 rounded text-on-surface-muted hover:text-on-surface-secondary hover:bg-surface-tertiary transition-colors"
+                >
+                  <Plus size={14} />
+                </button>
+              ) : undefined
+            }
+            dragHandleListeners={dragListeners}
+          />
+          {projectsExpanded && (
+            <ProjectTree
+              projects={projects}
+              currentView={currentView}
+              selectedProjectId={selectedProjectId}
+              onNavigate={onNavigate}
+              projectTaskCounts={projectTaskCounts}
+              projectCompletedCounts={projectCompletedCounts}
+              collapsed={collapsed}
             />
-            {projectsExpanded && (
-              <ProjectTree
-                projects={projects}
-                currentView={currentView}
-                selectedProjectId={selectedProjectId}
-                onNavigate={onNavigate}
-                projectTaskCounts={projectTaskCounts}
-                projectCompletedCounts={projectCompletedCounts}
-                collapsed={collapsed}
-              />
-            )}
-          </>
-        )}
-      </SortableSection>
-    );
+          )}
+        </>
+      ),
+    });
   }
   if (itemId === "my-views") {
     if (savedFilters.length === 0) return null;
-    return (
-      <SortableSection key={itemId} id={itemId}>
-        {(dragListeners) => (
-          <>
-            <SectionHeader
-              label="My Views"
-              expanded={filtersExpanded}
-              onToggle={() => setFiltersExpanded(!filtersExpanded)}
-              dragHandleListeners={dragListeners}
-            />
-            {filtersExpanded && (
-              <ul className="space-y-0.5">
-                {savedFilters.map((filter) => {
-                  const isActive = currentView === "filter" && selectedFilterId === filter.id;
-                  return (
-                    <li key={`filter-${filter.id}`}>
-                      {renderNavButton(
-                        `filter-${filter.id}`,
-                        filter.name,
-                        Filter,
-                        isActive,
-                        () => onNavigate("filter", filter.id),
-                        collapsed,
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </>
-        )}
-      </SortableSection>
-    );
+    return sectionRenderer({
+      id: itemId,
+      children: (dragListeners) => (
+        <>
+          <SectionHeader
+            label="My Views"
+            expanded={filtersExpanded}
+            onToggle={() => setFiltersExpanded(!filtersExpanded)}
+            dragHandleListeners={dragListeners}
+          />
+          {filtersExpanded && (
+            <ul className="space-y-0.5">
+              {savedFilters.map((filter) => {
+                const isActive = currentView === "filter" && selectedFilterId === filter.id;
+                return (
+                  <li key={`filter-${filter.id}`}>
+                    {renderNavButton(
+                      `filter-${filter.id}`,
+                      filter.name,
+                      Filter,
+                      isActive,
+                      () => onNavigate("filter", filter.id),
+                      collapsed,
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </>
+      ),
+    });
   }
   if (itemId === "tools") {
     if (panels.length === 0 && viewsBySlot.tools.length === 0) return null;
-    return (
-      <SortableSection key={itemId} id={itemId}>
-        {(dragListeners) => (
-          <>
-            <SectionHeader
-              label="Tools"
-              expanded={toolsExpanded}
-              onToggle={() => setToolsExpanded(!toolsExpanded)}
-              dragHandleListeners={dragListeners}
-            />
-            {toolsExpanded && (
-              <>
-                {viewsBySlot.tools.length > 0 && (
-                  <ul className="space-y-0.5">
-                    {viewsBySlot.tools.map((view) => (
-                      <li key={`plugin-view-${view.id}`}>
-                        {renderPluginViewButton(
-                          view,
-                          currentView,
-                          selectedPluginViewId,
-                          onNavigate,
-                          collapsed,
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {panels.length > 0 && (
-                  <div className="space-y-1.5 px-3 mt-1">
-                    {panels.map((panel) => (
-                      <div
-                        key={panel.id}
-                        className="p-2 rounded-md bg-surface-tertiary border border-border"
-                      >
-                        <div className="flex items-center gap-1 text-xs font-medium text-on-surface-secondary mb-1">
-                          <span>{panel.icon}</span>
-                          <span>{panel.title}</span>
-                        </div>
-                        {panel.contentType === "react" && panel.component ? (
-                          <PluginErrorBoundary pluginId={panel.id}>
-                            <panel.component />
-                          </PluginErrorBoundary>
-                        ) : panel.content ? (
-                          <p className="text-xs text-on-surface-muted whitespace-pre-wrap">
-                            {panel.content}
-                          </p>
-                        ) : null}
+    return sectionRenderer({
+      id: itemId,
+      children: (dragListeners) => (
+        <>
+          <SectionHeader
+            label="Tools"
+            expanded={toolsExpanded}
+            onToggle={() => setToolsExpanded(!toolsExpanded)}
+            dragHandleListeners={dragListeners}
+          />
+          {toolsExpanded && (
+            <>
+              {viewsBySlot.tools.length > 0 && (
+                <ul className="space-y-0.5">
+                  {viewsBySlot.tools.map((view) => (
+                    <li key={`plugin-view-${view.id}`}>
+                      {renderPluginViewButton(
+                        view,
+                        currentView,
+                        selectedPluginViewId,
+                        onNavigate,
+                        collapsed,
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {panels.length > 0 && (
+                <div className="space-y-1.5 px-3 mt-1">
+                  {panels.map((panel) => (
+                    <div
+                      key={panel.id}
+                      className="p-2 rounded-md bg-surface-tertiary border border-border"
+                    >
+                      <div className="flex items-center gap-1 text-xs font-medium text-on-surface-secondary mb-1">
+                        <span>{panel.icon}</span>
+                        <span>{panel.title}</span>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </>
-        )}
-      </SortableSection>
-    );
+                      {panel.contentType === "react" && panel.component ? (
+                        <PluginErrorBoundary pluginId={panel.id}>
+                          <panel.component />
+                        </PluginErrorBoundary>
+                      ) : panel.content ? (
+                        <p className="text-xs text-on-surface-muted whitespace-pre-wrap">
+                          {panel.content}
+                        </p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </>
+      ),
+    });
   }
   return null;
 }

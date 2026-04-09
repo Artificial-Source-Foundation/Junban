@@ -1,6 +1,6 @@
 import { useState, useCallback, memo } from "react";
 import { Copy, Check, Pencil, RotateCcw, X, Send } from "lucide-react";
-import type { AIChatMessage } from "../../api/index.js";
+import type { AIChatMessage } from "../../api/ai.js";
 
 interface MessageActionsProps {
   message: AIChatMessage;

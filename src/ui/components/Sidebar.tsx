@@ -1,15 +1,6 @@
 import { useState, useMemo, useCallback, type MouseEvent as ReactMouseEvent } from "react";
-import { motion } from "framer-motion";
-import {
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import type { DragEndEvent } from "@dnd-kit/core";
 import { Inbox } from "lucide-react";
-import { useReducedMotion } from "./useReducedMotion.js";
 import type { Project } from "../../core/types.js";
 import type { PanelInfo, ViewInfo } from "../api/plugins.js";
 import { useGeneralSettings } from "../context/SettingsContext.js";
@@ -82,11 +73,6 @@ export function Sidebar({
   const [favoriteViewsExpanded, setFavoriteViewsExpanded] = useState(true);
   const [ctxMenu, setCtxMenu] = useState<ContextMenuState | null>(null);
   const [emptySpaceMenu, setEmptySpaceMenu] = useState<{ x: number; y: number } | null>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
 
   const visibleNavItems = useMemo(() => {
     const hidden = new Set<string>();
@@ -252,28 +238,12 @@ export function Sidebar({
     updateSetting,
   });
 
-  const reducedMotion = useReducedMotion();
   const countMap: Record<string, number | undefined> = { inbox: inboxCount, today: todayCount };
 
-  const SidebarTag = reducedMotion ? "aside" : motion.aside;
-  const sidebarMotionProps = reducedMotion
-    ? {}
-    : {
-        initial: false,
-        animate: { width: collapsed ? 64 : 272 },
-        transition: {
-          duration: 0.24,
-          ease: [0.22, 1, 0.36, 1] as const,
-        },
-      };
-
   return (
-    <SidebarTag
+    <aside
       aria-label="Main navigation"
-      className={`relative z-20 border-r border-border bg-surface-secondary flex flex-col ${
-        reducedMotion ? "transition-[width] duration-200 ease-out " : ""
-      }${collapsed ? "w-16 overflow-visible" : "w-sidebar"}`}
-      {...sidebarMotionProps}
+      className={`relative z-20 border-r border-border bg-surface-secondary flex flex-col transition-[width] duration-200 ease-out motion-reduce:transition-none ${collapsed ? "w-16 overflow-visible" : "w-sidebar"}`}
     >
       <SidebarHeader
         collapsed={collapsed}
@@ -316,7 +286,6 @@ export function Sidebar({
             savedFilters={savedFilters}
             selectedFilterId={selectedFilterId}
             panels={panels}
-            sensors={sensors}
             onDragEnd={handleDragEnd}
             onNavContextMenu={handleNavContextMenu}
             onOpenProjectModal={onOpenProjectModal}
@@ -347,6 +316,6 @@ export function Sidebar({
           onClose={() => setEmptySpaceMenu(null)}
         />
       )}
-    </SidebarTag>
+    </aside>
   );
 }

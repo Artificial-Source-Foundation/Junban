@@ -4,8 +4,9 @@ import { isTauri } from "../../../utils/tauri.js";
 import { APP_VERSION } from "../../../config/defaults.js";
 import { api } from "../../api/index.js";
 
-const RELEASES_URL = "https://github.com/ASF-GROUP/Junban/releases/latest";
-const CHANGELOG_URL = "https://github.com/ASF-GROUP/Junban/blob/main/CHANGELOG.md";
+const RELEASES_URL = "https://github.com/Artificial-Source-Foundation/Junban/releases/latest";
+const CHANGELOG_URL =
+  "https://github.com/Artificial-Source-Foundation/Junban/blob/main/CHANGELOG.md";
 
 interface PendingUpdate {
   version: string;
@@ -261,9 +262,9 @@ export function AboutTab() {
       <div>
         <div className="flex items-center gap-3">
           <img
-            src="/images/logo.webp"
+            src="/images/logo.svg"
             alt="Junban logo"
-            className="w-12 h-12 rounded-xl ring-1 ring-border/60 bg-surface object-cover dark:invert"
+            className="w-12 h-12 rounded-xl ring-1 ring-border/60 bg-surface object-contain p-2 dark:invert"
           />
           <div>
             <p className="text-sm font-semibold text-on-surface">
@@ -357,7 +358,7 @@ export function AboutTab() {
         <h3 className="text-sm font-semibold text-on-surface mb-2">Feedback</h3>
         <div className="flex gap-3">
           <a
-            href="https://github.com/ASF-GROUP/Junban/issues/new?labels=bug"
+            href="https://github.com/Artificial-Source-Foundation/Junban/issues/new?labels=bug"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-surface-secondary transition-colors text-on-surface-secondary"
@@ -366,7 +367,7 @@ export function AboutTab() {
             Report a Bug
           </a>
           <a
-            href="https://github.com/ASF-GROUP/Junban/issues/new?labels=enhancement"
+            href="https://github.com/Artificial-Source-Foundation/Junban/issues/new?labels=enhancement"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-surface-secondary transition-colors text-on-surface-secondary"
@@ -428,7 +429,7 @@ export function AboutTab() {
         <p className="text-xs text-on-surface-muted">
           Built by the{" "}
           <a
-            href="https://github.com/ASF-GROUP"
+            href="https://github.com/Artificial-Source-Foundation"
             target="_blank"
             rel="noopener noreferrer"
             className="text-accent hover:underline"

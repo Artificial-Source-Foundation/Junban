@@ -1,11 +1,6 @@
 import type { Project } from "../../core/types.js";
-import {
-  useDirectServices,
-  BASE,
-  handleResponse,
-  handleVoidResponse,
-  getServices,
-} from "./helpers.js";
+import { useDirectServices, BASE, handleResponse, handleVoidResponse } from "./helpers.js";
+import { getServices } from "./direct-services.js";
 
 export async function listTags(): Promise<{ id: string; name: string; color: string }[]> {
   if (useDirectServices()) {

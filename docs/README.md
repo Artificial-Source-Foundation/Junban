@@ -11,6 +11,7 @@ This is the canonical documentation entry point for Junban contributors and AI a
 | Set up local development   | [`guides/SETUP.md`](guides/SETUP.md)               |
 | Contribute safely          | [`guides/CONTRIBUTING.md`](guides/CONTRIBUTING.md) |
 | Understand architecture    | [`guides/ARCHITECTURE.md`](guides/ARCHITECTURE.md) |
+| Understand performance     | [`guides/PERFORMANCE.md`](guides/PERFORMANCE.md)   |
 | Check roadmap and status   | [`planning/ROADMAP.md`](planning/ROADMAP.md)       |
 | Review security model      | [`guides/SECURITY.md`](guides/SECURITY.md)         |
 
@@ -19,7 +20,7 @@ This is the canonical documentation entry point for Junban contributors and AI a
 ```text
 docs/
 ├── README.md        Canonical docs index and maintenance policy
-├── guides/          Setup, contributing, architecture, security, releases
+├── guides/          Setup, contributing, architecture, performance, security, releases
 ├── frontend/        UI reference docs for views, components, context, hooks, themes
 ├── backend/         Core, database, parser, AI, voice, MCP, CLI, storage, plugins
 ├── plugins/         Plugin-author documentation and examples

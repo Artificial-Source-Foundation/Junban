@@ -1,5 +1,6 @@
 import type { DailyStat } from "../../core/types.js";
-import { useDirectServices, BASE, buildApiUrl, handleResponse, getServices } from "./helpers.js";
+import { useDirectServices, BASE, buildApiUrl, handleResponse } from "./helpers.js";
+import { getServices } from "./direct-services.js";
 
 export async function getDailyStats(startDate: string, endDate: string): Promise<DailyStat[]> {
   if (useDirectServices()) {

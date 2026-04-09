@@ -5,7 +5,6 @@ import * as sections from "./sections.js";
 import * as comments from "./comments.js";
 import * as stats from "./stats.js";
 import * as plugins from "./plugins.js";
-import * as ai from "./ai.js";
 import * as settings from "./settings.js";
 
 export const api = {
@@ -16,7 +15,6 @@ export const api = {
   ...comments,
   ...stats,
   ...plugins,
-  ...ai,
   ...settings,
 };
 
@@ -30,10 +28,3 @@ export type {
   ViewInfo,
   StorePluginInfo,
 } from "./plugins.js";
-export type {
-  AIConfigInfo,
-  AIChatMessage,
-  AIProviderInfo,
-  ModelDiscoveryInfo,
-  ChatSessionInfo,
-} from "./ai.js";

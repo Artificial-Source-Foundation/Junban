@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { AIChatMessage } from "../../api/index.js";
+import type { AIChatMessage } from "../../api/ai.js";
 
 export interface AIChatContextValue {
   messages: AIChatMessage[];

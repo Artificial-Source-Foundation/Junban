@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useNudges } from "../../../src/ui/hooks/useNudges.js";
 import type { Task } from "../../../src/core/types.js";
@@ -79,13 +79,26 @@ function makeSettings(overrides: Partial<GeneralSettings> = {}): GeneralSettings
 
 // Use a very large interval so interval never fires during tests
 const NO_INTERVAL = 999999999;
+const INITIAL_NUDGE_DELAY_MS = 120;
 
 describe("useNudges", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("returns nudges from task state", () => {
     const tasks = [makeTask({ id: "t1", dueDate: "2026-02-26T00:00:00.000Z" })];
     const { result } = renderHook(() =>
       useNudges({ tasks, settings: makeSettings(), intervalMs: NO_INTERVAL }),
     );
+
+    act(() => {
+      vi.advanceTimersByTime(INITIAL_NUDGE_DELAY_MS);
+    });
 
     expect(result.current.activeNudges.length).toBeGreaterThan(0);
     expect(result.current.activeNudges.find((n) => n.type === "overdue_alert")).toBeDefined();
@@ -95,6 +108,10 @@ describe("useNudges", () => {
     const tasks: Task[] = []; // empty → would fire empty_today
     const settings = makeSettings({ nudge_empty_today: "false" });
     const { result } = renderHook(() => useNudges({ tasks, settings, intervalMs: NO_INTERVAL }));
+
+    act(() => {
+      vi.advanceTimersByTime(INITIAL_NUDGE_DELAY_MS);
+    });
 
     expect(result.current.activeNudges.find((n) => n.type === "empty_today")).toBeUndefined();
   });
@@ -113,6 +130,10 @@ describe("useNudges", () => {
       useNudges({ tasks, settings: makeSettings(), intervalMs: NO_INTERVAL }),
     );
 
+    act(() => {
+      vi.advanceTimersByTime(INITIAL_NUDGE_DELAY_MS);
+    });
+
     const overdue = result.current.activeNudges.find((n) => n.type === "overdue_alert");
     expect(overdue).toBeDefined();
 
@@ -129,6 +150,10 @@ describe("useNudges", () => {
       ({ tasks, settings }) => useNudges({ tasks, settings, intervalMs: NO_INTERVAL }),
       { initialProps: { tasks, settings: makeSettings() } },
     );
+
+    act(() => {
+      vi.advanceTimersByTime(INITIAL_NUDGE_DELAY_MS);
+    });
 
     const overdue = result.current.activeNudges.find((n) => n.type === "overdue_alert");
     act(() => {
@@ -148,12 +173,20 @@ describe("useNudges", () => {
       { initialProps: { tasks: initialTasks, settings: makeSettings() } },
     );
 
+    act(() => {
+      vi.advanceTimersByTime(INITIAL_NUDGE_DELAY_MS);
+    });
+
     // Should have empty_today nudge
     expect(result.current.activeNudges.find((n) => n.type === "empty_today")).toBeDefined();
 
     // Add a today task
-    const updatedTasks = [makeTask({ dueDate: "2026-02-28T00:00:00.000Z" })];
+    const updatedTasks = [makeTask({ id: "t2", dueDate: "2026-02-28T00:00:00.000Z" })];
     rerender({ tasks: updatedTasks, settings: makeSettings() });
+
+    act(() => {
+      vi.advanceTimersByTime(INITIAL_NUDGE_DELAY_MS);
+    });
 
     // empty_today should no longer be present
     expect(result.current.activeNudges.find((n) => n.type === "empty_today")).toBeUndefined();
@@ -171,6 +204,10 @@ describe("useNudges", () => {
     const { result } = renderHook(() =>
       useNudges({ tasks, settings: makeSettings(), intervalMs: NO_INTERVAL }),
     );
+
+    act(() => {
+      vi.advanceTimersByTime(INITIAL_NUDGE_DELAY_MS);
+    });
 
     const ids = result.current.activeNudges.map((n) => n.id);
     expect(new Set(ids).size).toBe(ids.length);

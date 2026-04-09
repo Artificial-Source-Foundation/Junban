@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAIContext } from "../../context/AIContext.js";
 import { AIFeatureProvider } from "../../context/AIFeatureProvider.js";
-import { api, type AIProviderInfo, type ModelDiscoveryInfo } from "../../api/index.js";
+import * as api from "../../api/ai.js";
+import type { AIProviderInfo, ModelDiscoveryInfo } from "../../api/ai.js";
 import { PROVIDER_HELP } from "./ai/ai-tab-constants.js";
 import { MemorySection } from "./ai/MemorySection.js";
 import { CustomInstructionsSection } from "./ai/CustomInstructionsSection.js";

@@ -113,11 +113,22 @@ export function PluginProvider({ children }: { children: React.ReactNode }) {
 
     let idleHandle: number | null = null;
     let timeoutHandle: ReturnType<typeof globalThis.setTimeout> | null = null;
+    let didRun = false;
+
+    const runOnce = () => {
+      if (didRun) return;
+      didRun = true;
+      if (timeoutHandle !== null) {
+        globalThis.clearTimeout(timeoutHandle);
+        timeoutHandle = null;
+      }
+      scheduleDeferredFetches();
+    };
+
+    timeoutHandle = globalThis.setTimeout(runOnce, 300);
 
     if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      idleHandle = window.requestIdleCallback(scheduleDeferredFetches, { timeout: 1500 });
-    } else {
-      timeoutHandle = globalThis.setTimeout(scheduleDeferredFetches, 300);
+      idleHandle = window.requestIdleCallback(runOnce, { timeout: 1500 });
     }
 
     return () => {

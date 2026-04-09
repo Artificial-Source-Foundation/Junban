@@ -48,25 +48,23 @@
 
 ### TaskList.tsx
 
-- **Path:** `src/ui/components/TaskList.tsx` (283 lines)
-- **Purpose:** Renders a sortable list of tasks with drag-and-drop reordering, hierarchical tree flattening, and inline subtask creation.
+- **Path:** `src/ui/components/TaskList.tsx`
+- **Purpose:** Startup-safe task list entry point that renders a lightweight base list immediately and lazily upgrades to the enhanced drag-and-drop/virtualized list when reordering is available.
 - **Key Exports:** `TaskList`
 - **Props:**
   - `tasks: Task[]`
-  - `onComplete, onDelete, onSelect, onNavigateToTask` -- task action callbacks
+  - `onToggle: (id: string) => void`
+  - `onSelect: (id: string) => void`
   - `onReorder?: (orderedIds: string[]) => void`
-  - `selectedTaskId?: string | null`
-  - `highlightedTaskIds?: Set<string>`
-  - `multiSelectedIds?: Set<string>`
+  - `selectedTaskId: string | null`
+  - `selectedTaskIds?: Set<string>`
   - `onMultiSelect?: (id, event) => void`
-  - `projects?: Project[]`
   - `onAddSubtask?: (parentId: string, title: string) => void`
-  - `onIndent?: (id: string) => void`
-  - `onOutdent?: (id: string) => void`
+  - `onUpdateDueDate?: (taskId: string, dueDate: string | null) => void`
   - `onContextMenu?: (taskId: string, position: { x: number; y: number }) => void` -- right-click context menu handler, passed through to TaskItem
-- **Key Dependencies:** `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`, `TaskItem.tsx`, `InlineAddSubtask.tsx`
+- **Key Dependencies:** `task-list/TaskListBase.tsx`, `task-list/TaskListEnhanced.tsx`, `TaskItem.tsx`, `InlineAddSubtask.tsx`
 - **Used By:** `Inbox.tsx`, `Today.tsx`, `Upcoming.tsx`, `Project.tsx`, `Completed.tsx`
-- **Notes:** Builds a flat tree from `parentId` relationships. Uses `DndContext` + `SortableContext` with `verticalListSortingStrategy`. Supports keyboard-based indent/outdent (Tab/Shift+Tab) on focused items. Includes a `DragOverlay` for styled drag ghost (semi-transparent, shadow, slight rotation) during drag-and-drop.
+- **Notes:** The base list handles tree flattening, expansion state, selection, inline subtask creation, due-date updates, and context menus without pulling drag/drop or virtualization code into the first render. When `onReorder` is provided, the enhanced list is preloaded during idle time and upgrades in place with drag-and-drop, drag overlay, framer-motion list transitions, and virtualization for long lists.
 
 ---
 
@@ -931,16 +929,17 @@ Extracted sub-components used by `AIChatPanel.tsx`. Each handles a single concer
 
 ### Skeleton.tsx
 
-- **Path:** `src/ui/components/Skeleton.tsx` (45 lines)
-- **Purpose:** Skeleton loading placeholder components for initial app load state.
-- **Key Exports:** `SkeletonLine`, `SkeletonTaskItem`, `SkeletonTaskList`
+- **Path:** `src/ui/components/Skeleton.tsx`
+- **Purpose:** Skeleton loading placeholder components for initial app load state and lazy view transitions.
+- **Key Exports:** `SkeletonLine`, `SkeletonTaskItem`, `SkeletonTaskList`, `ViewSkeleton`
 - **Props:**
   - `SkeletonLine`: `width?: string` -- CSS width (default "100%")
   - `SkeletonTaskItem`: none
   - `SkeletonTaskList`: `count?: number` -- number of skeleton rows (default 5)
-- **Key Dependencies:** None
-- **Used By:** `App.tsx` (replaces "Loading..." text during initial data fetch)
-- **Notes:** Uses `animate-pulse` with `bg-surface-tertiary`. Has `aria-busy="true"` and `role="status"` for accessibility.
+  - `ViewSkeleton`: `view: View` -- adapts the shell to the current route
+- **Key Dependencies:** `useRouting.ts` types
+- **Used By:** `AppLayout.tsx`, `ViewRenderer.tsx`
+- **Notes:** Uses `animate-pulse` with `bg-surface-tertiary`. Has `aria-busy="true"` and `role="status"` for accessibility. `ViewSkeleton` renders a header, input bar, task list shell, and optional side cards keyed to the active view so route changes never fall back to plain text while lazy chunks load.
 
 ---
 

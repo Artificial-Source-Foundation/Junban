@@ -15,7 +15,7 @@ import { PluginSettingsManager } from "./plugins/settings.js";
 import { CommandRegistry } from "./plugins/command-registry.js";
 import { UIRegistry } from "./plugins/ui-registry.js";
 import { ChatManager } from "./ai/chat.js";
-import { createDefaultRegistry } from "./ai/provider.js";
+import { createDefaultRegistry } from "./ai/provider-node.js";
 import { createDefaultToolRegistry } from "./ai/tool-registry.js";
 import type { LLMProviderRegistry } from "./ai/provider/registry.js";
 import type { ToolRegistry } from "./ai/tools/registry.js";

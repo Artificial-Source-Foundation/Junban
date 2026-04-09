@@ -1,6 +1,4 @@
-import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
-import { useReducedMotion } from "../useReducedMotion.js";
 import { CollapsedTooltip } from "./SidebarPrimitives.js";
 
 interface SidebarHeaderProps {
@@ -16,7 +14,6 @@ export function SidebarHeader({
   onAddTask,
   onSearch,
 }: SidebarHeaderProps) {
-  const reducedMotion = useReducedMotion();
   const isMac =
     typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.userAgent);
 
@@ -26,17 +23,17 @@ export function SidebarHeader({
         {!collapsed ? (
           <div className="flex items-center gap-2">
             <img
-              src="/images/logo.webp"
+              src="/images/logo.svg"
               alt="Junban logo"
-              className="h-7 w-7 shrink-0 rounded-md ring-1 ring-border/60 bg-surface object-cover dark:invert"
+              className="h-7 w-7 shrink-0 rounded-md ring-1 ring-border/60 bg-surface object-contain p-1 dark:invert"
             />
             <h2 className="text-base font-bold text-on-surface tracking-tight">Junban</h2>
           </div>
         ) : (
           <img
-            src="/images/logo.webp"
+            src="/images/logo.svg"
             alt="Junban logo"
-            className="h-7 w-7 shrink-0 rounded-md ring-1 ring-border/60 bg-surface object-cover dark:invert"
+            className="h-7 w-7 shrink-0 rounded-md ring-1 ring-border/60 bg-surface object-contain p-1 dark:invert"
           />
         )}
         {onToggleCollapsed && !collapsed && (
@@ -60,17 +57,15 @@ export function SidebarHeader({
         )}
       </div>
       {onAddTask && (
-        <motion.button
+        <button
           onClick={onAddTask}
-          whileHover={reducedMotion ? undefined : { scale: 1.02 }}
-          whileTap={reducedMotion ? undefined : { scale: 0.98 }}
-          className={`mt-3 w-full flex items-center rounded-lg bg-accent text-white font-medium text-sm transition-colors hover:bg-accent-hover ${
+          className={`mt-3 w-full flex items-center rounded-lg bg-accent text-white font-medium text-sm transition-colors hover:bg-accent-hover motion-safe:transition-transform motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98] ${
             collapsed ? "justify-center p-2" : "gap-2 px-3 py-2"
           }`}
         >
           <Plus size={18} />
           {!collapsed && "Add task"}
-        </motion.button>
+        </button>
       )}
       {onSearch && !collapsed && (
         <button

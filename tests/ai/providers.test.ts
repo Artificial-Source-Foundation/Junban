@@ -6,7 +6,7 @@ import { kimiPlugin } from "../../src/ai/provider/adapters/kimi.js";
 import { dashscopePlugin } from "../../src/ai/provider/adapters/dashscope.js";
 import { groqPlugin } from "../../src/ai/provider/adapters/groq.js";
 import { zaiPlugin } from "../../src/ai/provider/adapters/zai.js";
-import { createDefaultRegistry } from "../../src/ai/provider.js";
+import { createDefaultRegistry } from "../../src/ai/provider-node.js";
 
 const newProviders = [
   {

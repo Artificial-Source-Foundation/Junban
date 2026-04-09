@@ -1,12 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
 import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
 import type { Task } from "../../core/types.js";
 import { getPriority } from "../../core/priorities.js";
 import { useGeneralSettings } from "../context/SettingsContext.js";
 import { useReducedMotion } from "./useReducedMotion.js";
 import { CompletionBurst } from "./CompletionBurst.js";
-import { checkmark, springSnappy, subtlePulse } from "../utils/animation-variants.js";
 import { TaskItemContent } from "./task-item/TaskItemContent.js";
 import { TaskItemActions } from "./task-item/TaskItemActions.js";
 import { formatDuration, getRowClassName } from "./task-item/task-item-utils.js";
@@ -118,6 +116,22 @@ export const TaskItem = React.memo(function TaskItem({
     : "hover:bg-on-surface-muted/15";
 
   const rowClassName = getRowClassName(!!isMultiSelected, isSelected, task.status, task.priority);
+  const checkboxClassName = [
+    "relative w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center",
+    reducedMotion
+      ? "transition-colors duration-200"
+      : "transition-transform duration-150 hover:scale-110 active:scale-95",
+    !reducedMotion && task.priority === 1 && task.status === "pending"
+      ? "animate-subtle-pulse"
+      : "",
+    task.status === "completed"
+      ? "bg-success border-success"
+      : showCheckbox && isMultiSelected
+        ? "bg-accent border-accent"
+        : `${priorityColorClass} ${priorityHoverClass}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div
@@ -176,15 +190,7 @@ export const TaskItem = React.memo(function TaskItem({
       )}
 
       {/* Priority-colored circle (unified checkbox + completion) */}
-      <motion.button
-        variants={
-          !reducedMotion && task.priority === 1 && task.status === "pending"
-            ? subtlePulse
-            : undefined
-        }
-        animate="animate"
-        whileHover={reducedMotion ? undefined : { scale: 1.15 }}
-        whileTap={reducedMotion ? undefined : { scale: 0.9 }}
+      <button
         onClick={(e) => {
           e.stopPropagation();
           if (showCheckbox && onMultiSelect) {
@@ -202,46 +208,34 @@ export const TaskItem = React.memo(function TaskItem({
               ? "Mark task incomplete"
               : `Complete task${priority ? ` (${priority.label})` : ""}`
         }
-        className={`relative w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-200 ${
-          task.status === "completed"
-            ? "bg-success border-success"
-            : showCheckbox && isMultiSelected
-              ? "bg-accent border-accent"
-              : `${priorityColorClass} ${priorityHoverClass}`
-        }`}
+        className={checkboxClassName}
       >
         {task.status === "completed" && (
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-white">
-            <motion.path
+            <path
               d="M5 13l4 4L19 7"
               stroke="currentColor"
               strokeWidth={3}
               strokeLinecap="round"
               strokeLinejoin="round"
-              variants={checkmark}
-              initial={reducedMotion ? "animate" : "initial"}
-              animate="animate"
-              transition={springSnappy}
+              className={reducedMotion ? "" : "animate-checkmark-stroke"}
             />
           </svg>
         )}
         {showCheckbox && isMultiSelected && task.status !== "completed" && (
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-white">
-            <motion.path
+            <path
               d="M5 13l4 4L19 7"
               stroke="currentColor"
               strokeWidth={3}
               strokeLinecap="round"
               strokeLinejoin="round"
-              variants={checkmark}
-              initial={reducedMotion ? "animate" : "initial"}
-              animate="animate"
-              transition={springSnappy}
+              className={reducedMotion ? "" : "animate-checkmark-stroke"}
             />
           </svg>
         )}
         <CompletionBurst active={showBurst} />
-      </motion.button>
+      </button>
       {priority && <span className="sr-only">{priority.label}</span>}
 
       {/* Content area: title + metadata */}

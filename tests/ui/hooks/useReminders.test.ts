@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 
 const mockFetchDueReminders = vi.fn().mockResolvedValue([]);
@@ -13,12 +13,18 @@ import { useReminders } from "../../../src/ui/hooks/useReminders.js";
 
 describe("useReminders", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("fetches due reminders on mount", async () => {
     const onReminder = vi.fn();
     renderHook(() => useReminders({ onReminder, intervalMs: 600000 }));
+    await vi.advanceTimersByTimeAsync(1500);
 
     // Wait for the initial async checkReminders to resolve
     await vi.waitFor(() => {
@@ -34,6 +40,7 @@ describe("useReminders", () => {
 
     const onReminder = vi.fn();
     renderHook(() => useReminders({ onReminder, intervalMs: 600000 }));
+    await vi.advanceTimersByTimeAsync(1500);
 
     await vi.waitFor(() => {
       expect(onReminder).toHaveBeenCalledTimes(2);
@@ -47,6 +54,7 @@ describe("useReminders", () => {
 
     const onReminder = vi.fn();
     renderHook(() => useReminders({ onReminder, intervalMs: 600000 }));
+    await vi.advanceTimersByTimeAsync(1500);
 
     await vi.waitFor(() => {
       expect(mockUpdateTask).toHaveBeenCalledWith("t1", { remindAt: null });
@@ -61,6 +69,7 @@ describe("useReminders", () => {
     const onReminder = vi.fn();
     // Use a very short interval so polling kicks in quickly
     renderHook(() => useReminders({ onReminder, intervalMs: 50 }));
+    await vi.advanceTimersByTimeAsync(1700);
 
     // Wait for at least 2 fetch calls
     await vi.waitFor(() => {
@@ -75,8 +84,7 @@ describe("useReminders", () => {
     const onReminder = vi.fn();
     renderHook(() => useReminders({ onReminder, enabled: false }));
 
-    // Give it time to potentially fire
-    await new Promise((r) => setTimeout(r, 100));
+    await vi.advanceTimersByTimeAsync(2000);
 
     expect(mockFetchDueReminders).not.toHaveBeenCalled();
   });
@@ -84,13 +92,9 @@ describe("useReminders", () => {
   it("polls at the specified interval", async () => {
     const onReminder = vi.fn();
     renderHook(() => useReminders({ onReminder, intervalMs: 100 }));
+    await vi.advanceTimersByTimeAsync(1900);
 
-    // Wait for initial + at least 2 intervals
-    await vi.waitFor(
-      () => {
-        expect(mockFetchDueReminders.mock.calls.length).toBeGreaterThanOrEqual(3);
-      },
-      { timeout: 2000 },
-    );
+    // Initial check is delayed, then interval polling begins.
+    expect(mockFetchDueReminders.mock.calls.length).toBeGreaterThanOrEqual(3);
   });
 });

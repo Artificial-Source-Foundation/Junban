@@ -1,6 +1,8 @@
 import { useEffect, useRef, useCallback } from "react";
 import { fetchDueReminders, updateTask } from "../api/tasks.js";
 
+const INITIAL_REMINDERS_CHECK_DELAY_MS = 1500;
+
 interface UseRemindersOptions {
   onReminder: (task: { id: string; title: string }) => void;
   enabled?: boolean;
@@ -42,10 +44,30 @@ export function useReminders({
   useEffect(() => {
     if (!enabled) return;
 
-    // Initial check
-    checkReminders();
+    let intervalHandle: ReturnType<typeof globalThis.setInterval> | null = null;
 
-    const timer = setInterval(checkReminders, intervalMs);
-    return () => clearInterval(timer);
+    const startPolling = () => {
+      if (intervalHandle !== null) return;
+      intervalHandle = globalThis.setInterval(() => {
+        void checkReminders();
+      }, intervalMs);
+    };
+
+    const scheduleInitialCheck = () => {
+      void checkReminders();
+      startPolling();
+    };
+
+    const timeoutHandle = globalThis.setTimeout(
+      scheduleInitialCheck,
+      INITIAL_REMINDERS_CHECK_DELAY_MS,
+    );
+
+    return () => {
+      globalThis.clearTimeout(timeoutHandle);
+      if (intervalHandle !== null) {
+        globalThis.clearInterval(intervalHandle);
+      }
+    };
   }, [enabled, intervalMs, checkReminders]);
 }

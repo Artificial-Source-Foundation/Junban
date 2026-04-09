@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createDefaultRegistry } from "../../src/ai/provider.js";
+import { createDefaultRegistry } from "../../src/ai/provider-node.js";
 
 describe("createDefaultRegistry", () => {
   it("registers all built-in providers", () => {

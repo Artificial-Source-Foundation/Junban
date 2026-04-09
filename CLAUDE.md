@@ -8,7 +8,7 @@ ASF Junban is an open-source, AI-native task manager with an Obsidian-style plug
 
 It's the task manager that doesn't exist yet — beautiful and simple out of the box, with a real AI assistant (not a gimmick), and a plugin system so simple that anyone can build features through AI-generated code. No coding experience required.
 
-This is the second ASF project, alongside [ASF Sentinel](https://github.com/ASF-GROUP/sentinel) (a Discord bot for AI news curation).
+This is the second ASF project, alongside [ASF Sentinel](https://github.com/Artificial-Source-Foundation/Sentinel) (a Discord bot for AI news curation).
 
 ## ASF Values (MUST Follow)
 
@@ -348,7 +348,7 @@ Plugin Discovery → Manifest Validation → Sandbox Creation → Lifecycle Hook
 | `src/core/types.ts`               | Core type definitions (Task, Project, Tag, etc.)           |
 | `src/parser/task-parser.ts`       | Natural language task input parser                         |
 | `src/ai/provider.ts`              | AI provider setup + default registries                     |
-| `src/ai/tools/registry.ts`        | AI tool registry (42 tools)                                |
+| `src/ai/tools/registry.ts`        | AI tool registry for built-in assistant capabilities       |
 | `src/ai/voice/interface.ts`       | STT/TTS provider interfaces                                |
 | `src/plugins/loader.ts`           | Plugin discovery and loading                               |
 | `src/plugins/api.ts`              | Plugin API surface — what plugins can do                   |

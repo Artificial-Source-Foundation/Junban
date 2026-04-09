@@ -1,4 +1,4 @@
-import { type ReactNode, type CSSProperties, type MouseEvent as ReactMouseEvent } from "react";
+import { type ReactNode, type MouseEvent as ReactMouseEvent } from "react";
 import {
   Inbox,
   CalendarDays,
@@ -15,8 +15,6 @@ import {
   GripVertical,
   Zap,
 } from "lucide-react";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import type { GeneralSettings } from "../../context/SettingsContext.js";
 
 export function CollapsedTooltip({ visible, label }: { visible: boolean; label: string }) {
@@ -92,19 +90,9 @@ export const NAV_FEATURE_MAP: Record<string, keyof GeneralSettings> = {
 };
 
 export function SortableNavItem({ id, children }: { id: string; children: ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id,
-  });
-  const style: CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-  // Spread attributes but override role to "presentation" so the wrapper doesn't
-  // create a duplicate "button" role alongside the inner <button> element.
-  // This prevents Playwright strict-mode violations when querying by role.
+  // Startup-safe fallback wrapper. Drag listeners are injected by the lazy DnD path.
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} role="presentation">
+    <div data-nav-id={id} role="presentation" style={{ opacity: 1 }}>
       {children}
     </div>
   );
@@ -115,19 +103,11 @@ export function SortableSection({
   children,
 }: {
   id: string;
-  children: (dragHandleListeners: Record<string, any>) => ReactNode;
+  children: (dragHandleListeners: Record<string, unknown>) => ReactNode;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id,
-  });
-  const style: CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
   return (
-    <div ref={setNodeRef} style={style} {...attributes} role="group" data-section-id={id}>
-      {children(listeners ?? {})}
+    <div role="group" data-section-id={id}>
+      {children({})}
     </div>
   );
 }
@@ -143,7 +123,7 @@ export function SectionHeader({
   expanded: boolean;
   onToggle: () => void;
   trailing?: ReactNode;
-  dragHandleListeners?: Record<string, any>;
+  dragHandleListeners?: Record<string, unknown>;
 }) {
   return (
     <div className="group/section flex items-center mt-5 mb-1 px-3">

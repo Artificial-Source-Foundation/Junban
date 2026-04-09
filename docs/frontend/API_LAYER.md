@@ -15,8 +15,9 @@ The mode is determined by `isTauri()` from `utils/tauri.js`, which checks for th
 
 ```
 src/ui/api/
-  index.ts       -- Barrel export combining all modules into a single `api` object
-  helpers.ts     -- Shared utilities (isTauri, BASE URL, response handlers, service loader)
+  index.ts       -- Barrel export combining non-AI modules into a single `api` object
+  helpers.ts     -- Shared utilities (isTauri, BASE URL, response handlers)
+  direct-services.ts -- Lazy Tauri/bootstrap service loader for in-process mode
   tasks.ts       -- Task CRUD, bulk operations, tree operations, import
   projects.ts    -- Project CRUD, tag listing
   templates.ts   -- Template CRUD and instantiation
@@ -33,11 +34,11 @@ src/ui/api/
 ## index.ts
 
 - **Path:** `src/ui/api/index.ts` (40 lines)
-- **Purpose:** Barrel file that imports all API modules (tasks, templates, projects, sections, comments, stats, plugins, ai, settings) and re-exports them as a single `api` object plus type re-exports.
+- **Purpose:** Barrel file that imports the general frontend API modules (tasks, templates, projects, sections, comments, stats, plugins, settings) and re-exports them as a single `api` object plus related type re-exports.
 - **Key Exports:**
-  - `api` -- unified API object with all functions spread from submodules
-  - Type re-exports: `PluginInfo`, `SettingDefinitionInfo`, `PluginCommandInfo`, `StatusBarItemInfo`, `PanelInfo`, `ViewInfo`, `StorePluginInfo`, `AIConfigInfo`, `AIChatMessage`, `AIProviderInfo`, `ModelDiscoveryInfo`, `ChatSessionInfo`
-- **Used By:** Every component that needs to call the backend
+  - `api` -- unified API object with all non-AI functions spread from submodules
+  - Type re-exports: `PluginInfo`, `SettingDefinitionInfo`, `PluginCommandInfo`, `StatusBarItemInfo`, `PanelInfo`, `ViewInfo`, `StorePluginInfo`
+- **Used By:** General UI codepaths that should not pull AI-specific modules into the default startup graph
 
 ---
 
@@ -50,9 +51,17 @@ src/ui/api/
   - `BASE: string` -- base URL for REST API (`"/api"`)
   - `handleResponse<T>(res: Response): Promise<T>` -- parses JSON response, throws on HTTP error (extracts `error` field from JSON body if available)
   - `handleVoidResponse(res: Response): Promise<void>` -- checks for HTTP error without parsing body
-  - `getServices(): Promise<WebServices>` -- lazy-loads and caches the Tauri in-process services
+
+---
+
+## direct-services.ts
+
+- **Path:** `src/ui/api/direct-services.ts`
+- **Purpose:** Isolated lazy loader for Tauri/in-process service bootstrap.
+- **Key Exports:**
+  - `getServices(): Promise<WebServices>` -- lazy-loads and caches `bootstrapWeb()`
   - `WebServices` type -- the return type of `bootstrapWeb()`
-- **Notes:** `getServices()` lazily imports `bootstrapWeb` from `../../bootstrap-web.js` and caches the result. This deferred loading ensures the heavy WASM/SQLite initialization only happens when needed.
+- **Notes:** Split out of `helpers.ts` so the common API helper path does not automatically drag the heavy in-process bootstrap loader into every startup module. `getServices()` lazily imports `../../bootstrap-web.js` and caches the result.
 
 ---
 
@@ -62,23 +71,23 @@ src/ui/api/
 - **Purpose:** Task CRUD operations, bulk operations, tree/subtask operations, reminders, and import.
 - **Key Exports:**
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `listTasks` | `(params?: { search?, projectId?, status? }) => Promise<Task[]>` | List all tasks with optional filters |
-| `createTask` | `(input: CreateTaskInput) => Promise<Task>` | Create a new task |
-| `completeTask` | `(id) => Promise<Task>` | Mark task as completed |
-| `updateTask` | `(id, input: UpdateTaskInput) => Promise<Task>` | Update task fields |
-| `deleteTask` | `(id) => Promise<void>` | Delete a task |
-| `completeManyTasks` | `(ids) => Promise<Task[]>` | Bulk complete |
-| `deleteManyTasks` | `(ids) => Promise<void>` | Bulk delete |
-| `updateManyTasks` | `(ids, changes) => Promise<Task[]>` | Bulk update |
-| `fetchDueReminders` | `() => Promise<Task[]>` | Get tasks with due reminders |
-| `listTaskTree` | `() => Promise<Task[]>` | Get flat task tree with hierarchy |
-| `getChildren` | `(parentId) => Promise<Task[]>` | Get subtasks of a parent |
-| `indentTask` | `(id) => Promise<Task>` | Make task a subtask of the previous sibling |
-| `outdentTask` | `(id) => Promise<Task>` | Move subtask up one level |
-| `reorderTasks` | `(orderedIds) => Promise<void>` | Set manual task ordering |
-| `importTasks` | `(tasks: ImportedTask[]) => Promise<ImportResult>` | Import tasks from external source |
+| Function            | Signature                                                        | Description                                 |
+| ------------------- | ---------------------------------------------------------------- | ------------------------------------------- |
+| `listTasks`         | `(params?: { search?, projectId?, status? }) => Promise<Task[]>` | List all tasks with optional filters        |
+| `createTask`        | `(input: CreateTaskInput) => Promise<Task>`                      | Create a new task                           |
+| `completeTask`      | `(id) => Promise<Task>`                                          | Mark task as completed                      |
+| `updateTask`        | `(id, input: UpdateTaskInput) => Promise<Task>`                  | Update task fields                          |
+| `deleteTask`        | `(id) => Promise<void>`                                          | Delete a task                               |
+| `completeManyTasks` | `(ids) => Promise<Task[]>`                                       | Bulk complete                               |
+| `deleteManyTasks`   | `(ids) => Promise<void>`                                         | Bulk delete                                 |
+| `updateManyTasks`   | `(ids, changes) => Promise<Task[]>`                              | Bulk update                                 |
+| `fetchDueReminders` | `() => Promise<Task[]>`                                          | Get tasks with due reminders                |
+| `listTaskTree`      | `() => Promise<Task[]>`                                          | Get flat task tree with hierarchy           |
+| `getChildren`       | `(parentId) => Promise<Task[]>`                                  | Get subtasks of a parent                    |
+| `indentTask`        | `(id) => Promise<Task>`                                          | Make task a subtask of the previous sibling |
+| `outdentTask`       | `(id) => Promise<Task>`                                          | Move subtask up one level                   |
+| `reorderTasks`      | `(orderedIds) => Promise<void>`                                  | Set manual task ordering                    |
+| `importTasks`       | `(tasks: ImportedTask[]) => Promise<ImportResult>`               | Import tasks from external source           |
 
 - **REST Endpoints (server mode):**
   - `GET /api/tasks` (with query params)
@@ -106,13 +115,13 @@ src/ui/api/
 - **Purpose:** Project CRUD and tag listing.
 - **Key Exports:**
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `listTags` | `() => Promise<{ id, name, color }[]>` | List all tags |
-| `listProjects` | `() => Promise<Project[]>` | List all projects |
-| `createProject` | `(name, color?, icon?, parentId?, isFavorite?, viewStyle?) => Promise<Project>` | Create a project with optional hierarchy and display options |
-| `updateProject` | `(id, data) => Promise<Project \| null>` | Update project fields (name, color, icon, archived, parentId, isFavorite, viewStyle) |
-| `deleteProject` | `(id) => Promise<void>` | Delete a project |
+| Function        | Signature                                                                       | Description                                                                          |
+| --------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `listTags`      | `() => Promise<{ id, name, color }[]>`                                          | List all tags                                                                        |
+| `listProjects`  | `() => Promise<Project[]>`                                                      | List all projects                                                                    |
+| `createProject` | `(name, color?, icon?, parentId?, isFavorite?, viewStyle?) => Promise<Project>` | Create a project with optional hierarchy and display options                         |
+| `updateProject` | `(id, data) => Promise<Project \| null>`                                        | Update project fields (name, color, icon, archived, parentId, isFavorite, viewStyle) |
+| `deleteProject` | `(id) => Promise<void>`                                                         | Delete a project                                                                     |
 
 - **REST Endpoints (server mode):**
   - `GET /api/tags`
@@ -130,13 +139,13 @@ src/ui/api/
 - **Purpose:** Task template CRUD and instantiation.
 - **Key Exports:**
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `listTemplates` | `() => Promise<TaskTemplate[]>` | List all templates |
-| `createTemplate` | `(input: CreateTemplateInput) => Promise<TaskTemplate>` | Create a template |
-| `updateTemplate` | `(id, input: UpdateTemplateInput) => Promise<TaskTemplate>` | Update a template |
-| `deleteTemplate` | `(id) => Promise<void>` | Delete a template |
-| `instantiateTemplate` | `(id, variables?) => Promise<Task>` | Create a task from a template |
+| Function              | Signature                                                   | Description                   |
+| --------------------- | ----------------------------------------------------------- | ----------------------------- |
+| `listTemplates`       | `() => Promise<TaskTemplate[]>`                             | List all templates            |
+| `createTemplate`      | `(input: CreateTemplateInput) => Promise<TaskTemplate>`     | Create a template             |
+| `updateTemplate`      | `(id, input: UpdateTemplateInput) => Promise<TaskTemplate>` | Update a template             |
+| `deleteTemplate`      | `(id) => Promise<void>`                                     | Delete a template             |
+| `instantiateTemplate` | `(id, variables?) => Promise<Task>`                         | Create a task from a template |
 
 - **REST Endpoints (server mode):**
   - `GET /api/templates`
@@ -154,13 +163,13 @@ src/ui/api/
 - **Purpose:** Task comment CRUD and activity feed listing.
 - **Key Exports:**
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `listTaskComments` | `(taskId) => Promise<TaskComment[]>` | List all comments on a task |
-| `addTaskComment` | `(taskId, content) => Promise<TaskComment>` | Add a comment to a task |
-| `updateTaskComment` | `(commentId, content) => Promise<void>` | Update a comment's content |
-| `deleteTaskComment` | `(commentId) => Promise<void>` | Delete a comment |
-| `listTaskActivity` | `(taskId) => Promise<TaskActivity[]>` | List activity history for a task |
+| Function            | Signature                                   | Description                      |
+| ------------------- | ------------------------------------------- | -------------------------------- |
+| `listTaskComments`  | `(taskId) => Promise<TaskComment[]>`        | List all comments on a task      |
+| `addTaskComment`    | `(taskId, content) => Promise<TaskComment>` | Add a comment to a task          |
+| `updateTaskComment` | `(commentId, content) => Promise<void>`     | Update a comment's content       |
+| `deleteTaskComment` | `(commentId) => Promise<void>`              | Delete a comment                 |
+| `listTaskActivity`  | `(taskId) => Promise<TaskActivity[]>`       | List activity history for a task |
 
 - **REST Endpoints (server mode):**
   - `GET /api/tasks/:taskId/comments`
@@ -178,13 +187,13 @@ src/ui/api/
 - **Purpose:** Project section CRUD and reorder operations.
 - **Key Exports:**
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `listSections` | `(projectId) => Promise<Section[]>` | List sections for a project |
-| `createSection` | `(projectId, name) => Promise<Section>` | Create a new section |
-| `updateSection` | `(id, { name?, isCollapsed? }) => Promise<void>` | Update section name or collapsed state |
-| `deleteSection` | `(id) => Promise<void>` | Delete a section |
-| `reorderSections` | `(orderedIds) => Promise<void>` | Set section display order |
+| Function          | Signature                                        | Description                            |
+| ----------------- | ------------------------------------------------ | -------------------------------------- |
+| `listSections`    | `(projectId) => Promise<Section[]>`              | List sections for a project            |
+| `createSection`   | `(projectId, name) => Promise<Section>`          | Create a new section                   |
+| `updateSection`   | `(id, { name?, isCollapsed? }) => Promise<void>` | Update section name or collapsed state |
+| `deleteSection`   | `(id) => Promise<void>`                          | Delete a section                       |
+| `reorderSections` | `(orderedIds) => Promise<void>`                  | Set section display order              |
 
 - **REST Endpoints (server mode):**
   - `GET /api/sections?projectId=...`
@@ -202,10 +211,10 @@ src/ui/api/
 - **Purpose:** Fetch productivity statistics for date ranges or today.
 - **Key Exports:**
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
+| Function        | Signature                                      | Description                      |
+| --------------- | ---------------------------------------------- | -------------------------------- |
 | `getDailyStats` | `(startDate, endDate) => Promise<DailyStat[]>` | Get daily stats for a date range |
-| `getTodayStats` | `() => Promise<DailyStat>` | Get stats for today |
+| `getTodayStats` | `() => Promise<DailyStat>`                     | Get stats for today              |
 
 - **REST Endpoints (server mode):**
   - `GET /api/stats/daily?startDate=...&endDate=...`
@@ -220,44 +229,76 @@ src/ui/api/
 - **Purpose:** Plugin management including lifecycle, settings, commands, UI components, permissions, and the plugin store.
 - **Key Exports:**
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `listPlugins` | `() => Promise<PluginInfo[]>` | List installed plugins |
-| `getPluginSettings` | `(pluginId) => Promise<Record<string, unknown>>` | Get plugin settings |
-| `updatePluginSetting` | `(pluginId, key, value) => Promise<void>` | Update a plugin setting |
-| `listPluginCommands` | `() => Promise<PluginCommandInfo[]>` | List registered commands |
-| `executePluginCommand` | `(id) => Promise<void>` | Execute a command by ID |
-| `getStatusBarItems` | `() => Promise<StatusBarItemInfo[]>` | Get status bar items |
-| `getPluginPanels` | `() => Promise<PanelInfo[]>` | Get sidebar panels |
-| `getPluginViews` | `() => Promise<ViewInfo[]>` | Get custom views |
-| `getPluginViewContent` | `(viewId) => Promise<string>` | Get view HTML content |
-| `getPluginPermissions` | `(pluginId) => Promise<string[] \| null>` | Get approved permissions |
-| `approvePluginPermissions` | `(pluginId, permissions) => Promise<void>` | Approve permissions |
-| `revokePluginPermissions` | `(pluginId) => Promise<void>` | Revoke permissions |
-| `getPluginStore` | `() => Promise<{ plugins: StorePluginInfo[] }>` | Fetch store index |
-| `installPlugin` | `(pluginId, downloadUrl) => Promise<void>` | Install from store |
-| `uninstallPlugin` | `(pluginId) => Promise<void>` | Uninstall a plugin |
-| `togglePlugin` | `(pluginId) => Promise<void>` | Enable/disable a plugin |
+| Function                   | Signature                                        | Description              |
+| -------------------------- | ------------------------------------------------ | ------------------------ |
+| `listPlugins`              | `() => Promise<PluginInfo[]>`                    | List installed plugins   |
+| `getPluginSettings`        | `(pluginId) => Promise<Record<string, unknown>>` | Get plugin settings      |
+| `updatePluginSetting`      | `(pluginId, key, value) => Promise<void>`        | Update a plugin setting  |
+| `listPluginCommands`       | `() => Promise<PluginCommandInfo[]>`             | List registered commands |
+| `executePluginCommand`     | `(id) => Promise<void>`                          | Execute a command by ID  |
+| `getStatusBarItems`        | `() => Promise<StatusBarItemInfo[]>`             | Get status bar items     |
+| `getPluginPanels`          | `() => Promise<PanelInfo[]>`                     | Get sidebar panels       |
+| `getPluginViews`           | `() => Promise<ViewInfo[]>`                      | Get custom views         |
+| `getPluginViewContent`     | `(viewId) => Promise<string>`                    | Get view HTML content    |
+| `getPluginPermissions`     | `(pluginId) => Promise<string[] \| null>`        | Get approved permissions |
+| `approvePluginPermissions` | `(pluginId, permissions) => Promise<void>`       | Approve permissions      |
+| `revokePluginPermissions`  | `(pluginId) => Promise<void>`                    | Revoke permissions       |
+| `getPluginStore`           | `() => Promise<{ plugins: StorePluginInfo[] }>`  | Fetch store index        |
+| `installPlugin`            | `(pluginId, downloadUrl) => Promise<void>`       | Install from store       |
+| `uninstallPlugin`          | `(pluginId) => Promise<void>`                    | Uninstall a plugin       |
+| `togglePlugin`             | `(pluginId) => Promise<void>`                    | Enable/disable a plugin  |
 
 - **Key Interfaces:**
 
 ```typescript
 interface PluginInfo {
-  id: string; name: string; version: string; author: string;
-  description: string; enabled: boolean; permissions: string[];
-  settings: SettingDefinitionInfo[]; builtin: boolean; icon?: string;
+  id: string;
+  name: string;
+  version: string;
+  author: string;
+  description: string;
+  enabled: boolean;
+  permissions: string[];
+  settings: SettingDefinitionInfo[];
+  builtin: boolean;
+  icon?: string;
 }
 
-interface PluginCommandInfo { id: string; name: string; hotkey?: string; }
-interface StatusBarItemInfo { id: string; text: string; icon: string; }
-interface PanelInfo { id: string; title: string; icon: string; content: string; }
-interface ViewInfo { id: string; name: string; icon: string; }
+interface PluginCommandInfo {
+  id: string;
+  name: string;
+  hotkey?: string;
+}
+interface StatusBarItemInfo {
+  id: string;
+  text: string;
+  icon: string;
+}
+interface PanelInfo {
+  id: string;
+  title: string;
+  icon: string;
+  content: string;
+}
+interface ViewInfo {
+  id: string;
+  name: string;
+  icon: string;
+}
 
 interface StorePluginInfo {
-  id: string; name: string; description: string; author: string;
-  version: string; repository: string; downloadUrl?: string;
-  tags: string[]; minJunbanVersion: string; icon?: string;
-  downloads?: number; longDescription?: string;
+  id: string;
+  name: string;
+  description: string;
+  author: string;
+  version: string;
+  repository: string;
+  downloadUrl?: string;
+  tags: string[];
+  minJunbanVersion: string;
+  icon?: string;
+  downloads?: number;
+  longDescription?: string;
 }
 ```
 
@@ -271,29 +312,31 @@ interface StorePluginInfo {
 - **Purpose:** AI provider configuration, chat messaging with SSE streaming, model discovery, model lifecycle management, and multi-session chat management.
 - **Key Exports:**
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `listAIProviders` | `() => Promise<AIProviderInfo[]>` | List available AI providers |
-| `fetchModels` | `(providerName, baseUrl?) => Promise<ModelDiscoveryInfo[]>` | Discover available models |
-| `loadModel` | `(providerName, modelKey, baseUrl?) => Promise<void>` | Load a model (LM Studio) |
-| `unloadModel` | `(providerName, modelKey, baseUrl?) => Promise<void>` | Unload a model |
-| `getAIConfig` | `() => Promise<AIConfigInfo>` | Get current AI config |
-| `updateAIConfig` | `(config) => Promise<void>` | Update AI config (clears chat session) |
-| `sendChatMessage` | `(message, options?) => Promise<ReadableStream \| null>` | Send chat message, returns SSE stream |
-| `getChatMessages` | `() => Promise<AIChatMessage[]>` | Get chat history (restores session if needed) |
-| `clearChat` | `() => Promise<void>` | Clear chat session |
-| `listChatSessions` | `() => Promise<ChatSessionInfo[]>` | List all chat sessions |
-| `renameChatSession` | `(sessionId, title) => Promise<void>` | Rename a chat session |
-| `deleteChatSession` | `(sessionId) => Promise<void>` | Delete a chat session |
-| `switchChatSession` | `(sessionId) => Promise<AIChatMessage[]>` | Switch to a session, returns its messages |
-| `createNewChatSession` | `() => Promise<string>` | Create a new empty session |
+| Function               | Signature                                                   | Description                                   |
+| ---------------------- | ----------------------------------------------------------- | --------------------------------------------- |
+| `listAIProviders`      | `() => Promise<AIProviderInfo[]>`                           | List available AI providers                   |
+| `fetchModels`          | `(providerName, baseUrl?) => Promise<ModelDiscoveryInfo[]>` | Discover available models                     |
+| `loadModel`            | `(providerName, modelKey, baseUrl?) => Promise<void>`       | Load a model (LM Studio)                      |
+| `unloadModel`          | `(providerName, modelKey, baseUrl?) => Promise<void>`       | Unload a model                                |
+| `getAIConfig`          | `() => Promise<AIConfigInfo>`                               | Get current AI config                         |
+| `updateAIConfig`       | `(config) => Promise<void>`                                 | Update AI config (clears chat session)        |
+| `sendChatMessage`      | `(message, options?) => Promise<ReadableStream \| null>`    | Send chat message, returns SSE stream         |
+| `getChatMessages`      | `() => Promise<AIChatMessage[]>`                            | Get chat history (restores session if needed) |
+| `clearChat`            | `() => Promise<void>`                                       | Clear chat session                            |
+| `listChatSessions`     | `() => Promise<ChatSessionInfo[]>`                          | List all chat sessions                        |
+| `renameChatSession`    | `(sessionId, title) => Promise<void>`                       | Rename a chat session                         |
+| `deleteChatSession`    | `(sessionId) => Promise<void>`                              | Delete a chat session                         |
+| `switchChatSession`    | `(sessionId) => Promise<AIChatMessage[]>`                   | Switch to a session, returns its messages     |
+| `createNewChatSession` | `() => Promise<string>`                                     | Create a new empty session                    |
 
 - **Key Interfaces:**
 
 ```typescript
 interface AIConfigInfo {
-  provider: string | null; model: string | null;
-  baseUrl: string | null; hasApiKey: boolean;
+  provider: string | null;
+  model: string | null;
+  baseUrl: string | null;
+  hasApiKey: boolean;
 }
 
 interface AIChatMessage {
@@ -302,22 +345,35 @@ interface AIChatMessage {
   toolCallId?: string;
   toolCalls?: { id: string; name: string; arguments: string }[];
   toolResults?: { toolName: string; data: string }[];
-  isError?: boolean; errorCategory?: string; retryable?: boolean;
+  isError?: boolean;
+  errorCategory?: string;
+  retryable?: boolean;
 }
 
 interface ChatSessionInfo {
-  sessionId: string; title: string;
-  createdAt: string; messageCount: number;
+  sessionId: string;
+  title: string;
+  createdAt: string;
+  messageCount: number;
 }
 
 interface AIProviderInfo {
-  name: string; displayName: string; needsApiKey: boolean;
-  optionalApiKey?: boolean; defaultModel: string;
-  suggestedModels?: string[]; defaultBaseUrl?: string;
-  showBaseUrl?: boolean; pluginId: string | null;
+  name: string;
+  displayName: string;
+  needsApiKey: boolean;
+  optionalApiKey?: boolean;
+  defaultModel: string;
+  suggestedModels?: string[];
+  defaultBaseUrl?: string;
+  showBaseUrl?: boolean;
+  pluginId: string | null;
 }
 
-interface ModelDiscoveryInfo { id: string; label: string; loaded: boolean; }
+interface ModelDiscoveryInfo {
+  id: string;
+  label: string;
+  loaded: boolean;
+}
 ```
 
 - **REST Endpoints (server mode):**
@@ -347,12 +403,12 @@ interface ModelDiscoveryInfo { id: string; label: string; loaded: boolean; }
 - **Purpose:** App settings persistence, storage info, and data export.
 - **Key Exports:**
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `exportAllData` | `() => Promise<{ tasks, projects, tags }>` | Export all data |
-| `getAppSetting` | `(key) => Promise<string \| null>` | Get a single setting |
-| `getStorageInfo` | `() => Promise<{ mode, path }>` | Get storage backend info |
-| `setAppSetting` | `(key, value) => Promise<void>` | Set a single setting |
+| Function         | Signature                                  | Description              |
+| ---------------- | ------------------------------------------ | ------------------------ |
+| `exportAllData`  | `() => Promise<{ tasks, projects, tags }>` | Export all data          |
+| `getAppSetting`  | `(key) => Promise<string \| null>`         | Get a single setting     |
+| `getStorageInfo` | `() => Promise<{ mode, path }>`            | Get storage backend info |
+| `setAppSetting`  | `(key, value) => Promise<void>`            | Set a single setting     |
 
 - **REST Endpoints (server mode):**
   - `GET /api/settings/:key`
