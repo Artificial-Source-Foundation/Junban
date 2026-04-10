@@ -179,6 +179,16 @@ export function listTasksDueForReminder(idx: MarkdownIndexes, beforeTime: string
   return results;
 }
 
+export function listTasksByParent(idx: MarkdownIndexes, parentId: string): TaskRow[] {
+  const results: TaskRow[] = [];
+  for (const entry of idx.taskIndex.values()) {
+    if (entry.row.parentId === parentId) {
+      results.push(entry.row);
+    }
+  }
+  return results;
+}
+
 // ── Task-Tag Relations ──
 
 export function getTaskTags(idx: MarkdownIndexes, taskId: string): TaskTagJoin[] {
@@ -195,6 +205,26 @@ export function getTaskTags(idx: MarkdownIndexes, taskId: string): TaskTagJoin[]
       });
     }
   }
+  return results;
+}
+
+export function getTaskTagsByTaskIds(idx: MarkdownIndexes, taskIds: string[]): TaskTagJoin[] {
+  const ids = new Set(taskIds);
+  const results: TaskTagJoin[] = [];
+
+  for (const [taskId, tagIds] of idx.taskTagIndex) {
+    if (!ids.has(taskId)) {
+      continue;
+    }
+
+    for (const tagId of tagIds) {
+      const tag = idx.tagIndex.get(tagId);
+      if (tag) {
+        results.push({ task_tags: { taskId, tagId }, tags: tag });
+      }
+    }
+  }
+
   return results;
 }
 

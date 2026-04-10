@@ -386,9 +386,9 @@ async function createWebServices(): Promise<WebAppServices> {
         storage.setPluginPermissions(builtinPlugin.id, builtinPlugin.permissions);
         save();
       }
-
-      await loadBuiltinPlugin(builtinPlugin.id);
     }
+
+    await Promise.all(builtinPlugins.map((builtinPlugin) => loadBuiltinPlugin(builtinPlugin.id)));
 
     const flushDbToDisk = () => {
       const bytes = sqlite.export();

@@ -31,6 +31,7 @@ import type {
 interface StorageQueries {
   // ── Tasks ──
   listTasks(): TaskRow[];
+  listTasksByParent(parentId: string): TaskRow[];
   getTask(id: string): TaskRow[];
   insertTask(task: TaskRow): MutationResult;
   insertTaskWithId(task: TaskRow): MutationResult;
@@ -42,6 +43,7 @@ interface StorageQueries {
 
   // ── Task-Tag Relations ──
   getTaskTags(taskId: string): TaskTagJoin[];
+  getTaskTagsByTaskIds(taskIds: string[]): TaskTagJoin[];
   listAllTaskTags(): TaskTagJoin[];
   insertTaskTag(taskId: string, tagId: string): MutationResult;
   deleteTaskTags(taskId: string): MutationResult;
@@ -146,6 +148,10 @@ export class SQLiteBackend implements IStorage {
     return this.q.listTasks();
   }
 
+  listTasksByParent(parentId: string): TaskRow[] {
+    return this.q.listTasksByParent(parentId);
+  }
+
   getTask(id: string): TaskRow[] {
     return this.q.getTask(id);
   }
@@ -182,6 +188,10 @@ export class SQLiteBackend implements IStorage {
 
   getTaskTags(taskId: string): TaskTagJoin[] {
     return this.q.getTaskTags(taskId);
+  }
+
+  getTaskTagsByTaskIds(taskIds: string[]): TaskTagJoin[] {
+    return this.q.getTaskTagsByTaskIds(taskIds);
   }
 
   listAllTaskTags(): TaskTagJoin[] {

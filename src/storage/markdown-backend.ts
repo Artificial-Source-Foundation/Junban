@@ -146,10 +146,18 @@ export class MarkdownBackend implements IStorage {
     return taskOps.listTasksDueForReminder(this.idx, beforeTime);
   }
 
+  listTasksByParent(parentId: string): TaskRow[] {
+    return taskOps.listTasksByParent(this.idx, parentId);
+  }
+
   // ── Task-Tag Relations ──
 
   getTaskTags(taskId: string): TaskTagJoin[] {
     return taskOps.getTaskTags(this.idx, taskId);
+  }
+
+  getTaskTagsByTaskIds(taskIds: string[]): TaskTagJoin[] {
+    return taskOps.getTaskTagsByTaskIds(this.idx, taskIds);
   }
 
   insertTaskTag(taskId: string, tagId: string): MutationResult {

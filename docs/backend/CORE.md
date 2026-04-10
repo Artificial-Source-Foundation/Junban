@@ -9,7 +9,6 @@ The `src/core/` directory contains the heart of the Junban application: task man
 ### `tasks.ts`
 
 **Path:** `src/core/tasks.ts`
-**Lines:** 434
 **Purpose:** The central task service -- handles all task CRUD operations, subtask hierarchy, batch operations, recurring task creation, and reminder queries. Both the UI and CLI use this module.
 **Key Exports:**
 
@@ -18,6 +17,12 @@ The `src/core/` directory contains the heart of the Junban application: task man
 - `IStorage` (storage interface), `TagService`, `EventBus`, `TaskFilter`, `filterTasks`, `sortByPriority`, `generateId`, `NotFoundError`, `getNextOccurrence`, `createLogger`
   **Used By:**
 - `src/bootstrap.ts`, `src/bootstrap-web.ts`, `src/cli/commands/*.ts`, `src/plugins/api.ts`, `src/ai/tools/builtin/*.ts`, `src/ai/chat.ts`
+
+Performance notes:
+
+- `getChildren()` now uses backend-level parent queries instead of loading every task and filtering in memory.
+- `getDueReminders()` hydrates tags only for due reminder rows instead of scanning all task-tag joins.
+- `updateMany()` resolves shared tag names once per batch before applying tag assignments across tasks.
 
 ---
 

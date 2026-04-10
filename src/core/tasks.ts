@@ -1,6 +1,5 @@
 import type { CreateTaskInput, UpdateTaskInput, Task, Tag } from "./types.js";
-import type { TagRow } from "../storage/interface.js";
-import type { IStorage } from "../storage/interface.js";
+import type { IStorage, TagRow, TaskRow, TaskTagJoin } from "../storage/interface.js";
 import type { TagService } from "./tags.js";
 import type { TaskFilter } from "./filters.js";
 import type { EventBus } from "./event-bus.js";
@@ -24,16 +23,43 @@ export class TaskService {
     private eventBus?: EventBus,
   ) {}
 
+  private hydrateTasks(rows: TaskRow[], tagRows: TaskTagJoin[]): Task[] {
+    const tagsByTaskId = new Map<string, TagRow[]>();
+    for (const join of tagRows) {
+      const taskId = join.task_tags.taskId;
+      if (!tagsByTaskId.has(taskId)) tagsByTaskId.set(taskId, []);
+      tagsByTaskId.get(taskId)!.push(join.tags);
+    }
+
+    return rows.map((row) => ({
+      ...row,
+      dueTime: row.dueTime ?? false,
+      parentId: row.parentId ?? null,
+      remindAt: row.remindAt ?? null,
+      estimatedMinutes: row.estimatedMinutes ?? null,
+      actualMinutes: row.actualMinutes ?? null,
+      deadline: row.deadline ?? null,
+      isSomeday: row.isSomeday ?? false,
+      sectionId: row.sectionId ?? null,
+      dreadLevel: row.dreadLevel ?? null,
+      tags: tagsByTaskId.get(row.id) ?? [],
+    }));
+  }
+
+  private async resolveTags(tagNames: string[] | undefined): Promise<Tag[]> {
+    if (!tagNames || tagNames.length === 0) {
+      return [];
+    }
+
+    return Promise.all(tagNames.map((tagName) => this.tagService.getOrCreate(tagName)));
+  }
+
   async create(input: CreateTaskInput): Promise<Task> {
     const now = new Date().toISOString();
     const id = generateId();
 
     // Resolve tags: getOrCreate each tag name
-    const tags: Tag[] = [];
-    for (const tagName of input.tags ?? []) {
-      const tag = await this.tagService.getOrCreate(tagName);
-      tags.push(tag);
-    }
+    const tags = await this.resolveTags(input.tags);
 
     // Insert the task row
     this.queries.insertTask({
@@ -98,29 +124,7 @@ export class TaskService {
 
   async list(filter?: TaskFilter): Promise<Task[]> {
     const rows = this.queries.listTasks();
-
-    // Single batch query — eliminates N+1
-    const allTagJoins = this.queries.listAllTaskTags();
-    const tagsByTaskId = new Map<string, TagRow[]>();
-    for (const join of allTagJoins) {
-      const taskId = join.task_tags.taskId;
-      if (!tagsByTaskId.has(taskId)) tagsByTaskId.set(taskId, []);
-      tagsByTaskId.get(taskId)!.push(join.tags);
-    }
-
-    const tasks: Task[] = rows.map((row) => ({
-      ...row,
-      dueTime: row.dueTime ?? false,
-      parentId: row.parentId ?? null,
-      remindAt: row.remindAt ?? null,
-      estimatedMinutes: row.estimatedMinutes ?? null,
-      actualMinutes: row.actualMinutes ?? null,
-      deadline: row.deadline ?? null,
-      isSomeday: row.isSomeday ?? false,
-      sectionId: row.sectionId ?? null,
-      dreadLevel: row.dreadLevel ?? null,
-      tags: tagsByTaskId.get(row.id) ?? [],
-    }));
+    const tasks = this.hydrateTasks(rows, this.queries.listAllTaskTags());
 
     // Apply in-memory filtering (reuses existing filterTasks)
     let result = filter ? filterTasks(tasks, filter) : tasks;
@@ -167,8 +171,8 @@ export class TaskService {
     // If tags are being updated, replace all tag associations
     if (tagNames !== undefined) {
       this.queries.deleteTaskTags(id);
-      for (const tagName of tagNames) {
-        const tag = await this.tagService.getOrCreate(tagName);
+      const resolvedTags = await this.resolveTags(tagNames);
+      for (const tag of resolvedTags) {
         this.queries.insertTaskTag(id, tag.id);
       }
     }
@@ -341,10 +345,10 @@ export class TaskService {
 
     // Handle tags per-task if provided
     if (tagNames !== undefined) {
+      const resolvedTags = await this.resolveTags([...new Set(tagNames)]);
       for (const id of ids) {
         this.queries.deleteTaskTags(id);
-        for (const tagName of tagNames) {
-          const tag = await this.tagService.getOrCreate(tagName);
+        for (const tag of resolvedTags) {
           this.queries.insertTaskTag(id, tag.id);
         }
       }
@@ -408,36 +412,18 @@ export class TaskService {
   async getDueReminders(): Promise<Task[]> {
     const now = new Date().toISOString();
     const rows = this.queries.listTasksDueForReminder(now);
-
-    const allTagJoins = this.queries.listAllTaskTags();
-    const tagsByTaskId = new Map<string, import("../storage/interface.js").TagRow[]>();
-    for (const join of allTagJoins) {
-      const taskId = join.task_tags.taskId;
-      if (!tagsByTaskId.has(taskId)) tagsByTaskId.set(taskId, []);
-      tagsByTaskId.get(taskId)!.push(join.tags);
-    }
-
-    return rows.map((row) => ({
-      ...row,
-      dueTime: row.dueTime ?? false,
-      parentId: row.parentId ?? null,
-      remindAt: row.remindAt ?? null,
-      estimatedMinutes: row.estimatedMinutes ?? null,
-      actualMinutes: row.actualMinutes ?? null,
-      deadline: row.deadline ?? null,
-      isSomeday: row.isSomeday ?? false,
-      sectionId: row.sectionId ?? null,
-      dreadLevel: row.dreadLevel ?? null,
-      tags: tagsByTaskId.get(row.id) ?? [],
-    }));
+    const taskIds = rows.map((row) => row.id);
+    const tagJoins = this.queries.getTaskTagsByTaskIds(taskIds);
+    return this.hydrateTasks(rows, tagJoins);
   }
 
   // ── Sub-task methods ──
 
   /** Get direct children of a task. */
   async getChildren(parentId: string): Promise<Task[]> {
-    const allTasks = await this.list();
-    return allTasks.filter((t) => t.parentId === parentId);
+    const rows = this.queries.listTasksByParent(parentId);
+    const tagJoins = this.queries.getTaskTagsByTaskIds(rows.map((row) => row.id));
+    return this.hydrateTasks(rows, tagJoins);
   }
 
   /** List tasks as a nested tree (top-level tasks with children populated). */

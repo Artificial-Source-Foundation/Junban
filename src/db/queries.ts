@@ -7,6 +7,9 @@ export function createQueries(db: BaseSQLiteDatabase<"sync", any, typeof schema>
     // ── Tasks ────────────────────────────────────────────
     listTasks: () => db.select().from(schema.tasks).all(),
 
+    listTasksByParent: (parentId: string) =>
+      db.select().from(schema.tasks).where(eq(schema.tasks.parentId, parentId)).all(),
+
     getTask: (id: string) => db.select().from(schema.tasks).where(eq(schema.tasks.id, id)).all(),
 
     insertTask: (task: typeof schema.tasks.$inferInsert) =>
@@ -51,6 +54,16 @@ export function createQueries(db: BaseSQLiteDatabase<"sync", any, typeof schema>
         .innerJoin(schema.tags, eq(schema.taskTags.tagId, schema.tags.id))
         .where(eq(schema.taskTags.taskId, taskId))
         .all(),
+
+    getTaskTagsByTaskIds: (taskIds: string[]) =>
+      taskIds.length === 0
+        ? []
+        : db
+            .select()
+            .from(schema.taskTags)
+            .innerJoin(schema.tags, eq(schema.taskTags.tagId, schema.tags.id))
+            .where(inArray(schema.taskTags.taskId, taskIds))
+            .all(),
 
     listAllTaskTags: () =>
       db

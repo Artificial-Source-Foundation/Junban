@@ -105,13 +105,16 @@ Metrics are collected through a lightweight in-browser performance registry expo
 
 The current startup path also includes a few small scheduling optimizations aimed at weaker machines:
 
-- initial task refresh uses a much shorter idle timeout so Inbox becomes useful sooner
+- initial task refresh now runs immediately instead of waiting an extra frame, so Inbox becomes useful sooner
 - blocked-task relation hydration starts earlier after first paint
 - onboarding and saved-filter hydration use shorter deferred timeouts so UI state stabilizes sooner without moving them onto the critical render path
+- built-in plugin bootstrap can load enabled built-ins in parallel in the web path
+- task-service hot paths now avoid whole-database scans for child lookup and reminder-tag hydration
+- bulk tag updates resolve shared tags once per batch instead of once per task
 
 ## Recent Results
 
-The current production preview baseline is approximately:
+The current Lighthouse production preview baseline is approximately:
 
 - Performance: `100`
 - FCP: `~552ms`
@@ -119,7 +122,18 @@ The current production preview baseline is approximately:
 - TBT: `0ms`
 - CLS: `0`
 
-Remaining early requests are mostly the core startup bundles, fonts, plugin/view hydration, and a few stubborn lazy-feature chunks that are now in diminishing-returns territory.
+The current automated Playwright benchmark pass on this machine measured approximately:
+
+- empty startup: `163-203ms`
+- initial task refresh: `41-51ms`
+- startup with 200 seeded tasks: `90-99ms`
+- seeded task refresh: `300-334ms`
+- task create: `8-10ms`
+- task complete: `11-14ms`
+- settings open: `313-321ms`
+- route change: `21-30ms`
+
+Remaining work is now less about first-paint scheduling and more about deeper algorithmic paths under heavier data or more complex plugins.
 
 ## When To Update This Doc
 

@@ -35,26 +35,31 @@ Defined in `interface.ts`. All methods are synchronous (both backends return val
 
 ### Method Groups
 
-| Group              | Methods                                                                                                                                               |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tasks              | `listTasks`, `getTask`, `insertTask`, `insertTaskWithId`, `updateTask`, `deleteTask`, `deleteManyTasks`, `updateManyTasks`, `listTasksDueForReminder` |
-| Task-Tag Relations | `getTaskTags`, `listAllTaskTags`, `insertTaskTag`, `deleteTaskTags`, `deleteManyTaskTags`                                                             |
-| Projects           | `listProjects`, `getProject`, `getProjectByName`, `insertProject`, `updateProject`, `deleteProject`                                                   |
-| Tags               | `listTags`, `getTagByName`, `insertTag`, `deleteTag`                                                                                                  |
-| Sections           | `listSections`, `getSection`, `insertSection`, `updateSection`, `deleteSection`                                                                       |
-| Task Comments      | `listTaskComments`, `insertTaskComment`, `updateTaskComment`, `deleteTaskComment`                                                                     |
-| Task Activity      | `listTaskActivity`, `insertTaskActivity`                                                                                                              |
-| Task Relations     | `listTaskRelations`, `getTaskRelations`, `insertTaskRelation`, `deleteTaskRelation`, `deleteAllTaskRelations`                                         |
-| Daily Stats        | `getDailyStat`, `upsertDailyStat`, `listDailyStats`                                                                                                   |
-| Templates          | `listTemplates`, `getTemplate`, `insertTemplate`, `updateTemplate`, `deleteTemplate`                                                                  |
-| Chat               | `listChatMessages`, `insertChatMessage`, `deleteChatSession`, `getLatestSessionId`, `listChatSessions`, `renameChatSession`                           |
-| Plugin Settings    | `loadPluginSettings`, `savePluginSettings`                                                                                                            |
-| Plugin Permissions | `getPluginPermissions`, `setPluginPermissions`, `deletePluginPermissions`                                                                             |
-| App Settings       | `getAppSetting`, `setAppSetting`, `deleteAppSetting`                                                                                                  |
+| Group              | Methods                                                                                                                                                                    |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tasks              | `listTasks`, `listTasksByParent`, `getTask`, `insertTask`, `insertTaskWithId`, `updateTask`, `deleteTask`, `deleteManyTasks`, `updateManyTasks`, `listTasksDueForReminder` |
+| Task-Tag Relations | `getTaskTags`, `getTaskTagsByTaskIds`, `listAllTaskTags`, `insertTaskTag`, `deleteTaskTags`, `deleteManyTaskTags`                                                          |
+| Projects           | `listProjects`, `getProject`, `getProjectByName`, `insertProject`, `updateProject`, `deleteProject`                                                                        |
+| Tags               | `listTags`, `getTagByName`, `insertTag`, `deleteTag`                                                                                                                       |
+| Sections           | `listSections`, `getSection`, `insertSection`, `updateSection`, `deleteSection`                                                                                            |
+| Task Comments      | `listTaskComments`, `insertTaskComment`, `updateTaskComment`, `deleteTaskComment`                                                                                          |
+| Task Activity      | `listTaskActivity`, `insertTaskActivity`                                                                                                                                   |
+| Task Relations     | `listTaskRelations`, `getTaskRelations`, `insertTaskRelation`, `deleteTaskRelation`, `deleteAllTaskRelations`                                                              |
+| Daily Stats        | `getDailyStat`, `upsertDailyStat`, `listDailyStats`                                                                                                                        |
+| Templates          | `listTemplates`, `getTemplate`, `insertTemplate`, `updateTemplate`, `deleteTemplate`                                                                                       |
+| Chat               | `listChatMessages`, `insertChatMessage`, `deleteChatSession`, `getLatestSessionId`, `listChatSessions`, `renameChatSession`                                                |
+| Plugin Settings    | `loadPluginSettings`, `savePluginSettings`                                                                                                                                 |
+| Plugin Permissions | `getPluginPermissions`, `setPluginPermissions`, `deletePluginPermissions`                                                                                                  |
+| App Settings       | `getAppSetting`, `setAppSetting`, `deleteAppSetting`                                                                                                                       |
 
 ## SQLite Backend
 
 `sqlite-backend.ts` wraps the `createQueries()` function from `src/db/queries.ts`. Each IStorage method maps directly to a Drizzle query. This is the default backend and handles all complex filtering via SQL.
+
+Recent performance-oriented additions:
+
+- `listTasksByParent(parentId)` supports targeted child-task lookup without full task scans.
+- `getTaskTagsByTaskIds(taskIds)` supports batched tag hydration for reminder and child-task flows.
 
 ## Markdown Backend
 
@@ -85,6 +90,7 @@ Key design decisions:
 - Uses the `yaml` package (not `js-yaml`) for parsing
 - `markdown-utils.ts` handles YAML ↔ object conversion
 - Task move/rename writes are fail-safe: the new file is written first, and the old file is removed only after a successful write
+- Task/tag lookup helpers mirror the SQLite targeted-query surface so core services can keep the same optimized code paths across both backends
 
 ## Backend Selection
 

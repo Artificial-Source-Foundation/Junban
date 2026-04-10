@@ -154,6 +154,7 @@ export interface MutationResult {
 export interface IStorage {
   // ── Tasks ──
   listTasks(): TaskRow[];
+  listTasksByParent(parentId: string): TaskRow[];
   getTask(id: string): TaskRow[];
   insertTask(task: TaskRow): MutationResult;
   insertTaskWithId(task: TaskRow): MutationResult;
@@ -165,6 +166,7 @@ export interface IStorage {
 
   // ── Task-Tag Relations ──
   getTaskTags(taskId: string): TaskTagJoin[];
+  getTaskTagsByTaskIds(taskIds: string[]): TaskTagJoin[];
   listAllTaskTags(): TaskTagJoin[];
   insertTaskTag(taskId: string, tagId: string): MutationResult;
   deleteTaskTags(taskId: string): MutationResult;
