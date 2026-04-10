@@ -31,8 +31,6 @@ function AppContent() {
     settingsTab,
     focusModeOpen,
     setFocusModeOpen,
-    calendarMode,
-    setCalendarMode,
     handleNavigate,
     openSettingsTab,
   } = routing;
@@ -266,7 +264,6 @@ function AppContent() {
       multiSelectedIds,
       featureSettings,
       pluginViews,
-      calendarMode,
       sections,
       availableTags,
       tasks: state.tasks,
@@ -282,7 +279,6 @@ function AppContent() {
       multiSelectedIds,
       featureSettings,
       pluginViews,
-      calendarMode,
       sections,
       availableTags,
       state.tasks,
@@ -341,8 +337,6 @@ function AppContent() {
         handleAddSubtask={handleAddSubtask}
         handleUpdateDueDate={handleUpdateDueDate}
         handleContextMenu={handleContextMenu}
-        handleRestoreTask={handlers.handleRestoreTask}
-        handleActivateTask={handlers.handleActivateTask}
         handleCreateSection={handlers.handleCreateSection}
         handleUpdateSection={handlers.handleUpdateSection}
         handleDeleteSection={handlers.handleDeleteSection}
@@ -353,7 +347,6 @@ function AppContent() {
         handleAddComment={handlers.handleAddComment}
         handleUpdateComment={handlers.handleUpdateComment}
         handleDeleteComment={handlers.handleDeleteComment}
-        setCalendarMode={setCalendarMode}
         addTaskTrigger={addTaskTrigger}
         handleOpenSettingsTab={handleOpenSettingsTab}
         setSearchOpen={setSearchOpen}

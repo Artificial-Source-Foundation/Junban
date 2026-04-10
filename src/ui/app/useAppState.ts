@@ -22,7 +22,7 @@ import type {
   TaskComment,
   TaskActivity,
 } from "../../core/types.js";
-import type { View, CalendarMode } from "../hooks/useRouting.js";
+import type { View } from "../hooks/useRouting.js";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "junban.ui.sidebar.collapsed";
 
@@ -37,7 +37,6 @@ export function useAppState(routing: {
   selectedPluginViewId: string | null;
   selectedFilterId: string | null;
   focusModeOpen: boolean;
-  calendarMode: CalendarMode | null;
 }) {
   const {
     currentView,
@@ -46,7 +45,6 @@ export function useAppState(routing: {
     selectedPluginViewId,
     selectedFilterId,
     focusModeOpen,
-    calendarMode,
   } = routing;
 
   const { settings: featureSettings } = useGeneralSettings();
@@ -360,32 +358,14 @@ export function useAppState(routing: {
           : null;
         return t ? `${t.title} - Junban` : "Task - Junban";
       }
-      case "calendar": {
-        const m = calendarMode
-          ? calendarMode.charAt(0).toUpperCase() + calendarMode.slice(1)
-          : "Week";
-        return `Calendar (${m}) - Junban`;
-      }
       case "filters-labels":
         return "Filters & Labels - Junban";
-      case "completed":
-        return "Completed - Junban";
-      case "cancelled":
-        return "Cancelled - Junban";
-      case "someday":
-        return "Someday / Maybe - Junban";
-      case "stats":
-        return "Stats - Junban";
-      case "matrix":
-        return "Matrix - Junban";
       case "filter": {
         const f = savedFilters.find((f) => f.id === selectedFilterId);
         return f ? `${f.name} - Junban` : "Filter - Junban";
       }
       case "ai-chat":
         return "AI Chat - Junban";
-      case "dopamine-menu":
-        return "Quick Wins - Junban";
       default:
         return "Junban";
     }
@@ -400,7 +380,6 @@ export function useAppState(routing: {
     selectedPluginViewId,
     selectedFilterId,
     savedFilters,
-    calendarMode,
   ]);
 
   useEffect(() => {

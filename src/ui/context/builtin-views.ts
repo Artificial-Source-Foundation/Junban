@@ -27,7 +27,7 @@ const builtinComponentFactories = new Map<string, () => Promise<ComponentType<an
  * Register a built-in plugin's React component factory.
  * The factory is called lazily on first resolve and the result is cached.
  */
- 
+
 export function registerBuiltinComponent(
   pluginId: string,
   factory: () => Promise<ComponentType<any>>,
@@ -39,7 +39,7 @@ export function registerBuiltinComponent(
  * Resolve a built-in React component for a plugin view.
  * Returns null if the pluginId has no registered factory.
  */
- 
+
 export async function resolveBuiltinComponent(
   pluginId: string,
 ): Promise<((props: any) => any) | null> {
@@ -105,4 +105,39 @@ registerBuiltinComponent("timeblocking", async () => {
       { value: cachedTimeblockingProxy },
       React.createElement(TimeblockingView),
     );
+});
+
+registerBuiltinComponent("stats", async () => {
+  const { StatsPluginView } = await import("../../plugins/builtin/stats/view.js");
+  return StatsPluginView;
+});
+
+registerBuiltinComponent("someday", async () => {
+  const { SomedayPluginView } = await import("../../plugins/builtin/someday/view.js");
+  return SomedayPluginView;
+});
+
+registerBuiltinComponent("completed", async () => {
+  const { CompletedPluginView } = await import("../../plugins/builtin/completed/view.js");
+  return CompletedPluginView;
+});
+
+registerBuiltinComponent("cancelled", async () => {
+  const { CancelledPluginView } = await import("../../plugins/builtin/cancelled/view.js");
+  return CancelledPluginView;
+});
+
+registerBuiltinComponent("matrix", async () => {
+  const { MatrixPluginView } = await import("../../plugins/builtin/matrix/view.js");
+  return MatrixPluginView;
+});
+
+registerBuiltinComponent("calendar", async () => {
+  const { CalendarPluginView } = await import("../../plugins/builtin/calendar/view.js");
+  return CalendarPluginView;
+});
+
+registerBuiltinComponent("dopamine-menu", async () => {
+  const { DopamineMenuPluginView } = await import("../../plugins/builtin/dopamine-menu/view.js");
+  return DopamineMenuPluginView;
 });

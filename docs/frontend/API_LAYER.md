@@ -302,7 +302,7 @@ interface StorePluginInfo {
 }
 ```
 
-- **Notes:** In Tauri/direct-services mode, built-in plugins are initialized during web bootstrap and surfaced through `listPlugins()`, so plugin views/commands/status items can hydrate without the server route path. Community plugin install/uninstall are still unsupported in this mode, and permission approval/revocation plus toggle fail explicitly because they require the server plugin-management surface. `PluginInfo` includes an optional `icon` field. `StorePluginInfo` includes optional `icon`, `downloads` count, and `longDescription` for the store detail view.
+- **Notes:** In Tauri/direct-services mode, built-in plugins are discovered during web bootstrap but stay disabled until the user activates them. Direct-services now supports built-in permission approval, revocation, and toggle so plugin views/commands/status items can appear without the server route path once enabled. Community plugin install/uninstall is still unsupported in this mode. Existing desktop users are grandfathered for the legacy `pomodoro` and `timeblocking` built-ins so upgrades do not silently remove those views. `PluginInfo` includes an optional `icon` field. `StorePluginInfo` includes optional `icon`, `downloads` count, and `longDescription` for the store detail view.
 
 ---
 

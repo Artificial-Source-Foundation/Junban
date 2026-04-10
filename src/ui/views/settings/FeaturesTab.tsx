@@ -3,6 +3,10 @@ import {
   DEFAULT_SETTINGS,
   type GeneralSettings,
 } from "../../context/SettingsContext.js";
+import { NudgeSection } from "./general/NudgeSection.js";
+import { NotificationSection } from "./general/NotificationSection.js";
+import { SoundSection } from "./general/SoundSection.js";
+import { StartupSection } from "./general/StartupSection.js";
 import { SettingRow, Toggle } from "./components.js";
 
 type FeatureKey = Extract<keyof GeneralSettings, `feature_${string}`>;
@@ -22,100 +26,65 @@ interface FeatureGroup {
 
 const FEATURE_GROUPS: FeatureGroup[] = [
   {
-    title: "Views",
-    description: "Additional views in the sidebar",
+    title: "Extra Views",
+    description: "Optional screens you may want once your workflow grows beyond the basics",
     features: [
-      {
-        key: "feature_calendar",
-        label: "Calendar",
-        description: "View tasks on a calendar",
-      },
-      {
-        key: "feature_completed",
-        label: "Completed tasks",
-        description: "View completed tasks",
-      },
-      {
-        key: "feature_cancelled",
-        label: "Cancelled tasks",
-        description: "View and restore cancelled tasks",
-      },
-      {
-        key: "feature_someday",
-        label: "Someday / Maybe",
-        description: "Park tasks you might do later in a dedicated view",
-      },
-      {
-        key: "feature_matrix",
-        label: "Eisenhower Matrix",
-        description: "Priority matrix view for urgent/important categorization",
-      },
-      {
-        key: "feature_stats",
-        label: "Productivity stats",
-        description: "Track completion streaks and daily statistics",
-      },
       {
         key: "feature_filters_labels",
         label: "Filters & Labels",
-        description: "Saved filters and label management",
-      },
-      {
-        key: "feature_dopamine_menu",
-        label: "Quick Wins",
-        description: "A fun way to pick easy tasks when you need a quick win",
+        description: "Saved filters and label organization in one place",
       },
     ],
   },
   {
-    title: "Task Features",
-    description: "Enhancements to task management",
+    title: "Workflow Options",
+    description: "More structure and planning detail for people who want a richer setup",
     features: [
       {
         key: "feature_sections",
         label: "Project sections",
-        description: "Group tasks into named sections within projects",
+        description: "Group tasks inside projects with named sections",
       },
       {
         key: "feature_kanban",
         label: "Kanban / Board view",
-        description: "Drag-and-drop board view for projects with sections",
+        description: "Use a drag-and-drop board layout inside projects",
       },
       {
         key: "feature_duration",
         label: "Time estimates",
-        description: "Show duration badges on tasks (e.g. 30m, 1h)",
+        description: "Track rough time estimates like 30m or 1h on tasks",
       },
       {
         key: "feature_deadlines",
         label: "Deadlines",
-        description: "Separate hard deadline field distinct from the due date",
+        description: "Add a hard deadline separate from the normal due date",
       },
       {
         key: "feature_comments",
         label: "Comments & activity",
-        description: "Add comments and view activity history on tasks",
+        description: "Keep notes and see task activity history",
       },
     ],
   },
   {
-    title: "Productivity",
-    description: "Focus and productivity tools",
+    title: "Power Tools",
+    description: "Helpful extras for people who want more automation, prompts, or keyboard speed",
     features: [
       {
         key: "feature_chords",
         label: "Keyboard chords",
-        description: "Multi-key shortcuts like g then i to jump to Inbox",
+        description: "Jump around the app with multi-key shortcuts like g then i",
       },
       {
         key: "eat_the_frog_enabled",
         label: "Eat the Frog",
-        description: "Highlight your most-dreaded task each morning",
+        description: "Highlight the hardest task to tackle first",
       },
       {
         key: "nudge_enabled",
         label: "Smart Nudges",
-        description: "Contextual reminders about overdue tasks, deadlines, etc.",
+        description: "Show lightweight reminders based on what is falling behind",
       },
     ],
   },
@@ -143,10 +112,18 @@ export function FeaturesTab() {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-on-surface-muted">
-        Toggle features on or off. Disabled features are hidden from the interface but your data is
-        preserved.
-      </p>
+      <div className="max-w-2xl">
+        <h2 className="text-lg font-semibold text-on-surface">Advanced</h2>
+        <p className="mt-1 text-sm text-on-surface-muted">
+          Optional upgrades for desktop use, planning depth, and power-user workflows. Turn them on
+          only when you need them. Your data stays intact when they are off.
+        </p>
+      </div>
+
+      <StartupSection />
+      <SoundSection />
+      <NotificationSection />
+      <NudgeSection />
 
       {FEATURE_GROUPS.map((group) => (
         <div key={group.title}>
@@ -173,13 +150,13 @@ export function FeaturesTab() {
           onClick={handleEnableAll}
           className="px-4 py-2 text-sm rounded-lg border border-border text-on-surface-secondary hover:bg-surface-tertiary transition-colors"
         >
-          Enable All
+          Turn On All
         </button>
         <button
           onClick={handleResetToDefaults}
           className="px-4 py-2 text-sm rounded-lg border border-border text-on-surface-secondary hover:bg-surface-tertiary transition-colors"
         >
-          Reset to Defaults
+          Restore Defaults
         </button>
       </div>
     </div>

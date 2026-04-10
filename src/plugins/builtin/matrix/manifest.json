@@ -1,0 +1,12 @@
+{
+  "id": "matrix",
+  "icon": "🧭",
+  "name": "Matrix",
+  "version": "1.0.0",
+  "author": "ASF",
+  "description": "Organize pending work with an Eisenhower-style priority matrix.",
+  "main": "index.ts",
+  "minJunbanVersion": "1.0.0",
+  "permissions": ["task:read", "task:write", "ui:view"],
+  "settings": []
+}

@@ -12,7 +12,7 @@ import type {
   TaskActivity,
   UpdateTaskInput,
 } from "../../core/types.js";
-import type { View, CalendarMode } from "../hooks/useRouting.js";
+import type { View } from "../hooks/useRouting.js";
 import type { ViewInfo, PanelInfo } from "../api/plugins.js";
 import type { ParsedTaskInput } from "./ViewRenderer.js";
 import type { SettingsTab } from "../views/settings/types.js";
@@ -98,8 +98,6 @@ interface AppLayoutProps {
   handleAddSubtask: (parentId: string, title: string) => void;
   handleUpdateDueDate: (id: string, date: string | null) => void;
   handleContextMenu: (taskId: string, position: { x: number; y: number }) => void;
-  handleRestoreTask: (id: string) => void;
-  handleActivateTask: (id: string) => void;
   handleCreateSection: (name: string) => void;
   handleUpdateSection: (id: string, data: { name?: string; isCollapsed?: boolean }) => void;
   handleDeleteSection: (id: string) => void;
@@ -110,9 +108,6 @@ interface AppLayoutProps {
   handleAddComment: (taskId: string, content: string) => void;
   handleUpdateComment: (commentId: string, content: string) => void;
   handleDeleteComment: (commentId: string) => void;
-
-  // Calendar
-  setCalendarMode: (mode: CalendarMode) => void;
   addTaskTrigger: number;
   handleOpenSettingsTab: (tab: SettingsTab) => void;
   setSearchOpen: (open: boolean) => void;
@@ -175,8 +170,6 @@ export function AppLayout({
   handleAddSubtask,
   handleUpdateDueDate,
   handleContextMenu,
-  handleRestoreTask,
-  handleActivateTask,
   handleCreateSection,
   handleUpdateSection,
   handleDeleteSection,
@@ -187,7 +180,6 @@ export function AppLayout({
   handleAddComment,
   handleUpdateComment,
   handleDeleteComment,
-  setCalendarMode,
   addTaskTrigger,
   handleOpenSettingsTab,
   setSearchOpen,
@@ -295,7 +287,6 @@ export function AppLayout({
                   )}
                   <AppStateProvider value={appState}>
                     <ViewRenderer
-                      setCalendarMode={setCalendarMode}
                       addTaskTrigger={addTaskTrigger}
                       handleCreateTask={handleCreateTask}
                       handleToggleTask={handleToggleTask}
@@ -308,8 +299,6 @@ export function AppLayout({
                       handleUpdateDueDate={handleUpdateDueDate}
                       handleContextMenu={handleContextMenu}
                       handleNavigate={handleNavigate}
-                      handleRestoreTask={handleRestoreTask}
-                      handleActivateTask={handleActivateTask}
                       handleCreateSection={handleCreateSection}
                       handleUpdateSection={handleUpdateSection}
                       handleDeleteSection={handleDeleteSection}

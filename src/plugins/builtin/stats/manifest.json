@@ -1,0 +1,12 @@
+{
+  "id": "stats",
+  "icon": "📊",
+  "name": "Stats",
+  "version": "1.0.0",
+  "author": "ASF",
+  "description": "Productivity metrics, streaks, and completion trends.",
+  "main": "index.ts",
+  "minJunbanVersion": "1.0.0",
+  "permissions": ["task:read", "ui:view"],
+  "settings": []
+}

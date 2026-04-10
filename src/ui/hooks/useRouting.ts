@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { SettingsTab } from "../views/settings/types.js";
 import { useGeneralSettings } from "../context/SettingsContext.js";
+import { LEGACY_BUILTIN_VIEW_IDS } from "../../plugins/builtin/registry.js";
 
 export type View =
   | "inbox"
@@ -20,8 +21,6 @@ export type View =
   | "ai-chat"
   | "dopamine-menu";
 
-export type CalendarMode = "day" | "week" | "month";
-
 interface RouteState {
   view: View;
   projectId: string | null;
@@ -29,7 +28,6 @@ interface RouteState {
   pluginViewId: string | null;
   filterId: string | null;
   focusModeOpen: boolean;
-  calendarMode: CalendarMode | null;
 }
 
 const DEFAULT_ROUTE_STATE: RouteState = {
@@ -39,8 +37,20 @@ const DEFAULT_ROUTE_STATE: RouteState = {
   pluginViewId: null,
   filterId: null,
   focusModeOpen: false,
-  calendarMode: null,
 };
+
+function toLegacyPluginRoute(view: string): RouteState | null {
+  const pluginViewId = LEGACY_BUILTIN_VIEW_IDS[view];
+  if (!pluginViewId) {
+    return null;
+  }
+
+  return {
+    ...DEFAULT_ROUTE_STATE,
+    view: "plugin-view",
+    pluginViewId,
+  };
+}
 
 function decodePathSegment(segment: string | undefined): string | null {
   if (!segment) return null;
@@ -72,10 +82,10 @@ function parseRouteStateFromHash(hash: string, defaultView: View = "inbox"): Rou
       route.view = "upcoming";
       break;
     case "calendar": {
-      route.view = "calendar";
-      const modeParam = params.get("mode");
-      if (modeParam === "day" || modeParam === "week" || modeParam === "month") {
-        route.calendarMode = modeParam;
+      const legacyRoute = toLegacyPluginRoute(root);
+      if (legacyRoute) {
+        route.view = legacyRoute.view;
+        route.pluginViewId = legacyRoute.pluginViewId;
       }
       break;
     }
@@ -107,20 +117,18 @@ function parseRouteStateFromHash(hash: string, defaultView: View = "inbox"): Rou
       route.view = "filters-labels";
       break;
     case "completed":
-      route.view = "completed";
-      break;
     case "cancelled":
-      route.view = "cancelled";
-      break;
     case "someday":
-      route.view = "someday";
-      break;
     case "stats":
-      route.view = "stats";
-      break;
     case "matrix":
-      route.view = "matrix";
+    case "dopamine-menu": {
+      const legacyRoute = toLegacyPluginRoute(root);
+      if (legacyRoute) {
+        route.view = legacyRoute.view;
+        route.pluginViewId = legacyRoute.pluginViewId;
+      }
       break;
+    }
     case "filter":
       route.view = "filter";
       route.filterId = decodePathSegment(pathSegments[1]);
@@ -128,9 +136,6 @@ function parseRouteStateFromHash(hash: string, defaultView: View = "inbox"): Rou
       break;
     case "ai-chat":
       route.view = "ai-chat";
-      break;
-    case "dopamine-menu":
-      route.view = "dopamine-menu";
       break;
     default:
       route.view = defaultView;
@@ -170,34 +175,23 @@ function buildHashFromRoute(route: RouteState): string {
       path = "/filters-labels";
       break;
     case "completed":
-      path = "/completed";
-      break;
     case "cancelled":
-      path = "/cancelled";
-      break;
     case "someday":
-      path = "/someday";
-      break;
     case "stats":
-      path = "/stats";
-      break;
     case "matrix":
-      path = "/matrix";
+    case "dopamine-menu": {
+      const pluginViewId = LEGACY_BUILTIN_VIEW_IDS[route.view];
+      path = pluginViewId ? `/plugin-view/${encodeURIComponent(pluginViewId)}` : "/inbox";
       break;
+    }
     case "filter":
       path = route.filterId ? `/filter/${encodeURIComponent(route.filterId)}` : "/inbox";
       break;
     case "calendar":
-      path = "/calendar";
-      if (route.calendarMode) {
-        params.set("mode", route.calendarMode);
-      }
+      path = `/plugin-view/${encodeURIComponent(LEGACY_BUILTIN_VIEW_IDS.calendar)}`;
       break;
     case "ai-chat":
       path = "/ai-chat";
-      break;
-    case "dopamine-menu":
-      path = "/dopamine-menu";
       break;
     case "inbox":
     default:
@@ -221,7 +215,6 @@ export function useRouting() {
   const [, setSettingsTabTrigger] = useState(0);
 
   const [focusModeOpen, setFocusModeOpen] = useState(false);
-  const [calendarMode, setCalendarMode] = useState<CalendarMode | null>(null);
   const [routeReady, setRouteReady] = useState(false);
   const navigationKeyRef = useRef<string | null>(null);
 
@@ -231,7 +224,6 @@ export function useRouting() {
     setSelectedRouteTaskId(route.view === "task" ? route.taskId : null);
     setSelectedPluginViewId(route.view === "plugin-view" ? route.pluginViewId : null);
     setSelectedFilterId(route.view === "filter" ? route.filterId : null);
-    setCalendarMode(route.view === "calendar" ? route.calendarMode : null);
     setFocusModeOpen(route.focusModeOpen);
   }, []);
 
@@ -265,7 +257,6 @@ export function useRouting() {
       pluginViewId: selectedPluginViewId,
       filterId: selectedFilterId,
       focusModeOpen,
-      calendarMode,
     };
 
     const nextHash = buildHashFromRoute(route);
@@ -290,24 +281,23 @@ export function useRouting() {
     selectedPluginViewId,
     selectedFilterId,
     focusModeOpen,
-    calendarMode,
   ]);
 
   const handleNavigate = useCallback(
     (view: string, id?: string) => {
+      const legacyRoute = toLegacyPluginRoute(view);
       const nextRoute: RouteState = {
-        view: view as View,
+        view: legacyRoute?.view ?? (view as View),
         projectId: view === "project" ? (id ?? null) : null,
         taskId: view === "task" ? (id ?? null) : null,
-        pluginViewId: view === "plugin-view" ? (id ?? null) : null,
+        pluginViewId: view === "plugin-view" ? (id ?? null) : (legacyRoute?.pluginViewId ?? null),
         filterId: view === "filter" ? (id ?? null) : null,
         focusModeOpen,
-        calendarMode: view === "calendar" ? calendarMode : null,
       };
 
       applyRouteState(nextRoute);
     },
-    [applyRouteState, focusModeOpen, calendarMode],
+    [applyRouteState, focusModeOpen],
   );
 
   const openSettingsTab = useCallback((tab: SettingsTab) => {
@@ -325,8 +315,6 @@ export function useRouting() {
     settingsTab: settingsTabRef.current,
     focusModeOpen,
     setFocusModeOpen,
-    calendarMode,
-    setCalendarMode,
     handleNavigate,
     openSettingsTab,
   };

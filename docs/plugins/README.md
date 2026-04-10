@@ -36,6 +36,8 @@ This section is the fastest way for developers and AI agents to understand how t
 | Node built-ins / host globals | Trusted app code | Blocked |
 | Permission approval flow | Explicit activation | Explicit activation plus permission approval |
 
+Junban now treats advanced built-in experiences like `timeblocking`, `pomodoro`, `stats`, `calendar`, `matrix`, `someday`, `completed`, `cancelled`, and `quick wins` as optional extensions instead of core-default views.
+
 ## Common Mistakes
 
 - Using `import`, `import()`, or `import.meta` in a community plugin.

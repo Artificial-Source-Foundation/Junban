@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 vi.mock("lucide-react", () => ({
   CheckCircle2: (props: any) => <svg data-testid="icon-check" {...props} />,
@@ -77,6 +77,10 @@ describe("OnboardingModal", () => {
     expect(screen.getByText("Minimal")).toBeDefined();
     expect(screen.getByText("Standard")).toBeDefined();
     expect(screen.getByText("Everything")).toBeDefined();
+    expect(
+      screen.getByText("Start simple. You can always add more later in Settings."),
+    ).toBeDefined();
+    expect(screen.getByText("Recommended to start: just Inbox, Today, and Upcoming")).toBeDefined();
   });
 
   it("navigates through AI step to ready step", () => {
@@ -89,7 +93,7 @@ describe("OnboardingModal", () => {
     expect(screen.getByText("You're all set!")).toBeDefined();
   });
 
-  it("calls onComplete on Start using Junban", () => {
+  it("calls onComplete on Start using Junban", async () => {
     const onComplete = vi.fn();
     render(<OnboardingModal open={true} onComplete={onComplete} />);
     fireEvent.click(screen.getByText("Get Started")); // 0 -> 1
@@ -97,6 +101,8 @@ describe("OnboardingModal", () => {
     fireEvent.click(screen.getByText("Next")); // 2 -> 3
     fireEvent.click(screen.getByText("Set up later")); // 3 -> 4
     fireEvent.click(screen.getByText("Start using Junban"));
-    expect(onComplete).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(onComplete).toHaveBeenCalledTimes(1);
+    });
   });
 });

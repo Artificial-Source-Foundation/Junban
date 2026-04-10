@@ -60,12 +60,7 @@ function SkeletonCard({ className = "" }: { className?: string }) {
 }
 
 export function ViewSkeleton({ view }: ViewSkeletonProps) {
-  const showSidebarCards =
-    view === "today" ||
-    view === "calendar" ||
-    view === "stats" ||
-    view === "matrix" ||
-    view === "filters-labels";
+  const showSidebarCards = view === "today" || view === "plugin-view" || view === "filters-labels";
   const taskCount = view === "today" || view === "upcoming" ? 6 : 5;
 
   return (

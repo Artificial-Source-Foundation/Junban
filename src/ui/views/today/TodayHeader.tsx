@@ -1,6 +1,7 @@
 import { CompletionRing } from "../../components/CompletionRing.js";
 import { TaskJar } from "../../components/TaskJar.js";
 import { useGeneralSettings } from "../../context/SettingsContext.js";
+import { usePluginContext } from "../../context/PluginContext.js";
 import type { Task } from "../../../core/types.js";
 
 interface TodayHeaderProps {
@@ -25,8 +26,9 @@ export function TodayHeader({
   onWeeklyReview,
 }: TodayHeaderProps) {
   const { settings } = useGeneralSettings();
+  const { plugins } = usePluginContext();
   const showTaskJar = settings.eat_the_frog_enabled !== "false";
-  const showWeeklyReview = settings.feature_stats !== "false";
+  const showWeeklyReview = plugins.some((plugin) => plugin.id === "stats" && plugin.enabled);
 
   return (
     <div className="flex items-center justify-between mb-4 md:mb-6">

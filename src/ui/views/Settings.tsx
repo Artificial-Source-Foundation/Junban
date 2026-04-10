@@ -12,7 +12,7 @@ import {
   FileText,
   ArrowLeft,
   ChevronRight,
-  ToggleRight,
+  Sparkles,
 } from "lucide-react";
 import { useIsMobile } from "../hooks/useIsMobile.js";
 import { ErrorBoundary } from "../components/ErrorBoundary.js";
@@ -67,7 +67,8 @@ interface TabMeta {
 const TABS: TabMeta[] = [
   {
     id: "general",
-    label: "General",
+    label: "Essentials",
+    subtitle: "Everyday task basics",
     icon: <SlidersHorizontal className="w-4 h-4" />,
     mobileIcon: <SlidersHorizontal className="w-5 h-5" />,
   },
@@ -80,36 +81,10 @@ const TABS: TabMeta[] = [
   },
   {
     id: "features",
-    label: "Features",
-    subtitle: "Enable & disable",
-    icon: <ToggleRight className="w-4 h-4" />,
-    mobileIcon: <ToggleRight className="w-5 h-5" />,
-  },
-  {
-    id: "ai",
-    label: "AI Assistant",
-    subtitle: "Models & providers",
-    icon: <Bot className="w-4 h-4" />,
-    mobileIcon: <Bot className="w-5 h-5" />,
-  },
-  {
-    id: "voice",
-    label: "Voice",
-    subtitle: "Speech & microphone",
-    icon: <Mic className="w-4 h-4" />,
-    mobileIcon: <Mic className="w-5 h-5" />,
-  },
-  {
-    id: "plugins",
-    label: "Plugins",
-    icon: <Puzzle className="w-4 h-4" />,
-    mobileIcon: <Puzzle className="w-5 h-5" />,
-  },
-  {
-    id: "templates",
-    label: "Templates",
-    icon: <FileText className="w-4 h-4" />,
-    mobileIcon: <FileText className="w-5 h-5" />,
+    label: "Advanced",
+    subtitle: "Optional upgrades",
+    icon: <Sparkles className="w-4 h-4" />,
+    mobileIcon: <Sparkles className="w-5 h-5" />,
   },
   {
     id: "keyboard",
@@ -119,15 +94,44 @@ const TABS: TabMeta[] = [
     mobileIcon: <Keyboard className="w-5 h-5" />,
   },
   {
+    id: "templates",
+    label: "Templates",
+    subtitle: "Repeatable tasks",
+    icon: <FileText className="w-4 h-4" />,
+    mobileIcon: <FileText className="w-5 h-5" />,
+  },
+  {
+    id: "ai",
+    label: "AI",
+    subtitle: "Chat, models & providers",
+    icon: <Bot className="w-4 h-4" />,
+    mobileIcon: <Bot className="w-5 h-5" />,
+  },
+  {
+    id: "voice",
+    label: "Voice",
+    subtitle: "Speech & dictation",
+    icon: <Mic className="w-4 h-4" />,
+    mobileIcon: <Mic className="w-5 h-5" />,
+  },
+  {
+    id: "plugins",
+    label: "Extensions",
+    subtitle: "Built-ins & community",
+    icon: <Puzzle className="w-4 h-4" />,
+    mobileIcon: <Puzzle className="w-5 h-5" />,
+  },
+  {
     id: "data",
     label: "Data",
-    subtitle: "Import & export",
+    subtitle: "Backup & transfer",
     icon: <Database className="w-4 h-4" />,
     mobileIcon: <Database className="w-5 h-5" />,
   },
   {
     id: "about",
     label: "About",
+    subtitle: "Version & system info",
     icon: <Info className="w-4 h-4" />,
     mobileIcon: <Info className="w-5 h-5" />,
   },
@@ -135,9 +139,11 @@ const TABS: TabMeta[] = [
 
 // Sections for the mobile index page
 const MOBILE_SECTIONS: { label: string; tabs: SettingsTab[] }[] = [
-  { label: "General", tabs: ["general", "appearance", "features", "keyboard", "data"] },
+  { label: "Essentials", tabs: ["general", "appearance"] },
+  { label: "Advanced", tabs: ["features", "keyboard", "templates"] },
   { label: "AI & Voice", tabs: ["ai", "voice"] },
-  { label: "Extensions", tabs: ["plugins", "templates"] },
+  { label: "Extensions", tabs: ["plugins"] },
+  { label: "Data", tabs: ["data"] },
   { label: "Info", tabs: ["about"] },
 ];
 

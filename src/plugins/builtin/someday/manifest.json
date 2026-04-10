@@ -1,0 +1,12 @@
+{
+  "id": "someday",
+  "icon": "💡",
+  "name": "Someday / Maybe",
+  "version": "1.0.0",
+  "author": "ASF",
+  "description": "A dedicated parking lot for ideas and lower-commitment tasks.",
+  "main": "index.ts",
+  "minJunbanVersion": "1.0.0",
+  "permissions": ["task:read", "task:write", "ui:view"],
+  "settings": []
+}

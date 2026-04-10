@@ -1,7 +1,9 @@
 import { useState, useCallback } from "react";
 import { themeManager } from "../themes/manager.js";
 import { useGeneralSettings, type GeneralSettings } from "../context/SettingsContext.js";
-import { PRESETS, TOTAL_STEPS } from "./onboarding/constants.js";
+import { approvePluginPermissions } from "../api/plugins.js";
+import { DIRECT_PLUGIN_POLICIES } from "../../plugins/builtin/registry.js";
+import { PRESETS, PRESET_BUILTIN_PLUGINS, TOTAL_STEPS } from "./onboarding/constants.js";
 import { StepWelcome } from "./onboarding/StepWelcome.js";
 import { StepTheme } from "./onboarding/StepTheme.js";
 import { StepPreset } from "./onboarding/StepPreset.js";
@@ -42,21 +44,31 @@ export function OnboardingModal({ open, onComplete, onRequestOpenSettings }: Onb
   );
 
   const handleFinish = useCallback(() => {
-    // Apply preset feature flags
-    const preset = PRESETS[selectedPreset];
-    for (const [key, value] of Object.entries(preset)) {
-      updateSetting(key as keyof GeneralSettings, value as GeneralSettings[keyof GeneralSettings]);
-    }
+    void (async () => {
+      const preset = PRESETS[selectedPreset];
+      for (const [key, value] of Object.entries(preset)) {
+        updateSetting(
+          key as keyof GeneralSettings,
+          value as GeneralSettings[keyof GeneralSettings],
+        );
+      }
 
-    // Theme and accent are already applied live, but ensure they're persisted
-    themeManager.setTheme(selectedTheme);
-    updateSetting("accent_color", selectedAccent);
+      themeManager.setTheme(selectedTheme);
+      updateSetting("accent_color", selectedAccent);
 
-    onComplete();
+      const pluginIds = PRESET_BUILTIN_PLUGINS[selectedPreset];
+      await Promise.allSettled(
+        pluginIds.map((pluginId) =>
+          approvePluginPermissions(pluginId, DIRECT_PLUGIN_POLICIES[pluginId].permissions),
+        ),
+      );
 
-    if (wantsAI) {
-      onRequestOpenSettings?.("ai");
-    }
+      onComplete();
+
+      if (wantsAI) {
+        onRequestOpenSettings?.("ai");
+      }
+    })();
   }, [
     selectedPreset,
     selectedTheme,

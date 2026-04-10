@@ -27,14 +27,14 @@ test.describe("Settings modal", () => {
   test("shows all 10 setting tabs in the sidebar", async ({ page }) => {
     await openSettings(page);
     const tabs = [
-      "General",
+      "Essentials",
       "Appearance",
-      "Features",
-      "AI Assistant",
-      "Voice",
-      "Plugins",
-      "Templates",
+      "Advanced",
       "Keyboard",
+      "Templates",
+      "AI",
+      "Voice",
+      "Extensions",
       "Data",
       "About",
     ];
@@ -49,8 +49,8 @@ test.describe("Settings modal", () => {
     await page.getByRole("button", { name: "Appearance", exact: true }).click();
     await expect(page.getByText("Color scheme")).toBeVisible();
 
-    await page.getByRole("button", { name: "Features", exact: true }).click();
-    await expect(page.getByText("Toggle features on or off")).toBeVisible();
+    await page.getByRole("button", { name: "Advanced", exact: true }).click();
+    await expect(page.getByText("Optional upgrades for desktop use")).toBeVisible();
 
     await page.getByRole("button", { name: "About", exact: true }).click();
     await expect(page.getByText("Junban").first()).toBeVisible();

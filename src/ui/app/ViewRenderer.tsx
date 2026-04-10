@@ -4,7 +4,6 @@ import { ViewSkeleton } from "../components/Skeleton.js";
 import { useReducedMotion } from "../components/useReducedMotion.js";
 import { useAppState } from "../context/AppStateContext.js";
 import type { UpdateTaskInput } from "../../core/types.js";
-import type { CalendarMode } from "../hooks/useRouting.js";
 import type { SettingsTab } from "../views/settings/types.js";
 import { Inbox } from "../views/Inbox.js";
 import { Today } from "../views/Today.js";
@@ -12,50 +11,27 @@ import { Upcoming } from "../views/Upcoming.js";
 
 const loadPluginView = () => import("../views/PluginView.js");
 const loadProject = () => import("../views/Project.js");
-const loadCompleted = () => import("../views/Completed.js");
-const loadCancelled = () => import("../views/Cancelled.js");
-const loadSomeday = () => import("../views/Someday.js");
-const loadStats = () => import("../views/Stats.js");
-const loadMatrix = () => import("../views/Matrix.js");
-const loadCalendar = () => import("../views/Calendar.js");
 const loadFiltersLabels = () => import("../views/FiltersLabels.js");
 const loadFilterView = () => import("../views/FilterView.js");
 const loadTaskPage = () => import("../views/TaskPage.js");
 const loadAIChat = () => import("../views/AIChat.js");
-const loadDopamineMenu = () => import("../views/DopamineMenu.js");
 
 const PluginView = lazy(() => loadPluginView().then((module) => ({ default: module.PluginView })));
 const Project = lazy(() => loadProject().then((module) => ({ default: module.Project })));
-const Completed = lazy(() => loadCompleted().then((module) => ({ default: module.Completed })));
-const Cancelled = lazy(() => loadCancelled().then((module) => ({ default: module.Cancelled })));
-const Someday = lazy(() => loadSomeday().then((module) => ({ default: module.Someday })));
-const Stats = lazy(() => loadStats().then((module) => ({ default: module.Stats })));
-const Matrix = lazy(() => loadMatrix().then((module) => ({ default: module.Matrix })));
-const Calendar = lazy(() => loadCalendar().then((module) => ({ default: module.Calendar })));
 const FiltersLabels = lazy(() =>
   loadFiltersLabels().then((module) => ({ default: module.FiltersLabels })),
 );
 const FilterView = lazy(() => loadFilterView().then((module) => ({ default: module.FilterView })));
 const TaskPage = lazy(() => loadTaskPage().then((module) => ({ default: module.TaskPage })));
 const AIChat = lazy(() => loadAIChat().then((module) => ({ default: module.AIChat })));
-const DopamineMenu = lazy(() =>
-  loadDopamineMenu().then((module) => ({ default: module.DopamineMenu })),
-);
 
 const VIEW_PRELOADERS = {
   "plugin-view": loadPluginView,
   project: loadProject,
-  completed: loadCompleted,
-  cancelled: loadCancelled,
-  someday: loadSomeday,
-  stats: loadStats,
-  matrix: loadMatrix,
-  calendar: loadCalendar,
   "filters-labels": loadFiltersLabels,
   filter: loadFilterView,
   task: loadTaskPage,
   "ai-chat": loadAIChat,
-  "dopamine-menu": loadDopamineMenu,
 } as const;
 
 /** Parsed task input from TaskInput / QuickAdd — mirrors useTaskHandlers.handleCreateTask param. */
@@ -74,7 +50,6 @@ export interface ParsedTaskInput {
 }
 
 interface ViewRendererProps {
-  setCalendarMode: (mode: CalendarMode) => void;
   addTaskTrigger: number;
   handleCreateTask: (data: ParsedTaskInput) => void;
   handleToggleTask: (id: string) => void;
@@ -90,8 +65,6 @@ interface ViewRendererProps {
   handleUpdateDueDate: (id: string, date: string | null) => void;
   handleContextMenu: (taskId: string, position: { x: number; y: number }) => void;
   handleNavigate: (view: string, id?: string) => void;
-  handleRestoreTask: (id: string) => void;
-  handleActivateTask: (id: string) => void;
   handleCreateSection: (name: string) => void;
   handleUpdateSection: (id: string, data: { name?: string; isCollapsed?: boolean }) => void;
   handleDeleteSection: (id: string) => void;
@@ -100,7 +73,6 @@ interface ViewRendererProps {
 }
 
 export function ViewRenderer({
-  setCalendarMode,
   addTaskTrigger,
   handleCreateTask,
   handleToggleTask,
@@ -113,8 +85,6 @@ export function ViewRenderer({
   handleUpdateDueDate,
   handleContextMenu,
   handleNavigate,
-  handleRestoreTask,
-  handleActivateTask,
   handleCreateSection,
   handleUpdateSection,
   handleDeleteSection,
@@ -131,9 +101,7 @@ export function ViewRenderer({
     selectedFilterId,
     selectedTaskId,
     multiSelectedIds,
-    featureSettings,
     pluginViews,
-    calendarMode,
     sections,
     availableTags,
   } = useAppState();
@@ -156,7 +124,6 @@ export function ViewRenderer({
     preloadCurrentView?.();
 
     const preloadCommonViews = () => {
-      loadCalendar();
       loadFiltersLabels();
       loadTaskPage();
     };
@@ -282,18 +249,6 @@ export function ViewRenderer({
           />,
         );
       }
-      case "calendar":
-        return wrapLazyView(
-          <Calendar
-            tasks={tasks}
-            projects={projects}
-            onSelectTask={handleSelectTask}
-            onToggleTask={handleToggleTask}
-            onUpdateDueDate={handleUpdateDueDate}
-            mode={calendarMode}
-            onModeChange={setCalendarMode}
-          />,
-        );
       case "filters-labels":
         return wrapLazyView(
           <FiltersLabels
@@ -303,47 +258,6 @@ export function ViewRenderer({
             }}
           />,
         );
-      case "completed":
-        return wrapLazyView(
-          <Completed tasks={tasks} projects={projects} onSelectTask={handleSelectTask} />,
-        );
-      case "cancelled":
-        return featureSettings.feature_cancelled !== "false"
-          ? wrapLazyView(
-              <Cancelled
-                tasks={tasks}
-                projects={projects}
-                onSelectTask={handleSelectTask}
-                onRestoreTask={handleRestoreTask}
-              />,
-            )
-          : null;
-      case "someday":
-        return featureSettings.feature_someday !== "false"
-          ? wrapLazyView(
-              <Someday
-                tasks={tasks}
-                onSelectTask={handleSelectTask}
-                onActivateTask={handleActivateTask}
-              />,
-            )
-          : null;
-      case "stats":
-        return featureSettings.feature_stats !== "false"
-          ? wrapLazyView(<Stats tasks={tasks} />)
-          : null;
-      case "matrix":
-        return featureSettings.feature_matrix !== "false"
-          ? wrapLazyView(
-              <Matrix
-                tasks={tasks}
-                onToggleTask={handleToggleTask}
-                onSelectTask={handleSelectTask}
-                onUpdateTask={handleUpdateTask}
-                selectedTaskId={selectedTaskId}
-              />,
-            )
-          : null;
       case "filter":
         return selectedFilterId
           ? wrapLazyView(
@@ -377,23 +291,6 @@ export function ViewRenderer({
             onSelectTask={handleSelectTask}
           />,
         );
-      case "dopamine-menu":
-        return featureSettings.feature_dopamine_menu !== "false"
-          ? wrapLazyView(
-              <DopamineMenu
-                tasks={tasks}
-                onToggleTask={handleToggleTask}
-                onSelectTask={handleSelectTask}
-                selectedTaskId={selectedTaskId}
-                selectedTaskIds={multiSelectedIds}
-                onMultiSelect={handleMultiSelect}
-                onReorder={handleReorder}
-                onAddSubtask={handleAddSubtask}
-                onUpdateDueDate={handleUpdateDueDate}
-                onContextMenu={handleContextMenu}
-              />,
-            )
-          : null;
       default:
         return null;
     }

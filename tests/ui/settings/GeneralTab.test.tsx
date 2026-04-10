@@ -64,17 +64,16 @@ describe("GeneralTab", () => {
     );
   });
 
-  it("renders 3 sections (no Appearance)", async () => {
+  it("renders only essential settings sections", async () => {
     renderGeneralTab();
     await waitFor(() => {
-      expect(screen.getByText("Date & Time")).toBeDefined();
+      expect(screen.getByText("Essentials")).toBeDefined();
     });
+    expect(screen.getByText("Date & Time")).toBeDefined();
     expect(screen.getByText("Task Behavior")).toBeDefined();
-    await waitFor(() => {
-      expect(screen.getByText("Notifications")).toBeDefined();
-    });
-    // Appearance section should NOT be present
     expect(screen.queryByText("Appearance")).toBeNull();
+    expect(screen.queryByText("Notifications")).toBeNull();
+    expect(screen.queryByText("Quick Capture")).toBeNull();
   });
 
   it("renders week start dropdown", async () => {

@@ -60,7 +60,13 @@ export function PluginsTab() {
         setActionError(null);
         await api.approvePluginPermissions(permissionPlugin.id, permissions);
         setPermissionPlugin(null);
-        await refreshPlugins();
+        await Promise.all([
+          refreshPlugins(),
+          refreshViews(),
+          refreshPanels(),
+          refreshStatusBar(),
+          refreshCommands(),
+        ]);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to approve plugin permissions";
         setActionError(message);
@@ -72,7 +78,13 @@ export function PluginsTab() {
     try {
       setActionError(null);
       await api.revokePluginPermissions(pluginId);
-      await refreshPlugins();
+      await Promise.all([
+        refreshPlugins(),
+        refreshViews(),
+        refreshPanels(),
+        refreshStatusBar(),
+        refreshCommands(),
+      ]);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to revoke plugin permissions";
       setActionError(message);

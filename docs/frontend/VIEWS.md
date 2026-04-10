@@ -222,6 +222,12 @@ The parent `Calendar.tsx` coordinates mode switching and top-level navigation; t
 
 `src/ui/views/Settings.tsx` is the main settings shell.
 
+- The primary split is now `Essentials` vs `Advanced`.
+- `Essentials` keeps baseline task-app preferences like date/time and task defaults.
+- `Advanced` collects optional workflow tweaks like quick capture, sound, notifications, nudges, and feature toggles so first-run settings feel lighter.
+- The surrounding tab labels are intentionally product-facing: `AI`, `Voice`, `Extensions`, `Templates`, `Data`, and `About`.
+- First-run copy intentionally nudges users toward the `Minimal` preset, and `Templates` now sits later in the settings flow so it does not crowd the first-run essentials.
+
 It is responsible for:
 
 - desktop modal layout

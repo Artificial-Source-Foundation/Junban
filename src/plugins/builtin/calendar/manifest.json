@@ -1,0 +1,12 @@
+{
+  "id": "calendar",
+  "icon": "🗓️",
+  "name": "Calendar",
+  "version": "1.0.0",
+  "author": "ASF",
+  "description": "Browse scheduled work in day, week, and month calendar layouts.",
+  "main": "index.ts",
+  "minJunbanVersion": "1.0.0",
+  "permissions": ["task:read", "task:write", "project:read", "ui:view"],
+  "settings": []
+}

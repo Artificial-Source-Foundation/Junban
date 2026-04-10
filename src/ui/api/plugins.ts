@@ -2,84 +2,9 @@ import { useDirectServices, BASE, handleResponse, handleVoidResponse } from "./h
 import { getServices } from "./direct-services.js";
 import type { SettingDefinition } from "../../plugins/types.js";
 import { hasSettingsPermission, settingsPermissionError } from "../../plugins/route-policy.js";
+import { DIRECT_PLUGIN_POLICIES } from "../../plugins/builtin/registry.js";
 
-export const DIRECT_PLUGIN_POLICIES: Record<
-  string,
-  { permissions: string[]; settings: SettingDefinition[] }
-> = {
-  pomodoro: {
-    permissions: ["task:read", "commands", "ui:status", "ui:view", "storage", "settings"],
-    settings: [
-      { id: "workMinutes", name: "Work Duration", type: "number", default: 25, min: 1, max: 120 },
-      { id: "breakMinutes", name: "Break Duration", type: "number", default: 5, min: 1, max: 60 },
-      {
-        id: "longBreakMinutes",
-        name: "Long Break Duration",
-        type: "number",
-        default: 15,
-        min: 1,
-        max: 60,
-      },
-      {
-        id: "sessionsBeforeLongBreak",
-        name: "Sessions Before Long Break",
-        type: "number",
-        default: 4,
-        min: 1,
-        max: 10,
-      },
-    ],
-  },
-  timeblocking: {
-    permissions: [
-      "task:read",
-      "task:write",
-      "commands",
-      "ui:view",
-      "ui:status",
-      "storage",
-      "settings",
-      "ai:tools",
-    ],
-    settings: [
-      {
-        id: "defaultDurationMinutes",
-        name: "Default Block Duration",
-        type: "select",
-        default: "30",
-        options: ["15", "30", "45", "60", "90", "120"],
-      },
-      {
-        id: "workDayStart",
-        name: "Work Day Start",
-        type: "select",
-        default: "09:00",
-        options: ["06:00", "07:00", "08:00", "09:00", "10:00"],
-      },
-      {
-        id: "workDayEnd",
-        name: "Work Day End",
-        type: "select",
-        default: "17:00",
-        options: ["16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"],
-      },
-      {
-        id: "gridIntervalMinutes",
-        name: "Grid Interval",
-        type: "select",
-        default: "30",
-        options: ["15", "30", "60"],
-      },
-      {
-        id: "weekStartDay",
-        name: "Week Start Day",
-        type: "select",
-        default: "monday",
-        options: ["sunday", "monday"],
-      },
-    ],
-  },
-};
+export { DIRECT_PLUGIN_POLICIES };
 
 function getDirectPluginPolicy(pluginId: string): {
   permissions: string[];
@@ -335,9 +260,14 @@ export async function approvePluginPermissions(
   permissions: string[],
 ): Promise<void> {
   if (useDirectServices()) {
-    throw new Error(
-      `Plugin permission approval is not available in direct-services mode (${pluginId})`,
-    );
+    const svc = await getServices();
+    if (typeof svc.approveBuiltinPlugin !== "function") {
+      throw new Error(
+        `Plugin permission approval is not available in direct-services mode (${pluginId})`,
+      );
+    }
+    await svc.approveBuiltinPlugin(pluginId, permissions);
+    return;
   }
   await handleVoidResponse(
     await fetch(`${BASE}/plugins/${pluginId}/permissions/approve`, {
@@ -350,9 +280,14 @@ export async function approvePluginPermissions(
 
 export async function revokePluginPermissions(pluginId: string): Promise<void> {
   if (useDirectServices()) {
-    throw new Error(
-      `Plugin permission revocation is not available in direct-services mode (${pluginId})`,
-    );
+    const svc = await getServices();
+    if (typeof svc.revokeBuiltinPlugin !== "function") {
+      throw new Error(
+        `Plugin permission revocation is not available in direct-services mode (${pluginId})`,
+      );
+    }
+    await svc.revokeBuiltinPlugin(pluginId);
+    return;
   }
   await handleVoidResponse(
     await fetch(`${BASE}/plugins/${pluginId}/permissions/revoke`, {
@@ -400,7 +335,12 @@ export async function uninstallPlugin(pluginId: string): Promise<void> {
 
 export async function togglePlugin(pluginId: string): Promise<void> {
   if (useDirectServices()) {
-    throw new Error(`Plugin toggle is not available in direct-services mode (${pluginId})`);
+    const svc = await getServices();
+    if (typeof svc.toggleBuiltinPlugin !== "function") {
+      throw new Error(`Plugin toggle is not available in direct-services mode (${pluginId})`);
+    }
+    await svc.toggleBuiltinPlugin(pluginId);
+    return;
   }
   await handleVoidResponse(
     await fetch(`${BASE}/plugins/${pluginId}/toggle`, {

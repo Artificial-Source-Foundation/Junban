@@ -29,6 +29,13 @@ vi.mock("../../../src/ui/api/index.js", () => ({
 
 import { AboutTab } from "../../../src/ui/views/settings/AboutTab.js";
 
+async function renderAboutTab() {
+  render(<AboutTab />);
+  await waitFor(() => {
+    expect(screen.getByText("System Info")).toBeDefined();
+  });
+}
+
 describe("AboutTab", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -38,58 +45,55 @@ describe("AboutTab", () => {
   });
 
   it("renders app name and version", async () => {
-    render(<AboutTab />);
+    await renderAboutTab();
     expect(screen.getByText(/ASF Junban/)).toBeDefined();
     expect(screen.getByText("v1.0.0")).toBeDefined();
   });
 
-  it("renders app description", () => {
-    render(<AboutTab />);
+  it("renders app description", async () => {
+    await renderAboutTab();
     expect(screen.getByText(/AI-native task manager/)).toBeDefined();
   });
 
-  it("renders feedback links", () => {
-    render(<AboutTab />);
+  it("renders feedback links", async () => {
+    await renderAboutTab();
     expect(screen.getByText("Report a Bug")).toBeDefined();
     expect(screen.getByText("Request a Feature")).toBeDefined();
   });
 
-  it("renders bug report link with correct href", () => {
-    render(<AboutTab />);
+  it("renders bug report link with correct href", async () => {
+    await renderAboutTab();
     const link = screen.getByText("Report a Bug").closest("a");
     expect(link?.getAttribute("href")).toContain("issues/new");
     expect(link?.getAttribute("href")).toContain("bug");
   });
 
-  it("renders open source credits section", () => {
-    render(<AboutTab />);
+  it("renders open source credits section", async () => {
+    await renderAboutTab();
     expect(screen.getByText("Open Source Credits")).toBeDefined();
   });
 
-  it("renders credit categories", () => {
-    render(<AboutTab />);
+  it("renders credit categories", async () => {
+    await renderAboutTab();
     expect(screen.getByText("AI & Machine Learning")).toBeDefined();
     expect(screen.getByText("Frontend")).toBeDefined();
     expect(screen.getByText("Database & Storage")).toBeDefined();
   });
 
-  it("renders individual credits with links", () => {
-    render(<AboutTab />);
+  it("renders individual credits with links", async () => {
+    await renderAboutTab();
     expect(screen.getByText("React")).toBeDefined();
     expect(screen.getByText("Vitest")).toBeDefined();
     expect(screen.getByText("Tailwind CSS")).toBeDefined();
   });
 
   it("renders system info after loading", async () => {
-    render(<AboutTab />);
-    await waitFor(() => {
-      expect(screen.getByText("System Info")).toBeDefined();
-    });
+    await renderAboutTab();
     expect(screen.getByText("SQLite")).toBeDefined();
   });
 
-  it("renders footer with ASF mention", () => {
-    render(<AboutTab />);
+  it("renders footer with ASF mention", async () => {
+    await renderAboutTab();
     expect(screen.getByText("AI Strategic Forum")).toBeDefined();
     expect(screen.getByText(/Licensed under MIT/)).toBeDefined();
   });

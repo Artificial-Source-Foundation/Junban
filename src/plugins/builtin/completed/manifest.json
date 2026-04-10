@@ -1,0 +1,12 @@
+{
+  "id": "completed",
+  "icon": "✅",
+  "name": "Completed",
+  "version": "1.0.0",
+  "author": "ASF",
+  "description": "Review completed tasks in a dedicated history view.",
+  "main": "index.ts",
+  "minJunbanVersion": "1.0.0",
+  "permissions": ["task:read", "project:read", "ui:view"],
+  "settings": []
+}

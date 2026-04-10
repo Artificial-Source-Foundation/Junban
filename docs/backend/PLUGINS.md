@@ -129,6 +129,7 @@ The loader treats built-in and community plugins differently:
 
 - Community plugins are affected by the community-plugin enablement setting and permission approval flow.
 - Built-in extensions are trusted from a manifest perspective but still remain explicitly activated by the user.
+- Web/direct-services bootstrap now mirrors that activation model: built-ins are surfaced in plugin metadata immediately, but their commands, views, status items, and hooks are only loaded after a stored approval exists.
 - Built-in extensions loaded via native `import()` are staged into a fresh temp directory per load so entry and dependency modules both get fresh module URLs (avoids stale dependency caches on unload/reload or reinstall-at-same-path).
 - Community plugins execute in a fresh sandbox per load; sandbox module cache is scoped to that sandbox and is destroyed on unload.
 

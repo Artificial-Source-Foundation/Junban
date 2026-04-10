@@ -14,7 +14,7 @@ export function StepPreset({
         How much do you want to see?
       </h2>
       <p className="text-sm text-on-surface-muted text-center mt-1 mb-6">
-        You can always change this in Settings
+        Start simple. You can always add more later in Settings.
       </p>
       <div className="space-y-3">
         {PRESET_OPTIONS.map((option) => {

@@ -26,6 +26,17 @@ vi.mock("../../../src/ui/api/ai.js", () => ({
   updateAiMemory: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("../../../src/ui/api/index.js", () => ({
+  api: {
+    getAppSetting: vi.fn().mockResolvedValue(null),
+    setAppSetting: vi.fn().mockResolvedValue(undefined),
+    getAiMemories: vi.fn().mockResolvedValue([]),
+    deleteAiMemory: vi.fn().mockResolvedValue(undefined),
+    deleteAllAiMemories: vi.fn().mockResolvedValue(undefined),
+    updateAiMemory: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 import { AITab } from "../../../src/ui/views/settings/AITab.js";
 
 describe("AITab", () => {

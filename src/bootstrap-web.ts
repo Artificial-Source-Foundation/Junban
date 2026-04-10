@@ -13,33 +13,17 @@ import { CommandRegistry } from "./plugins/command-registry.js";
 import { UIRegistry } from "./plugins/ui-registry.js";
 import { createPluginAPI } from "./plugins/api.js";
 import { Plugin } from "./plugins/lifecycle.js";
-import { PluginManifest } from "./plugins/types.js";
 import type { Permission } from "./plugins/types.js";
 import { ToolRegistry } from "./ai/tools/registry.js";
 import { loadDbFile, saveDbFile } from "./db/persistence.js";
 import { SQLiteBackend } from "./storage/sqlite-backend.js";
 import type { IStorage } from "./storage/interface.js";
 import { createLogger } from "./utils/logger.js";
-import pomodoroManifestJson from "./plugins/builtin/pomodoro/manifest.json";
-import timeblockingManifestJson from "./plugins/builtin/timeblocking/manifest.json";
+import type { EventName, EventCallback } from "./core/event-bus.js";
+import { BUILTIN_MANIFESTS, BUILTIN_PLUGIN_LOADERS } from "./plugins/builtin/registry.js";
 
 const logger = createLogger("bootstrap-web");
-
-function runPluginHook(
-  pluginId: string,
-  hookName: string,
-  callback: () => void | Promise<void>,
-): void {
-  Promise.resolve()
-    .then(callback)
-    .catch((err: unknown) => {
-      logger.error("Built-in plugin hook failed in web bootstrap", {
-        pluginId,
-        hookName,
-        error: err instanceof Error ? err.message : String(err),
-      });
-    });
-}
+const LEGACY_AUTO_ENABLED_PLUGIN_IDS = new Set(["pomodoro", "timeblocking"]);
 
 // Web/Tauri mode always uses SQLite (sql.js in browser has no filesystem access).
 // Markdown storage requires Node.js for file I/O.
@@ -68,19 +52,12 @@ export interface WebAppServices {
     builtin: true;
     icon?: string;
   }>;
+  approveBuiltinPlugin: (pluginId: string, permissions: string[]) => Promise<void>;
+  revokeBuiltinPlugin: (pluginId: string) => Promise<void>;
+  toggleBuiltinPlugin: (pluginId: string) => Promise<void>;
   getAIRuntime: () => Promise<WebAIRuntime>;
   save: () => void;
 }
-
-const BUILTIN_MANIFESTS = [
-  PluginManifest.parse(pomodoroManifestJson),
-  PluginManifest.parse(timeblockingManifestJson),
-] as const;
-
-const BUILTIN_PLUGIN_LOADERS: Record<string, () => Promise<{ default: new () => Plugin }>> = {
-  pomodoro: () => import("./plugins/builtin/pomodoro/index.js"),
-  timeblocking: () => import("./plugins/builtin/timeblocking/index.js"),
-};
 
 let webServices: WebAppServices | null = null;
 let webServicesPending: Promise<WebAppServices> | null = null;
@@ -114,6 +91,11 @@ async function createWebServices(): Promise<WebAppServices> {
   const pluginToolRegistry = new ToolRegistry();
   let aiRuntime: WebAIRuntime | null = null;
   let aiRuntimePending: Promise<WebAIRuntime> | null = null;
+  const pluginListeners = new Map<
+    string,
+    Array<{ event: EventName; callback: (...args: unknown[]) => void }>
+  >();
+  const pluginInstances = new Map<string, Plugin>();
 
   const builtinPlugins: WebAppServices["builtinPlugins"] = BUILTIN_MANIFESTS.map((manifest) => ({
     id: manifest.id,
@@ -127,6 +109,215 @@ async function createWebServices(): Promise<WebAppServices> {
     builtin: true,
     icon: manifest.icon,
   }));
+
+  const trackPluginListener = <E extends EventName>(
+    pluginId: string,
+    event: E,
+    callback: EventCallback<E>,
+  ): void => {
+    const listeners = pluginListeners.get(pluginId) ?? [];
+    listeners.push({ event, callback: callback as (...args: unknown[]) => void });
+    pluginListeners.set(pluginId, listeners);
+  };
+
+  const removePluginListeners = (pluginId: string): void => {
+    const listeners = pluginListeners.get(pluginId);
+    if (!listeners) return;
+
+    for (const { event, callback } of listeners) {
+      eventBus.off(event, callback);
+    }
+    pluginListeners.delete(pluginId);
+  };
+
+  const registerTaskHooks = (pluginId: string, plugin: Plugin, permissions: Permission[]): void => {
+    if (!permissions.includes("task:read")) {
+      return;
+    }
+
+    if (typeof plugin.onTaskCreate === "function") {
+      const callback: EventCallback<"task:create"> = (task) => {
+        void Promise.resolve(plugin.onTaskCreate?.(task)).catch((err: unknown) => {
+          logger.error("Built-in plugin hook failed in web bootstrap", {
+            pluginId,
+            hookName: "onTaskCreate",
+            error: err instanceof Error ? err.message : String(err),
+          });
+        });
+      };
+      eventBus.on("task:create", callback);
+      trackPluginListener(pluginId, "task:create", callback);
+    }
+
+    if (typeof plugin.onTaskComplete === "function") {
+      const callback: EventCallback<"task:complete"> = (task) => {
+        void Promise.resolve(plugin.onTaskComplete?.(task)).catch((err: unknown) => {
+          logger.error("Built-in plugin hook failed in web bootstrap", {
+            pluginId,
+            hookName: "onTaskComplete",
+            error: err instanceof Error ? err.message : String(err),
+          });
+        });
+      };
+      eventBus.on("task:complete", callback);
+      trackPluginListener(pluginId, "task:complete", callback);
+    }
+
+    if (typeof plugin.onTaskUpdate === "function") {
+      const callback: EventCallback<"task:update"> = (payload) => {
+        void Promise.resolve(plugin.onTaskUpdate?.(payload.task, payload.changes)).catch(
+          (err: unknown) => {
+            logger.error("Built-in plugin hook failed in web bootstrap", {
+              pluginId,
+              hookName: "onTaskUpdate",
+              error: err instanceof Error ? err.message : String(err),
+            });
+          },
+        );
+      };
+      eventBus.on("task:update", callback);
+      trackPluginListener(pluginId, "task:update", callback);
+    }
+
+    if (typeof plugin.onTaskDelete === "function") {
+      const callback: EventCallback<"task:delete"> = (task) => {
+        void Promise.resolve(plugin.onTaskDelete?.(task)).catch((err: unknown) => {
+          logger.error("Built-in plugin hook failed in web bootstrap", {
+            pluginId,
+            hookName: "onTaskDelete",
+            error: err instanceof Error ? err.message : String(err),
+          });
+        });
+      };
+      eventBus.on("task:delete", callback);
+      trackPluginListener(pluginId, "task:delete", callback);
+    }
+  };
+
+  const unloadBuiltinPlugin = async (pluginId: string): Promise<void> => {
+    const builtinPlugin = builtinPlugins.find((plugin) => plugin.id === pluginId);
+    const instance = pluginInstances.get(pluginId);
+    if (!builtinPlugin || !builtinPlugin.enabled || !instance) {
+      return;
+    }
+
+    try {
+      await instance.onUnload();
+    } catch (err: unknown) {
+      logger.error("Failed to unload built-in plugin in web bootstrap", {
+        pluginId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    removePluginListeners(pluginId);
+    commandRegistry.unregisterByPlugin(pluginId);
+    uiRegistry.removeByPlugin(pluginId);
+    aiRuntime?.aiProviderRegistry.unregisterByPlugin(pluginId);
+    pluginToolRegistry.unregisterBySource(pluginId);
+    aiRuntime?.toolRegistry.unregisterBySource(pluginId);
+    pluginInstances.delete(pluginId);
+    builtinPlugin.enabled = false;
+  };
+
+  const loadBuiltinPlugin = async (pluginId: string): Promise<void> => {
+    const builtinPlugin = builtinPlugins.find((plugin) => plugin.id === pluginId);
+    if (!builtinPlugin || builtinPlugin.enabled) {
+      return;
+    }
+
+    const approvedPermissions = storage.getPluginPermissions(pluginId);
+    if (approvedPermissions === null) {
+      return;
+    }
+
+    const loader = BUILTIN_PLUGIN_LOADERS[pluginId];
+    if (!loader) {
+      logger.warn("No built-in plugin loader registered", { pluginId });
+      return;
+    }
+
+    try {
+      await settingsManager.load(pluginId);
+
+      const module = await loader();
+      const PluginClass = module.default;
+      const plugin = new PluginClass();
+      const api = createPluginAPI({
+        pluginId,
+        permissions: builtinPlugin.permissions,
+        taskService,
+        projectService,
+        tagService,
+        eventBus,
+        settingsManager,
+        commandRegistry,
+        uiRegistry,
+        settingDefinitions: builtinPlugin.settings,
+        toolRegistry: pluginToolRegistry,
+        onEventListenerRegistered: (event, callback) => {
+          trackPluginListener(pluginId, event, callback as EventCallback<EventName>);
+        },
+      });
+
+      plugin.app = api;
+      plugin.settings = api.settings;
+      await plugin.onLoad();
+      registerTaskHooks(pluginId, plugin, builtinPlugin.permissions);
+      pluginInstances.set(pluginId, plugin);
+      builtinPlugin.enabled = true;
+
+      if (aiRuntime) {
+        for (const definition of pluginToolRegistry.getDefinitions()) {
+          const registered = pluginToolRegistry.get(definition.name);
+          if (!registered) continue;
+          if (aiRuntime.toolRegistry.has(definition.name)) continue;
+          aiRuntime.toolRegistry.register(
+            registered.definition,
+            registered.executor,
+            registered.source,
+          );
+        }
+      }
+    } catch (err: unknown) {
+      removePluginListeners(pluginId);
+      commandRegistry.unregisterByPlugin(pluginId);
+      uiRegistry.removeByPlugin(pluginId);
+      pluginToolRegistry.unregisterBySource(pluginId);
+      pluginInstances.delete(pluginId);
+      builtinPlugin.enabled = false;
+      logger.error("Failed to initialize built-in plugin in web bootstrap", {
+        pluginId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  };
+
+  const approveBuiltinPlugin = async (pluginId: string, permissions: string[]): Promise<void> => {
+    storage.setPluginPermissions(pluginId, permissions);
+    await loadBuiltinPlugin(pluginId);
+    save();
+  };
+
+  const revokeBuiltinPlugin = async (pluginId: string): Promise<void> => {
+    await unloadBuiltinPlugin(pluginId);
+    storage.deletePluginPermissions(pluginId);
+    save();
+  };
+
+  const toggleBuiltinPlugin = async (pluginId: string): Promise<void> => {
+    const builtinPlugin = builtinPlugins.find((plugin) => plugin.id === pluginId);
+    if (!builtinPlugin) {
+      throw new Error("Plugin not found");
+    }
+
+    if (builtinPlugin.enabled) {
+      await revokeBuiltinPlugin(pluginId);
+      return;
+    }
+
+    await approveBuiltinPlugin(pluginId, builtinPlugin.permissions);
+  };
 
   const getAIRuntime = async (): Promise<WebAIRuntime> => {
     if (aiRuntime) return aiRuntime;
@@ -175,69 +366,16 @@ async function createWebServices(): Promise<WebAppServices> {
   eventBus.on("section:reorder", save);
 
   for (const builtinPlugin of builtinPlugins) {
-    const loader = BUILTIN_PLUGIN_LOADERS[builtinPlugin.id];
-    if (!loader) {
-      logger.warn("No built-in plugin loader registered", {
-        pluginId: builtinPlugin.id,
-      });
-      continue;
+    if (
+      existingData &&
+      storage.getPluginPermissions(builtinPlugin.id) === null &&
+      LEGACY_AUTO_ENABLED_PLUGIN_IDS.has(builtinPlugin.id)
+    ) {
+      storage.setPluginPermissions(builtinPlugin.id, builtinPlugin.permissions);
+      save();
     }
 
-    try {
-      await settingsManager.load(builtinPlugin.id);
-
-      const module = await loader();
-      const PluginClass = module.default;
-      const plugin = new PluginClass();
-
-      const api = createPluginAPI({
-        pluginId: builtinPlugin.id,
-        permissions: builtinPlugin.permissions,
-        taskService,
-        projectService,
-        tagService,
-        eventBus,
-        settingsManager,
-        commandRegistry,
-        uiRegistry,
-        settingDefinitions: builtinPlugin.settings,
-        toolRegistry: pluginToolRegistry,
-      });
-
-      plugin.app = api;
-      plugin.settings = api.settings;
-      await plugin.onLoad();
-
-      if (typeof plugin.onTaskCreate === "function") {
-        eventBus.on("task:create", (task) =>
-          runPluginHook(builtinPlugin.id, "onTaskCreate", () => plugin.onTaskCreate?.(task)),
-        );
-      }
-      if (typeof plugin.onTaskComplete === "function") {
-        eventBus.on("task:complete", (task) =>
-          runPluginHook(builtinPlugin.id, "onTaskComplete", () => plugin.onTaskComplete?.(task)),
-        );
-      }
-      if (typeof plugin.onTaskUpdate === "function") {
-        eventBus.on("task:update", (payload) =>
-          runPluginHook(builtinPlugin.id, "onTaskUpdate", () =>
-            plugin.onTaskUpdate?.(payload.task, payload.changes),
-          ),
-        );
-      }
-      if (typeof plugin.onTaskDelete === "function") {
-        eventBus.on("task:delete", (task) =>
-          runPluginHook(builtinPlugin.id, "onTaskDelete", () => plugin.onTaskDelete?.(task)),
-        );
-      }
-
-      builtinPlugin.enabled = true;
-    } catch (err) {
-      logger.error("Failed to initialize built-in plugin in web bootstrap", {
-        pluginId: builtinPlugin.id,
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
+    await loadBuiltinPlugin(builtinPlugin.id);
   }
 
   const flushDbToDisk = () => {
@@ -272,6 +410,9 @@ async function createWebServices(): Promise<WebAppServices> {
     uiRegistry,
     storage,
     builtinPlugins,
+    approveBuiltinPlugin,
+    revokeBuiltinPlugin,
+    toggleBuiltinPlugin,
     getAIRuntime,
     save,
   };

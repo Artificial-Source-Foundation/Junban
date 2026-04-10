@@ -1,12 +1,6 @@
 import { useGeneralSettings } from "../../context/SettingsContext.js";
 import { DateTimeSection } from "./general/DateTimeSection.js";
 import { TaskDefaultsSection } from "./general/TaskDefaultsSection.js";
-import { SoundSection } from "./general/SoundSection.js";
-import { StartupSection } from "./general/StartupSection.js";
-import { NudgeSection } from "./general/NudgeSection.js";
-import { NotificationSection } from "./general/NotificationSection.js";
-
-// ── Main component ──
 
 export function GeneralTab() {
   const { loaded } = useGeneralSettings();
@@ -15,23 +9,15 @@ export function GeneralTab() {
 
   return (
     <div className="space-y-8">
-      {/* ── Date & Time ── */}
+      <div className="max-w-2xl">
+        <h2 className="text-lg font-semibold text-on-surface">Essentials</h2>
+        <p className="mt-1 text-sm text-on-surface-muted">
+          Core preferences for how Junban looks and behaves day to day.
+        </p>
+      </div>
+
       <DateTimeSection />
-
-      {/* ── Task Behavior ── */}
       <TaskDefaultsSection />
-
-      {/* ── Quick Capture (Tauri only) ── */}
-      <StartupSection />
-
-      {/* ── Sound Effects ── */}
-      <SoundSection />
-
-      {/* ── Smart Nudges ── */}
-      <NudgeSection />
-
-      {/* ── Notifications ── */}
-      <NotificationSection />
     </div>
   );
 }

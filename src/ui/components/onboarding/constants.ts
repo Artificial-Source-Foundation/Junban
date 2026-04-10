@@ -53,47 +53,33 @@ export const PRESET_OPTIONS: PresetOption[] = [
   {
     key: "minimal",
     label: "Minimal",
-    description: "Just the essentials \u2014 Inbox, Today, Upcoming",
+    description: "Recommended to start: just Inbox, Today, and Upcoming",
     icon: Minus,
   },
   {
     key: "standard",
     label: "Standard",
-    description: "Core views plus calendar, completed tasks, and stats",
+    description: "Adds a few planning views once you are ready for more",
     icon: Layers,
   },
   {
     key: "power",
     label: "Everything",
-    description: "All views and productivity features enabled",
+    description: "Turns on all optional views and workflow extras",
     icon: Rocket,
   },
 ];
 
 export const PRESETS: PresetSettings = {
   minimal: {
-    feature_calendar: "false",
     feature_filters_labels: "false",
-    feature_completed: "false",
-    feature_cancelled: "false",
-    feature_matrix: "false",
-    feature_stats: "false",
-    feature_someday: "false",
     feature_chords: "false",
-    feature_dopamine_menu: "false",
     eat_the_frog_enabled: "false",
     nudge_enabled: "false",
   },
   standard: {
-    feature_calendar: "true",
     feature_filters_labels: "false",
-    feature_completed: "true",
-    feature_cancelled: "false",
-    feature_matrix: "false",
-    feature_stats: "true",
-    feature_someday: "true",
     feature_chords: "false",
-    feature_dopamine_menu: "false",
     eat_the_frog_enabled: "false",
     nudge_enabled: "true",
     nudge_overdue_alert: "true",
@@ -103,15 +89,8 @@ export const PRESETS: PresetSettings = {
     nudge_overloaded_day: "false",
   },
   power: {
-    feature_calendar: "true",
     feature_filters_labels: "true",
-    feature_completed: "true",
-    feature_cancelled: "true",
-    feature_matrix: "true",
-    feature_stats: "true",
-    feature_someday: "true",
     feature_chords: "true",
-    feature_dopamine_menu: "true",
     eat_the_frog_enabled: "true",
     eat_the_frog_morning_only: "true",
     nudge_enabled: "true",
@@ -121,6 +100,12 @@ export const PRESETS: PresetSettings = {
     nudge_empty_today: "true",
     nudge_overloaded_day: "true",
   },
+} as const;
+
+export const PRESET_BUILTIN_PLUGINS = {
+  minimal: [],
+  standard: ["calendar", "completed", "stats", "someday"],
+  power: ["calendar", "completed", "cancelled", "matrix", "stats", "someday", "dopamine-menu"],
 } as const;
 
 export const TOTAL_STEPS = 5;

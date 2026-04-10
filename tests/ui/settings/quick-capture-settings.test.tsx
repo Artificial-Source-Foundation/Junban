@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { GeneralTab } from "../../../src/ui/views/settings/GeneralTab.js";
+import { FeaturesTab } from "../../../src/ui/views/settings/FeaturesTab.js";
 import { SettingsProvider } from "../../../src/ui/context/SettingsContext.js";
 
 const settingsApiMocks = vi.hoisted(() => ({
@@ -49,10 +49,10 @@ const mockNotification = {
 };
 Object.defineProperty(window, "Notification", { value: mockNotification, writable: true });
 
-function renderGeneralTab() {
+function renderFeaturesTab() {
   return render(
     <SettingsProvider>
-      <GeneralTab />
+      <FeaturesTab />
     </SettingsProvider>,
   );
 }
@@ -74,7 +74,7 @@ describe("Quick Capture Settings", () => {
   });
 
   it("renders Quick Capture section when isTauri() is true", async () => {
-    renderGeneralTab();
+    renderFeaturesTab();
     await waitFor(() => {
       expect(screen.getByText("Quick Capture")).toBeDefined();
     });
@@ -83,22 +83,22 @@ describe("Quick Capture Settings", () => {
   it("hides Quick Capture section when isTauri() is false", async () => {
     mockIsTauri.mockReturnValue(false);
 
-    renderGeneralTab();
+    renderFeaturesTab();
     await waitFor(() => {
-      expect(screen.getByText("Date & Time")).toBeDefined();
+      expect(screen.getByText("Advanced")).toBeDefined();
     });
     expect(screen.queryByText("Quick Capture")).toBeNull();
   });
 
   it("shows the default hotkey", async () => {
-    renderGeneralTab();
+    renderFeaturesTab();
     await waitFor(() => {
       expect(screen.getByText("CmdOrCtrl+Shift+Space")).toBeDefined();
     });
   });
 
   it("has Record and Reset buttons", async () => {
-    renderGeneralTab();
+    renderFeaturesTab();
     await waitFor(() => {
       expect(screen.getByText("Record")).toBeDefined();
       expect(screen.getByText("Reset")).toBeDefined();
@@ -106,7 +106,7 @@ describe("Quick Capture Settings", () => {
   });
 
   it("switches to recording mode when Record is clicked", async () => {
-    renderGeneralTab();
+    renderFeaturesTab();
     await waitFor(() => {
       expect(screen.getByText("Record")).toBeDefined();
     });
@@ -117,7 +117,7 @@ describe("Quick Capture Settings", () => {
   });
 
   it("resets hotkey to default when Reset is clicked", async () => {
-    renderGeneralTab();
+    renderFeaturesTab();
     await waitFor(() => {
       expect(screen.getByText("Reset")).toBeDefined();
     });
@@ -133,7 +133,7 @@ describe("Quick Capture Settings", () => {
   });
 
   it("has an enable/disable toggle for quick capture", async () => {
-    renderGeneralTab();
+    renderFeaturesTab();
     await waitFor(() => {
       expect(screen.getByText("Enable quick capture")).toBeDefined();
     });
