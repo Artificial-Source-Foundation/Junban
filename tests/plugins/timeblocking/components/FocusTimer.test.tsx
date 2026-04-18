@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { FocusTimer, isBlockActive, formatRemaining } from "../../../../src/plugins/builtin/timeblocking/components/FocusTimer.js";
+import { FocusTimer } from "../../../../src/plugins/builtin/timeblocking/components/FocusTimer.js";
+import {
+  isBlockActive,
+  formatRemaining,
+} from "../../../../src/plugins/builtin/timeblocking/components/focus-timer-utils.js";
 import type { TimeBlock } from "../../../../src/plugins/builtin/timeblocking/types.js";
 
 function formatDateStr(date: Date): string {

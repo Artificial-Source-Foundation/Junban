@@ -8,6 +8,23 @@ import type { TTSProviderPlugin, TTSOptions, Voice } from "../interface.js";
 
 export type ModelStatus = "idle" | "loading" | "ready" | "error";
 
+interface PiperProgress {
+  loaded: number;
+  total: number;
+}
+
+interface PiperTtsModule {
+  download(voiceId: string, onProgress: (progress: PiperProgress) => void): Promise<void>;
+  predict(
+    input: { text: string; voiceId: string },
+    onProgress: (progress: PiperProgress) => void,
+  ): Promise<Blob>;
+}
+
+interface DirectoryHandleWithKeys extends FileSystemDirectoryHandle {
+  keys(): AsyncIterable<string>;
+}
+
 const PIPER_VOICES: Voice[] = [
   { id: "en_US-hfc_female-medium", name: "HFC Female (US)" },
   { id: "en_US-hfc_male-medium", name: "HFC Male (US)" },
@@ -49,8 +66,8 @@ export class PiperLocalTTSProvider implements TTSProviderPlugin {
     this.onStatusChange?.("loading", 0);
 
     try {
-      const tts = await import("@mintplex-labs/piper-tts-web");
-      await tts.download(this.defaultVoice as any, (p) => {
+      const tts = (await import("@mintplex-labs/piper-tts-web")) as unknown as PiperTtsModule;
+      await tts.download(this.defaultVoice, (p) => {
         if (p.total > 0) {
           this.progress = Math.round((p.loaded / p.total) * 100);
           this.onStatusChange?.("loading", this.progress);
@@ -69,8 +86,8 @@ export class PiperLocalTTSProvider implements TTSProviderPlugin {
   async synthesize(text: string, opts?: TTSOptions): Promise<ArrayBuffer> {
     const voiceId = opts?.voice ?? this.defaultVoice;
 
-    const tts = await import("@mintplex-labs/piper-tts-web");
-    const blob = await tts.predict({ text, voiceId: voiceId as any }, (p) => {
+    const tts = (await import("@mintplex-labs/piper-tts-web")) as unknown as PiperTtsModule;
+    const blob = await tts.predict({ text, voiceId }, (p) => {
       if (this.status !== "ready" && p.total > 0) {
         this.status = "loading";
         this.progress = Math.round((p.loaded / p.total) * 100);
@@ -99,9 +116,11 @@ export class PiperLocalTTSProvider implements TTSProviderPlugin {
   async checkCached(): Promise<boolean> {
     try {
       const root = await navigator.storage.getDirectory();
-      const dir = await root.getDirectoryHandle("piper", { create: false });
-      for await (const name of (dir as any).keys()) {
-        if ((name as string).endsWith(".onnx")) return true;
+      const dir = (await root.getDirectoryHandle("piper", {
+        create: false,
+      })) as DirectoryHandleWithKeys;
+      for await (const name of dir.keys()) {
+        if (name.endsWith(".onnx")) return true;
       }
       return false;
     } catch {
@@ -126,11 +145,13 @@ export class PiperLocalTTSProvider implements TTSProviderPlugin {
   async getModelSize(): Promise<number> {
     try {
       const root = await navigator.storage.getDirectory();
-      const dir = await root.getDirectoryHandle("piper", { create: false });
+      const dir = (await root.getDirectoryHandle("piper", {
+        create: false,
+      })) as DirectoryHandleWithKeys;
       let totalSize = 0;
-      for await (const name of (dir as any).keys()) {
+      for await (const name of dir.keys()) {
         try {
-          const fileHandle = await dir.getFileHandle(name as string);
+          const fileHandle = await dir.getFileHandle(name);
           const file = await fileHandle.getFile();
           totalSize += file.size;
         } catch {

@@ -8,6 +8,31 @@ import type { STTProviderPlugin, STTOptions } from "../interface.js";
 
 export type ModelStatus = "idle" | "loading" | "ready" | "error";
 
+interface WhisperProgressEvent {
+  status?: string;
+  progress?: number;
+}
+
+interface WhisperPipeline {
+  (samples: Float32Array, options: { return_timestamps: boolean }): Promise<unknown>;
+}
+
+interface WhisperPipelineFactory {
+  (
+    task: "automatic-speech-recognition",
+    modelId: string,
+    options: {
+      dtype: string;
+      device: string;
+      progress_callback: (event: WhisperProgressEvent) => void;
+    },
+  ): Promise<WhisperPipeline>;
+}
+
+interface WhisperTranscriptionResult {
+  text?: string;
+}
+
 export class WhisperLocalSTTProvider implements STTProviderPlugin {
   readonly id = "whisper-local";
   readonly name = "Whisper (Local)";
@@ -18,7 +43,7 @@ export class WhisperLocalSTTProvider implements STTProviderPlugin {
   progress = 0;
   onStatusChange?: (status: ModelStatus, progress: number) => void;
 
-  private pipelineInstance: any = null;
+  private pipelineInstance: WhisperPipeline | null = null;
   private loadPromise: Promise<void> | null = null;
 
   constructor(opts?: {
@@ -40,9 +65,9 @@ export class WhisperLocalSTTProvider implements STTProviderPlugin {
     // Decode audio blob to Float32Array at 16kHz (Whisper's expected sample rate)
     const samples = await decodeAudioBlob(audio, 16000);
 
-    const result = await this.pipelineInstance!(samples, {
+    const result = (await this.pipelineInstance!(samples, {
       return_timestamps: false,
-    });
+    })) as WhisperTranscriptionResult;
 
     return (result?.text ?? "").trim();
   }
@@ -135,11 +160,12 @@ export class WhisperLocalSTTProvider implements STTProviderPlugin {
     this.onStatusChange?.("loading", 0);
 
     try {
-      const { pipeline } = await import("@huggingface/transformers");
+      const transformers = await import("@huggingface/transformers");
+      const pipeline = transformers.pipeline as unknown as WhisperPipelineFactory;
       this.pipelineInstance = await pipeline("automatic-speech-recognition", this.modelId, {
         dtype: "q4",
         device: "wasm",
-        progress_callback: (event: any) => {
+        progress_callback: (event: WhisperProgressEvent) => {
           if (event.status === "progress" && typeof event.progress === "number") {
             this.progress = Math.round(event.progress);
             this.onStatusChange?.("loading", this.progress);

@@ -2,7 +2,7 @@ import { eq, desc, inArray, and, or, lte, gte, isNotNull, min, count } from "dri
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import * as schema from "./schema.js";
 
-export function createQueries(db: BaseSQLiteDatabase<"sync", any, typeof schema>) {
+export function createQueries(db: BaseSQLiteDatabase<"sync", unknown, typeof schema>) {
   return {
     // ── Tasks ────────────────────────────────────────────
     listTasks: () => db.select().from(schema.tasks).all(),

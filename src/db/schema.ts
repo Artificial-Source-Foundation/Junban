@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core";
+import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 
 export const tasks = sqliteTable("tasks", {
   id: text("id").primaryKey(),
@@ -13,8 +14,7 @@ export const tasks = sqliteTable("tasks", {
   completedAt: text("completed_at"),
   projectId: text("project_id").references(() => projects.id, { onDelete: "set null" }),
   recurrence: text("recurrence"),
-  // Self-referential FK requires `(): any` — Drizzle circular reference limitation
-  parentId: text("parent_id").references((): any => tasks.id, { onDelete: "cascade" }),
+  parentId: text("parent_id").references((): AnySQLiteColumn => tasks.id, { onDelete: "cascade" }),
   remindAt: text("remind_at"),
   sortOrder: integer("sort_order").notNull().default(0),
   estimatedMinutes: integer("estimated_minutes"),
@@ -32,7 +32,9 @@ export const projects = sqliteTable("projects", {
   name: text("name").notNull().unique(),
   color: text("color").notNull().default("#3b82f6"),
   icon: text("icon"),
-  parentId: text("parent_id").references((): any => projects.id, { onDelete: "set null" }),
+  parentId: text("parent_id").references((): AnySQLiteColumn => projects.id, {
+    onDelete: "set null",
+  }),
   isFavorite: integer("is_favorite", { mode: "boolean" }).notNull().default(false),
   viewStyle: text("view_style", { enum: ["list", "board", "calendar"] })
     .notNull()
