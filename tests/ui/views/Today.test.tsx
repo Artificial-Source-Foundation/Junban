@@ -28,6 +28,9 @@ vi.mock("../../../src/ui/context/PluginContext.js", () => ({
   usePluginContext: () => ({
     plugins: [],
   }),
+  useOptionalPluginContext: () => ({
+    plugins: [],
+  }),
 }));
 
 // Mock child components to isolate Today view tests

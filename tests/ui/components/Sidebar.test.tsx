@@ -141,9 +141,9 @@ describe("Sidebar", () => {
     expect(screen.getByText("Inbox")).toBeTruthy();
     expect(screen.getByText("Today")).toBeTruthy();
     expect(screen.getByText("Upcoming")).toBeTruthy();
-    expect(screen.queryByText("Calendar")).toBeNull();
+    expect(screen.getByText("Calendar")).toBeTruthy();
     expect(screen.queryByText("Filters & Labels")).toBeNull();
-    expect(screen.queryByText("Completed")).toBeNull();
+    expect(screen.getByText("Completed")).toBeTruthy();
   });
 
   it("highlights the active view", () => {
@@ -437,8 +437,8 @@ describe("Sidebar", () => {
 
   it("does not show 'Move to bottom' for last item", () => {
     render(<Sidebar {...defaultProps} onOpenSettings={vi.fn()} />);
-    const upcomingBtn = screen.getByText("Upcoming").closest("button")!;
-    fireEvent.contextMenu(upcomingBtn);
+    const quickWinsBtn = screen.getByText("Quick Wins").closest("button")!;
+    fireEvent.contextMenu(quickWinsBtn);
     expect(screen.queryByText("Move to bottom")).toBeNull();
   });
 
@@ -483,12 +483,12 @@ describe("Sidebar", () => {
 
   // ── Show all hidden ──
 
-  it("'Show all hidden' is not shown when no hideable feature-mapped views exist", () => {
+  it("'Show all hidden' is shown when optional views are hidden", () => {
     mockSettings = { feature_stats: "false", feature_someday: "false" };
     render(<Sidebar {...defaultProps} onOpenSettings={vi.fn()} />);
     const inboxBtn = screen.getByText("Inbox").closest("button")!;
     fireEvent.contextMenu(inboxBtn);
-    expect(screen.queryByText("Show all hidden")).toBeNull();
+    expect(screen.getByText("Show all hidden")).toBeTruthy();
   });
 
   it("does not show 'Show all hidden' when no views are hidden", () => {
