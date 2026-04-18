@@ -11,7 +11,7 @@ and private by default because your data stays on your machine.
 No accounts. No tracking. No mandatory cloud.
 
 <p>
-  <a href="https://github.com/Artificial-Source-Foundation/Junban">Home</a> &nbsp;&middot;&nbsp;
+  <a href="https://github.com/Artificial-Source/Junban">Home</a> &nbsp;&middot;&nbsp;
   <a href="docs/guides/SETUP.md">Setup</a> &nbsp;&middot;&nbsp;
   <a href="docs/guides/ARCHITECTURE.md">Architecture</a> &nbsp;&middot;&nbsp;
   <a href="docs/guides/RELEASES.md">Releases</a> &nbsp;&middot;&nbsp;
@@ -20,11 +20,11 @@ No accounts. No tracking. No mandatory cloud.
   <a href="docs/product/roadmap.md">Roadmap</a>
 </p>
 
-[![CI](https://github.com/Artificial-Source-Foundation/Junban/actions/workflows/ci.yml/badge.svg)](https://github.com/Artificial-Source-Foundation/Junban/actions/workflows/ci.yml)
+[![CI](https://github.com/Artificial-Source/Junban/actions/workflows/ci.yml/badge.svg)](https://github.com/Artificial-Source/Junban/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/Artificial-Source-Foundation/Junban?style=social)](https://github.com/Artificial-Source-Foundation/Junban/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/Artificial-Source/Junban?style=social)](https://github.com/Artificial-Source/Junban/stargazers)
 
-An open-source project by the [AI Strategic Forum (ASF)](https://github.com/Artificial-Source-Foundation) community.
+An open-source project by the [AI Strategic Forum (ASF)](https://github.com/Artificial-Source) community.
 
 <br />
 
@@ -73,7 +73,7 @@ An open-source project by the [AI Strategic Forum (ASF)](https://github.com/Arti
 
 Download the latest desktop release here:
 
-<https://github.com/Artificial-Source-Foundation/Junban/releases/latest>
+<https://github.com/Artificial-Source/Junban/releases/latest>
 
 Pick the file for your platform:
 
@@ -95,14 +95,14 @@ Linux quick install from the latest release:
 
 ```bash
 # Debian/Ubuntu (.deb) - download latest, then install
-curl -fsSL https://api.github.com/repos/Artificial-Source-Foundation/Junban/releases/latest \
+curl -fsSL https://api.github.com/repos/Artificial-Source/Junban/releases/latest \
   | grep -o 'https://[^"]*amd64\.deb' \
   | head -n 1 \
   | xargs curl -fL -o ASF-Junban-latest-amd64.deb
 sudo apt install ./ASF-Junban-latest-amd64.deb
 
 # Portable (.AppImage) - download latest, make executable, then run
-curl -fsSL https://api.github.com/repos/Artificial-Source-Foundation/Junban/releases/latest \
+curl -fsSL https://api.github.com/repos/Artificial-Source/Junban/releases/latest \
   | grep -o 'https://[^"]*amd64\.AppImage' \
   | head -n 1 \
   | xargs curl -fL -o ASF-Junban-latest-amd64.AppImage
@@ -180,7 +180,7 @@ See `docs/guides/SETUP.md` for the full setup guide.
 Quick start:
 
 ```bash
-git clone https://github.com/Artificial-Source-Foundation/Junban.git
+git clone https://github.com/Artificial-Source/Junban.git
 cd Junban
 pnpm install
 cp .env.example .env

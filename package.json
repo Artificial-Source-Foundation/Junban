@@ -5,11 +5,11 @@
   "author": "AI Strategic Forum (ASF)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Artificial-Source-Foundation/Junban.git"
+    "url": "https://github.com/Artificial-Source/Junban.git"
   },
-  "homepage": "https://github.com/Artificial-Source-Foundation/Junban",
+  "homepage": "https://github.com/Artificial-Source/Junban",
   "bugs": {
-    "url": "https://github.com/Artificial-Source-Foundation/Junban/issues"
+    "url": "https://github.com/Artificial-Source/Junban/issues"
   },
   "keywords": [
     "task-manager",

@@ -24,7 +24,7 @@ Rust and Tauri are only needed if you want to build the desktop app. The web UI 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/Artificial-Source-Foundation/Junban.git
+git clone https://github.com/Artificial-Source/Junban.git
 cd Junban
 ```
 

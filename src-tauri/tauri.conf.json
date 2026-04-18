@@ -64,7 +64,7 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://github.com/Artificial-Source-Foundation/Junban/releases/latest/download/latest.json"
+        "https://github.com/Artificial-Source/Junban/releases/latest/download/latest.json"
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDRCQ0JGQzQ1QkU5OEU3RkUKUldUKzU1aStSZnpMU3poV2pvL2NHOVBXdjBqYUJkODdUTk9NT3lHeFl6Y3hObndmY0czMHBJcTcK"
     }

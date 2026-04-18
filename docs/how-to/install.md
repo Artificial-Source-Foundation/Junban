@@ -14,7 +14,7 @@ Use this page when you want to get Junban installed for local use.
 
 If you just want to run the app and not modify source, use the release page:
 
-- [GitHub Releases](https://github.com/Artificial-Source-Foundation/Junban/releases/latest)
+- [GitHub Releases](https://github.com/Artificial-Source/Junban/releases/latest)
 
 Assets include `.exe/.msi` for Windows, `.dmg` for macOS, and `.deb`/`.AppImage` for Linux.
 
@@ -24,7 +24,7 @@ Assets include `.exe/.msi` for Windows, `.dmg` for macOS, and `.deb`/`.AppImage`
 2. Clone and install:
 
    ```bash
-   git clone https://github.com/Artificial-Source-Foundation/Junban.git
+   git clone https://github.com/Artificial-Source/Junban.git
    cd Junban
    pnpm install
    ```

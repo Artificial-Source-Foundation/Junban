@@ -17,7 +17,7 @@ If you already have these, you can usually finish this in a short session. First
 ### 1) Clone and install
 
 ```bash
-git clone https://github.com/Artificial-Source-Foundation/Junban.git
+git clone https://github.com/Artificial-Source/Junban.git
 cd Junban
 pnpm install
 ```

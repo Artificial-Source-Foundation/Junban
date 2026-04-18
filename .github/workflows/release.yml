@@ -71,7 +71,7 @@ jobs:
           grep -q '^name = "asf_junban_lib"' src-tauri/Cargo.toml
           grep -q '"productName": "ASF Junban"' src-tauri/tauri.conf.json
           grep -q '"identifier": "com.asf.junban"' src-tauri/tauri.conf.json
-          grep -q 'Artificial-Source-Foundation/Junban/releases/latest/download/latest.json' src-tauri/tauri.conf.json
+          grep -q 'Artificial-Source/Junban/releases/latest/download/latest.json' src-tauri/tauri.conf.json
 
           if grep -nE 'asf-saydo|asf_saydo_lib|ASF Saydo|com\.asf\.saydo|ASF-GROUP/Saydo' package.json src-tauri/Cargo.toml src-tauri/tauri.conf.json; then
             echo "Stale pre-Junban branding is still present in release metadata" >&2
