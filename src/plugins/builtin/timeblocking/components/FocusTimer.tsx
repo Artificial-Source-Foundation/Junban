@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Play, Square, Clock } from "lucide-react";
 import type { TimeBlock } from "../types.js";
+import { timeToMinutes } from "./TimelineColumn.js";
 import { formatRemaining, isBlockActive } from "./focus-timer-utils.js";
 
 interface FocusTimerProps {
