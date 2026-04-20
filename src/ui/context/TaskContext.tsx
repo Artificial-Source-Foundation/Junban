@@ -20,6 +20,7 @@ import {
   updateTask as updateTaskApi,
 } from "../api/tasks.js";
 import { endNamedPerfSpan, markPerf, measureAsync } from "../../utils/perf.js";
+import { JUNBAN_RUNTIME_UPDATED_EVENT, type JunbanRuntimeConfig } from "../../utils/runtime.js";
 
 interface TaskState {
   tasks: Task[];
@@ -236,6 +237,24 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void refreshTasks();
   }, [refreshTasks]);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const runtime = (event as CustomEvent<JunbanRuntimeConfig>).detail;
+      const desktop = runtime?.desktop;
+      if (!desktop || desktop.ready) {
+        return;
+      }
+
+      dispatch({
+        type: "LOAD_ERROR",
+        error: desktop.error?.trim() || "Desktop backend unavailable.",
+      });
+    };
+
+    window.addEventListener(JUNBAN_RUNTIME_UPDATED_EVENT, handler);
+    return () => window.removeEventListener(JUNBAN_RUNTIME_UPDATED_EVENT, handler);
+  }, []);
 
   const contextValue = useMemo(
     () => ({

@@ -6,19 +6,20 @@
 
 ## Architecture Overview
 
-The API layer provides a unified interface for the React frontend to interact with backend services. It does not own UI state; contexts/hooks consume this layer. Every function supports two execution modes:
+The API layer provides a unified interface for the React frontend to interact with backend services. It does not own UI state; contexts/hooks consume this layer. The transport now has three practical runtime shapes:
 
 1. **Server mode** (default) -- makes HTTP `fetch` calls to the Hono API at `/api/*`
-2. **Tauri mode** -- calls backend services directly in-process via lazy-loaded `bootstrapWeb` services
+2. **Packaged desktop mode** -- makes HTTP `fetch` calls to the localhost Node sidecar API
+3. **Direct-services mode** -- lazy-loads `bootstrapWeb()` for browser-owned embedded runtimes such as the current remote-desktop browser path
 
-The mode is determined by `isTauri()` from `utils/tauri.js`, which checks for the Tauri runtime. This dual-mode architecture allows the same React code to run both as a web app (with a server) and as a desktop app (with embedded services).
+`helpers.ts` decides which transport to use based on the active runtime. This keeps the packaged desktop app on the backend-owned data/API path while preserving the existing browser/direct-services path where a backend is not present.
 
 This reference summarizes stable transport contracts. For exact request/response shapes and implementation details, treat each source file in `src/ui/api/` as canonical.
 
 ```
 src/ui/api/
   index.ts       -- Barrel export combining non-AI modules into a single `api` object
-  helpers.ts     -- Shared utilities (isTauri, BASE URL, response handlers)
+  helpers.ts     -- Shared utilities (runtime-aware API base, readiness validation, response handlers)
   direct-services.ts -- Lazy Tauri/bootstrap service loader for in-process mode
   tasks.ts       -- Task CRUD, bulk operations, tree operations, import
   projects.ts    -- Project CRUD, tag listing
@@ -50,20 +51,24 @@ src/ui/api/
 - **Purpose:** Shared utilities for all API modules.
 - **Key Exports:**
   - `isTauri` -- re-exported from `utils/tauri.js`
-  - `BASE: string` -- base URL for REST API (`"/api"`)
+  - `getApiBase(): string` -- resolves the active REST base (`"/api"` in browser/server mode, runtime-provided localhost base in packaged desktop mode)
+  - `BASE: string` -- legacy string-like export backed by `getApiBase()` for existing fetch call sites
+  - `useDirectServices(): boolean` -- whether the caller should use lazy `bootstrapWeb()` services instead of HTTP
+  - `waitForDesktopApiReady(): Promise<void>` -- packaged-desktop startup guard that validates the runtime-provided sidecar health contract before API helpers are used
   - `handleResponse<T>(res: Response): Promise<T>` -- parses JSON response, throws on HTTP error (extracts `error` field from JSON body if available)
   - `handleVoidResponse(res: Response): Promise<void>` -- checks for HTTP error without parsing body
+- **Notes:** In packaged desktop mode, Tauri injects `window.__JUNBAN_RUNTIME_READY__` before the UI imports API helpers. That handshake provides the sidecar's dynamic localhost API base plus `ready/error` status. `waitForDesktopApiReady()` first honors that descriptor; only ready descriptors proceed to the health-check probe, and unready descriptors fail fast so the shell can render a controlled startup error state. After startup, the runtime layer also listens for `junban:desktop-runtime-descriptor-changed` events from the Tauri shell and updates `window.__JUNBAN_RUNTIME__` in place so API calls stop using stale ready descriptors if the sidecar later dies.
 
 ---
 
 ## direct-services.ts
 
 - **Path:** `src/ui/api/direct-services.ts`
-- **Purpose:** Isolated lazy loader for Tauri/in-process service bootstrap.
+- **Purpose:** Isolated lazy loader for browser-owned embedded service bootstrap.
 - **Key Exports:**
   - `getServices(): Promise<WebServices>` -- lazy-loads and caches `bootstrapWeb()`
   - `WebServices` type -- the return type of `bootstrapWeb()`
-- **Notes:** Split out of `helpers.ts` so the common API helper path does not automatically drag the heavy in-process bootstrap loader into every startup module. `getServices()` lazily imports `../../bootstrap-web.js` and caches the result.
+- **Notes:** Split out of `helpers.ts` so the common API helper path does not automatically drag the heavy in-process bootstrap loader into every startup module. `getServices()` lazily imports `../../bootstrap-web.js` and caches the result. Packaged desktop no longer uses this path for its main window; it remains for runtime shapes that still own persistence in-browser.
 
 ---
 

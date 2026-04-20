@@ -79,17 +79,26 @@ depending on environment configuration.
 
 Used by the React app when running in the browser or inside the Tauri webview.
 
-This path builds services through `src/bootstrap-web.ts`.
+This path now has two local-runtime variants:
+
+- Plain browser and the current remote-browser desktop path still build services through `src/bootstrap-web.ts`.
+- Packaged desktop now starts the existing Node backend as a localhost sidecar and routes the UI through the Hono API.
+- The packaged desktop webview now receives an explicit runtime descriptor from Tauri before the app imports API helpers; that descriptor carries the actual sidecar API base, readiness contract, and failure reason instead of relying on a hardcoded localhost port in the frontend.
 
 Important constraint:
 
 - Browser-side code always uses SQLite via `sql.js`
 - Markdown storage is Node-only because it requires filesystem access
+- Packaged desktop uses the backend-owned SQLite/API path instead of the browser-owned sql.js persistence path
+- The packaged desktop sidecar binds an available localhost port at startup, and the frontend learns that dynamic port only through the runtime-descriptor handshake from Tauri
+- Readiness validation requires the backend health payload to identify Junban rather than accepting any HTTP 200 responder on that port; if startup fails, Tauri now leaves the app bootable and exposes an unready desktop runtime descriptor so the frontend can render a controlled error state
+- If the sidecar later exits, subsequent runtime-descriptor reads report the desktop backend as unready instead of leaving stale ready metadata behind
 
 Desktop remote-access note:
 
 - Packaged Tauri builds can also host a lightweight Rust web server that serves the compiled frontend and synchronizes the persisted SQLite file for personal trusted-network access.
 - That remote browser path still uses the browser service graph from `src/bootstrap-web.ts`; it swaps filesystem persistence for HTTP-backed DB-file load/save.
+- The local packaged desktop window is no longer on that browser-owned path; it talks to the bundled Node sidecar over localhost so it uses the same backend API/storage ownership model as source-run server mode.
 - Remote access settings are persisted by the Tauri runtime so the desktop app can auto-start the server on launch.
 - The desktop window locks local editing while remote access is active, and the Rust host only authorizes one remote browser session at a time.
 - Optional password protection is enforced by the Rust host before the remote browser can read or write the SQLite file.

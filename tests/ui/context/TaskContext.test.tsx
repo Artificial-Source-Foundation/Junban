@@ -43,6 +43,7 @@ const taskApiMocks = vi.hoisted(() => ({
 
 vi.mock("../../../src/ui/api/tasks.js", () => taskApiMocks);
 import { TaskProvider, useTaskContext } from "../../../src/ui/context/TaskContext.js";
+import { JUNBAN_RUNTIME_UPDATED_EVENT } from "../../../src/utils/runtime.js";
 
 function TestConsumer() {
   const { state, createTask, updateTask, completeTask, deleteTask, refreshTasks } =
@@ -367,5 +368,36 @@ describe("TaskContext", () => {
     await waitFor(() => {
       expect(screen.getByTestId("task-count").textContent).toBe("1");
     });
+  });
+
+  it("surfaces desktop backend unavailability events while app is running", async () => {
+    render(
+      <TaskProvider>
+        <TestConsumer />
+      </TaskProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loading").textContent).toBe("false");
+    });
+
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent(JUNBAN_RUNTIME_UPDATED_EVENT, {
+          detail: {
+            mode: "default",
+            desktop: {
+              apiBase: "http://127.0.0.1:7001/api",
+              healthUrl: "http://127.0.0.1:7001/api/health",
+              ready: false,
+              service: "junban-backend",
+              error: "Desktop backend exited with code Some(1) signal None",
+            },
+          },
+        }),
+      );
+    });
+
+    expect(screen.getByTestId("error").textContent).toContain("Desktop backend exited");
   });
 });

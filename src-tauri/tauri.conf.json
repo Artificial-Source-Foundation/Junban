@@ -4,8 +4,8 @@
   "version": "1.0.5",
   "identifier": "com.asf.junban",
   "build": {
-    "beforeDevCommand": "pnpm dev:full",
-    "beforeBuildCommand": "pnpm build",
+    "beforeDevCommand": "pnpm tauri:prepare-sidecar && pnpm dev:full",
+    "beforeBuildCommand": "pnpm build && pnpm tauri:prepare-sidecar",
     "devUrl": "http://localhost:5173",
     "frontendDist": "../dist"
   },
@@ -33,12 +33,14 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' http://localhost:4822 https:"
+      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' http://127.0.0.1:* http://localhost:* https:"
     }
   },
   "bundle": {
     "active": true,
     "createUpdaterArtifacts": true,
+    "resources": ["../dist/**/*", "./gen/sidecar/"],
+    "externalBin": ["binaries/junban-node"],
     "targets": "all",
     "icon": [
       "icons/32x32.png",

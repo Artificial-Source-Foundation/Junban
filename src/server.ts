@@ -24,6 +24,11 @@ setDefaultLogLevel(env.LOG_LEVEL);
 const logger = createLogger("server");
 
 const API_PORT = parseInt(process.env.API_PORT ?? "4822", 10);
+const HEALTH_RESPONSE = {
+  ok: true,
+  service: "junban-backend",
+  runtime: "node",
+} as const;
 
 logger.info("Bootstrapping services...");
 const runtime = createNodeBackendRuntime();
@@ -127,7 +132,7 @@ app.route(
 app.route("/api/voice", voiceRoutes());
 
 // Health check
-app.get("/api/health", (c) => c.json({ ok: true }));
+app.get("/api/health", (c) => c.json(HEALTH_RESPONSE));
 
 // Start the server
 const server = serve(
