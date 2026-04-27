@@ -259,7 +259,7 @@ fn emit_runtime_descriptor_change(app: &AppHandle, runtime: &JunbanRuntimeDescri
 
 fn default_remote_config() -> RemoteServerConfigFile {
     RemoteServerConfigFile {
-        port: 4822,
+        port: 4823,
         auto_start: false,
         password_enabled: false,
         password_hash: None,
@@ -320,6 +320,13 @@ fn bind_remote_listener(
 }
 
 fn format_remote_listener_bind_error(bind_addr: SocketAddr, err: &std::io::Error) -> String {
+    if err.kind() == ErrorKind::AddrInUse {
+        return format!(
+            "Port {} is already in use. Choose another remote access port.",
+            bind_addr.port()
+        );
+    }
+
     format!("Failed to bind remote listener {bind_addr}: {err}")
 }
 
@@ -1471,7 +1478,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("Failed to build ASF Junban.")
+        .expect("Failed to build Junban.")
         .run(|_app, _event| {});
 }
 
@@ -1482,10 +1489,11 @@ mod tests {
     use super::{
         active_login_lockout_duration, authorize_remote_session, bind_remote_server_listeners,
         build_desktop_runtime_descriptor, build_remote_api_proxy_target, build_session_status,
-        build_status, build_unready_desktop_runtime_descriptor, ensure_remote_access_backend_ready,
-        is_expected_desktop_backend_response, is_same_origin_remote_post, parse_session_cookie,
-        read_remote_session_status, register_failed_login_attempt, remote_server_bind_addrs,
-        should_redirect_remote_path_to_root, RemoteAuthState, JUNBAN_BACKEND_SERVICE,
+        build_status, build_unready_desktop_runtime_descriptor, default_remote_config,
+        ensure_remote_access_backend_ready, is_expected_desktop_backend_response,
+        is_same_origin_remote_post, parse_session_cookie, read_remote_session_status,
+        register_failed_login_attempt, remote_server_bind_addrs, should_redirect_remote_path_to_root,
+        RemoteAuthState, JUNBAN_BACKEND_SERVICE,
     };
     use axum::http::{header, HeaderMap, HeaderValue};
     use std::io;
@@ -1583,6 +1591,13 @@ mod tests {
     }
 
     #[test]
+    fn default_remote_access_port_does_not_conflict_with_dev_api_port() {
+        let config = default_remote_config();
+
+        assert_eq!(config.port, 4823);
+    }
+
+    #[test]
     fn passwordless_remote_access_advertises_only_ipv4_loopback_bind() {
         assert_eq!(
             remote_server_bind_addrs(false, 4822),
@@ -1612,6 +1627,26 @@ mod tests {
             .expect("listener address should resolve");
         assert!(listener_addr.is_ipv4());
         assert_eq!(listener_addr.ip().to_string(), "127.0.0.1");
+    }
+
+    #[tokio::test]
+    async fn occupied_remote_access_port_reports_actionable_error() {
+        let occupied = std::net::TcpListener::bind("127.0.0.1:0")
+            .expect("test should reserve a loopback port");
+        let occupied_port = occupied
+            .local_addr()
+            .expect("reserved listener address should resolve")
+            .port();
+
+        let error = match bind_remote_server_listeners(false, occupied_port) {
+            Ok(_) => panic!("occupied port should fail to bind"),
+            Err(error) => error,
+        };
+
+        assert_eq!(
+            error,
+            format!("Port {occupied_port} is already in use. Choose another remote access port.")
+        );
     }
 
     #[tokio::test]

@@ -6,7 +6,20 @@ This guide shows the quickest reliable path to expose Junban tasks, projects, ta
 
 Claude Desktop launches the Junban MCP server itself from the config entry below. You do not need to keep a separate `pnpm mcp` terminal running for normal Claude Desktop usage.
 
-Add this block to your `claude_desktop_config.json`:
+If Junban is installed as a packaged command, add this block to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "junban": {
+      "command": "junban-mcp",
+      "args": []
+    }
+  }
+}
+```
+
+If you are running Junban from a source checkout, use the project script form instead:
 
 ```json
 {
@@ -38,6 +51,12 @@ These map to the MCP tool/resources/prompts exposed by Junban.
 If you want to verify that the server starts cleanly outside Claude Desktop, run:
 
 ```bash
+junban-mcp
+```
+
+From a source checkout, run:
+
+```bash
 pnpm mcp
 ```
 
@@ -48,6 +67,7 @@ The MCP entrypoint in `src/mcp/server.ts` runs on stdio (JSON-RPC). The server u
 - The server intentionally uses stdio transport, so stdout must remain JSON-RPC only.
 - Console output is redirected to stderr in `src/mcp/server.ts` to avoid protocol noise.
 - Plugin-contributed tools are available when plugin loading runs in bootstrap, so MCP sees the same tool registry exposed by Junban.
+- The Agent Tools settings tab in the app can copy or download the same MCP config and a short agent skill file.
 
 ## Related docs
 

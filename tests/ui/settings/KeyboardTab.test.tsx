@@ -10,6 +10,7 @@ const mockSubscribe = vi.fn().mockReturnValue(() => {});
 const mockRebind = vi.fn();
 const mockResetToDefault = vi.fn();
 const mockToJSON = vi.fn().mockReturnValue({});
+const mockUpdateSetting = vi.fn();
 
 vi.mock("../../../src/ui/shortcutManagerInstance.js", () => ({
   shortcutManager: {
@@ -25,6 +26,13 @@ vi.mock("../../../src/ui/api/index.js", () => ({
   api: {
     setAppSetting: vi.fn().mockResolvedValue(undefined),
   },
+}));
+
+vi.mock("../../../src/ui/context/SettingsContext.js", () => ({
+  useGeneralSettings: () => ({
+    settings: { feature_chords: "true" },
+    updateSetting: mockUpdateSetting,
+  }),
 }));
 
 import { KeyboardTab } from "../../../src/ui/views/settings/KeyboardTab.js";
@@ -44,6 +52,26 @@ describe("KeyboardTab", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetAll.mockReturnValue(shortcuts);
+  });
+
+  it("renders keyboard behavior controls", () => {
+    render(<KeyboardTab />);
+    expect(screen.getByText("Keyboard Behavior")).toBeDefined();
+    expect(screen.getByText("Keyboard chords")).toBeDefined();
+    expect(
+      screen.getByText("Jump around the app with multi-key shortcuts like g then i"),
+    ).toBeDefined();
+  });
+
+  it("toggles keyboard chords from the keyboard tab", () => {
+    render(<KeyboardTab />);
+    const label = screen.getByText("Keyboard chords");
+    const row = label.closest(".flex")!;
+    const toggle = row.querySelector("button")!;
+
+    fireEvent.click(toggle);
+
+    expect(mockUpdateSetting).toHaveBeenCalledWith("feature_chords", "false");
   });
 
   it("renders shortcut list", () => {

@@ -4,7 +4,7 @@ This page tracks Junban's milestone-level product direction.
 
 For the current shipped snapshot, see [`status.md`](status.md). For scoped future-product planning, see [`prds/README.md`](prds/README.md).
 
-Future milestones below intentionally stay summary-level; detailed scope lives in PRDs (product framing) and `docs/internal/` planning docs (execution detail).
+Future milestones below intentionally stay summary-level; detailed scope lives in PRDs.
 
 ## v0.1 — Foundation (MVP)
 
@@ -26,7 +26,7 @@ Shipped multi-provider AI chat, tool calling, voice input/output, dynamic model 
 
 ## v0.5 — Plugin System
 
-The Obsidian-style plugin architecture.
+The plugin architecture.
 
 Shipped the sandboxed plugin runtime, author-facing API, plugin registry/store flows, UI extension points, and permission-controlled plugin management.
 
@@ -44,11 +44,11 @@ Shipped the stable desktop release with plugin API guarantees, packaging/update 
 
 ## v1.1 — Timeblocking Plugin
 
-Akiflow-inspired timeblocking as a first-class plugin. Validates plugin React rendering.
+Timeblocking as a first-class plugin. Validates plugin React rendering.
 
 Shipped the first advanced built-in plugin with day/week timeline views, recurrence, focus integration, and richer plugin UI/runtime capabilities.
 
-For shipped-product detail, use [`status.md`](status.md). For historical execution context, use [`../internal/planning/sprint-history.md`](../internal/planning/sprint-history.md).
+For shipped-product detail, use [`status.md`](status.md).
 
 ## v1.2 — Calendar Integrations
 
@@ -58,7 +58,7 @@ See [`prds/calendar-integrations.md`](prds/calendar-integrations.md).
 
 ## v1.5 — Junban Sync
 
-Cross-device sync service (paid, optional — like Obsidian Sync).
+Cross-device sync service (paid, optional).
 
 See [`prds/junban-sync.md`](prds/junban-sync.md).
 

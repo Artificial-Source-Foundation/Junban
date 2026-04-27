@@ -3,7 +3,7 @@
   "icon": "🧩",
   "name": "Example Plugin",
   "version": "2.0.0",
-  "author": "ASF",
+  "author": "Artificial Source",
   "description": "A complete example plugin demonstrating the Junban Plugin API: tasks, projects, tags, events, commands, status bar, and settings.",
   "main": "index.mjs",
   "minJunbanVersion": "0.1.0",

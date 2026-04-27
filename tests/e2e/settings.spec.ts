@@ -24,18 +24,20 @@ test.describe("Settings modal", () => {
     await expect(page.getByRole("heading", { name: "Settings" })).not.toBeVisible();
   });
 
-  test("shows all 10 MVP setting tabs in the sidebar", async ({ page }) => {
+  test("shows all setting tabs in the sidebar", async ({ page }) => {
     await openSettings(page);
     const tabs = [
       "Essentials",
       "Appearance",
+      "Alerts",
       "Filters & Labels",
-      "Advanced",
       "Keyboard",
       "Templates",
       "AI",
       "Voice",
+      "Agent Tools",
       "Data",
+      "Advanced",
       "About",
     ];
     for (const tab of tabs) {
@@ -52,23 +54,51 @@ test.describe("Settings modal", () => {
     await page.getByRole("button", { name: "Filters & Labels", exact: true }).click();
     await expect(page.getByText("My Filters")).toBeVisible();
 
+    await page.getByRole("button", { name: "Alerts", exact: true }).click();
+    await expect(page.getByText("Alerts & Feedback")).toBeVisible();
+
     await page.getByRole("button", { name: "Advanced", exact: true }).click();
-    await expect(page.getByText("Optional upgrades for desktop use")).toBeVisible();
+    await expect(page.getByText("Feature flags and developer controls")).toBeVisible();
 
     await page.getByRole("button", { name: "About", exact: true }).click();
     await expect(page.getByText("Junban").first()).toBeVisible();
   });
+
+  test("keeps dark settings form controls readable", async ({ page }) => {
+    await page.evaluate(() => {
+      localStorage.setItem("junban-theme", "dark");
+    });
+    await page.reload();
+    await openSettings(page, "Essentials");
+
+    const content = settingsContent(page);
+    const weekStartRow = content.getByText("Week starts on").locator("..").locator("..");
+    const weekStartSelect = weekStartRow.locator("select");
+    await expect(weekStartSelect).toBeVisible();
+
+    const styles = await weekStartSelect.evaluate((element) => {
+      const computed = window.getComputedStyle(element);
+      return {
+        color: computed.color,
+        backgroundColor: computed.backgroundColor,
+        colorScheme: computed.colorScheme,
+      };
+    });
+
+    expect(styles.color).not.toBe(styles.backgroundColor);
+    expect(styles.colorScheme).toContain("dark");
+  });
 });
 
-// ── General tab ─────────────────────────────────────────────────────────
+// ── Essentials tab ──────────────────────────────────────────────────────
 
-test.describe("General settings tab", () => {
+test.describe("Essentials settings tab", () => {
   test.beforeEach(async ({ page }) => {
     await setupPage(page);
   });
 
   test("displays Date & Time section with controls", async ({ page }) => {
-    await openSettings(page, "General");
+    await openSettings(page, "Essentials");
     const content = settingsContent(page);
     await expect(content.getByText("Date & Time")).toBeVisible();
     await expect(content.getByText("Week starts on")).toBeVisible();
@@ -78,7 +108,7 @@ test.describe("General settings tab", () => {
   });
 
   test("can change week start day", async ({ page }) => {
-    await openSettings(page, "General");
+    await openSettings(page, "Essentials");
 
     const content = settingsContent(page);
     const weekStartRow = content.getByText("Week starts on").locator("..").locator("..");
@@ -88,7 +118,7 @@ test.describe("General settings tab", () => {
   });
 
   test("can change date format", async ({ page }) => {
-    await openSettings(page, "General");
+    await openSettings(page, "Essentials");
 
     const content = settingsContent(page);
     const dateFormatRow = content.getByText("Date format").locator("..").locator("..");
@@ -98,7 +128,7 @@ test.describe("General settings tab", () => {
   });
 
   test("can toggle time format between 12h and 24h", async ({ page }) => {
-    await openSettings(page, "General");
+    await openSettings(page, "Essentials");
 
     const content = settingsContent(page);
     await content.getByRole("button", { name: "24-hour" }).click();
@@ -106,7 +136,7 @@ test.describe("General settings tab", () => {
   });
 
   test("displays Task Behavior section", async ({ page }) => {
-    await openSettings(page, "General");
+    await openSettings(page, "Essentials");
     const content = settingsContent(page);
     await expect(content.getByText("Task Behavior")).toBeVisible();
     await expect(content.getByText("Default priority")).toBeVisible();
@@ -115,7 +145,7 @@ test.describe("General settings tab", () => {
   });
 
   test("can change default priority", async ({ page }) => {
-    await openSettings(page, "General");
+    await openSettings(page, "Essentials");
 
     const content = settingsContent(page);
     const priorityRow = content.getByText("Default priority").locator("..").locator("..");
@@ -125,7 +155,7 @@ test.describe("General settings tab", () => {
   });
 
   test("can change start screen", async ({ page }) => {
-    await openSettings(page, "General");
+    await openSettings(page, "Essentials");
 
     const content = settingsContent(page);
     const startRow = content.getByText("Start screen").locator("..").locator("..");
@@ -136,26 +166,33 @@ test.describe("General settings tab", () => {
     // Reset to inbox
     await startSelect.selectOption("inbox");
   });
+});
+
+// ── Alerts tab ──────────────────────────────────────────────────────────
+
+test.describe("Alerts settings tab", () => {
+  test.beforeEach(async ({ page }) => {
+    await setupPage(page);
+  });
 
   test("displays Sound Effects section heading", async ({ page }) => {
-    await openSettings(page, "General");
+    await openSettings(page, "Alerts");
     const content = settingsContent(page);
     await expect(content.getByRole("heading", { name: "Sound Effects" })).toBeVisible();
     await expect(content.getByText("Enable sound effects")).toBeVisible();
   });
 
   test("displays individual sound toggles", async ({ page }) => {
-    await openSettings(page, "General");
+    await openSettings(page, "Alerts");
     const content = settingsContent(page);
     await expect(content.getByText("Task completed", { exact: true })).toBeVisible();
     await expect(content.getByText("Task created", { exact: true })).toBeVisible();
     await expect(content.getByText("Task deleted", { exact: true })).toBeVisible();
-    // "Reminder" matches exactly
     await expect(content.getByText("Reminder", { exact: true })).toBeVisible();
   });
 
   test("sound preview buttons are present", async ({ page }) => {
-    await openSettings(page, "General");
+    await openSettings(page, "Alerts");
 
     const content = settingsContent(page);
     const previewButtons = content.getByRole("button", { name: "Preview" });
@@ -163,7 +200,7 @@ test.describe("General settings tab", () => {
   });
 
   test("displays Notifications section", async ({ page }) => {
-    await openSettings(page, "General");
+    await openSettings(page, "Alerts");
     const content = settingsContent(page);
     await expect(content.getByRole("heading", { name: "Notifications" })).toBeVisible();
     await expect(content.getByText("Browser notifications", { exact: true })).toBeVisible();
@@ -279,98 +316,103 @@ test.describe("Appearance settings tab", () => {
   });
 });
 
-// ── Features tab ────────────────────────────────────────────────────────
+// ── Advanced tab ────────────────────────────────────────────────────────
 
-test.describe("Features settings tab", () => {
+test.describe("Advanced settings tab", () => {
   test.beforeEach(async ({ page }) => {
     await setupPage(page);
   });
 
   test("displays all feature toggles", async ({ page }) => {
-    await openSettings(page, "Features");
+    await openSettings(page, "Advanced");
 
     const features = [
-      "Calendar",
-      "Completed tasks",
-      "Cancelled tasks",
-      "Someday / Maybe",
-      "Eisenhower Matrix",
-      "Productivity stats",
       "Filters & Labels",
-      "Quick Wins",
       "Project sections",
       "Kanban / Board view",
       "Time estimates",
       "Deadlines",
       "Comments & activity",
-      "Keyboard chords",
       "Eat the Frog",
-      "Smart Nudges",
+      "Developer mode",
     ];
 
     const content = settingsContent(page);
     for (const feature of features) {
-      await expect(content.getByText(feature, { exact: true })).toBeVisible();
+      await expect(content.getByText(feature, { exact: true }).first()).toBeVisible();
     }
   });
 
   test("feature toggles are all enabled by default (accent-colored)", async ({ page }) => {
-    await openSettings(page, "Features");
+    await openSettings(page, "Advanced");
 
-    // The Toggle component renders a <button> with bg-accent class when enabled
-    // Count the toggle buttons within the features section (each SettingRow has one toggle)
     const content = settingsContent(page);
-    // Each feature has a toggle button that's a small rounded-full button
-    const toggleButtons = content.locator("button.inline-flex.h-5.w-9.rounded-full.bg-accent");
-    await expect(toggleButtons).toHaveCount(16);
+    const enabledByDefault = [
+      "Filters & Labels",
+      "Project sections",
+      "Kanban / Board view",
+      "Time estimates",
+      "Deadlines",
+      "Comments & activity",
+      "Eat the Frog",
+    ];
+
+    for (const feature of enabledByDefault) {
+      const toggle = content.locator(
+        `xpath=.//p[normalize-space()='${feature}']/ancestor::div[contains(@class,'flex items-center justify-between')][1]//button`,
+      );
+      await expect(toggle).toHaveClass(/bg-accent/);
+    }
+
+    const developerToggle = content.locator(
+      "xpath=.//p[normalize-space()='Developer mode']/ancestor::div[contains(@class,'flex items-center justify-between')][1]//button",
+    );
+    await expect(developerToggle).not.toHaveClass(/bg-accent/);
   });
 
   test("toggling a feature off changes its visual state", async ({ page }) => {
-    await openSettings(page, "Features");
+    await openSettings(page, "Advanced");
 
     const content = settingsContent(page);
-    // Find the toggle in the "Productivity stats" row
-    const statsToggle = content.locator(
-      "xpath=.//p[normalize-space()='Productivity stats']/ancestor::div[contains(@class,'flex items-center justify-between')][1]//button",
+    // Find the toggle in the "Project sections" row
+    const sectionsToggle = content.locator(
+      "xpath=.//p[normalize-space()='Project sections']/ancestor::div[contains(@class,'flex items-center justify-between')][1]//button",
     );
-    await expect(statsToggle).toHaveClass(/bg-accent/);
+    await expect(sectionsToggle).toHaveClass(/bg-accent/);
 
-    await statsToggle.click();
+    await sectionsToggle.click();
 
     // After clicking, it should no longer have bg-accent
-    await expect(statsToggle).not.toHaveClass(/bg-accent/);
+    await expect(sectionsToggle).not.toHaveClass(/bg-accent/);
 
     // Toggle it back on
-    await statsToggle.click();
-    await expect(statsToggle).toHaveClass(/bg-accent/);
+    await sectionsToggle.click();
+    await expect(sectionsToggle).toHaveClass(/bg-accent/);
   });
 
-  test("disabling a feature hides its sidebar nav item", async ({ page }) => {
-    // Verify Stats nav exists
-    await expect(page.getByRole("button", { name: "Stats", exact: true })).toBeVisible();
+  test("developer mode can be enabled", async ({ page }) => {
+    await openSettings(page, "Advanced");
 
-    // Disable stats via API
-    await page.request.put("/api/settings/feature_stats", { data: { value: "false" } });
-    await page.reload();
-    await expect(page.getByText("Inbox").first()).toBeVisible({ timeout: 10000 });
+    const content = settingsContent(page);
+    const developerToggle = content.locator(
+      "xpath=.//p[normalize-space()='Developer mode']/ancestor::div[contains(@class,'flex items-center justify-between')][1]//button",
+    );
 
-    // Stats nav should be gone
-    await expect(page.getByRole("button", { name: "Stats", exact: true })).not.toBeVisible();
-
-    // Re-enable
-    await page.request.put("/api/settings/feature_stats", { data: { value: "true" } });
+    await expect(developerToggle).not.toHaveClass(/bg-accent/);
+    await developerToggle.click();
+    await expect(developerToggle).toHaveClass(/bg-accent/);
   });
 });
 
-// ── AI Assistant tab ────────────────────────────────────────────────────
+// ── AI tab ───────────────────────────────────────────────────────────────
 
-test.describe("AI Assistant settings tab", () => {
+test.describe("AI settings tab", () => {
   test.beforeEach(async ({ page }) => {
     await setupPage(page);
   });
 
   test("displays AI provider configuration", async ({ page }) => {
-    await openSettings(page, "AI Assistant");
+    await openSettings(page, "AI");
     const content = settingsContent(page);
     await expect(content.getByText("Provider").first()).toBeVisible({ timeout: 5000 });
   });
@@ -443,7 +485,7 @@ test.describe("About settings tab", () => {
   test("displays app info", async ({ page }) => {
     await openSettings(page, "About");
     const content = settingsContent(page);
-    await expect(content.getByText("ASF Junban").first()).toBeVisible({ timeout: 5000 });
+    await expect(content.getByText("Junban").first()).toBeVisible({ timeout: 5000 });
     await expect(content.getByText("Open Source Credits")).toBeVisible();
     await expect(content.getByText("Feedback")).toBeVisible();
   });
@@ -464,7 +506,7 @@ test.describe("Settings persistence", () => {
     await expect(page.getByText("Inbox").first()).toBeVisible({ timeout: 10000 });
 
     // Verify the setting persisted
-    await openSettings(page, "General");
+    await openSettings(page, "Essentials");
     const content = settingsContent(page);
     await expect(content.getByText("e.g. 14:30")).toBeVisible();
 
@@ -486,9 +528,9 @@ test.describe("Settings persistence", () => {
     await page.request.put("/api/settings/feature_someday", { data: { value: "true" } });
   });
 
-  test("start view setting is applied in the General tab", async ({ page }) => {
+  test("start view setting is applied in the Essentials tab", async ({ page }) => {
     // Verify we can change the start screen setting and it persists
-    await openSettings(page, "General");
+    await openSettings(page, "Essentials");
     const content = settingsContent(page);
     const startRow = content.getByText("Start screen").locator("..").locator("..");
     const startSelect = startRow.locator("select");
@@ -499,7 +541,7 @@ test.describe("Settings persistence", () => {
 
     // Close settings, reopen, verify it persisted
     await closeSettings(page);
-    await openSettings(page, "General");
+    await openSettings(page, "Essentials");
     const content2 = settingsContent(page);
     const startRow2 = content2.getByText("Start screen").locator("..").locator("..");
     await expect(startRow2.locator("select")).toHaveValue("today");
@@ -516,7 +558,7 @@ test.describe("Settings persistence", () => {
     await expect(page.getByText("Inbox").first()).toBeVisible({ timeout: 10000 });
 
     // Verify via settings UI
-    await openSettings(page, "General");
+    await openSettings(page, "Essentials");
     const content = settingsContent(page);
     const calRow = content.getByText("Default calendar view").locator("..").locator("..");
     // The selected button has bg-accent class

@@ -38,7 +38,7 @@ describe("ui/api/plugins direct-services settings path", () => {
           id: "pomodoro",
           name: "Pomodoro Timer",
           version: "1.0.0",
-          author: "ASF",
+          author: "Artificial Source",
           description: "Focus timer with configurable work/break intervals.",
           enabled: true,
           permissions: DIRECT_PLUGIN_POLICIES.pomodoro.permissions,

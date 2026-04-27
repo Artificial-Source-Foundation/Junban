@@ -1,6 +1,7 @@
 import type { AppServices } from "../../bootstrap.js";
 import type { TaskFilter } from "../../core/filters.js";
 import type { Task } from "../../core/types.js";
+import { NotFoundError } from "../../core/errors.js";
 
 interface ListOptions {
   today?: boolean;
@@ -35,8 +36,7 @@ export async function listTasks(options: ListOptions, services: AppServices) {
     if (project) {
       filter.projectId = project.id;
     } else {
-      console.log(`Project "${options.project}" not found.`);
-      return;
+      throw new NotFoundError("Project", options.project);
     }
   }
 

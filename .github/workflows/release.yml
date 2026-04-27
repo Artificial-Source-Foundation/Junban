@@ -69,7 +69,7 @@ jobs:
           grep -q '"name": "asf-junban"' package.json
           grep -q '^name = "asf-junban"' src-tauri/Cargo.toml
           grep -q '^name = "asf_junban_lib"' src-tauri/Cargo.toml
-          grep -q '"productName": "ASF Junban"' src-tauri/tauri.conf.json
+          grep -q '"productName": "Junban"' src-tauri/tauri.conf.json
           grep -q '"identifier": "com.asf.junban"' src-tauri/tauri.conf.json
           grep -q 'Artificial-Source/Junban/releases/latest/download/latest.json' src-tauri/tauri.conf.json
 
@@ -140,7 +140,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: `${{ needs.verify-release.outputs.tag_name }}`,
-              name: `ASF Junban ${{ needs.verify-release.outputs.tag_name }}`,
+              name: `Junban ${{ needs.verify-release.outputs.tag_name }}`,
               body: process.env.RELEASE_BODY,
               draft: true,
               prerelease: false,

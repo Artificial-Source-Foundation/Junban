@@ -163,6 +163,56 @@
 
 ---
 
+## useToday.ts
+
+- **Path:** `src/ui/hooks/useToday.ts`
+- **Purpose:** Provides the current local date key and a matching midnight `Date` object, refreshing automatically after midnight.
+- **Key Exports:** `useToday`
+- **Return Value:** `{ today: string, todayDate: Date }` where `today` is a `toDateKey()` string and `todayDate` is memoized from `${today}T00:00:00`.
+- **Key Dependencies:** `toDateKey` from `utils/format-date.js`, `setTimeout`
+- **Used By:** Date-sensitive views/components that need a stable current-day value without repeated render-path allocations.
+- **Notes:** Re-arms the timeout after each rollover and schedules the update just past midnight with a small buffer.
+
+---
+
+## useGlobalShortcut.ts
+
+- **Path:** `src/ui/hooks/useGlobalShortcut.ts`
+- **Purpose:** Registers a system-wide Tauri global shortcut and invokes a callback on key press.
+- **Key Exports:** `useGlobalShortcut`
+- **Params:** `(shortcut: string, callback: () => void, enabled = true)`
+- **Return Value:** None (side effect only)
+- **Key Dependencies:** `isTauri`, dynamic imports from `@tauri-apps/plugin-global-shortcut`
+- **Used By:** `src/ui/app/useAppState.ts` for desktop quick-capture shortcuts.
+- **Notes:** No-ops outside Tauri or when disabled. Fires only on `event.state === "Pressed"`, unregisters on cleanup, and catches registration failures so shortcuts already claimed by another app do not break the UI.
+
+---
+
+## useClickOutside.ts
+
+- **Path:** `src/ui/hooks/useClickOutside.ts`
+- **Purpose:** Calls a handler when the user clicks or taps outside a referenced element.
+- **Key Exports:** `useClickOutside`
+- **Params:** `(ref: RefObject<HTMLElement | null>, handler: () => void, enabled?: boolean)`
+- **Return Value:** None (side effect only)
+- **Key Dependencies:** Document-level `mousedown` and `touchstart` listeners.
+- **Used By:** Popup-style UI such as pickers and menus.
+- **Notes:** Skips listener registration when `enabled === false`. The handler is not called when the event target is inside the referenced element.
+
+---
+
+## useQuickCaptureWindow.ts
+
+- **Path:** `src/ui/hooks/useQuickCaptureWindow.ts`
+- **Purpose:** Provides helpers for showing, focusing, centering, and hiding the desktop quick-capture Tauri window.
+- **Key Exports:** `useQuickCaptureWindow`
+- **Return Value:** `{ showWindow: () => Promise<void>, hideWindow: () => Promise<void> }`
+- **Key Dependencies:** `isTauri`, dynamic import of `WebviewWindow` from `@tauri-apps/api/webviewWindow`
+- **Used By:** `src/ui/app/useAppState.ts` and app-level quick-capture handling.
+- **Notes:** Uses the `quick-capture` window label. All operations no-op outside Tauri and catch failures when the window is unavailable.
+
+---
+
 ## useSoundEffect.ts
 
 - **Path:** `src/ui/hooks/useSoundEffect.ts`

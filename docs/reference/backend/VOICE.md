@@ -107,9 +107,9 @@ Local Model Flow (Whisper/Kokoro):
   - **Conditionally registered (require API key):**
     - `GroqSTTProvider` (when `groqApiKey` provided)
     - `GroqTTSProvider` (when `groqApiKey` provided)
-  - **Conditionally registered (require API key):** - `InworldTTSProvider` (registered only when `inworldApiKey` is provided)
-    **Key Dependencies:** All adapter classes
-    **Used By:** App initialization, settings context
+    - `InworldTTSProvider` (when `inworldApiKey` is provided)
+  **Key Dependencies:** All adapter classes
+  **Used By:** App initialization, settings context
 
 ---
 

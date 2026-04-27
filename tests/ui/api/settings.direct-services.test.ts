@@ -37,8 +37,8 @@ describe("ui/api/settings direct-services parity", () => {
     mockGetDesktopRemoteServerStatus.mockResolvedValue({
       available: true,
       running: false,
-      port: 4822,
-      localUrl: "http://127.0.0.1:4822",
+      port: 4823,
+      localUrl: "http://127.0.0.1:4823",
     });
     mockGetServices.mockResolvedValue({
       storage: mockStorage,
@@ -86,8 +86,8 @@ describe("ui/api/settings direct-services parity", () => {
     mockGetDesktopRemoteServerStatus.mockResolvedValue({
       available: true,
       running: true,
-      port: 4822,
-      localUrl: "http://127.0.0.1:4822",
+      port: 4823,
+      localUrl: "http://127.0.0.1:4823",
     });
 
     await expect(setAppSetting("font_size", "14")).rejects.toThrow(
@@ -96,5 +96,14 @@ describe("ui/api/settings direct-services parity", () => {
 
     expect(mockStorage.setAppSetting).not.toHaveBeenCalled();
     expect(mockSave).not.toHaveBeenCalled();
+  });
+
+  it("setAppSetting still writes when desktop remote status is unavailable", async () => {
+    mockGetDesktopRemoteServerStatus.mockRejectedValue(new Error("sidecar unavailable"));
+
+    await setAppSetting("font_size", "14");
+
+    expect(mockStorage.setAppSetting).toHaveBeenCalledWith("font_size", "14");
+    expect(mockSave).toHaveBeenCalledTimes(1);
   });
 });

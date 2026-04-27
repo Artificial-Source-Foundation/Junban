@@ -3,7 +3,7 @@
   "icon": "🧭",
   "name": "Matrix",
   "version": "1.0.0",
-  "author": "ASF",
+  "author": "Artificial Source",
   "description": "Organize pending work with an Eisenhower-style priority matrix.",
   "main": "index.ts",
   "minJunbanVersion": "1.0.0",

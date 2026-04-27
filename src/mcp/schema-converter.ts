@@ -1,10 +1,10 @@
 /**
- * JSON Schema → Zod shape converter.
+ * JSON Schema → Zod object converter.
  * Converts the JSON Schema parameter objects used by ToolRegistry definitions
- * into Zod raw shapes compatible with McpServer.registerTool().
+ * into Zod objects compatible with McpServer.registerTool().
  *
  * Handles the subset used by our tools: string, number, integer, boolean,
- * array (of strings), enum, required, and description.
+ * arrays, nested objects, enum, required, min/max items, and description.
  */
 
 import { z } from "zod";
@@ -13,13 +13,35 @@ interface JsonSchemaProperty {
   type?: string;
   description?: string;
   enum?: (string | number)[];
-  items?: { type: string };
+  items?: JsonSchemaProperty;
+  properties?: Record<string, JsonSchemaProperty>;
+  required?: string[];
+  minItems?: number;
+  maxItems?: number;
+  additionalProperties?: boolean;
 }
 
 interface JsonSchemaObject {
   type: "object";
   properties?: Record<string, JsonSchemaProperty>;
   required?: string[];
+  additionalProperties?: boolean;
+}
+
+function objectToZod(
+  properties: Record<string, JsonSchemaProperty> = {},
+  required: string[] = [],
+  additionalProperties?: boolean,
+): z.ZodObject<Record<string, z.ZodTypeAny>> {
+  const requiredFields = new Set(required);
+  const shape: Record<string, z.ZodTypeAny> = {};
+
+  for (const [key, prop] of Object.entries(properties)) {
+    shape[key] = propertyToZod(prop, requiredFields.has(key));
+  }
+
+  const schema = z.object(shape);
+  return additionalProperties === false ? schema.strict() : schema;
 }
 
 /** Convert a single JSON Schema property to a Zod type. */
@@ -55,14 +77,17 @@ function propertyToZod(prop: JsonSchemaProperty, isRequired: boolean): z.ZodType
       break;
 
     case "array":
-      if (prop.items?.type === "string") {
-        schema = z.array(z.string());
-      } else if (prop.items?.type === "number" || prop.items?.type === "integer") {
-        schema = z.array(z.number());
-      } else {
-        // Default to array of strings
-        schema = z.array(z.string());
+      schema = z.array(prop.items ? propertyToZod(prop.items, true) : z.unknown());
+      if (typeof prop.minItems === "number") {
+        schema = (schema as z.ZodArray<z.ZodTypeAny>).min(prop.minItems);
       }
+      if (typeof prop.maxItems === "number") {
+        schema = (schema as z.ZodArray<z.ZodTypeAny>).max(prop.maxItems);
+      }
+      break;
+
+    case "object":
+      schema = objectToZod(prop.properties, prop.required, prop.additionalProperties);
       break;
 
     default:
@@ -83,17 +108,11 @@ function propertyToZod(prop: JsonSchemaProperty, isRequired: boolean): z.ZodType
 
 /**
  * Convert a JSON Schema object (as used by ToolDefinition.parameters) to a
- * Zod raw shape suitable for McpServer.registerTool()'s inputSchema.
+ * Zod object suitable for McpServer.registerTool()'s inputSchema.
  */
-export function jsonSchemaToZod(schema: Record<string, unknown>): Record<string, z.ZodTypeAny> {
+export function jsonSchemaToZod(
+  schema: Record<string, unknown>,
+): z.ZodObject<Record<string, z.ZodTypeAny>> {
   const obj = schema as unknown as JsonSchemaObject;
-  const properties = obj.properties ?? {};
-  const required = new Set(obj.required ?? []);
-
-  const shape: Record<string, z.ZodTypeAny> = {};
-  for (const [key, prop] of Object.entries(properties)) {
-    shape[key] = propertyToZod(prop, required.has(key));
-  }
-
-  return shape;
+  return objectToZod(obj.properties, obj.required, obj.additionalProperties);
 }

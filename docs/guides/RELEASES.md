@@ -1,6 +1,6 @@
 # Releases & Updates
 
-This guide describes how ASF Junban desktop releases, in-app updates, changelog entries, and local data storage work today.
+This guide describes how Junban desktop releases, in-app updates, changelog entries, and local data storage work today.
 
 ## What Ships to Users
 
@@ -14,7 +14,7 @@ This guide describes how ASF Junban desktop releases, in-app updates, changelog 
 
 ### Desktop App
 
-- Primary database path: `AppData/ASF Junban/junban.db`
+- Primary database path: `AppData/Junban/junban.db`
 - This is the SQLite database used by packaged Tauri installs, including the current sidecar-backed desktop runtime.
 - The app creates the directory automatically on first run.
 
@@ -31,12 +31,14 @@ This guide describes how ASF Junban desktop releases, in-app updates, changelog 
 - Repo-run dev commands use `JUNBAN_PROFILE=dev` automatically.
 - Default dev database path: `./data/dev/junban.db`
 - Override with `DB_PATH` in `.env`
-- If no profile is set, the fallback daily path remains `./data/junban.db`
+- If no profile is set, `daily` is used. On Linux, unset daily paths follow XDG data defaults: `$XDG_DATA_HOME/junban/junban.db` or `~/.local/share/junban/junban.db`. On other platforms, the fallback daily path remains `./data/junban.db`.
 
 ### Markdown Storage Mode
 
 - Optional alternative backend controlled by `STORAGE_MODE=markdown`
-- Daily default markdown path: `./tasks/`
+- Daily default markdown path on Linux: `$XDG_DATA_HOME/junban/tasks` or `~/.local/share/junban/tasks`
+- Set `MARKDOWN_PATH=./tasks/` explicitly if you want repo-local daily Markdown storage on Linux.
+- Daily default markdown path on other platforms: `./tasks/`
 - Dev-profile default markdown path: `./tasks/dev/`
 - Switching backends does not migrate data automatically; use export/import when changing modes.
 

@@ -19,6 +19,7 @@ import {
   SECTION_IDS,
   NAV_FEATURE_MAP,
 } from "./sidebar/SidebarPrimitives.js";
+import { LEGACY_BUILTIN_VIEW_IDS } from "../../plugins/builtin/registry.js";
 import { ViewNavigation } from "./sidebar/ViewNavigation.js";
 import {
   useSidebarContextMenu,
@@ -114,13 +115,27 @@ export function Sidebar({
   >(null);
   const [projectDeleteTarget, setProjectDeleteTarget] = useState<Project | null>(null);
 
+  const loadedPluginViewIds = useMemo(
+    () => new Set(pluginViews.map((view) => view.id)),
+    [pluginViews],
+  );
+  const legacyBuiltinViewIds = useMemo(
+    () => new Set<string>(Object.values(LEGACY_BUILTIN_VIEW_IDS)),
+    [],
+  );
+
   const visibleNavItems = useMemo(() => {
     const hidden = new Set<string>();
     for (const [viewId, settingKey] of Object.entries(NAV_FEATURE_MAP)) {
       if (settings[settingKey] === "false") hidden.add(viewId);
     }
-    return NAV_ITEMS.filter((item) => !hidden.has(item.id));
-  }, [settings]);
+    return NAV_ITEMS.filter((item) => {
+      if (hidden.has(item.id)) return false;
+
+      const pluginViewId = LEGACY_BUILTIN_VIEW_IDS[item.id];
+      return !pluginViewId || loadedPluginViewIds.has(pluginViewId);
+    });
+  }, [loadedPluginViewIds, settings]);
 
   const favoriteViewIds = useMemo(() => {
     const str = settings.sidebar_favorite_views;
@@ -158,6 +173,10 @@ export function Sidebar({
       tools: ViewInfo[] = [],
       workspace: ViewInfo[] = [];
     for (const view of pluginViews) {
+      if (builtinPluginIds.has(view.pluginId) && legacyBuiltinViewIds.has(view.id)) {
+        continue;
+      }
+
       const slot =
         view.slot === "navigation" &&
         builtinPluginIds.has(view.pluginId) &&
@@ -171,7 +190,7 @@ export function Sidebar({
       else tools.push(view);
     }
     return { navigation, tools, workspace };
-  }, [pluginViews, builtinPluginIds, navItemMap]);
+  }, [pluginViews, builtinPluginIds, legacyBuiltinViewIds, navItemMap]);
 
   const hasToolsContent = viewsBySlot.tools.length > 0 || panels.length > 0;
 

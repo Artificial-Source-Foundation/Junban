@@ -23,6 +23,9 @@ vi.mock("../../../src/ui/views/settings/GeneralTab.js", () => ({
 vi.mock("../../../src/ui/views/settings/AppearanceTab.js", () => ({
   AppearanceTab: () => <div>Appearance tab content</div>,
 }));
+vi.mock("../../../src/ui/views/settings/AlertsTab.js", () => ({
+  AlertsTab: () => <div>Alerts tab content</div>,
+}));
 vi.mock("../../../src/ui/views/settings/FiltersLabelsTab.js", () => ({
   FiltersLabelsTab: () => <div>Filters tab content</div>,
 }));
@@ -34,6 +37,9 @@ vi.mock("../../../src/ui/views/settings/AITab.js", () => ({
 }));
 vi.mock("../../../src/ui/views/settings/VoiceTab.js", () => ({
   VoiceTab: () => <div>Voice tab content</div>,
+}));
+vi.mock("../../../src/ui/views/settings/AgentToolsTab.js", () => ({
+  AgentToolsTab: () => <div>Agent tools tab content</div>,
 }));
 vi.mock("../../../src/ui/views/settings/TemplatesTab.js", () => ({
   TemplatesTab: () => <div>Templates tab content</div>,

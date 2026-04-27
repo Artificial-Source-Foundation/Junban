@@ -3,14 +3,10 @@ import {
   DEFAULT_SETTINGS,
   type GeneralSettings,
 } from "../../context/SettingsContext.js";
-import { NudgeSection } from "./general/NudgeSection.js";
-import { NotificationSection } from "./general/NotificationSection.js";
-import { SoundSection } from "./general/SoundSection.js";
-import { StartupSection } from "./general/StartupSection.js";
 import { SettingRow, Toggle } from "./components.js";
 
 type FeatureKey = Extract<keyof GeneralSettings, `feature_${string}`>;
-type ToggleKey = FeatureKey | "eat_the_frog_enabled" | "nudge_enabled";
+type ToggleKey = FeatureKey | "eat_the_frog_enabled";
 
 interface FeatureEntry {
   key: ToggleKey;
@@ -69,22 +65,12 @@ const FEATURE_GROUPS: FeatureGroup[] = [
   },
   {
     title: "Power Tools",
-    description: "Helpful extras for people who want more automation, prompts, or keyboard speed",
+    description: "Specialized workflow helpers that change how tasks are presented",
     features: [
-      {
-        key: "feature_chords",
-        label: "Keyboard chords",
-        description: "Jump around the app with multi-key shortcuts like g then i",
-      },
       {
         key: "eat_the_frog_enabled",
         label: "Eat the Frog",
         description: "Highlight the hardest task to tackle first",
-      },
-      {
-        key: "nudge_enabled",
-        label: "Smart Nudges",
-        description: "Show lightweight reminders based on what is falling behind",
       },
     ],
   },
@@ -115,15 +101,10 @@ export function FeaturesTab() {
       <div className="max-w-2xl">
         <h2 className="text-lg font-semibold text-on-surface">Advanced</h2>
         <p className="mt-1 text-sm text-on-surface-muted">
-          Optional upgrades for desktop use, planning depth, and power-user workflows. Turn them on
-          only when you need them. Your data stays intact when they are off.
+          Feature flags and developer controls for changing deeper app behavior. Turn these on only
+          when you need the extra surface area.
         </p>
       </div>
-
-      <StartupSection />
-      <SoundSection />
-      <NotificationSection />
-      <NudgeSection />
 
       {FEATURE_GROUPS.map((group) => (
         <div key={group.title}>
@@ -144,6 +125,32 @@ export function FeaturesTab() {
           <div className="mt-4 border-b border-border" />
         </div>
       ))}
+
+      <div>
+        <div className="mb-3">
+          <h3 className="text-sm font-semibold text-on-surface">Developer</h3>
+          <p className="text-xs text-on-surface-muted">
+            Tools for debugging the desktop app while building or testing it.
+          </p>
+        </div>
+        <div className="space-y-4 max-w-md">
+          <SettingRow
+            label="Developer mode"
+            description="Allow the desktop right-click developer menu and inspection tools"
+          >
+            <Toggle
+              enabled={settings.developer_mode === "true"}
+              onToggle={() =>
+                updateSetting(
+                  "developer_mode",
+                  settings.developer_mode === "true" ? "false" : "true",
+                )
+              }
+            />
+          </SettingRow>
+        </div>
+        <div className="mt-4 border-b border-border" />
+      </div>
 
       <div className="flex gap-3 max-w-md">
         <button

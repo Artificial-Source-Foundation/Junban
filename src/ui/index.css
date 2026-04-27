@@ -13,6 +13,39 @@
   body {
     font-family: var(--font-sans);
   }
+  input,
+  select,
+  textarea {
+    color: var(--color-on-surface);
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-on-surface-muted);
+    opacity: 1;
+  }
+  select option {
+    color: var(--color-on-surface);
+    background-color: var(--color-surface);
+  }
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    color: var(--color-on-surface-secondary);
+    background-color: var(--color-surface-secondary);
+    opacity: 0.75;
+  }
+  .dark input,
+  .dark select,
+  .dark textarea {
+    color-scheme: dark;
+  }
+  :root:not(.dark) input,
+  :root:not(.dark) select,
+  :root:not(.dark) textarea {
+    color-scheme: light;
+  }
   h1,
   h2,
   h3,

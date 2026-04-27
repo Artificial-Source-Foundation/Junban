@@ -1,4 +1,6 @@
 import { z } from "zod";
+import os from "node:os";
+import path from "node:path";
 
 const PROFILE_DEFAULTS = {
   daily: {
@@ -12,6 +14,38 @@ const PROFILE_DEFAULTS = {
 } as const;
 
 const profileSchema = z.enum(["daily", "dev"]);
+
+function getLinuxDataHome(): string | null {
+  const xdgDataHome = process.env.XDG_DATA_HOME?.trim();
+  if (xdgDataHome && path.isAbsolute(xdgDataHome) && !xdgDataHome.includes("\0")) {
+    return xdgDataHome;
+  }
+
+  let home: string;
+  try {
+    home = process.env.HOME?.trim() || os.homedir();
+  } catch {
+    return null;
+  }
+  home = home.trim();
+  if (!home || home.includes("\0") || !path.isAbsolute(home)) return null;
+  return path.join(home, ".local", "share");
+}
+
+function getProfileDefaults(profile: z.infer<typeof profileSchema>) {
+  if (profile === "daily" && process.platform === "linux") {
+    const dataHome = getLinuxDataHome();
+    if (dataHome) {
+      const root = path.join(dataHome, "junban");
+      return {
+        DB_PATH: path.join(root, "junban.db"),
+        MARKDOWN_PATH: path.join(root, "tasks"),
+      };
+    }
+  }
+
+  return PROFILE_DEFAULTS[profile];
+}
 
 const pathSchema = z
   .string()
@@ -42,7 +76,7 @@ export type Env = z.infer<typeof envSchema>;
 
 export function loadEnv(): Env {
   const profile = profileSchema.parse(process.env.JUNBAN_PROFILE ?? "daily");
-  const defaults = PROFILE_DEFAULTS[profile];
+  const defaults = getProfileDefaults(profile);
 
   return envSchema.parse({
     ...process.env,

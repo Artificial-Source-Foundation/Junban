@@ -2,7 +2,7 @@
 
 This page is the current product snapshot.
 
-For milestone sequencing, see [`roadmap.md`](roadmap.md). For internal execution history, see [`../internal/planning/sprint-history.md`](../internal/planning/sprint-history.md).
+For milestone sequencing, see [`roadmap.md`](roadmap.md).
 
 ## Current Snapshot
 
@@ -14,7 +14,7 @@ For milestone sequencing, see [`roadmap.md`](roadmap.md). For internal execution
 | Reliability and quality | Strong         | Automated checks and release hardening in place              |
 | **Overall**             | **Late stage** | **Core value shipped; next growth is integrations + sync**   |
 
-Status is intentionally concise. For delivery history and sprint-by-sprint detail, use [`../internal/planning/sprint-history.md`](../internal/planning/sprint-history.md) and [`../internal/planning/backlog.md`](../internal/planning/backlog.md).
+Status is intentionally concise and user-facing.
 
 ## Current Product Directions
 

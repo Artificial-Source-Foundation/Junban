@@ -3,7 +3,7 @@
   "icon": "🍅",
   "name": "Pomodoro Timer",
   "version": "1.0.0",
-  "author": "ASF",
+  "author": "Artificial Source",
   "description": "Focus timer with configurable work/break intervals.",
   "main": "index.ts",
   "minJunbanVersion": "0.1.0",

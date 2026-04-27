@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ASF Junban MCP Server — stdio entry point.
+ * Junban MCP Server — stdio entry point.
  *
  * Exposes all Junban tools, resources, and prompts over the MCP protocol.
  * Designed for Claude Desktop and other MCP-compatible clients.

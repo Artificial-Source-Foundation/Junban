@@ -29,7 +29,7 @@ Before merging into `developer`:
 - Confirm the PR is not really a release promotion or production hotfix.
 - Confirm CI passed.
 - Confirm docs were updated when behavior, APIs, workflows, or structure changed.
-- Confirm documentation routing follows `docs/README.md` and the domain indexes (`docs/reference/README.md`, `docs/product/README.md`, and `docs/internal/README.md`) when relevant.
+- Confirm documentation routing follows `docs/README.md` and the domain indexes (`docs/reference/README.md` and `docs/product/README.md`) when relevant.
 
 Before merging into `main`:
 

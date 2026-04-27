@@ -23,6 +23,7 @@ The view layer currently includes:
 - project-specific views
 - calendar views
 - settings surfaces
+- settings Agent Tools surface for downloadable CLI/MCP setup snippets
 - AI and plugin-owned view surfaces
 - lightweight utility views such as quick capture
 

@@ -1,4 +1,4 @@
-# Contributing to ASF Junban
+# Contributing to Junban
 
 Thank you for considering contributing to Junban! This guide covers everything you need to get started.
 
@@ -104,7 +104,6 @@ Start with `docs/README.md` for the docs taxonomy, then route through:
 
 - `docs/product/README.md` for mission, roadmap, status, and PRD-style product docs
 - `docs/reference/README.md` for technical-reference docs
-- `docs/internal/README.md` for internal planning docs
 
 Use `docs/README.md` as the single source of truth for ownership mapping and doc-governance policy.
 
@@ -227,19 +226,11 @@ To add your plugin to the community registry:
 
 See [SECURITY.md](SECURITY.md) for the full threat model.
 
-## Sprint Methodology
+## Planning Methodology
 
 Development follows milestone-based planning tracked in the [Roadmap](../product/roadmap.md). Contributors should align larger work with roadmap priorities or approved issues.
 
-### How Sprints Work
-
-- **Duration**: 2 weeks
-- **Planning**: Select items from backlog at sprint start
-- **Daily work**: Pick the next `ready` item, mark `in-progress`, complete it
-- **Review**: At sprint end, update items to `done`, write retro notes, plan next sprint
-- **Carry-over**: Incomplete items return to backlog or carry into the next sprint
-
-### Sprint Sizing
+### Work Sizing
 
 | Size | Effort    | Example                                                   |
 | ---- | --------- | --------------------------------------------------------- |
@@ -248,10 +239,10 @@ Development follows milestone-based planning tracked in the [Roadmap](../product
 | L    | 1–2 days  | Plugin loader with validation, keyboard navigation system |
 | XL   | 3–5 days  | Sandbox implementation, storage abstraction layer         |
 
-See [`../product/status.md`](../product/status.md) for the product snapshot and [`../internal/README.md`](../internal/README.md) for sprint execution/history.
+See [`../product/status.md`](../product/status.md) for the product snapshot.
 
 ## Questions?
 
 - Open a GitHub issue for bugs or feature discussions
 - Check existing issues before creating new ones
-- Be respectful — ASF values constructive discourse
+- Be respectful — Artificial Source values constructive discourse

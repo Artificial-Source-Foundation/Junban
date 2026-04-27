@@ -61,7 +61,7 @@ export async function getAppSetting(key: string): Promise<string | null> {
 export async function getStorageInfo(): Promise<{ mode: string; path: string }> {
   if (useDirectServices()) {
     // Desktop builds persist the SQLite database under the app's Tauri AppData directory.
-    return { mode: "sqlite", path: "AppData/ASF Junban/junban.db" };
+    return { mode: "sqlite", path: "AppData/Junban/junban.db" };
   }
   const res = await fetch(`${BASE}/settings/storage`);
   return handleResponse<{ mode: string; path: string }>(res);
@@ -69,8 +69,8 @@ export async function getStorageInfo(): Promise<{ mode: string; path: string }> 
 
 export async function setAppSetting(key: string, value: string): Promise<void> {
   if (isTauri()) {
-    const remoteStatus = await getDesktopRemoteServerStatus();
-    if (remoteStatus.running) {
+    const remoteStatus = await getDesktopRemoteServerStatus().catch(() => null);
+    if (remoteStatus?.running) {
       throw new Error(SETTINGS_MUTATION_BLOCKED_ERROR);
     }
   }

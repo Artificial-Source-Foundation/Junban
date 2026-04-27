@@ -94,6 +94,7 @@ export async function resetFeatureFlags(page: Page) {
   await Promise.all(
     flags.map((flag) => page.request.put(`/api/settings/${flag}`, { data: { value: "true" } })),
   );
+  await page.request.put("/api/settings/developer_mode", { data: { value: "false" } });
 }
 
 /** Navigate to a fresh page and dismiss onboarding. */

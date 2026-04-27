@@ -1,4 +1,5 @@
 import type { AppServices } from "../../bootstrap.js";
+import { NotFoundError } from "../../core/errors.js";
 
 interface DeleteOptions {
   json?: boolean;
@@ -7,8 +8,7 @@ interface DeleteOptions {
 export async function deleteTask(id: string, services: AppServices, options?: DeleteOptions) {
   const task = await services.taskService.get(id);
   if (!task) {
-    console.error(`Task not found: ${id}`);
-    process.exit(1);
+    throw new NotFoundError("Task", id);
   }
 
   await services.taskService.delete(id);

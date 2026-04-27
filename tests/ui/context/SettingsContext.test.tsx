@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, act, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, act, waitFor } from "@testing-library/react";
 
 const settingsApiMocks = vi.hoisted(() => ({
   getAllSettings: vi.fn().mockResolvedValue({}),
@@ -10,8 +10,8 @@ const desktopServerMocks = vi.hoisted(() => ({
   getDesktopRemoteServerStatus: vi.fn().mockResolvedValue({
     available: true,
     running: false,
-    port: 4822,
-    localUrl: "http://127.0.0.1:4822",
+    port: 4823,
+    localUrl: "http://127.0.0.1:4823",
   }),
 }));
 
@@ -43,6 +43,7 @@ function TestConsumer() {
       <span data-testid="confirm-delete">{settings.confirm_delete}</span>
       <span data-testid="start-view">{settings.start_view}</span>
       <span data-testid="week-start">{settings.week_start}</span>
+      <span data-testid="developer-mode">{settings.developer_mode}</span>
       <button data-testid="set-accent" onClick={() => updateSetting("accent_color", "#ef4444")}>
         Set accent
       </button>
@@ -58,6 +59,12 @@ function TestConsumer() {
       >
         Set reduce animations
       </button>
+      <button
+        data-testid="set-developer-mode"
+        onClick={() => updateSetting("developer_mode", "true")}
+      >
+        Set developer mode
+      </button>
     </div>
   );
 }
@@ -70,8 +77,8 @@ describe("SettingsContext", () => {
     desktopServerMocks.getDesktopRemoteServerStatus.mockResolvedValue({
       available: true,
       running: false,
-      port: 4822,
-      localUrl: "http://127.0.0.1:4822",
+      port: 4823,
+      localUrl: "http://127.0.0.1:4823",
     });
     // Reset document element state
     document.documentElement.style.removeProperty("--color-accent");
@@ -166,8 +173,8 @@ describe("SettingsContext", () => {
           detail: {
             available: true,
             running: true,
-            port: 4822,
-            localUrl: "http://127.0.0.1:4822",
+            port: 4823,
+            localUrl: "http://127.0.0.1:4823",
           },
         }),
       );
@@ -286,5 +293,117 @@ describe("SettingsContext", () => {
     expect(screen.getByTestId("reduce-animations").textContent).toBe("true");
     expect(document.documentElement.classList.contains("reduce-motion")).toBe(true);
     expect(settingsApiMocks.setAppSetting).toHaveBeenCalledWith("reduce_animations", "true");
+  });
+
+  it("developer mode change persists to api and updates context", async () => {
+    render(
+      <SettingsProvider>
+        <TestConsumer />
+      </SettingsProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loaded").textContent).toBe("true");
+    });
+
+    act(() => {
+      screen.getByTestId("set-developer-mode").click();
+    });
+
+    expect(screen.getByTestId("developer-mode").textContent).toBe("true");
+    expect(settingsApiMocks.setAppSetting).toHaveBeenCalledWith("developer_mode", "true");
+  });
+
+  it("suppresses unhandled native context menus when developer mode is off", async () => {
+    render(
+      <SettingsProvider>
+        <TestConsumer />
+      </SettingsProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loaded").textContent).toBe("true");
+    });
+
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+    act(() => {
+      window.dispatchEvent(event);
+    });
+
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("allows native context menus when developer mode is on", async () => {
+    settingsApiMocks.getAllSettings.mockResolvedValue({ developer_mode: "true" });
+
+    render(
+      <SettingsProvider>
+        <TestConsumer />
+      </SettingsProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loaded").textContent).toBe("true");
+      expect(screen.getByTestId("developer-mode").textContent).toBe("true");
+    });
+
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+    act(() => {
+      window.dispatchEvent(event);
+    });
+
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it("does not re-handle app context menus that already prevented default", async () => {
+    render(
+      <SettingsProvider>
+        <TestConsumer />
+        <button
+          type="button"
+          data-testid="app-menu"
+          onContextMenu={(event) => event.preventDefault()}
+        >
+          App menu
+        </button>
+      </SettingsProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loaded").textContent).toBe("true");
+    });
+
+    const menuTarget = screen.getByTestId("app-menu");
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+    const preventDefault = vi.spyOn(event, "preventDefault");
+
+    act(() => {
+      fireEvent(menuTarget, event);
+    });
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows native context menus on editable controls when developer mode is off", async () => {
+    render(
+      <SettingsProvider>
+        <TestConsumer />
+        <input aria-label="Editable note" />
+      </SettingsProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loaded").textContent).toBe("true");
+    });
+
+    const input = screen.getByRole("textbox", { name: "Editable note" });
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+
+    act(() => {
+      fireEvent(input, event);
+    });
+
+    expect(event.defaultPrevented).toBe(false);
   });
 });

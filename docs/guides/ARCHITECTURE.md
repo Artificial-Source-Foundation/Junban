@@ -4,6 +4,8 @@
 
 Junban is a local-first TypeScript application built around a shared domain core. The same business logic powers the React UI, the Hono API server, the CLI, the MCP server, and most plugin integrations.
 
+This guide is the canonical implementation-level architecture reference. The public explanation page at [`../explanation/architecture.md`](../explanation/architecture.md) should stay conceptual and link here instead of duplicating detailed bootstrap/runtime behavior.
+
 The architecture is organized around a few stable ideas:
 
 - Core rules live in services, not in UI or transport layers.

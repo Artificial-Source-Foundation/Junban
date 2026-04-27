@@ -121,7 +121,7 @@ export function Toggle({
     >
       <span
         className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-          enabled ? "translate-x-4.5" : "translate-x-0.5"
+          enabled ? "translate-x-[18px]" : "translate-x-0.5"
         }`}
       />
     </button>

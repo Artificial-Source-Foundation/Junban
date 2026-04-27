@@ -21,7 +21,6 @@
 - [ ] Routed through `docs/README.md` (single source of truth for ownership map + doc-governance routing) before selecting docs to update
 - [ ] Updated affected technical reference docs via `docs/reference/README.md` (`docs/reference/frontend/`, `docs/reference/backend/`, and/or `docs/reference/plugins/`)
 - [ ] Updated `docs/product/` docs if mission, roadmap, status, or PRD scope changed
-- [ ] Updated internal planning routing/docs via `docs/internal/README.md` when `docs/internal/planning/` or `docs/internal/sprints/` artifacts changed
 - [ ] Updated `AGENTS.md` / `CLAUDE.md` if contributor or agent workflow changed
 
 ## Notes

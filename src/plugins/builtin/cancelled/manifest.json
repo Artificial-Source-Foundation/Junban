@@ -3,7 +3,7 @@
   "icon": "✖️",
   "name": "Cancelled",
   "version": "1.0.0",
-  "author": "ASF",
+  "author": "Artificial Source",
   "description": "Inspect cancelled tasks and restore them when plans change.",
   "main": "index.ts",
   "minJunbanVersion": "1.0.0",

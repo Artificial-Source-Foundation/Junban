@@ -129,11 +129,30 @@ describe("Sidebar", () => {
     mockUpdateSetting.mockClear();
   });
 
+  const builtinNavigationViews = [
+    ["calendar:calendar", "calendar", "Calendar"],
+    ["completed:completed", "completed", "Completed"],
+    ["cancelled:cancelled", "cancelled", "Cancelled"],
+    ["matrix:matrix", "matrix", "Matrix"],
+    ["stats:stats", "stats", "Stats"],
+    ["someday:someday", "someday", "Someday / Maybe"],
+    ["dopamine-menu:dopamine-menu", "dopamine-menu", "Quick Wins"],
+  ].map(([id, pluginId, name]) => ({
+    id,
+    pluginId,
+    name,
+    icon: "",
+    slot: "navigation" as const,
+    contentType: "react" as const,
+  }));
+
   const defaultProps = {
     currentView: "inbox",
     onNavigate: vi.fn(),
     projects: [] as Project[],
     selectedProjectId: null,
+    pluginViews: builtinNavigationViews,
+    builtinPluginIds: new Set(builtinNavigationViews.map((view) => view.pluginId)),
   };
 
   it("renders nav links", () => {
@@ -414,6 +433,13 @@ describe("Sidebar", () => {
     mockSettings = { feature_completed: "false" };
     render(<Sidebar {...defaultProps} />);
     expect(screen.queryByText("Completed")).toBeNull();
+  });
+
+  it("hides plugin-backed nav items when their plugin view is not loaded", () => {
+    render(<Sidebar {...defaultProps} pluginViews={[]} />);
+    expect(screen.queryByText("Calendar")).toBeNull();
+    expect(screen.queryByText("Completed")).toBeNull();
+    expect(screen.queryByText("Quick Wins")).toBeNull();
   });
 
   // ── Nav ordering tests ──

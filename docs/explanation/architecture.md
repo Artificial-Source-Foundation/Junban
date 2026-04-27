@@ -9,6 +9,8 @@ Junban is a local-first application with a few intentionally narrow boundaries:
 
 The project is intentionally shaped so different runtimes can share the same domain behavior without rewriting product logic.
 
+This page is the conceptual architecture overview. For implementation-level bootstrap details, runtime ownership, and contributor maintenance rules, use [`../guides/ARCHITECTURE.md`](../guides/ARCHITECTURE.md) as the canonical architecture reference.
+
 ## Core idea: one domain, many entry points
 
 The strongest architectural theme is the separation between **domain logic** and **transport/runtime entry points**.

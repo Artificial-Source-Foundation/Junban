@@ -14,7 +14,8 @@ Raw Input
   |-> extractTags()         -- removes "#tag" patterns
   |-> extractProject()      -- removes "+projectName" patterns
   |-> extractRecurrence()   -- removes "daily", "weekly", "every N days", etc.
-  |-> extractDuration()     -- removes "~30m", "~1h", "~1.5h"
+  |-> extractDuration()     -- removes "~30m", "~1h", "~1.5h", "~1h30m"
+  |-> extractDreadLevel()   -- removes "~d1" through "~d5" or "!frog1" through "!frog5"
   |-> extractDeadline()     -- removes "deadline friday" or "!!friday"
   |-> extractSomeday()      -- removes "~someday" or "/someday"
   |-> parseDate()           -- chrono-node extracts dates/times
@@ -72,7 +73,10 @@ Each step extracts its tokens and returns the cleaned remaining text for the nex
 - `extractProject(input: string): { project: string | null; text: string }`
   - Matches: `+project-name` (word chars and hyphens)
 - `extractDuration(input: string): { estimatedMinutes: number | null; text: string }`
-  - Matches: `~30m`, `~1h`, `~1.5h`, `~90m` (requires `~` prefix)
+  - Matches: `~30m`, `~1h`, `~1.5h`, `~90m`, `~1h30m` (requires `~` prefix)
+- `extractDreadLevel(input: string): { dreadLevel: number | null; text: string }`
+  - Matches: `~d1` through `~d5` and `!frog1` through `!frog5`
+  - Used by motivation features such as Eat the Frog
 - `extractDeadline(input: string): { deadlineText: string | null; text: string }`
   - Matches: `deadline friday`, `deadline next friday` (keyword syntax, case-insensitive)
   - Matches: `!!friday`, `!!next friday` (`!!` prefix syntax)
@@ -89,14 +93,14 @@ Each step extracts its tokens and returns the cleaned remaining text for the nex
 ### `task-parser.ts`
 
 **Path:** `src/parser/task-parser.ts`
-**Purpose:** The main parser entry point. Orchestrates the full parsing pipeline: priority, tags, project, recurrence, duration, deadline, someday, then date/time. Whatever text remains after all extractions becomes the task title.
+**Purpose:** The main parser entry point. Orchestrates the full parsing pipeline: priority, tags, project, recurrence, duration, dread level, deadline, someday, then date/time. Whatever text remains after all extractions becomes the task title.
 
 **Key Exports:**
 
-- `ParsedTask` -- interface: `{ title: string; priority: number | null; tags: string[]; project: string | null; dueDate: Date | null; dueTime: boolean; recurrence: string | null; estimatedMinutes: number | null; deadline: Date | null; isSomeday: boolean }`
+- `ParsedTask` -- interface: `{ title: string; priority: number | null; tags: string[]; project: string | null; dueDate: Date | null; dueTime: boolean; recurrence: string | null; estimatedMinutes: number | null; deadline: Date | null; isSomeday: boolean; dreadLevel: number | null }`
 - `parseTask(input: string): ParsedTask`
 
-**Key Dependencies:** `parseDate`, `removeDateText` from `nlp.ts`; `extractPriority`, `extractTags`, `extractProject`, `extractRecurrence`, `extractDuration`, `extractDeadline`, `extractSomeday` from `grammar.ts`
+**Key Dependencies:** `parseDate`, `removeDateText` from `nlp.ts`; `extractPriority`, `extractTags`, `extractProject`, `extractRecurrence`, `extractDuration`, `extractDreadLevel`, `extractDeadline`, `extractSomeday` from `grammar.ts`
 
 **Used By:** `src/cli/commands/add.ts`, `src/core/import.ts` (Markdown import)
 
@@ -112,3 +116,17 @@ Each step extracts its tokens and returns the cleaned remaining text for the nex
 | `"write docs !!jan 15"` | title: "write docs", deadline: Jan 15 |
 | `"deep work ~2h p1"` | title: "deep work", estimatedMinutes: 120, priority: 1 |
 | `"read book ~someday"` | title: "read book", isSomeday: true |
+| `"call accountant ~d4"` | title: "call accountant", dreadLevel: 4 |
+| `"write migration plan !frog5 ~1h30m"` | title: "write migration plan", dreadLevel: 5, estimatedMinutes: 90 |
+
+### `task-extraction-patterns.ts`
+
+**Path:** `src/parser/task-extraction-patterns.ts`
+**Purpose:** Shared regex patterns for detecting likely tasks in unstructured text. These patterns support the AI `extract-tasks-from-text` flow and the UI preview in `ExtractTasksModal`.
+
+**Key Exports:**
+
+- `ACTION_VERBS` -- action-oriented line starter regex such as review, send, update, create, schedule, fix, implement, and similar verbs
+- `LIST_PREFIX` -- bullet, numbered-list, TODO/ACTION/AI/TASK marker detection
+
+**Used By:** AI task extraction and UI task extraction preview paths.

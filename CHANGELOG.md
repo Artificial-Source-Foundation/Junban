@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to ASF Junban are documented in this file.
+All notable changes to Junban are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Linux daily Node/server/CLI storage now follows XDG data defaults (`$XDG_DATA_HOME/junban/` or `~/.local/share/junban/`).
 - Removed `.swarm/` audit artifacts and `.mcp.json` from git tracking
 - Updated all README screenshots to reflect current UI state
 
@@ -35,14 +36,14 @@ Patch release to correct desktop packaging and release metadata after the stale 
 
 ### Fixed
 
-- Desktop release metadata now ships as `ASF Junban` / `asf-junban` instead of stale `Saydo` identifiers.
+- Desktop release metadata now ships as `Junban` / `asf-junban` instead of stale `Saydo` identifiers.
 - Release workflow now blocks publishing if tagged package metadata or uploaded assets still contain pre-Junban branding.
 - Draft releases now require `latest.json` updater metadata before publish.
 - README and release documentation now show the current packaged desktop download and install flow.
 
 ## [1.0.0] — 2026-02-28
 
-First stable public release. 37 sprints, 1930+ tests, 251 features shipped.
+First stable public release.
 
 ### Added
 
@@ -54,7 +55,7 @@ First stable public release. 37 sprints, 1930+ tests, 251 features shipped.
 - **8 LLM providers** — OpenAI, Anthropic, OpenRouter, Ollama, LM Studio, and OpenAI-compatible; pluggable pipeline with middleware (retry, timeout)
 - **Voice I/O** — 8 adapters across 6 providers: Browser Speech API, Groq (Whisper STT + PlayAI TTS), Inworld AI TTS, Whisper local STT, Kokoro local TTS (Web Worker), Piper local TTS
 - **Voice call mode** — hands-free AI conversation with VAD (voice activity detection), smart endpoint detection, grace period buffering
-- **Plugin system** — Obsidian-style: manifest validation, sandboxed execution, lifecycle hooks, command/panel/view registration, per-plugin settings and storage, community registry
+- **Plugin system** — Manifest validation, sandboxed execution, lifecycle hooks, command/panel/view registration, per-plugin settings and storage, community registry
 - **Built-in Pomodoro plugin** — example plugin demonstrating the full API
 - **MCP server** — 34 tools, 8 resources, 3 prompts exposed over stdio for Claude Desktop and custom AI agents
 - **CLI companion** — `junban add`, `junban list`, `junban done`, `junban edit`, `junban delete`
@@ -71,7 +72,7 @@ First stable public release. 37 sprints, 1930+ tests, 251 features shipped.
 
 ### Changed
 
-- Rebranded from "ASF Docket" to "ASF Junban" (Sprint 23) — all identifiers, DB filenames, localStorage keys, CLI commands updated
+- Rebranded from "ASF Docket" to "Junban" (Sprint 23) — all identifiers, DB filenames, localStorage keys, CLI commands updated
 - Replaced raw `AppServices.queries` with `IStorage` abstraction (Sprint 11) for dual-backend support
 - Structured logger (`createLogger`) replaces raw `console.log` across voice subsystem
 

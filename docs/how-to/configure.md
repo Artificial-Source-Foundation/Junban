@@ -23,12 +23,14 @@ STORAGE_MODE=markdown JUNBAN_PROFILE=dev pnpm server
 | Variable | Purpose | Default behavior |
 | --- | --- | --- |
 | `JUNBAN_PROFILE` | Chooses `daily` or `dev` profile defaults | `daily` |
-| `DB_PATH` | SQLite DB file path for server mode | `./data/junban.db` (`daily`) / `./data/dev/junban.db` (`dev`) |
+| `DB_PATH` | SQLite DB file path for server mode | Linux `daily`: `$XDG_DATA_HOME/junban/junban.db` or `~/.local/share/junban/junban.db`; other `daily`: `./data/junban.db`; `dev`: `./data/dev/junban.db` |
 | `STORAGE_MODE` | Backend engine: `sqlite` or `markdown` | `sqlite` |
-| `MARKDOWN_PATH` | Base path for markdown files when `STORAGE_MODE=markdown` | `./tasks/` (`daily`) / `./tasks/dev/` (`dev`) |
+| `MARKDOWN_PATH` | Base path for markdown files when `STORAGE_MODE=markdown` | Linux `daily`: `$XDG_DATA_HOME/junban/tasks` or `~/.local/share/junban/tasks`; other `daily`: `./tasks/`; `dev`: `./tasks/dev/` |
 | `PLUGIN_DIR` | Plugin discovery directory | `./plugins/` |
 
 Validation and defaults come from `src/config/env.ts`, and backend selection is implemented in `src/bootstrap.ts`.
+
+On Linux, daily-mode Node/server/CLI storage follows the XDG Base Directory Specification for data files. Set `DB_PATH` or `MARKDOWN_PATH` explicitly if you want repo-local daily data, a custom path, or a temporary database. Repo-run development commands still use `JUNBAN_PROFILE=dev` and remain repo-local.
 
 ### App and diagnostics
 

@@ -1,6 +1,6 @@
 import type { AppServices } from "../../bootstrap.js";
 import type { UpdateTaskInput } from "../../core/types.js";
-import { NotFoundError } from "../../core/errors.js";
+import { NotFoundError, ValidationError } from "../../core/errors.js";
 import { parseDate } from "../../parser/nlp.js";
 
 interface EditOptions {
@@ -15,7 +15,13 @@ export async function editTask(id: string, options: EditOptions, services: AppSe
   const updates: UpdateTaskInput = {};
 
   if (options.title) updates.title = options.title;
-  if (options.priority) updates.priority = parseInt(options.priority, 10);
+  if (options.priority) {
+    const priority = Number(options.priority);
+    if (!Number.isInteger(priority) || priority < 1 || priority > 4) {
+      throw new ValidationError("Priority must be a whole number from 1 to 4.");
+    }
+    updates.priority = priority;
+  }
   if (options.description) updates.description = options.description;
 
   if (options.due) {
@@ -24,14 +30,14 @@ export async function editTask(id: string, options: EditOptions, services: AppSe
       updates.dueDate = parsed.date.toISOString();
       updates.dueTime = parsed.hasTime;
     } else {
-      console.error(`Could not parse date: "${options.due}"`);
-      process.exit(1);
+      throw new ValidationError(`Could not parse date: "${options.due}"`);
     }
   }
 
   if (Object.keys(updates).length === 0) {
-    console.error("No updates provided. Use --title, --priority, --due, or --description.");
-    process.exit(1);
+    throw new ValidationError(
+      "No updates provided. Use --title, --priority, --due, or --description.",
+    );
   }
 
   try {
@@ -44,8 +50,7 @@ export async function editTask(id: string, options: EditOptions, services: AppSe
     }
   } catch (err) {
     if (err instanceof NotFoundError) {
-      console.error(`Task not found: ${id}`);
-      process.exit(1);
+      throw new NotFoundError("Task", id);
     }
     throw err;
   }

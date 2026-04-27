@@ -3,7 +3,7 @@
   "icon": "💡",
   "name": "Someday / Maybe",
   "version": "1.0.0",
-  "author": "ASF",
+  "author": "Artificial Source",
   "description": "A dedicated parking lot for ideas and lower-commitment tasks.",
   "main": "index.ts",
   "minJunbanVersion": "1.0.0",

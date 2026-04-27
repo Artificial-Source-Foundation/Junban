@@ -21,7 +21,8 @@ This document tracks runtime configuration for Junban’s backend and frontend t
 
 1. `JUNBAN_PROFILE` is validated as `daily | dev` and defaults to `daily`.
 2. `DB_PATH` and `MARKDOWN_PATH` are filled from profile defaults before validation:
-   - `daily` → `./data/junban.db`, `./tasks/`
+   - `daily` on Linux → `$XDG_DATA_HOME/junban/junban.db` and `$XDG_DATA_HOME/junban/tasks`, falling back to `~/.local/share/junban/...`.
+   - `daily` on other platforms → `./data/junban.db`, `./tasks/`
    - `dev` → `./data/dev/junban.db`, `./tasks/dev/`
 3. The resulting object is validated against the schema in `src/config/env.ts`.
 
@@ -45,6 +46,7 @@ All schema-based variables are defined in [`src/config/env.ts`](../../../src/con
 |----------|------------------|---------|-------|
 | `JUNBAN_PROFILE` | `"daily" \| "dev"` | `daily` | Chooses profile defaults for `DB_PATH` and `MARKDOWN_PATH` |
 | `DB_PATH` | non-empty string (no null bytes) | profile default | Path to SQLite DB file. In schema validation, this may be provided directly or filled from profile defaults. |
+| `XDG_DATA_HOME` | absolute path | unset | Runtime-only Linux env var, not part of the parsed `Env` schema. Used for the `daily` profile default when `DB_PATH` or `MARKDOWN_PATH` is not set. Relative or invalid values are ignored and the fallback is `~/.local/share`. |
 | `STORAGE_MODE` | `"sqlite" \| "markdown"` | `sqlite` | Storage backend selection |
 | `MARKDOWN_PATH` | non-empty string (no null bytes) | profile default | Base path for markdown task files when `STORAGE_MODE=markdown` |
 | `LOG_LEVEL` | `"debug" \| "info" \| "warn" \| "error"` | `info` | Controls logger threshold via `setDefaultLogLevel` |

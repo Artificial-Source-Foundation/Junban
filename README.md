@@ -2,7 +2,7 @@
 
 <img src="public/images/logo-192.png" alt="Junban logo" width="80" />
 
-# ASF Junban
+# Junban
 
 **A local-first task manager with AI, voice, and plugins.**<br />
 Fast for everyday task management, flexible when you need more power,<br />
@@ -24,7 +24,7 @@ No accounts. No tracking. No mandatory cloud.
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/Artificial-Source/Junban?style=social)](https://github.com/Artificial-Source/Junban/stargazers)
 
-An open-source project by the [AI Strategic Forum (ASF)](https://github.com/Artificial-Source) community.
+An open-source project by [Artificial Source](https://github.com/Artificial-Source).
 
 <br />
 
@@ -163,7 +163,7 @@ Current built-in providers include browser, hosted, and local model paths. See `
 
 ### Plugins
 
-Junban has an Obsidian-style plugin system with:
+Junban has a plugin system with:
 
 - Manifest-based discovery
 - Sandboxed execution
@@ -179,8 +179,33 @@ Plugin author docs:
 
 - React desktop/web UI
 - Standalone Hono API server
-- Commander-based CLI
+- Commander-based CLI with both simple task commands and full agent tool execution
 - MCP server for external AI agents
+
+### Agent tools
+
+Junban is designed so external AI agents can help manage tasks without sending your local data to a mandatory cloud service.
+
+- `junban` gives humans and terminal-controlled agents a local command line interface.
+- `junban tools` lists the registered AI/agent tools, including task, project, tag, planning, organization, reminders, and analytics tools.
+- `junban tool <name> --args '{...}'` runs one registered tool with validated JSON arguments.
+- `junban-mcp` starts the local MCP server for Claude Desktop and other MCP-compatible agents.
+- In the desktop app, open `Settings -> Agent Tools` to copy or download MCP config and a small agent skill/instructions file.
+
+Examples:
+
+```bash
+junban add "submit invoice tomorrow p1 #finance"
+junban list --today --json
+junban tools --json
+junban tool create_task --args '{"title":"Review roadmap","priority":2}' --json
+junban-mcp
+```
+
+Docs:
+
+- CLI guide: `docs/how-to/use-cli.md`
+- MCP setup: `docs/how-to/connect-claude-desktop.md`
 
 ## Development
 
@@ -243,7 +268,6 @@ Source-run dev commands use an isolated dev profile by default. Packaged desktop
 | `docs/product/README.md`   | Product-doc index for mission, roadmap, status, and PRD-style planning                                                     |
 | `docs/guides/`             | Contributor and maintainer workflows (setup, architecture, releases, security)                                             |
 | `docs/reference/README.md` | Technical-reference library index for `docs/reference/frontend/`, `docs/reference/backend/`, and `docs/reference/plugins/` |
-| `docs/internal/README.md`  | Internal planning library index for `docs/internal/planning/` and `docs/internal/sprints/`                                 |
 | `AGENTS.md`                | Quick-start for coding agents                                                                                              |
 | `CLAUDE.md`                | Contributor and agent development guide                                                                                    |
 

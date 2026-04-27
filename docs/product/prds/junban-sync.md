@@ -8,7 +8,7 @@ Create an optional paid sync service that lets users keep Junban local-first whi
 
 - Roadmap milestone: v1.5
 - Product state: Future
-- Internal planning source: promotion from internal backlog / epic planning is still pending
+- Product state: Future
 
 ## Problem
 

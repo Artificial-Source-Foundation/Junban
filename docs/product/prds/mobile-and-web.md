@@ -8,7 +8,7 @@ Extend Junban beyond desktop once optional sync exists, first through mobile sur
 
 - Roadmap milestones: v2.0 and v3.0
 - Product state: Future
-- Internal planning source: depends on future sync planning; no internal execution epic is active yet
+- Product state: Future
 
 ## Problem
 

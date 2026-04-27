@@ -81,7 +81,7 @@ export const openrouterPlugin: LLMProviderPlugin = createOpenAICompatPlugin({
   defaultBaseUrl: "https://openrouter.ai/api/v1",
   defaultHeaders: {
     "HTTP-Referer": "https://github.com/Artificial-Source/Junban",
-    "X-Title": "ASF Junban",
+    "X-Title": "Junban",
   },
   discoverModels: discoverOpenRouterModels,
 });

@@ -267,11 +267,11 @@ export function AboutTab() {
           />
           <div>
             <p className="text-sm font-semibold text-on-surface">
-              ASF Junban{" "}
+              Junban{" "}
               <span className="font-mono text-on-surface-muted font-normal">v{APP_VERSION}</span>
             </p>
             <p className="text-xs text-on-surface-muted">
-              Open-source, AI-native task manager with an Obsidian-style plugin system.
+              Open-source, local-first task manager with AI, voice, and plugins.
             </p>
           </div>
         </div>
@@ -433,7 +433,7 @@ export function AboutTab() {
             rel="noopener noreferrer"
             className="text-accent hover:underline"
           >
-            AI Strategic Forum
+            Artificial Source
           </a>{" "}
           community. Licensed under MIT.
         </p>

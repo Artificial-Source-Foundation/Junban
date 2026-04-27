@@ -390,7 +390,7 @@ const wasDeleted = await this.app.tags.delete("tag-id");
 
 ## 6. Events
 
-**Permission:** `task:read` (required for `events.on()`)
+**Permission:** `task:read` is required for `events.on()`. `events.off()` only removes a listener and does not require an additional permission check.
 
 ### Subscribing
 

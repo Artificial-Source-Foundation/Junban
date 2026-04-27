@@ -1,8 +1,8 @@
-# ASF Junban - Development Guide
+# Junban - Development Guide
 
 ## What This Repo Is
 
-ASF Junban is a local-first task manager with a React/Tauri UI, a shared TypeScript core, optional AI features, voice support, an MCP server, a CLI, and an Obsidian-style plugin system.
+Junban is a local-first task manager with a React/Tauri UI, a shared TypeScript core, optional AI features, voice support, an MCP server, a CLI, and plugins.
 
 Product-facing mission, principles, roadmap, status, and PRD docs now live under `docs/product/`.
 
@@ -15,7 +15,6 @@ Implementation-facing product principles are summarized in [`docs/product/missio
 - `docs/product/README.md` for product docs
 - `docs/product/mission-and-principles.md` for the product principles that should shape implementation decisions
 - `docs/reference/README.md` for technical-reference routing
-- `docs/internal/README.md` for internal-planning routing
 - `docs/guides/ARCHITECTURE.md` for the full architecture pass
 
 ## Current Tech Stack
@@ -287,7 +286,7 @@ Run `pnpm check` before considering a change complete unless the task explicitly
 
 1. Preserve sandbox boundaries and permission checks.
 2. Consider plugin author ergonomics, not just internal correctness.
-3. Update both internal plugin docs and plugin-author docs when the surface changes.
+3. Update both plugin runtime docs and plugin-author docs when the surface changes.
 
 ## Documentation Policy
 
@@ -297,7 +296,6 @@ Use `docs/README.md` as the single source of truth for the ownership map and doc
 
 - `docs/product/README.md` for product docs
 - `docs/reference/README.md` for technical reference docs
-- `docs/internal/README.md` for internal planning docs
 
 Keep quick guidance in entrypoint docs synchronized by linking to `docs/README.md` rather than copying full ownership-map blocks.
 
@@ -307,7 +305,7 @@ Avoid brittle documentation that depends on exact file counts or tool counts unl
 
 - Do not assume browser code can import Node-only modules.
 - Do not assume Markdown storage works in web bootstrap paths.
-- Do not assume repo-run dev commands share data with packaged installs; dev defaults to `./data/dev/junban.db` and `./tasks/dev/`, while packaged Tauri builds use AppData.
+- Do not assume repo-run dev commands share data with packaged installs; dev defaults to `./data/dev/junban.db` and `./tasks/dev/`, Linux daily Node/server/CLI defaults use XDG data paths under `$XDG_DATA_HOME/junban/` or `~/.local/share/junban/`, and packaged Tauri builds use AppData.
 - Do not bypass core services with duplicated business rules.
 - Do not weaken plugin isolation for convenience.
 - Do not print stray stdout in MCP paths.

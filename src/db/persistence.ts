@@ -1,7 +1,7 @@
 import { isTauri } from "../utils/tauri.js";
 import { isRemoteDesktopRuntime } from "../utils/runtime.js";
 
-const DB_DIR = "ASF Junban";
+const DB_DIR = "Junban";
 const DB_FILE = "junban.db";
 const REMOTE_DB_FILE_ACCESS_DISABLED_ERROR =
   "Remote-desktop clients must use the backend API; direct database file access is disabled.";

@@ -57,7 +57,7 @@ export async function getDesktopRemoteServerStatus(): Promise<DesktopRemoteServe
 export async function getDesktopRemoteServerConfig(): Promise<DesktopRemoteServerConfig> {
   if (!isTauri()) {
     return {
-      port: 4822,
+      port: 4823,
       autoStart: false,
       passwordEnabled: false,
       hasPassword: false,

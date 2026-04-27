@@ -6,7 +6,7 @@ const env = loadEnv();
 setDefaultLogLevel(env.LOG_LEVEL);
 const logger = createLogger("main");
 
-logger.info("ASF Junban starting...");
+logger.info("Junban starting...");
 
 const runtime = createNodeBackendRuntime();
 const { services } = runtime;

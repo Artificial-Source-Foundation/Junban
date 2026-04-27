@@ -6,7 +6,7 @@ Use this page when you want to get Junban installed for local use.
 
 - A local web app you can run from source (`pnpm dev` / `pnpm dev:full`)
 - Optional desktop app workflow with Tauri (`pnpm tauri:dev`, `pnpm tauri:build`)
-- CLI and MCP entrypoints from the same source tree
+- CLI and MCP entrypoints from the same source tree, plus packaged `junban` and `junban-mcp` commands after a built install
 
 ## Install options
 
@@ -64,11 +64,12 @@ When installed, you can use the desktop scripts listed in `package.json` and ref
 
 - The install path is project-local. Source-run data is isolated under `data/dev` via default profile behavior.
 - The data location for your packaged desktop install is managed by Tauri AppData, not this repository tree.
+- In the app, Settings → Agent Tools can copy or download the MCP config and a short agent skill file for other AI assistants.
 
 ## Upgrading an existing desktop install
 
 - Packaged desktop builds now run through a bundled localhost Node sidecar backend.
-- Normal upgrades still keep the same AppData SQLite database (`AppData/ASF Junban/junban.db`), so you should not need export/import or manual schema steps just because of the desktop-backend shift.
+- Normal upgrades still keep the same AppData SQLite database (`AppData/Junban/junban.db`), so you should not need export/import or manual schema steps just because of the desktop-backend shift.
 - Source-run dev data under `data/dev/` remains separate from packaged AppData data.
 - Existing desktop compatibility/grandfathering behavior for legacy built-in plugins is unchanged by this runtime change.
 

@@ -66,6 +66,7 @@ export interface GeneralSettings {
   eat_the_frog_morning_only: "true" | "false";
   feature_dopamine_menu: "true" | "false";
   community_plugins_enabled: "true" | "false";
+  developer_mode: "true" | "false";
 }
 
 export const DEFAULT_SETTINGS: GeneralSettings = {
@@ -116,6 +117,7 @@ export const DEFAULT_SETTINGS: GeneralSettings = {
   eat_the_frog_morning_only: "false",
   feature_dopamine_menu: "false",
   community_plugins_enabled: "false",
+  developer_mode: "false",
 };
 
 const SETTING_KEYS = Object.keys(DEFAULT_SETTINGS) as (keyof GeneralSettings)[];
@@ -296,6 +298,37 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isTauri()) {
+      return;
+    }
+
+    const handleContextMenu = (event: MouseEvent) => {
+      if (settings.developer_mode === "true") {
+        return;
+      }
+
+      if (event.defaultPrevented) {
+        return;
+      }
+
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        target.closest("input, textarea, select, a, [contenteditable]")
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+    };
+
+    window.addEventListener("contextmenu", handleContextMenu);
+    return () => {
+      window.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, [settings.developer_mode]);
+
   const updateSetting = useCallback(
     <K extends keyof GeneralSettings>(key: K, value: GeneralSettings[K]) => {
       if (readOnly) {
@@ -317,7 +350,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           error: err instanceof Error ? err.message : String(err),
         });
 
-        if (previousValue === null) {
+        const valueToRevert = previousValue;
+        if (valueToRevert === null) {
           return;
         }
 
@@ -326,8 +360,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             return prev;
           }
 
-          const reverted = { ...prev, [key]: previousValue };
-          applySettingSideEffects(key, previousValue);
+          const reverted = { ...prev, [key]: valueToRevert };
+          applySettingSideEffects(key, valueToRevert);
           return reverted;
         });
       });

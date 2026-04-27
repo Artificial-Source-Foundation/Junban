@@ -33,9 +33,22 @@ The MCP server reuses the exact same `bootstrap()` and `ToolRegistry` as the CLI
 pnpm mcp
 ```
 
-This starts the server on stdio (JSON-RPC). Use it as a manual smoke test or for clients that expect you to start the server yourself. Claude Desktop and similar stdio clients can launch the process from config instead.
+This starts the server on stdio (JSON-RPC). Use it as a manual smoke test or for clients that expect you to start the server yourself. Built packages also expose `junban-mcp` from `dist/mcp/server.js`. Claude Desktop and similar stdio clients can launch either process from config.
 
-For Claude Desktop, add to `claude_desktop_config.json`:
+For Claude Desktop with an installed package, add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "junban": {
+      "command": "junban-mcp",
+      "args": []
+    }
+  }
+}
+```
+
+For a source checkout, use the repo script form:
 
 ```json
 {
@@ -55,8 +68,8 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 const transport = new StdioClientTransport({
-  command: "pnpm",
-  args: ["--dir", "/path/to/junban", "mcp"],
+  command: "junban-mcp",
+  args: [],
 });
 
 const client = new Client({ name: "my-agent", version: "1.0.0" });
@@ -142,6 +155,8 @@ All tools from `ToolRegistry` are exposed as MCP tools with identical names, des
 To avoid drift, treat `src/ai/tool-registry.ts` as the source of truth for the complete tool inventory. This MCP layer intentionally mirrors that registry instead of maintaining a second hardcoded list.
 
 Tool families exposed through MCP include task management, projects, reminders, tags, organization helpers, analytics, and planning. See [AI.md](AI.md) for per-tool behavior.
+
+The terminal CLI mirrors this same registry through `junban tools` and `junban tool <name> --args '{...}'` for agents that can run shell commands but do not support MCP.
 
 ---
 

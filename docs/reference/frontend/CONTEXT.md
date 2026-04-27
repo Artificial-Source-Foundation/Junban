@@ -6,20 +6,22 @@
 
 ## Provider Nesting Order
 
-The providers are nested in `App.tsx` in this order (outermost first):
+Root providers are composed by `src/ui/app/AppProviders.tsx` in this order (outermost first):
 
 ```
-SettingsProvider
-  TaskProvider
-    PluginProvider
-      UndoProvider
-        AppStateProvider
+ErrorBoundary
+  SettingsProvider
+    TaskProvider
+      PluginProvider
+        UndoProvider
           <AppContent />
 ```
 
+`AppStateProvider` is not part of the root provider stack. It is applied inside `src/ui/app/AppLayout.tsx` around the rendered shell after `App.tsx` and `useAppState()` have computed the read-only aggregate value.
+
 `AIProvider` and `VoiceProvider` are now feature-scoped instead of app-global. They mount only around AI/voice entry points like `AIChat`, `AITab`, and `VoiceTab`, which keeps those chunks off the default startup path while preserving the same feature APIs.
 
-This nesting order still matters because inner providers can depend on outer ones (for example, feature-scoped AI still depends on `TaskProvider`, and `AppStateProvider` aggregates read-only state from the global providers above it).
+This nesting order still matters because inner providers can depend on outer ones (for example, feature-scoped AI still depends on `TaskProvider`, and `AppStateProvider` aggregates read-only state from the global providers before passing it deeper into the layout).
 
 ---
 

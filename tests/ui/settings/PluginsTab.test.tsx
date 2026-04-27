@@ -24,7 +24,7 @@ vi.mock("../../../src/ui/context/PluginContext.js", () => ({
         id: "pomodoro",
         name: "Pomodoro Timer",
         description: "Focus timer",
-        author: "ASF",
+        author: "Artificial Source",
         version: "1.0.0",
         enabled: true,
         builtin: true,

@@ -6,6 +6,23 @@
 
 ---
 
+## App Shell Modules
+
+`src/ui/App.tsx` is kept thin by delegating provider composition, layout, modal rendering, app-level state, and app-level handlers into `src/ui/app/` modules.
+
+| File                    | Responsibility                                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `AppProviders.tsx`      | Root provider stack: `ErrorBoundary > SettingsProvider > TaskProvider > PluginProvider > UndoProvider`.                                                |
+| `AppLayout.tsx`         | Main responsive shell: sidebar, breadcrumbs, route/view rendering, task detail panel, bulk actions, mobile drawer, FAB, and `AppStateProvider` wiring. |
+| `AppModals.tsx`         | Lazily loaded modal and overlay surface: settings, focus mode, command palette, search, quick add, templates, extracted tasks, onboarding, and chrome. |
+| `ViewRenderer.tsx`      | Maps route/view state to concrete view components and plugin view rendering.                                                                           |
+| `TaskContextMenu.tsx`   | Builds task context-menu state, menu items, and custom due/reminder date picker state.                                                                 |
+| `useAppState.ts`        | Aggregates app-level UI state, derived data, plugin data, project/tag/section fetches, blocked-task data, and desktop quick-capture/global shortcuts.  |
+| `useAppHandlers.ts`     | Centralizes app-level action handlers for projects, sections, comments, duplication, voice launch, quick capture, and mutation-blocked feedback.       |
+| `remoteMutationLock.ts` | Desktop remote-access guard helpers that block local mutations while the remote server owns the live database path.                                    |
+
+---
+
 ## Task Components
 
 ### TaskInput.tsx

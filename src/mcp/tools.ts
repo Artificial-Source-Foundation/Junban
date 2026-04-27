@@ -19,25 +19,21 @@ export function registerMcpTools(
   const definitions = toolRegistry.getDefinitions();
 
   for (const def of definitions) {
-    const zodShape = jsonSchemaToZod(def.parameters);
+    const inputSchema = jsonSchemaToZod(def.parameters);
 
-    server.registerTool(
-      def.name,
-      { description: def.description, inputSchema: zodShape },
-      async (args) => {
-        try {
-          const result = await toolRegistry.execute(
-            def.name,
-            args as Record<string, unknown>,
-            toolContext,
-          );
-          return {
-            content: [{ type: "text" as const, text: result }],
-          };
-        } catch (err) {
-          return toMcpError(err);
-        }
-      },
-    );
+    server.registerTool(def.name, { description: def.description, inputSchema }, async (args) => {
+      try {
+        const result = await toolRegistry.execute(
+          def.name,
+          args as Record<string, unknown>,
+          toolContext,
+        );
+        return {
+          content: [{ type: "text" as const, text: result }],
+        };
+      } catch (err) {
+        return toMcpError(err);
+      }
+    });
   }
 }

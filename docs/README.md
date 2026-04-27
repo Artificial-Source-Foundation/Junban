@@ -1,8 +1,8 @@
 # Documentation
 
-This is the canonical documentation entry point for Junban contributors and AI agents.
+This is the canonical documentation entry point for Junban users, contributors, and AI agents.
 
-Product-facing mission, roadmap, status, and PRD-style planning live under `docs/product/`; contributor, engineering, reference, and internal-planning docs live under their canonical domains in this tree.
+User-facing docs live in the Diataxis areas (`tutorials/`, `how-to/`, `explanation/`) and product docs (`product/`). Developer-facing docs live in `guides/` and `reference/`. Internal sprint planning and backlog docs are intentionally not part of this documentation tree.
 
 ## Start Here
 
@@ -26,13 +26,12 @@ Use this taxonomy first; each domain points to its canonical library location.
 
 | Domain              | Audience                                    | Start here                                   | Canonical locations                                                              |
 | ------------------- | ------------------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------- |
-| Public docs navigation | Users, contributors, external readers    | [public docs index](index.md)               | `docs/index.md`, `docs/tutorials/`, `docs/how-to/`, `docs/explanation/` as a routing surface; canonical ownership stays in this file |
-| Guides              | Contributors, maintainers, agents           | [`guides/`](guides/)                         | `docs/guides/`                                                                   |
+| User docs           | Users, source installers, plugin authors    | [public docs index](index.md)                | `docs/index.md`, `docs/tutorials/`, `docs/how-to/`, `docs/explanation/`          |
+| Product docs        | Users, contributors, external readers       | [`product/README.md`](product/README.md)     | `docs/product/`, `docs/product/prds/`                                            |
+| Developer guides    | Contributors, maintainers, agents           | [`guides/`](guides/)                         | `docs/guides/`                                                                   |
 | Technical reference | Contributors, maintainers, implementers     | [`reference/README.md`](reference/README.md) | `docs/reference/frontend/`, `docs/reference/backend/`, `docs/reference/plugins/` |
-| Product docs        | Maintainers, contributors, external readers | [`product/README.md`](product/README.md)     | `docs/product/`, `docs/product/prds/`                                            |
-| Internal planning   | Maintainers                                 | [`internal/README.md`](internal/README.md)   | `docs/internal/planning/`, `docs/internal/sprints/`                              |
 
-Legacy compatibility note: `docs/frontend/`, `docs/backend/`, `docs/plugins/`, and `docs/planning/` remain as compatibility surfaces for older URLs; route new work through `docs/reference/`, `docs/product/`, and `docs/internal/`. Lifecycle and retirement guidance lives in [`guides/LEGACY_COMPATIBILITY_POLICY.md`](guides/LEGACY_COMPATIBILITY_POLICY.md).
+Legacy compatibility note: `docs/frontend/`, `docs/backend/`, `docs/plugins/`, and `docs/planning/` remain as compatibility surfaces for older URLs; route new work through `docs/reference/` and `docs/product/`. Lifecycle and retirement guidance lives in [`guides/LEGACY_COMPATIBILITY_POLICY.md`](guides/LEGACY_COMPATIBILITY_POLICY.md).
 
 ## Structure
 
@@ -55,11 +54,8 @@ docs/
 │   ├── roadmap.md    Product roadmap
 │   ├── status.md     Product status snapshot
 │   └── prds/         Lightweight PRD-style planning docs
-├── internal/         Internal planning library
-│   ├── README.md     Internal planning index
-│   ├── planning/     Backlog, epics, and sprint history
-│   └── sprints/      Sprint execution artifacts
 └── planning/         Legacy compatibility stubs
+# legacy frontend/backend/plugins stubs omitted; see LEGACY_COMPATIBILITY_POLICY.md
 ```
 
 The structure tree intentionally omits the legacy stub directories under `docs/frontend/`,
@@ -68,11 +64,9 @@ are governed by [`guides/LEGACY_COMPATIBILITY_POLICY.md`](guides/LEGACY_COMPATIB
 
 ## Planning and product docs
 
-| You want to...                                                | Read this first                                      |
-| ------------------------------------------------------------- | ---------------------------------------------------- |
-| Understand product mission, roadmap, or PRD docs              | [`product/README.md`](product/README.md)             |
-| Find internal execution planning docs                         | [`internal/README.md`](internal/README.md)           |
-| See historical documentation IA planning baseline (secondary) | [`guides/DOCS_IA_AUDIT.md`](guides/DOCS_IA_AUDIT.md) |
+| You want to...                                   | Read this first                          |
+| ------------------------------------------------ | ---------------------------------------- |
+| Understand product mission, roadmap, or PRD docs | [`product/README.md`](product/README.md) |
 
 ## Canonical Ownership Map (Single Source of Truth)
 

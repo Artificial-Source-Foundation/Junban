@@ -1,4 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import os from "node:os";
+import path from "node:path";
 import { loadEnv } from "../../src/config/env.js";
 
 describe("loadEnv", () => {
@@ -7,18 +9,42 @@ describe("loadEnv", () => {
   beforeEach(() => {
     // Start with a clean env for each test
     process.env = { ...originalEnv };
+    delete process.env.JUNBAN_PROFILE;
+    delete process.env.DB_PATH;
+    delete process.env.MARKDOWN_PATH;
+    delete process.env.STORAGE_MODE;
+    delete process.env.LOG_LEVEL;
+    delete process.env.PORT;
+    delete process.env.DEFAULT_THEME;
+    delete process.env.NLP_LOCALE;
+    delete process.env.PLUGIN_DIR;
+    delete process.env.PLUGIN_SANDBOX;
+    delete process.env.PLUGIN_REGISTRY_URL;
+    delete process.env.PLUGIN_MAX_SIZE_MB;
+    delete process.env.CLI_OUTPUT_FORMAT;
+    delete process.env.XDG_DATA_HOME;
+    process.env.HOME = "/tmp/junban-home";
   });
 
   afterEach(() => {
     process.env = originalEnv;
+    vi.restoreAllMocks();
   });
 
   it("returns defaults when no env vars set", () => {
     const env = loadEnv();
     expect(env.JUNBAN_PROFILE).toBe("daily");
-    expect(env.DB_PATH).toBe("./data/junban.db");
+    expect(env.DB_PATH).toBe(
+      process.platform === "linux"
+        ? path.join("/tmp/junban-home", ".local", "share", "junban", "junban.db")
+        : "./data/junban.db",
+    );
     expect(env.STORAGE_MODE).toBe("sqlite");
-    expect(env.MARKDOWN_PATH).toBe("./tasks/");
+    expect(env.MARKDOWN_PATH).toBe(
+      process.platform === "linux"
+        ? path.join("/tmp/junban-home", ".local", "share", "junban", "tasks")
+        : "./tasks/",
+    );
     expect(env.LOG_LEVEL).toBe("info");
     expect(env.PORT).toBe(5173);
     expect(env.DEFAULT_THEME).toBe("light");
@@ -27,6 +53,53 @@ describe("loadEnv", () => {
     expect(env.PLUGIN_SANDBOX).toBe(true);
     expect(env.PLUGIN_MAX_SIZE_MB).toBe(10);
     expect(env.CLI_OUTPUT_FORMAT).toBe("text");
+  });
+
+  it("uses XDG_DATA_HOME for daily Linux storage defaults", () => {
+    process.env.XDG_DATA_HOME = "/tmp/xdg-data";
+
+    const env = loadEnv();
+
+    if (process.platform === "linux") {
+      expect(env.DB_PATH).toBe(path.join("/tmp/xdg-data", "junban", "junban.db"));
+      expect(env.MARKDOWN_PATH).toBe(path.join("/tmp/xdg-data", "junban", "tasks"));
+    } else {
+      expect(env.DB_PATH).toBe("./data/junban.db");
+      expect(env.MARKDOWN_PATH).toBe("./tasks/");
+    }
+  });
+
+  it("falls back to HOME when XDG_DATA_HOME is relative or empty", () => {
+    for (const invalidXdgDataHome of ["relative/path", "   "]) {
+      process.env.XDG_DATA_HOME = invalidXdgDataHome;
+
+      const env = loadEnv();
+
+      if (process.platform === "linux") {
+        expect(env.DB_PATH).toBe(
+          path.join("/tmp/junban-home", ".local", "share", "junban", "junban.db"),
+        );
+        expect(env.MARKDOWN_PATH).toBe(
+          path.join("/tmp/junban-home", ".local", "share", "junban", "tasks"),
+        );
+      } else {
+        expect(env.DB_PATH).toBe("./data/junban.db");
+        expect(env.MARKDOWN_PATH).toBe("./tasks/");
+      }
+    }
+  });
+
+  it("falls back to non-XDG daily defaults when Linux home cannot be resolved", () => {
+    vi.spyOn(process, "platform", "get").mockReturnValue("linux");
+    vi.spyOn(os, "homedir").mockImplementation(() => {
+      throw new Error("home unavailable");
+    });
+    delete process.env.HOME;
+
+    const env = loadEnv();
+
+    expect(env.DB_PATH).toBe("./data/junban.db");
+    expect(env.MARKDOWN_PATH).toBe("./tasks/");
   });
 
   it("uses dev profile defaults when JUNBAN_PROFILE=dev", () => {

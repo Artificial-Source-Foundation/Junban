@@ -1,11 +1,16 @@
 import { parseTask } from "../../parser/task-parser.js";
 import type { AppServices } from "../../bootstrap.js";
+import { ValidationError } from "../../core/errors.js";
 
 interface AddOptions {
   json?: boolean;
 }
 
 export async function addTask(description: string, services: AppServices, options?: AddOptions) {
+  if (!description.trim()) {
+    throw new ValidationError("Task description is required.");
+  }
+
   const parsed = parseTask(description);
 
   // Resolve project if present

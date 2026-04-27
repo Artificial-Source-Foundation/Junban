@@ -461,7 +461,7 @@ export class PluginLoader {
                 loaded.path,
                 loaded.manifest.main,
               );
-              return import(pathToFileURL(stagedEntry).href);
+              return import(/* @vite-ignore */ pathToFileURL(stagedEntry).href);
             })()
           : await (async () => {
               sandbox = createSandbox({

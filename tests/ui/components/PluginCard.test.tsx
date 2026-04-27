@@ -25,7 +25,7 @@ const settingsPlugin: PluginInfo = {
   id: "pomodoro",
   name: "Pomodoro Timer",
   description: "Focus timer with breaks",
-  author: "ASF",
+  author: "Artificial Source",
   version: "1.0.0",
   enabled: true,
   builtin: true,

@@ -16,8 +16,7 @@ export async function doneTask(id: string, services: AppServices, options?: Done
     }
   } catch (err) {
     if (err instanceof NotFoundError) {
-      console.error(`Task not found: ${id}`);
-      process.exit(1);
+      throw new NotFoundError("Task", id);
     }
     throw err;
   }

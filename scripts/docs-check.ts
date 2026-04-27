@@ -20,7 +20,6 @@ const TEXT_EXTENSIONS = new Set([
 ]);
 const LEGACY_DOC_PATHS = ["docs/frontend/", "docs/backend/", "docs/plugins/", "docs/planning/"];
 const LEGACY_PATH_ALLOWLIST = new Set([
-  normalizePath(path.join(ROOT, "docs", "guides", "DOCS_IA_AUDIT.md")),
   normalizePath(path.join(ROOT, "docs", "planning", "ROADMAP.md")),
   normalizePath(path.join(ROOT, "docs", "README.md")),
   normalizePath(path.join(ROOT, "docs", "product", "README.md")),

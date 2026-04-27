@@ -1,56 +1,38 @@
-import { lazy, Suspense, useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   X,
   SlidersHorizontal,
   Palette,
+  Bell,
   Bot,
   Mic,
+  Terminal,
   Keyboard,
   Database,
   Info,
   FileText,
   ArrowLeft,
   ChevronRight,
-  Sparkles,
+  Tags,
+  Wrench,
 } from "lucide-react";
 import { useIsMobile } from "../hooks/useIsMobile.js";
 import { ErrorBoundary } from "../components/ErrorBoundary.js";
 import { useGeneralSettings } from "../context/SettingsContext.js";
+import { AboutTab } from "./settings/AboutTab.js";
+import { AgentToolsTab } from "./settings/AgentToolsTab.js";
+import { AITab } from "./settings/AITab.js";
+import { AlertsTab } from "./settings/AlertsTab.js";
+import { AppearanceTab } from "./settings/AppearanceTab.js";
+import { DataTab } from "./settings/DataTab.js";
+import { FeaturesTab } from "./settings/FeaturesTab.js";
+import { FiltersLabelsTab } from "./settings/FiltersLabelsTab.js";
+import { GeneralTab } from "./settings/GeneralTab.js";
+import { KeyboardTab } from "./settings/KeyboardTab.js";
+import { TemplatesTab } from "./settings/TemplatesTab.js";
 import type { SettingsTab } from "./settings/types.js";
+import { VoiceTab } from "./settings/VoiceTab.js";
 import { endNamedPerfSpan, markPerf } from "../../utils/perf.js";
-
-const GeneralTab = lazy(() =>
-  import("./settings/GeneralTab.js").then((module) => ({ default: module.GeneralTab })),
-);
-const AppearanceTab = lazy(() =>
-  import("./settings/AppearanceTab.js").then((module) => ({ default: module.AppearanceTab })),
-);
-const FiltersLabelsTab = lazy(() =>
-  import("./settings/FiltersLabelsTab.js").then((module) => ({
-    default: module.FiltersLabelsTab,
-  })),
-);
-const FeaturesTab = lazy(() =>
-  import("./settings/FeaturesTab.js").then((module) => ({ default: module.FeaturesTab })),
-);
-const AITab = lazy(() =>
-  import("./settings/AITab.js").then((module) => ({ default: module.AITab })),
-);
-const VoiceTab = lazy(() =>
-  import("./settings/VoiceTab.js").then((module) => ({ default: module.VoiceTab })),
-);
-const TemplatesTab = lazy(() =>
-  import("./settings/TemplatesTab.js").then((module) => ({ default: module.TemplatesTab })),
-);
-const KeyboardTab = lazy(() =>
-  import("./settings/KeyboardTab.js").then((module) => ({ default: module.KeyboardTab })),
-);
-const DataTab = lazy(() =>
-  import("./settings/DataTab.js").then((module) => ({ default: module.DataTab })),
-);
-const AboutTab = lazy(() =>
-  import("./settings/AboutTab.js").then((module) => ({ default: module.AboutTab })),
-);
 
 export type { SettingsTab };
 
@@ -84,18 +66,18 @@ const TABS: TabMeta[] = [
     mobileIcon: <Palette className="w-5 h-5" />,
   },
   {
+    id: "alerts",
+    label: "Alerts",
+    subtitle: "Notifications & sounds",
+    icon: <Bell className="w-4 h-4" />,
+    mobileIcon: <Bell className="w-5 h-5" />,
+  },
+  {
     id: "filters",
     label: "Filters & Labels",
     subtitle: "Saved filters and tags",
-    icon: <SlidersHorizontal className="w-4 h-4" />,
-    mobileIcon: <SlidersHorizontal className="w-5 h-5" />,
-  },
-  {
-    id: "features",
-    label: "Advanced",
-    subtitle: "Optional upgrades",
-    icon: <Sparkles className="w-4 h-4" />,
-    mobileIcon: <Sparkles className="w-5 h-5" />,
+    icon: <Tags className="w-4 h-4" />,
+    mobileIcon: <Tags className="w-5 h-5" />,
   },
   {
     id: "keyboard",
@@ -126,11 +108,25 @@ const TABS: TabMeta[] = [
     mobileIcon: <Mic className="w-5 h-5" />,
   },
   {
+    id: "agent-tools",
+    label: "Agent Tools",
+    subtitle: "CLI & MCP setup",
+    icon: <Terminal className="w-4 h-4" />,
+    mobileIcon: <Terminal className="w-5 h-5" />,
+  },
+  {
     id: "data",
     label: "Data",
     subtitle: "Backup & transfer",
     icon: <Database className="w-4 h-4" />,
     mobileIcon: <Database className="w-5 h-5" />,
+  },
+  {
+    id: "features",
+    label: "Advanced",
+    subtitle: "Feature flags & developer tools",
+    icon: <Wrench className="w-4 h-4" />,
+    mobileIcon: <Wrench className="w-5 h-5" />,
   },
   {
     id: "about",
@@ -143,11 +139,10 @@ const TABS: TabMeta[] = [
 
 // Sections for the mobile index page
 const MOBILE_SECTIONS: { label: string; tabs: SettingsTab[] }[] = [
-  { label: "Essentials", tabs: ["general", "appearance", "filters"] },
-  { label: "Advanced", tabs: ["features", "keyboard", "templates"] },
-  { label: "AI & Voice", tabs: ["ai", "voice"] },
-  { label: "Data", tabs: ["data"] },
-  { label: "Info", tabs: ["about"] },
+  { label: "Everyday", tabs: ["general", "appearance", "alerts", "filters"] },
+  { label: "Workflow", tabs: ["keyboard", "templates"] },
+  { label: "AI & Voice", tabs: ["ai", "voice", "agent-tools"] },
+  { label: "System", tabs: ["data", "features", "about"] },
 ];
 
 const REMOTE_ADMIN_TABS = new Set<SettingsTab>(["data", "about"]);
@@ -158,19 +153,14 @@ function sanitizeSettingsTab(tab: SettingsTab | null | undefined): SettingsTab {
 }
 
 function renderTabContent(tab: SettingsTab, mutationsBlocked: boolean) {
-  const fallback = (
-    <div className="flex min-h-[240px] items-center justify-center text-sm text-on-surface-muted">
-      Loading settings...
-    </div>
-  );
   const errorFallback = (
     <div className="flex min-h-[240px] items-center justify-center text-sm text-error">
       Failed to load this settings tab. Refresh and try again.
     </div>
   );
   const wrap = (content: React.ReactNode) => (
-    <ErrorBoundary fallback={errorFallback}>
-      <Suspense fallback={fallback}>{content}</Suspense>
+    <ErrorBoundary key={tab} fallback={errorFallback}>
+      {content}
     </ErrorBoundary>
   );
 
@@ -179,6 +169,8 @@ function renderTabContent(tab: SettingsTab, mutationsBlocked: boolean) {
       return wrap(<GeneralTab />);
     case "appearance":
       return wrap(<AppearanceTab />);
+    case "alerts":
+      return wrap(<AlertsTab />);
     case "filters":
       return wrap(<FiltersLabelsTab />);
     case "features":
@@ -187,6 +179,8 @@ function renderTabContent(tab: SettingsTab, mutationsBlocked: boolean) {
       return wrap(<AITab />);
     case "voice":
       return wrap(<VoiceTab />);
+    case "agent-tools":
+      return wrap(<AgentToolsTab />);
     case "templates":
       return wrap(<TemplatesTab />);
     case "keyboard":

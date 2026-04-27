@@ -3,7 +3,7 @@
   "icon": "⚡",
   "name": "Quick Wins",
   "version": "1.0.0",
-  "author": "ASF",
+  "author": "Artificial Source",
   "description": "A playful quick-win view for easy tasks when momentum matters most.",
   "main": "index.ts",
   "minJunbanVersion": "1.0.0",

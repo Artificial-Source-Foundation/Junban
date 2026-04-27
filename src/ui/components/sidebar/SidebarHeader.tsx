@@ -21,7 +21,11 @@ export function SidebarHeader({
 
   return (
     <div className={`py-4 ${collapsed ? "px-2" : "px-4"}`}>
-      <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
+      <div
+        className={`flex ${
+          collapsed ? "flex-col items-center gap-1" : "items-center justify-between"
+        }`}
+      >
         {!collapsed ? (
           <div className="flex items-center gap-2">
             <img
@@ -35,7 +39,7 @@ export function SidebarHeader({
           <img
             src="/images/logo.webp"
             alt="Junban logo"
-            className="h-7 w-7 shrink-0 rounded-md ring-1 ring-border/60 bg-surface object-contain p-1 dark:invert"
+            className="h-9 w-9 shrink-0 rounded-lg ring-1 ring-border/60 bg-surface object-contain p-1.5 dark:invert"
           />
         )}
         {onToggleCollapsed && !collapsed && (
@@ -51,7 +55,7 @@ export function SidebarHeader({
           <button
             onClick={onToggleCollapsed}
             aria-label="Expand sidebar"
-            className="group relative mt-2 p-1.5 rounded-md text-on-surface-muted hover:bg-surface-tertiary hover:text-on-surface transition-colors"
+            className="group relative p-1.5 rounded-md text-on-surface-muted hover:bg-surface-tertiary hover:text-on-surface transition-colors"
           >
             <ChevronRight size={16} />
             <CollapsedTooltip visible label="Expand sidebar" />

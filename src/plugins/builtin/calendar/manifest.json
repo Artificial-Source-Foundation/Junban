@@ -3,7 +3,7 @@
   "icon": "🗓️",
   "name": "Calendar",
   "version": "1.0.0",
-  "author": "ASF",
+  "author": "Artificial Source",
   "description": "Browse scheduled work in day, week, and month calendar layouts.",
   "main": "index.ts",
   "minJunbanVersion": "1.0.0",

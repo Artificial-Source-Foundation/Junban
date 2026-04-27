@@ -1,6 +1,6 @@
 # Junban Documentation
 
-Junban is a local-first task manager with a React desktop/web UI, a Hono API server, a Commander-based CLI, an MCP server, optional AI and voice features, and an Obsidian-style plugin system. The current repository shows a shared TypeScript core reused across those entrypoints, with SQLite as the default storage mode and a Markdown backend available in Node runtimes.
+Junban is a local-first task manager with a React desktop/web UI, a Hono API server, a Commander-based CLI, an MCP server, optional AI and voice features, and plugins. The current repository shows a shared TypeScript core reused across those entrypoints, with SQLite as the default storage mode and a Markdown backend available in Node runtimes.
 
 This page is the public-facing entry point for the documentation set. For the canonical maintenance map and documentation ownership rules, see [`README.md`](README.md).
 
@@ -47,5 +47,4 @@ This page is the public-facing entry point for the documentation set. For the ca
 - Contributor and maintainer routing: [`README.md`](README.md)
 - Technical reference index: [`reference/README.md`](reference/README.md)
 - Product docs and roadmap: [`product/README.md`](product/README.md)
-- Internal planning docs: [`internal/README.md`](internal/README.md)
 - Documentation surface manifest: [`manifest.md`](manifest.md)

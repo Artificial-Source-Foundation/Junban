@@ -4,7 +4,7 @@ This policy defines how Junban keeps legacy documentation paths alive for link c
 
 ## Canonical vs legacy surfaces
 
-- Canonical documentation lives under `docs/reference/`, `docs/product/`, and `docs/internal/`.
+- Canonical documentation lives under `docs/reference/`, `docs/product/`, `docs/guides/`, and the user-facing Diataxis areas.
 - Legacy compatibility stubs exist under historical paths (`docs/frontend`, `docs/backend`, `docs/plugins`, and `docs/planning`).
 - New normative content must be authored in canonical docs, not in legacy stubs.
 
@@ -25,7 +25,7 @@ Compatibility stubs are intentionally temporary but may stay in place across mul
 Retirement should happen only when all conditions are met:
 
 1. Canonical replacement docs are stable.
-2. Internal docs and templates no longer rely on the legacy path.
+2. Current docs and templates no longer rely on the legacy path.
 3. A dedicated cleanup milestone/PR explicitly removes the stubs and updates affected links.
 
 Until then, keep stubs in place.

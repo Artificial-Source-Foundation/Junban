@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json",
-  "productName": "ASF Junban",
+  "productName": "Junban",
   "version": "1.0.5",
   "identifier": "com.asf.junban",
   "build": {
@@ -12,11 +12,14 @@
   "app": {
     "windows": [
       {
-        "title": "ASF Junban",
+        "label": "main",
+        "title": "Junban",
         "width": 1200,
         "height": 800,
         "minWidth": 800,
-        "minHeight": 600
+        "minHeight": 600,
+        "decorations": false,
+        "shadow": true
       },
       {
         "label": "quick-capture",

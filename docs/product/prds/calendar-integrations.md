@@ -7,8 +7,7 @@ Enable Junban's timeblocking workflow to interoperate with external calendars th
 ## Status
 
 - Roadmap milestone: v1.2
-- Epic status: Backlog
-- Internal planning source: [`../../internal/planning/epics.md`](../../internal/planning/epics.md)
+- Product state: Future
 
 ## Problem
 

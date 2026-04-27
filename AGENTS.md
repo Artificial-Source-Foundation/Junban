@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file is the quick-start for AI coding agents working in ASF Junban. Read this first, then use `CLAUDE.md` for the broader development guide and `docs/README.md` for the canonical docs index.
+This file is the quick-start for AI coding agents working in Junban. Read this first, then use `CLAUDE.md` for the broader development guide and `docs/README.md` for the canonical docs index.
 
 ## First Moves
 
@@ -53,7 +53,7 @@ Junban is a local-first task manager with:
 | Work on MCP                                       | `src/mcp/`, `docs/reference/backend/MCP.md`                                                                                                                                |
 | Work on CLI                                       | `src/cli/`, `docs/how-to/use-cli.md`, `docs/reference/backend/CLI.md`                                                                                                      |
 | Understand release/setup/security                 | `docs/guides/RELEASES.md`, `docs/guides/SETUP.md`, `docs/guides/SECURITY.md`                                                                                               |
-| Check product roadmap/status or internal planning | `docs/product/README.md`, `docs/internal/README.md`                                                                                                                        |
+| Check product roadmap/status | `docs/product/README.md`                                                                                                                                                  |
 
 ## Top-Level Layout
 
@@ -158,7 +158,7 @@ pnpm plugin:create
 If code changes affect behavior, APIs, workflows, or file organization, update docs in the same PR.
 
 Route through `docs/README.md` first, then use domain indexes (`docs/reference/README.md`,
-`docs/product/README.md`, and `docs/internal/README.md`) before editing lower-level docs.
+`docs/product/README.md`) before editing lower-level docs.
 
 `docs/README.md` is the canonical ownership map and documentation-governance source.
 
@@ -178,7 +178,7 @@ Always verify against `docs/README.md` before deciding no doc update is needed.
 - Check whether the current task runs through the direct-service path, the Hono API path, or both.
 - Browser/web code cannot use Node-only modules.
 - Markdown storage is Node-only; web bootstrap always uses SQLite/sql.js.
-- Repo-run development commands use the `dev` profile by default. Assume the active dev SQLite DB is `./data/dev/junban.db` and the dev Markdown path is `./tasks/dev/` unless the task explicitly overrides `DB_PATH` or `MARKDOWN_PATH`.
+- Repo-run development commands use the `dev` profile by default. Assume the active dev SQLite DB is `./data/dev/junban.db` and the dev Markdown path is `./tasks/dev/` unless the task explicitly overrides `DB_PATH` or `MARKDOWN_PATH`. Linux `daily` Node/server/CLI defaults use XDG data paths under `$XDG_DATA_HOME/junban/` or `~/.local/share/junban/`.
 - Packaged desktop installs use Tauri AppData, not the repo-local dev database.
 - MCP uses stdio, so avoid noisy stdout behavior in MCP-specific code.
 - Plugin changes should preserve sandbox and permission boundaries.

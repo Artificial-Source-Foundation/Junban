@@ -443,7 +443,7 @@ if [[ "$INSTALL_DESKTOP" == "true" ]]; then
 
         RELEASE_DIR="$SCRIPT_DIR/target/release"
         BINARY_NAME=""
-        for name in junban asf-junban "ASF Junban" "asf_junban"; do
+        for name in junban asf-junban "asf_junban"; do
             if [[ -f "$RELEASE_DIR/$name" ]]; then
                 BINARY_NAME="$name"
                 break

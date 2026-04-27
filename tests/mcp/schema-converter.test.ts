@@ -1,124 +1,207 @@
 import { describe, it, expect } from "vitest";
-import { z } from "zod";
 import { jsonSchemaToZod } from "../../src/mcp/schema-converter.js";
 
 describe("jsonSchemaToZod", () => {
   it("converts a string property", () => {
-    const shape = jsonSchemaToZod({
+    const schema = jsonSchemaToZod({
       type: "object",
       properties: { name: { type: "string", description: "A name" } },
       required: ["name"],
     });
-    expect(shape.name).toBeDefined();
-    const result = z.object(shape).safeParse({ name: "hello" });
+    expect(schema.shape.name).toBeDefined();
+    const result = schema.safeParse({ name: "hello" });
     expect(result.success).toBe(true);
   });
 
   it("marks required fields as non-optional", () => {
-    const shape = jsonSchemaToZod({
+    const schema = jsonSchemaToZod({
       type: "object",
       properties: { title: { type: "string" } },
       required: ["title"],
     });
-    const missing = z.object(shape).safeParse({});
+    const missing = schema.safeParse({});
     expect(missing.success).toBe(false);
   });
 
   it("marks non-required fields as optional", () => {
-    const shape = jsonSchemaToZod({
+    const schema = jsonSchemaToZod({
       type: "object",
       properties: { title: { type: "string" } },
     });
-    const result = z.object(shape).safeParse({});
+    const result = schema.safeParse({});
     expect(result.success).toBe(true);
   });
 
   it("converts a number property", () => {
-    const shape = jsonSchemaToZod({
+    const schema = jsonSchemaToZod({
       type: "object",
       properties: { count: { type: "number" } },
       required: ["count"],
     });
-    const result = z.object(shape).safeParse({ count: 42 });
+    const result = schema.safeParse({ count: 42 });
     expect(result.success).toBe(true);
-    const bad = z.object(shape).safeParse({ count: "not a number" });
+    const bad = schema.safeParse({ count: "not a number" });
     expect(bad.success).toBe(false);
   });
 
   it("converts an integer property", () => {
-    const shape = jsonSchemaToZod({
+    const schema = jsonSchemaToZod({
       type: "object",
       properties: { amount: { type: "integer" } },
       required: ["amount"],
     });
-    const result = z.object(shape).safeParse({ amount: 5 });
+    const result = schema.safeParse({ amount: 5 });
     expect(result.success).toBe(true);
-    const floatResult = z.object(shape).safeParse({ amount: 5.5 });
+    const floatResult = schema.safeParse({ amount: 5.5 });
     expect(floatResult.success).toBe(false);
   });
 
   it("converts a boolean property", () => {
-    const shape = jsonSchemaToZod({
+    const schema = jsonSchemaToZod({
       type: "object",
       properties: { active: { type: "boolean" } },
       required: ["active"],
     });
-    const result = z.object(shape).safeParse({ active: true });
+    const result = schema.safeParse({ active: true });
     expect(result.success).toBe(true);
   });
 
   it("converts an array of strings property", () => {
-    const shape = jsonSchemaToZod({
+    const schema = jsonSchemaToZod({
       type: "object",
       properties: { tags: { type: "array", items: { type: "string" } } },
       required: ["tags"],
     });
-    const result = z.object(shape).safeParse({ tags: ["a", "b"] });
+    const result = schema.safeParse({ tags: ["a", "b"] });
     expect(result.success).toBe(true);
-    const bad = z.object(shape).safeParse({ tags: [1, 2] });
+    const bad = schema.safeParse({ tags: [1, 2] });
     expect(bad.success).toBe(false);
   });
 
+  it("converts an array of nested objects property", () => {
+    const schema = jsonSchemaToZod({
+      type: "object",
+      properties: {
+        tasks: {
+          type: "array",
+          minItems: 1,
+          maxItems: 2,
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              priority: { type: "number", enum: [1, 2, 3, 4] },
+            },
+            required: ["title"],
+          },
+        },
+      },
+      required: ["tasks"],
+    });
+
+    const result = schema.safeParse({ tasks: [{ title: "A", priority: 2 }] });
+    expect(result.success).toBe(true);
+
+    const missingNestedRequired = schema.safeParse({ tasks: [{ priority: 2 }] });
+    expect(missingNestedRequired.success).toBe(false);
+
+    const empty = schema.safeParse({ tasks: [] });
+    expect(empty.success).toBe(false);
+
+    const tooMany = schema.safeParse({
+      tasks: [{ title: "A" }, { title: "B" }, { title: "C" }],
+    });
+    expect(tooMany.success).toBe(false);
+  });
+
+  it("converts a nested object property", () => {
+    const schema = jsonSchemaToZod({
+      type: "object",
+      properties: {
+        changes: {
+          type: "object",
+          properties: {
+            status: { type: "string", enum: ["pending", "completed", "cancelled"] },
+          },
+          required: ["status"],
+        },
+      },
+      required: ["changes"],
+    });
+
+    expect(schema.safeParse({ changes: { status: "pending" } }).success).toBe(true);
+    expect(schema.safeParse({ changes: { status: "blocked" } }).success).toBe(false);
+  });
+
+  it("honors additionalProperties false on nested objects", () => {
+    const schema = jsonSchemaToZod({
+      type: "object",
+      properties: {
+        changes: {
+          type: "object",
+          additionalProperties: false,
+          properties: { priority: { type: "number" } },
+        },
+      },
+      required: ["changes"],
+    });
+
+    expect(schema.safeParse({ changes: { priority: 1 } }).success).toBe(true);
+    expect(schema.safeParse({ changes: { priority: 1, typo: true } }).success).toBe(false);
+  });
+
+  it("honors additionalProperties false on the root object", () => {
+    const schema = jsonSchemaToZod({
+      type: "object",
+      additionalProperties: false,
+      properties: { name: { type: "string" } },
+      required: ["name"],
+    });
+
+    expect(schema.safeParse({ name: "Junban" }).success).toBe(true);
+    expect(schema.safeParse({ name: "Junban", typo: true }).success).toBe(false);
+  });
+
   it("converts a string enum property", () => {
-    const shape = jsonSchemaToZod({
+    const schema = jsonSchemaToZod({
       type: "object",
       properties: { level: { type: "string", enum: ["low", "medium", "high"] } },
       required: ["level"],
     });
-    const result = z.object(shape).safeParse({ level: "low" });
+    const result = schema.safeParse({ level: "low" });
     expect(result.success).toBe(true);
-    const bad = z.object(shape).safeParse({ level: "extreme" });
+    const bad = schema.safeParse({ level: "extreme" });
     expect(bad.success).toBe(false);
   });
 
   it("converts a number enum property", () => {
-    const shape = jsonSchemaToZod({
+    const schema = jsonSchemaToZod({
       type: "object",
       properties: { priority: { type: "number", enum: [1, 2, 3, 4] } },
       required: ["priority"],
     });
-    const result = z.object(shape).safeParse({ priority: 2 });
+    const result = schema.safeParse({ priority: 2 });
     expect(result.success).toBe(true);
-    const bad = z.object(shape).safeParse({ priority: 5 });
+    const bad = schema.safeParse({ priority: 5 });
     expect(bad.success).toBe(false);
   });
 
   it("handles empty properties object", () => {
-    const shape = jsonSchemaToZod({ type: "object" });
-    expect(Object.keys(shape)).toHaveLength(0);
+    const schema = jsonSchemaToZod({ type: "object" });
+    expect(Object.keys(schema.shape)).toHaveLength(0);
   });
 
   it("preserves description on fields", () => {
-    const shape = jsonSchemaToZod({
+    const schema = jsonSchemaToZod({
       type: "object",
       properties: { name: { type: "string", description: "The user's name" } },
       required: ["name"],
     });
-    expect(shape.name.description).toBe("The user's name");
+    expect(schema.shape.name.description).toBe("The user's name");
   });
 
   it("converts a real tool schema (create_task-like)", () => {
-    const shape = jsonSchemaToZod({
+    const schema = jsonSchemaToZod({
       type: "object",
       properties: {
         title: { type: "string", description: "Task title" },
@@ -131,7 +214,7 @@ describe("jsonSchemaToZod", () => {
       required: ["title"],
     });
 
-    const result = z.object(shape).safeParse({
+    const result = schema.safeParse({
       title: "Buy milk",
       priority: 2,
       tags: ["groceries"],
@@ -139,7 +222,7 @@ describe("jsonSchemaToZod", () => {
     expect(result.success).toBe(true);
 
     // Optional fields can be omitted
-    const minimal = z.object(shape).safeParse({ title: "Hello" });
+    const minimal = schema.safeParse({ title: "Hello" });
     expect(minimal.success).toBe(true);
   });
 });

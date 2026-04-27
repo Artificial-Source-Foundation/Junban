@@ -7,7 +7,7 @@ const PLUGINS: RegistryEntry[] = [
     id: "pomodoro",
     name: "Pomodoro Timer",
     description: "Built-in Pomodoro timer with configurable intervals.",
-    author: "ASF",
+    author: "Artificial Source",
     version: "1.0.0",
     repository: "https://github.com/asf/pomodoro",
     tags: ["productivity", "timer"],
@@ -17,7 +17,7 @@ const PLUGINS: RegistryEntry[] = [
     id: "kanban",
     name: "Kanban Board",
     description: "Drag-and-drop Kanban board view for tasks.",
-    author: "ASF",
+    author: "Artificial Source",
     version: "1.0.0",
     repository: "https://github.com/asf/kanban",
     tags: ["view", "kanban"],
@@ -27,7 +27,7 @@ const PLUGINS: RegistryEntry[] = [
     id: "git-sync",
     name: "Git Sync",
     description: "Sync task data via Git for version control.",
-    author: "ASF",
+    author: "Artificial Source",
     version: "1.0.0",
     repository: "https://github.com/asf/git-sync",
     tags: ["sync", "git"],
@@ -63,9 +63,9 @@ describe("PluginRegistry.search", () => {
   });
 
   it("returns multiple matches", () => {
-    const results = registry.search(PLUGINS, "asf");
-    // "ASF" appears in author for all, but search checks name/description/tags only
-    // None of these have "asf" in name, description, or tags
+    const results = registry.search(PLUGINS, "artificial source");
+    // Author is intentionally ignored; search checks name/description/tags only.
+    // None of these have "artificial source" in name, description, or tags.
     expect(results).toHaveLength(0);
   });
 

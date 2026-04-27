@@ -167,6 +167,11 @@ Design rule:
 
 That keeps task/project mutations consistent regardless of how they were initiated.
 
+Transport surfaces:
+
+- MCP exposes every registered tool through `src/mcp/tools.ts` for MCP-compatible agents.
+- The CLI exposes the same registry through `junban tools` and `junban tool <name> --args '{...}'` for terminal-controlled agents.
+
 ### Built-in tool categories
 
 Built-in tools cover areas such as:

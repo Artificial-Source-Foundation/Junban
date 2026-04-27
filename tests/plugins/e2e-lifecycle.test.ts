@@ -446,31 +446,27 @@ export default class IsolationPlugin {
     writePlugin(
       pluginDir,
       pluginId,
-      makeManifest(pluginId),
+      makeManifest(pluginId, { permissions: ["task:read", "storage"] }),
       `
-let hookCallCount = 0;
-
 export default class CleanupPlugin {
-  async onLoad() {}
-  async onUnload() {}
-
-  onTaskCreate(task) {
-    hookCallCount++;
+  async onLoad() {
+    this.app.events.on("task:create", async (task) => {
+      const count = (await this.app.storage.get("count")) ?? 0;
+      await this.app.storage.set("count", count + 1);
+      await this.app.storage.set("lastTask", task.title);
+    });
   }
+  async onUnload() {}
 }
-
-export { hookCallCount };
 `,
     );
 
-    const { loader, testServices } = createLoaderWithServices(pluginDir);
+    const { loader, services, testServices } = createLoaderWithServices(pluginDir);
 
     await loader.discover();
     await loader.approveAndLoad(pluginId, [
       "task:read",
-      "task:write",
-      "commands",
-      "settings",
+      "storage",
     ]);
 
     // Verify EventBus listener was added for task:create
@@ -482,6 +478,11 @@ export { hookCallCount };
     await testServices.taskService.create({
       title: "Before unload",
       dueTime: false,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(services.settingsManager.getAll(pluginId)).toMatchObject({
+      count: 1,
+      lastTask: "Before unload",
     });
 
     // Unload the plugin
@@ -496,6 +497,11 @@ export { hookCallCount };
     await testServices.taskService.create({
       title: "After unload",
       dueTime: false,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(services.settingsManager.getAll(pluginId)).toMatchObject({
+      count: 1,
+      lastTask: "Before unload",
     });
 
     // Plugin state reflects unloaded

@@ -3,7 +3,7 @@
   "icon": "✅",
   "name": "Completed",
   "version": "1.0.0",
-  "author": "ASF",
+  "author": "Artificial Source",
   "description": "Review completed tasks in a dedicated history view.",
   "main": "index.ts",
   "minJunbanVersion": "1.0.0",

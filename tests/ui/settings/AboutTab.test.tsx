@@ -46,13 +46,15 @@ describe("AboutTab", () => {
 
   it("renders app name and version", async () => {
     await renderAboutTab();
-    expect(screen.getByText(/ASF Junban/)).toBeDefined();
+    expect(
+      screen.getByText((_, element) => element?.textContent === "Junban v1.0.0"),
+    ).toBeDefined();
     expect(screen.getByText("v1.0.0")).toBeDefined();
   });
 
   it("renders app description", async () => {
     await renderAboutTab();
-    expect(screen.getByText(/AI-native task manager/)).toBeDefined();
+    expect(screen.getByText(/local-first task manager/)).toBeDefined();
   });
 
   it("renders feedback links", async () => {
@@ -92,9 +94,9 @@ describe("AboutTab", () => {
     expect(screen.getByText("SQLite")).toBeDefined();
   });
 
-  it("renders footer with ASF mention", async () => {
+  it("renders footer with Artificial Source mention", async () => {
     await renderAboutTab();
-    expect(screen.getByText("AI Strategic Forum")).toBeDefined();
+    expect(screen.getByText("Artificial Source")).toBeDefined();
     expect(screen.getByText(/Licensed under MIT/)).toBeDefined();
   });
 });

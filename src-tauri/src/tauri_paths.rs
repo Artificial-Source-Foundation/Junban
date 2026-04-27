@@ -9,7 +9,7 @@ fn app_data_root(app: &AppHandle) -> Result<PathBuf, String> {
         .path()
         .app_data_dir()
         .map_err(|err| format!("Failed to resolve app data directory: {err}"))?;
-    Ok(app_data.join("ASF Junban"))
+    Ok(app_data.join("Junban"))
 }
 
 pub(crate) fn db_path(app: &AppHandle) -> Result<PathBuf, String> {

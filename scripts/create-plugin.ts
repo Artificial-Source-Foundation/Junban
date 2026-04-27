@@ -1,5 +1,5 @@
 /**
- * Plugin scaffolding CLI for ASF Junban.
+ * Plugin scaffolding CLI for Junban.
  *
  * Usage: pnpm plugin:create <plugin-name>
  *

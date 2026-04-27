@@ -1,6 +1,6 @@
 # Local Development Setup
 
-Step-by-step guide to get ASF Junban running on your machine.
+Step-by-step guide to get Junban running on your machine.
 
 ## Prerequisites
 
@@ -62,7 +62,7 @@ cp .env.example .env
 The defaults work out of the box. Edit `.env` if you want to change:
 
 - `JUNBAN_PROFILE` — storage profile (`daily` by default; repo dev commands use `dev` automatically)
-- `DB_PATH` — where the SQLite database is stored (default: `./data/junban.db`)
+- `DB_PATH` — where the SQLite database is stored (Linux `daily` defaults to XDG data paths; repo dev defaults to `./data/dev/junban.db`)
 - `STORAGE_MODE` — `sqlite` (default) or `markdown`
 - `LOG_LEVEL` — `debug`, `info`, `warn`, `error`
 
@@ -71,6 +71,8 @@ Repo-run development commands automatically use the `dev` profile, which keeps l
 - `pnpm dev:full`, `pnpm server`, `pnpm db:migrate`, `pnpm cli`, `pnpm mcp`, and `pnpm tauri:dev` use `./data/dev/junban.db`
 - `STORAGE_MODE=markdown` in those same commands uses `./tasks/dev/`
 - Packaged desktop builds still store data in Tauri AppData
+
+If you run Node/server/CLI commands with `JUNBAN_PROFILE=daily` on Linux, unset paths follow XDG data defaults: `$XDG_DATA_HOME/junban/` or `~/.local/share/junban/`. Explicit `DB_PATH` and `MARKDOWN_PATH` always win.
 
 ### 5. Set Up the Database Manually (Optional)
 

@@ -18,10 +18,3 @@ The canonical product-documentation home is [`../product/README.md`](../product/
 | Milestone sequencing and future versions | [`../product/roadmap.md`](../product/roadmap.md)                                   |
 | Current shipped-product snapshot         | [`../product/status.md`](../product/status.md)                                     |
 | Future scoped feature planning / PRDs    | [`../product/prds/README.md`](../product/prds/README.md)                           |
-| Internal backlog and idea pool           | [`../internal/planning/backlog.md`](../internal/planning/backlog.md)               |
-| Epics and execution planning             | [`../internal/planning/epics.md`](../internal/planning/epics.md)                   |
-| Historical sprint execution              | [`../internal/planning/sprint-history.md`](../internal/planning/sprint-history.md) |
-
-## Internal execution history (for context only)
-
-Historical sprint tracking and technical-debt notes now live under [`../internal/planning/sprint-history.md`](../internal/planning/sprint-history.md).

@@ -9,6 +9,7 @@ This page is author-facing. For plugin runtime internals (loader/sandbox/policy/
 > - Community plugins run in a restricted VM context and cannot use Node built-ins, `process`, or host globals directly.
 > - ESM `import` / dynamic `import()` and `import.meta` are blocked for community plugins; use relative `require("./local-file.js")` for local module splitting.
 > - The examples below use plain exported classes. Junban injects `this.app` and `this.settings` before `onLoad()`.
+> - Entry files must be valid JavaScript. Some advanced snippets intentionally include TypeScript-style annotations to explain shapes; remove those annotations in runtime `.js`, `.mjs`, or `.cjs` files.
 
 ---
 
@@ -339,7 +340,7 @@ A full plugin with a structured view, status bar, settings, storage, and command
   "id": "pomodoro",
   "name": "Pomodoro Timer",
   "version": "1.0.0",
-  "author": "ASF",
+  "author": "Artificial Source",
   "description": "Focus timer with configurable work/break intervals.",
   "main": "index.mjs",
   "minJunbanVersion": "1.0.0",

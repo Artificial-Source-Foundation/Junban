@@ -2,9 +2,11 @@ import { lazy, Suspense, useEffect, useRef, type ReactNode } from "react";
 import { Globe, Lock } from "lucide-react";
 import { ErrorBoundary } from "../components/ErrorBoundary.js";
 import { Sidebar } from "../components/Sidebar.js";
+import { TitleBar } from "../components/TitleBar.js";
 import { Breadcrumb, type BreadcrumbItem } from "../components/Breadcrumb.js";
 import { ViewSkeleton } from "../components/Skeleton.js";
 import { AppStateProvider, type AppState } from "../context/AppStateContext.js";
+import { isTauri } from "../../utils/tauri.js";
 import { ViewRenderer } from "./ViewRenderer.js";
 import type {
   Task,
@@ -233,160 +235,161 @@ export function AppLayout({
 
   return (
     <div className="flex flex-col h-screen bg-surface text-on-surface pb-[--height-bottom-nav] md:pb-0">
+      {isTauri() && <TitleBar />}
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-accent focus:text-white focus:rounded-lg focus:text-sm"
       >
         Skip to main content
       </a>
-      <div className="flex flex-1 overflow-hidden">
-        <div className="hidden md:flex">
-          <ErrorBoundary
-            fallback={
-              <div className="p-4 text-sm text-on-surface-secondary">Sidebar failed to load.</div>
-            }
-          >
-            <Sidebar
-              currentView={currentView}
-              onNavigate={handleNavigate}
-              onOpenSettings={handleOpenSettings}
-              projects={projects}
-              selectedProjectId={selectedProjectId}
-              panels={panels}
-              pluginViews={pluginViews}
-              selectedPluginViewId={selectedPluginViewId}
-              collapsed={sidebarCollapsed}
-              onToggleCollapsed={onToggleSidebar}
-              projectTaskCounts={projectTaskCounts}
-              projectCompletedCounts={projectCompletedCounts}
-              onAddTask={handleAddTask}
-              onSearch={() => setSearchOpen(true)}
-              inboxCount={inboxTaskCount}
-              todayCount={todayTaskCount}
-              onOpenProjectModal={() => setProjectModalOpen(true)}
-              onCreateProject={handleCreateProject}
-              onUpdateProject={handleUpdateProject}
-              onDeleteProject={handleDeleteProject}
-              builtinPluginIds={builtinPluginIds}
-              savedFilters={savedFilters}
-              selectedFilterId={selectedFilterId}
-              mutationsBlocked={mutationsBlocked}
-            />
-          </ErrorBoundary>
-        </div>
-        <main
-          id="main-content"
-          tabIndex={-1}
-          className="flex-1 overflow-auto p-3 md:p-6 flex flex-col"
-        >
-          {remoteServerRunning && (
-            <div
-              ref={lockBannerRef}
-              tabIndex={-1}
-              role="region"
-              aria-labelledby="remote-lock-banner-title"
-              aria-describedby="remote-lock-banner-description remote-lock-banner-status"
-              className="mb-4 rounded-xl border border-warning/30 bg-warning/5 p-4 outline-none"
+      <AppStateProvider value={appState}>
+        <div className="flex flex-1 overflow-hidden">
+          <div className="hidden md:flex">
+            <ErrorBoundary
+              fallback={
+                <div className="p-4 text-sm text-on-surface-secondary">Sidebar failed to load.</div>
+              }
             >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-lg bg-warning/10 p-2 text-warning">
-                    <Lock size={18} />
-                  </div>
-                  <div role="status" aria-live="polite" aria-atomic="true">
-                    <p
-                      id="remote-lock-banner-title"
-                      className="text-sm font-medium text-on-surface"
-                    >
-                      Remote session active
-                    </p>
-                    <p
-                      id="remote-lock-banner-description"
-                      className="text-sm text-on-surface-secondary"
-                    >
-                      Local desktop changes are paused while remote access is running. You can still
-                      manage remote access from Settings → Data or with the control here.
-                    </p>
-                    <p id="remote-lock-banner-status" className="sr-only">
-                      Local desktop changes are unavailable until remote access stops.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  ref={stopRemoteAccessButtonRef}
-                  type="button"
-                  onClick={handleStopRemoteServer}
-                  aria-describedby="remote-lock-banner-description"
-                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-on-surface hover:bg-surface-tertiary"
-                >
-                  <Globe size={16} />
-                  Stop remote access
-                </button>
-              </div>
-            </div>
-          )}
-          <div
-            data-testid="app-workspace"
-            aria-disabled={mutationsBlocked}
-            {...(mutationsBlocked ? { inert: true } : {})}
-            className={`max-w-7xl w-full mx-auto flex-1 flex flex-col ${
-              mutationsBlocked ? "pointer-events-none select-none opacity-50" : ""
-            }`}
+              <Sidebar
+                currentView={currentView}
+                onNavigate={handleNavigate}
+                onOpenSettings={handleOpenSettings}
+                projects={projects}
+                selectedProjectId={selectedProjectId}
+                panels={panels}
+                pluginViews={pluginViews}
+                selectedPluginViewId={selectedPluginViewId}
+                collapsed={sidebarCollapsed}
+                onToggleCollapsed={onToggleSidebar}
+                projectTaskCounts={projectTaskCounts}
+                projectCompletedCounts={projectCompletedCounts}
+                onAddTask={handleAddTask}
+                onSearch={() => setSearchOpen(true)}
+                inboxCount={inboxTaskCount}
+                todayCount={todayTaskCount}
+                onOpenProjectModal={() => setProjectModalOpen(true)}
+                onCreateProject={handleCreateProject}
+                onUpdateProject={handleUpdateProject}
+                onDeleteProject={handleDeleteProject}
+                builtinPluginIds={builtinPluginIds}
+                savedFilters={savedFilters}
+                selectedFilterId={selectedFilterId}
+                mutationsBlocked={mutationsBlocked}
+              />
+            </ErrorBoundary>
+          </div>
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="flex-1 overflow-auto p-3 md:p-6 flex flex-col"
           >
-            {multiSelectedIds.size > 0 && (
-              <Suspense fallback={null}>
-                <BulkActionBar
-                  selectedCount={multiSelectedIds.size}
-                  onCompleteAll={handleBulkComplete}
-                  onDeleteAll={handleBulkDelete}
-                  onMoveToProject={handleBulkMoveToProject}
-                  onAddTag={handleBulkAddTag}
-                  onClear={clearSelection}
-                  projects={projects}
-                />
-              </Suspense>
-            )}
-            {loading && tasks.length === 0 ? (
-              <ViewSkeleton view={currentView} />
-            ) : error ? (
-              <p role="alert" className="text-error">
-                Error: {error}
-              </p>
-            ) : (
-              <ErrorBoundary
-                key={`${currentView}-${selectedProjectId ?? ""}-${selectedPluginViewId ?? ""}`}
+            {remoteServerRunning && (
+              <div
+                ref={lockBannerRef}
+                tabIndex={-1}
+                role="region"
+                aria-labelledby="remote-lock-banner-title"
+                aria-describedby="remote-lock-banner-description remote-lock-banner-status"
+                className="mb-4 rounded-xl border border-warning/30 bg-warning/5 p-4 outline-none"
               >
-                <div className="animate-fade-in flex-1 flex flex-col">
-                  {(currentView === "project" || currentView === "task") && (
-                    <Breadcrumb
-                      items={(() => {
-                        const items: BreadcrumbItem[] = [];
-                        if (currentView === "project") {
-                          items.push({
-                            label: "Projects",
-                            onClick: () => handleNavigate("inbox"),
-                          });
-                          const project = projects.find((p) => p.id === selectedProjectId);
-                          if (project) items.push({ label: project.name });
-                        } else if (currentView === "task") {
-                          const routeTask = selectedRouteTaskId
-                            ? tasks.find((t) => t.id === selectedRouteTaskId)
-                            : null;
-                          if (routeTask?.projectId) {
-                            const project = projects.find((p) => p.id === routeTask.projectId);
-                            if (project)
-                              items.push({
-                                label: project.name,
-                                onClick: () => handleNavigate("project", project.id),
-                              });
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-warning/10 p-2 text-warning">
+                      <Lock size={18} />
+                    </div>
+                    <div role="status" aria-live="polite" aria-atomic="true">
+                      <p
+                        id="remote-lock-banner-title"
+                        className="text-sm font-medium text-on-surface"
+                      >
+                        Remote session active
+                      </p>
+                      <p
+                        id="remote-lock-banner-description"
+                        className="text-sm text-on-surface-secondary"
+                      >
+                        Local desktop changes are paused while remote access is running. You can
+                        still manage remote access from Settings → Data or with the control here.
+                      </p>
+                      <p id="remote-lock-banner-status" className="sr-only">
+                        Local desktop changes are unavailable until remote access stops.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    ref={stopRemoteAccessButtonRef}
+                    type="button"
+                    onClick={handleStopRemoteServer}
+                    aria-describedby="remote-lock-banner-description"
+                    className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-on-surface hover:bg-surface-tertiary"
+                  >
+                    <Globe size={16} />
+                    Stop remote access
+                  </button>
+                </div>
+              </div>
+            )}
+            <div
+              data-testid="app-workspace"
+              aria-disabled={mutationsBlocked}
+              {...(mutationsBlocked ? { inert: true } : {})}
+              className={`max-w-7xl w-full mx-auto flex-1 flex flex-col ${
+                mutationsBlocked ? "pointer-events-none select-none opacity-50" : ""
+              }`}
+            >
+              {multiSelectedIds.size > 0 && (
+                <Suspense fallback={null}>
+                  <BulkActionBar
+                    selectedCount={multiSelectedIds.size}
+                    onCompleteAll={handleBulkComplete}
+                    onDeleteAll={handleBulkDelete}
+                    onMoveToProject={handleBulkMoveToProject}
+                    onAddTag={handleBulkAddTag}
+                    onClear={clearSelection}
+                    projects={projects}
+                  />
+                </Suspense>
+              )}
+              {loading && tasks.length === 0 ? (
+                <ViewSkeleton view={currentView} />
+              ) : error ? (
+                <p role="alert" className="text-error">
+                  Error: {error}
+                </p>
+              ) : (
+                <ErrorBoundary
+                  key={`${currentView}-${selectedProjectId ?? ""}-${selectedPluginViewId ?? ""}`}
+                >
+                  <div className="animate-fade-in flex-1 flex flex-col">
+                    {(currentView === "project" || currentView === "task") && (
+                      <Breadcrumb
+                        items={(() => {
+                          const items: BreadcrumbItem[] = [];
+                          if (currentView === "project") {
+                            items.push({
+                              label: "Projects",
+                              onClick: () => handleNavigate("inbox"),
+                            });
+                            const project = projects.find((p) => p.id === selectedProjectId);
+                            if (project) items.push({ label: project.name });
+                          } else if (currentView === "task") {
+                            const routeTask = selectedRouteTaskId
+                              ? tasks.find((t) => t.id === selectedRouteTaskId)
+                              : null;
+                            if (routeTask?.projectId) {
+                              const project = projects.find((p) => p.id === routeTask.projectId);
+                              if (project)
+                                items.push({
+                                  label: project.name,
+                                  onClick: () => handleNavigate("project", project.id),
+                                });
+                            }
+                            if (routeTask) items.push({ label: routeTask.title });
                           }
-                          if (routeTask) items.push({ label: routeTask.title });
-                        }
-                        return items;
-                      })()}
-                    />
-                  )}
-                  <AppStateProvider value={appState}>
+                          return items;
+                        })()}
+                      />
+                    )}
                     <ViewRenderer
                       addTaskTrigger={addTaskTrigger}
                       handleCreateTask={handleCreateTask}
@@ -406,123 +409,125 @@ export function AppLayout({
                       handleMoveTask={handleMoveTask}
                       handleOpenSettingsTab={handleOpenSettingsTab}
                     />
-                  </AppStateProvider>
-                </div>
+                  </div>
+                </ErrorBoundary>
+              )}
+            </div>
+          </main>
+        </div>
+
+        {!remoteServerRunning && isMobile && (
+          <Suspense fallback={null}>
+            <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+              <ErrorBoundary
+                fallback={
+                  <div className="p-4 text-sm text-on-surface-secondary">
+                    Sidebar failed to load.
+                  </div>
+                }
+              >
+                <Sidebar
+                  currentView={currentView}
+                  onNavigate={handleNavigate}
+                  onOpenSettings={() => {
+                    setDrawerOpen(false);
+                    handleOpenSettings();
+                  }}
+                  projects={projects}
+                  selectedProjectId={selectedProjectId}
+                  panels={panels}
+                  pluginViews={pluginViews}
+                  selectedPluginViewId={selectedPluginViewId}
+                  collapsed={false}
+                  projectTaskCounts={projectTaskCounts}
+                  projectCompletedCounts={projectCompletedCounts}
+                  onAddTask={() => {
+                    setDrawerOpen(false);
+                    handleAddTask();
+                  }}
+                  onSearch={() => {
+                    setDrawerOpen(false);
+                    setSearchOpen(true);
+                  }}
+                  inboxCount={inboxTaskCount}
+                  todayCount={todayTaskCount}
+                  onOpenProjectModal={() => {
+                    setDrawerOpen(false);
+                    setProjectModalOpen(true);
+                  }}
+                  onCreateProject={handleCreateProject}
+                  onUpdateProject={handleUpdateProject}
+                  onDeleteProject={handleDeleteProject}
+                  builtinPluginIds={builtinPluginIds}
+                  savedFilters={savedFilters}
+                  selectedFilterId={selectedFilterId}
+                  mutationsBlocked={mutationsBlocked}
+                />
               </ErrorBoundary>
-            )}
-          </div>
-        </main>
-      </div>
-
-      {!remoteServerRunning && isMobile && (
-        <Suspense fallback={null}>
-          <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-            <ErrorBoundary
-              fallback={
-                <div className="p-4 text-sm text-on-surface-secondary">Sidebar failed to load.</div>
-              }
-            >
-              <Sidebar
-                currentView={currentView}
-                onNavigate={handleNavigate}
-                onOpenSettings={() => {
-                  setDrawerOpen(false);
-                  handleOpenSettings();
-                }}
-                projects={projects}
-                selectedProjectId={selectedProjectId}
-                panels={panels}
-                pluginViews={pluginViews}
-                selectedPluginViewId={selectedPluginViewId}
-                collapsed={false}
-                projectTaskCounts={projectTaskCounts}
-                projectCompletedCounts={projectCompletedCounts}
-                onAddTask={() => {
-                  setDrawerOpen(false);
-                  handleAddTask();
-                }}
-                onSearch={() => {
-                  setDrawerOpen(false);
-                  setSearchOpen(true);
-                }}
-                inboxCount={inboxTaskCount}
-                todayCount={todayTaskCount}
-                onOpenProjectModal={() => {
-                  setDrawerOpen(false);
-                  setProjectModalOpen(true);
-                }}
-                onCreateProject={handleCreateProject}
-                onUpdateProject={handleUpdateProject}
-                onDeleteProject={handleDeleteProject}
-                builtinPluginIds={builtinPluginIds}
-                savedFilters={savedFilters}
-                selectedFilterId={selectedFilterId}
-                mutationsBlocked={mutationsBlocked}
-              />
-            </ErrorBoundary>
-          </MobileDrawer>
-        </Suspense>
-      )}
-
-      {!remoteServerRunning && isMobile && (
-        <ErrorBoundary fallback={null}>
-          <Suspense fallback={null}>
-            <>
-              <FAB onClick={handleAddTask} />
-              <BottomNavBar
-                currentView={currentView}
-                onNavigate={handleNavigate}
-                onMenuOpen={() => setDrawerOpen(true)}
-                onOpenVoice={handleOpenVoice}
-                inboxCount={inboxTaskCount}
-                todayCount={todayTaskCount}
-              />
-            </>
+            </MobileDrawer>
           </Suspense>
-        </ErrorBoundary>
-      )}
+        )}
 
-      {!remoteServerRunning && selectedTask && currentView !== "task" && (
-        <ErrorBoundary>
-          <Suspense fallback={null}>
-            <TaskDetailPanel
-              task={selectedTask}
-              allTasks={tasks}
-              onUpdate={handleUpdateTask}
-              onDelete={handleDeleteTask}
-              onClose={handleCloseDetail}
-              onIndent={handleIndent}
-              onOutdent={handleOutdent}
-              onSelect={handleSelectTask}
-              onAddSubtask={handleAddSubtask}
-              onToggleSubtask={handleToggleTask}
-              onReorder={handleReorder}
-              onNavigatePrev={
-                selectedTaskIdx > 0
-                  ? () => handleSelectTask(visibleTasks[selectedTaskIdx - 1].id)
-                  : undefined
-              }
-              onNavigateNext={
-                selectedTaskIdx >= 0 && selectedTaskIdx < visibleTasks.length - 1
-                  ? () => handleSelectTask(visibleTasks[selectedTaskIdx + 1].id)
-                  : undefined
-              }
-              onOpenFullPage={(id) => handleNavigate("task", id)}
-              hasPrev={selectedTaskIdx > 0}
-              hasNext={selectedTaskIdx >= 0 && selectedTaskIdx < visibleTasks.length - 1}
-              projectName={selectedTaskProjectName}
-              availableTags={availableTags}
-              comments={taskComments}
-              activity={taskActivity}
-              onAddComment={handleAddComment}
-              onUpdateComment={handleUpdateComment}
-              onDeleteComment={handleDeleteComment}
-            />
-          </Suspense>
-        </ErrorBoundary>
-      )}
+        {!remoteServerRunning && isMobile && (
+          <ErrorBoundary fallback={null}>
+            <Suspense fallback={null}>
+              <>
+                <FAB onClick={handleAddTask} />
+                <BottomNavBar
+                  currentView={currentView}
+                  onNavigate={handleNavigate}
+                  onMenuOpen={() => setDrawerOpen(true)}
+                  onOpenVoice={handleOpenVoice}
+                  inboxCount={inboxTaskCount}
+                  todayCount={todayTaskCount}
+                />
+              </>
+            </Suspense>
+          </ErrorBoundary>
+        )}
 
-      {children}
+        {!remoteServerRunning && selectedTask && currentView !== "task" && (
+          <ErrorBoundary>
+            <Suspense fallback={null}>
+              <TaskDetailPanel
+                task={selectedTask}
+                allTasks={tasks}
+                onUpdate={handleUpdateTask}
+                onDelete={handleDeleteTask}
+                onClose={handleCloseDetail}
+                onIndent={handleIndent}
+                onOutdent={handleOutdent}
+                onSelect={handleSelectTask}
+                onAddSubtask={handleAddSubtask}
+                onToggleSubtask={handleToggleTask}
+                onReorder={handleReorder}
+                onNavigatePrev={
+                  selectedTaskIdx > 0
+                    ? () => handleSelectTask(visibleTasks[selectedTaskIdx - 1].id)
+                    : undefined
+                }
+                onNavigateNext={
+                  selectedTaskIdx >= 0 && selectedTaskIdx < visibleTasks.length - 1
+                    ? () => handleSelectTask(visibleTasks[selectedTaskIdx + 1].id)
+                    : undefined
+                }
+                onOpenFullPage={(id) => handleNavigate("task", id)}
+                hasPrev={selectedTaskIdx > 0}
+                hasNext={selectedTaskIdx >= 0 && selectedTaskIdx < visibleTasks.length - 1}
+                projectName={selectedTaskProjectName}
+                availableTags={availableTags}
+                comments={taskComments}
+                activity={taskActivity}
+                onAddComment={handleAddComment}
+                onUpdateComment={handleUpdateComment}
+                onDeleteComment={handleDeleteComment}
+              />
+            </Suspense>
+          </ErrorBoundary>
+        )}
+
+        {children}
+      </AppStateProvider>
     </div>
   );
 }

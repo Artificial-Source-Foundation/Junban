@@ -20,11 +20,10 @@ describe("StatusBar", () => {
     mockUseDirectServices.mockReturnValue(true);
   });
 
-  it("renders empty state when no status bar items", () => {
+  it("does not render when no status bar items exist", () => {
     mockUsePluginContext.mockReturnValue({ statusBarItems: [] });
     const { container } = render(<StatusBar />);
-    // Always renders the bar for consistent layout; content is invisible
-    expect(container.firstChild).not.toBeNull();
+    expect(container.firstChild).toBeNull();
   });
 
   it("renders status bar items with icon and text", () => {

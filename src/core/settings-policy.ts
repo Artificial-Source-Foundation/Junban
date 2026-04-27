@@ -24,6 +24,7 @@ export const WRITABLE_SETTING_KEYS = new Set<string>([
   "sound_reminder",
   "calendar_default_mode",
   "font_family",
+  "developer_mode",
   // Feature toggles
   "feature_sections",
   "feature_kanban",

@@ -1,6 +1,6 @@
 # CLI Module Documentation
 
-The `src/cli/` directory implements the Junban CLI companion tool. It uses Commander.js for command registration and shares the same core services as the UI through the `bootstrap()` function.
+The `src/cli/` directory implements the Junban CLI companion tool. It uses Commander.js for command registration and shares the same core services as the UI through the `bootstrap()` function. Built packages expose the `junban` binary from `dist/cli/index.js`.
 
 ## Start Here
 
@@ -28,12 +28,12 @@ The long-lived Node runtime owner in `src/backend/node-runtime.ts` is primarily 
 
 ## Files
 
-Invocation note: the examples below use the repository script form (`pnpm cli -- ...`) because that is the default contributor workflow in this repo. If you installed the CLI as `junban`, the same commands work without the `pnpm cli --` prefix.
+Invocation note: the examples below use the repository script form (`pnpm cli -- ...`) because that is the default contributor workflow in this repo. If you installed the CLI as `junban`, the same commands work without the `pnpm cli --` prefix. The package `bin` field maps `junban` to `dist/cli/index.js`.
 
 ### `index.ts`
 
 **Path:** `src/cli/index.ts`
-**Purpose:** CLI entry point. Registers all commands with Commander.js and bootstraps the application services. Each command handler is dynamically imported to minimize startup time.
+**Purpose:** CLI entry point. Registers all commands with Commander.js and lazily bootstraps the application services only when a command runs. Each command handler is dynamically imported to minimize startup time and keep `--help`/`--version` independent from database startup.
 
 **Key Exports:** None (side-effect: parses process.argv and executes commands)
 
@@ -48,6 +48,8 @@ Invocation note: the examples below use the repository script form (`pnpm cli --
 - `junban done <id>` -- complete a task
 - `junban edit <id>` -- edit a task
 - `junban delete <id>` -- delete a task
+- `junban tools` -- list registered AI/agent tools
+- `junban tool <name>` -- execute a registered AI/agent tool with JSON arguments
 
 ---
 
@@ -198,6 +200,42 @@ pnpm cli -- delete abc12345 --json
 **Options:**
 
 - `--json` -- output as JSON
+
+---
+
+### `commands/tools.ts`
+
+**Path:** `src/cli/commands/tools.ts`
+**Purpose:** Handles the agent-oriented CLI surface. `tools` lists every registered `ToolRegistry` definition. `tool <name>` validates JSON arguments against that tool's JSON Schema and executes the tool with a shared `ToolContext`.
+
+**Key Exports:**
+
+- `listTools(services, options)`
+- `runTool(name, services, options)`
+
+**Key Dependencies:** `ToolRegistry`, `jsonSchemaToZod`, `createToolContext`, `AppServices`
+
+**Usage:**
+
+```bash
+pnpm cli -- tools --json
+pnpm cli -- tool create_task --args '{"title":"Review roadmap","priority":2}'
+pnpm cli -- tool create_task --args '{"title":"Review roadmap","priority":2}' --json
+pnpm cli -- tool create_task --args-file ./tool-args.json
+printf '%s' '{"title":"Follow up"}' | pnpm cli -- tool create_task --args-file -
+```
+
+**Options:**
+
+- `tools --json` -- output the tool definitions as JSON
+- `tool --args <json>` -- pass a JSON object directly
+- `tool --args-file <path>` -- read a JSON object from a file, or `-` for stdin
+- `tool --json` -- wrap the tool response in `{ "success": true, "result": ... }`
+
+Design notes:
+
+- The CLI intentionally mirrors the same registered tool registry that MCP exposes, so agents without MCP support still get broad task/project/tag/planning/analytics control from the terminal.
+- Arguments are validated before execution to avoid accidental malformed writes.
 
 ---
 

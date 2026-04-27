@@ -18,6 +18,12 @@ interface DataTabProps {
   mutationsBlocked?: boolean;
 }
 
+function remoteAccessErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string" && err.trim()) return err;
+  return fallback;
+}
+
 export function DataTab({ mutationsBlocked = false }: DataTabProps) {
   // Use the authoritative combined lock state: mutationsBlocked OR readOnly from context
   const { readOnly } = useGeneralSettings();
@@ -40,7 +46,7 @@ function RemoteAccessSection() {
     localUrl: null,
   });
   const [config, setConfig] = useState<DesktopRemoteServerConfig>({
-    port: 4822,
+    port: 4823,
     autoStart: false,
     passwordEnabled: false,
     hasPassword: false,
@@ -123,7 +129,7 @@ function RemoteAccessSection() {
       return nextConfig;
     } catch (err) {
       console.error("[settings:data] Failed to save remote access config:", err);
-      setError("Could not save remote access settings.");
+      setError(remoteAccessErrorMessage(err, "Could not save remote access settings."));
       return null;
     } finally {
       setSaving(false);
@@ -148,7 +154,7 @@ function RemoteAccessSection() {
       );
     } catch (err) {
       console.error("[settings:data] Failed to start remote server:", err);
-      setError(err instanceof Error ? err.message : "Could not start remote access.");
+      setError(remoteAccessErrorMessage(err, "Could not start remote access."));
     } finally {
       setLoading(false);
     }
@@ -163,7 +169,7 @@ function RemoteAccessSection() {
       setMessage("Remote access stopped.");
     } catch (err) {
       console.error("[settings:data] Failed to stop remote server:", err);
-      setError("Could not stop remote access.");
+      setError(remoteAccessErrorMessage(err, "Could not stop remote access."));
     } finally {
       setLoading(false);
     }

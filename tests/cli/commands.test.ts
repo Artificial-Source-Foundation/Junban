@@ -8,6 +8,9 @@ import { listTasks } from "../../src/cli/commands/list.js";
 import { doneTask } from "../../src/cli/commands/done.js";
 import { editTask } from "../../src/cli/commands/edit.js";
 import { deleteTask } from "../../src/cli/commands/delete.js";
+import { listTools, runTool } from "../../src/cli/commands/tools.js";
+import { StatsService } from "../../src/core/stats.js";
+import { createDefaultToolRegistry } from "../../src/ai/tool-registry.js";
 
 describe("CLI commands", () => {
   let services: AppServices;
@@ -17,7 +20,11 @@ describe("CLI commands", () => {
 
   beforeEach(() => {
     const testServices = createTestServices();
-    services = testServices;
+    services = {
+      ...testServices,
+      statsService: new StatsService(testServices.storage),
+      toolRegistry: createDefaultToolRegistry(),
+    } as AppServices;
     taskService = testServices.taskService;
     _projectService = testServices.projectService;
     logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
@@ -85,6 +92,12 @@ describe("CLI commands", () => {
 
       expect(logSpy).toHaveBeenCalledOnce();
       expect(logSpy.mock.calls[0][0]).toContain("buy milk");
+    });
+
+    it("fails when JSON project filter does not exist", async () => {
+      await expect(listTasks({ project: "missing", json: true }, services)).rejects.toThrow(
+        "Project not found: missing",
+      );
     });
   });
 
@@ -166,6 +179,51 @@ describe("CLI commands", () => {
       expect(logSpy).toHaveBeenCalledOnce();
       const output = JSON.parse(logSpy.mock.calls[0][0]);
       expect(output.deleted).toBe(true);
+    });
+  });
+
+  describe("tools", () => {
+    it("lists registered AI tools as JSON", async () => {
+      await listTools(services, { json: true });
+
+      expect(logSpy).toHaveBeenCalledOnce();
+      const output = JSON.parse(logSpy.mock.calls[0][0]);
+      expect(output.some((tool: { name: string }) => tool.name === "create_task")).toBe(true);
+      expect(output.some((tool: { name: string }) => tool.name === "query_tasks")).toBe(true);
+    });
+
+    it("runs a registered tool with validated JSON arguments", async () => {
+      await runTool("create_task", services, {
+        args: '{"title":"Agent-created task","priority":2}',
+      });
+
+      expect(logSpy).toHaveBeenCalledOnce();
+      const output = JSON.parse(logSpy.mock.calls[0][0]);
+      expect(output.success).toBe(true);
+      expect(output.task.title).toBe("Agent-created task");
+
+      const tasks = await taskService.list();
+      expect(tasks).toHaveLength(1);
+      expect(tasks[0].title).toBe("Agent-created task");
+    });
+
+    it("wraps tool output in a stable JSON envelope", async () => {
+      await runTool("create_task", services, {
+        args: '{"title":"Envelope task","priority":2}',
+        json: true,
+      });
+
+      expect(logSpy).toHaveBeenCalledOnce();
+      const output = JSON.parse(logSpy.mock.calls[0][0]);
+      expect(output.success).toBe(true);
+      expect(output.result.success).toBe(true);
+      expect(output.result.task.title).toBe("Envelope task");
+    });
+
+    it("rejects invalid tool arguments before execution", async () => {
+      await expect(runTool("create_task", services, { args: "{}" })).rejects.toThrow(
+        "Invalid arguments for create_task",
+      );
     });
   });
 });

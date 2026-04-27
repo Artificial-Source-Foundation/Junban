@@ -37,4 +37,3 @@ This directory is the technical reference library. If you are looking for a guid
 - Canonical docs map: [`../README.md`](../README.md)
 - Public docs manifest: [`../manifest.md`](../manifest.md)
 - Contributor and maintainer workflows: [`../guides/CONTRIBUTING.md`](../guides/CONTRIBUTING.md), [`../guides/MAINTAINERS.md`](../guides/MAINTAINERS.md)
-- Historical IA planning baseline (secondary): [`../guides/DOCS_IA_AUDIT.md`](../guides/DOCS_IA_AUDIT.md)

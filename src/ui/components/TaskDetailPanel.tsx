@@ -186,14 +186,14 @@ export function TaskDetailPanel({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       role="dialog"
       aria-modal="true"
       aria-label="Task details"
       onClick={onClose}
     >
       <div
-        className="bg-surface shadow-xl border border-border flex flex-col fixed bottom-0 left-0 right-0 h-[85vh] max-h-[calc(100vh-var(--height-bottom-nav))] rounded-t-xl md:relative md:inset-auto md:rounded-lg md:w-full md:max-w-4xl md:h-[85vh] md:max-h-[85vh] md:mx-4 animate-slide-up-fade md:animate-scale-fade-in"
+        className="bg-surface shadow-xl border border-border flex flex-col fixed bottom-0 left-0 right-0 h-[85vh] max-h-[calc(100vh-var(--height-bottom-nav))] rounded-t-xl md:relative md:inset-auto md:rounded-lg md:w-full md:max-w-4xl md:h-[85vh] md:max-h-[85vh] md:mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

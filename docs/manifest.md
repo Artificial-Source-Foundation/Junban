@@ -1,6 +1,6 @@
 # Documentation Manifest
 
-This manifest lists the public-facing documentation surface that currently exists in this repository.
+This manifest inventories the public-facing documentation surface that currently exists in this repository.
 
 The repository already treats [`README.md`](README.md) as the documentation ownership map and [`reference/README.md`](reference/README.md) as the technical reference index. This file is an inventory, not a second governance document.
 
@@ -25,8 +25,48 @@ The repository already treats [`README.md`](README.md) as the documentation owne
 | [`explanation/storage-model.md`](explanation/storage-model.md) | Explanation | Explains the SQLite and Markdown persistence tradeoffs |
 | [`explanation/plugin-system.md`](explanation/plugin-system.md) | Explanation | Explains plugin loading, permission approval, and sandbox boundaries |
 | [`explanation/ai-and-mcp.md`](explanation/ai-and-mcp.md) | Explanation | Explains how AI tools and the MCP server reuse the same service layer |
-| [`reference/README.md`](reference/README.md) | Reference index | Existing canonical technical reference library |
-| [`reference/backend/CONFIG.md`](reference/backend/CONFIG.md) | Reference | Canonical environment and runtime configuration reference |
+| [`reference/README.md`](reference/README.md) | Reference index | Canonical technical reference library |
+
+## Technical Reference Inventory
+
+The reference library is public and canonical for implementation details. It is listed separately from the Diataxis routing surface so this manifest can stay useful without duplicating the ownership rules in [`README.md`](README.md).
+
+### Frontend Reference
+
+| Page | Why it exists |
+| --- | --- |
+| [`reference/frontend/API_LAYER.md`](reference/frontend/API_LAYER.md) | Frontend API/direct-service access patterns |
+| [`reference/frontend/COMPONENTS.md`](reference/frontend/COMPONENTS.md) | React component responsibilities and integration points |
+| [`reference/frontend/CONTEXT.md`](reference/frontend/CONTEXT.md) | Context-provider ownership and state boundaries |
+| [`reference/frontend/HOOKS.md`](reference/frontend/HOOKS.md) | Custom hook responsibilities and integration points |
+| [`reference/frontend/SHORTCUTS.md`](reference/frontend/SHORTCUTS.md) | Keyboard shortcut map and customization behavior |
+| [`reference/frontend/THEMES.md`](reference/frontend/THEMES.md) | Theme tokens, CSS variables, and theme loading |
+| [`reference/frontend/VIEWS.md`](reference/frontend/VIEWS.md) | Screen-level view composition and routing |
+
+### Backend Reference
+
+| Page | Why it exists |
+| --- | --- |
+| [`reference/backend/AI.md`](reference/backend/AI.md) | AI chat, providers, tools, and runtime integration |
+| [`reference/backend/API.md`](reference/backend/API.md) | Hono route modules and HTTP API surface |
+| [`reference/backend/CLI.md`](reference/backend/CLI.md) | Commander CLI commands and behavior |
+| [`reference/backend/CONFIG.md`](reference/backend/CONFIG.md) | Environment and runtime configuration reference |
+| [`reference/backend/CORE.md`](reference/backend/CORE.md) | Domain services, types, and core logic |
+| [`reference/backend/DATABASE.md`](reference/backend/DATABASE.md) | Drizzle schema, migrations, and SQLite persistence |
+| [`reference/backend/MCP.md`](reference/backend/MCP.md) | MCP server bridge, tools, resources, and prompts |
+| [`reference/backend/PARSER.md`](reference/backend/PARSER.md) | Natural-language task parsing syntax and pipeline |
+| [`reference/backend/PLUGINS.md`](reference/backend/PLUGINS.md) | Plugin runtime internals, policies, and cleanup |
+| [`reference/backend/STORAGE.md`](reference/backend/STORAGE.md) | Storage interface and backend implementations |
+| [`reference/backend/UTILS.md`](reference/backend/UTILS.md) | Shared utility modules |
+| [`reference/backend/VOICE.md`](reference/backend/VOICE.md) | STT/TTS providers, voice registry, and audio utilities |
+
+### Plugin Author Reference
+
+| Page | Why it exists |
+| --- | --- |
+| [`reference/plugins/README.md`](reference/plugins/README.md) | Plugin-author onboarding and routing |
+| [`reference/plugins/API.md`](reference/plugins/API.md) | Public plugin API contract |
+| [`reference/plugins/EXAMPLES.md`](reference/plugins/EXAMPLES.md) | Plugin examples and authoring patterns |
 
 ## Canonical Sources
 
@@ -36,18 +76,17 @@ The repository already treats [`README.md`](README.md) as the documentation owne
 | [`reference/README.md`](reference/README.md) | Technical reference routing |
 | [`guides/`](guides/) | Contributor and maintainer workflows |
 | [`product/README.md`](product/README.md) | Product-facing mission, roadmap, and status |
-| [`internal/README.md`](internal/README.md) | Internal planning and sprint artifacts |
 
 ## Scope Notes
 
 - Public Diataxis pages may link to `docs/guides/`, `docs/reference/`, and selected `docs/product/` pages.
-- Public Diataxis pages should not rely on `docs/internal/` as a source for product claims or stable workflows.
+- Public Diataxis pages should describe stable user and developer workflows, not sprint plans or private backlog detail.
 - Reference details remain authoritative in `docs/reference/`; Diataxis pages summarize and route.
 - If a workflow appears incomplete or explicitly marked future-facing in the repository, it should be omitted or described as tentative.
 
 ## Planned Content Expansion
 
-The remaining major public-facing gap after this pass is mostly additional conceptual coverage, not basic navigation or workflow docs. The deepest technical details continue to live in the existing canonical reference library under `docs/reference/`.
+The remaining major public-facing gap after this pass is mostly additional conceptual coverage, not basic navigation or workflow docs. The deepest technical details continue to live in the canonical reference library under `docs/reference/`.
 
 ## Legacy Compatibility Paths
 
