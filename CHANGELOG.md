@@ -7,9 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+No unreleased changes yet.
+
+## [1.0.6] — 2026-05-01
+
+Patch release to publish the current packaged desktop build and installer flow.
+
 ### Added
 
 - **Linux installer helper** — `scripts/install-linux.sh` installs the latest `.deb` on Debian/Ubuntu or the latest AppImage on other Linux distributions.
+
+### Fixed
+
+- Published desktop installers now use the visible app name `Junban` instead of stale `ASF Junban` release branding.
+- Packaged desktop installs now ship the sidecar-backed local backend runtime so the installed app can load tasks instead of using the stale direct browser database path from `v1.0.5`.
+- The release workflow now rejects uploaded installer asset names that still contain stale visible `ASF Junban` branding.
+
+## [1.0.5] — 2026-04-18
+
+Maintenance release with desktop packaging and product cleanup before the sidecar-backed desktop runtime.
+
+### Added
+
 - **DevOps hardening** — graceful shutdown (SIGTERM/SIGINT) with plugin unload, uncaught exception handlers, Husky + lint-staged pre-commit hooks, `.nvmrc` for Node 22, Dependabot config, `.github/SECURITY.md` vulnerability reporting policy
 - **OpenRouter model filtering** — model dropdown dynamically filters to tool-capable models only (via `supported_parameters.includes("tools")`), sorted alphabetically with clean display names
 - **API key encryption** — AES-256-GCM encryption for API keys at rest
@@ -88,3 +107,5 @@ First stable public release.
 [1.0.0]: https://github.com/Artificial-Source/Junban/releases/tag/v1.0.0
 [1.0.1]: https://github.com/Artificial-Source/Junban/releases/tag/v1.0.1
 [1.0.2]: https://github.com/Artificial-Source/Junban/releases/tag/v1.0.2
+[1.0.5]: https://github.com/Artificial-Source/Junban/releases/tag/v1.0.5
+[1.0.6]: https://github.com/Artificial-Source/Junban/releases/tag/v1.0.6

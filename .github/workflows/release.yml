@@ -73,8 +73,8 @@ jobs:
           grep -q '"identifier": "com.asf.junban"' src-tauri/tauri.conf.json
           grep -q 'Artificial-Source/Junban/releases/latest/download/latest.json' src-tauri/tauri.conf.json
 
-          if grep -nE 'asf-saydo|asf_saydo_lib|ASF Saydo|com\.asf\.saydo|ASF-GROUP/Saydo' package.json src-tauri/Cargo.toml src-tauri/tauri.conf.json; then
-            echo "Stale pre-Junban branding is still present in release metadata" >&2
+          if grep -nE 'asf-saydo|asf_saydo_lib|ASF Saydo|ASF Junban|com\.asf\.saydo|ASF-GROUP/Saydo' package.json src-tauri/Cargo.toml src-tauri/tauri.conf.json; then
+            echo "Stale visible branding is still present in release metadata" >&2
             exit 1
           fi
 
@@ -273,9 +273,9 @@ jobs:
 
             core.info(`Draft release assets: ${assetNames.join(", ")}`);
 
-            const staleAsset = assetNames.find((name) => /saydo|docket/i.test(name));
+            const staleAsset = assetNames.find((name) => /saydo|docket|asf[ ._-]?junban/i.test(name));
             if (staleAsset) {
-              core.setFailed(`Draft release still contains stale branding: ${staleAsset}`);
+              core.setFailed(`Draft release still contains stale visible branding: ${staleAsset}`);
               return;
             }
 

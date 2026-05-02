@@ -41,9 +41,6 @@ fs.writeFileSync(cargoPath, cargo);
 const sourcesPath = path.join(root, "sources.json");
 const sources = JSON.parse(fs.readFileSync(sourcesPath, "utf-8"));
 sources.lastUpdated = new Date().toISOString().split("T")[0];
-for (const p of sources.plugins) {
-  p.minJunbanVersion = VERSION;
-}
 fs.writeFileSync(sourcesPath, JSON.stringify(sources, null, 2) + "\n");
 
 console.log(`Updated release version references to ${VERSION}`);

@@ -31,12 +31,17 @@ function expectIconFile(relativePath: string) {
 describe("Tauri desktop configuration", () => {
   it("uses a frameless main window with the expected desktop sidecar hooks", () => {
     const config = readJson<{
+      productName: string;
+      version: string;
       build: Record<string, string>;
       app: { windows: Array<Record<string, unknown>> };
       bundle: { externalBin: string[]; resources: string[]; icon: string[] };
     }>("src-tauri/tauri.conf.json");
+    const pkg = readJson<{ version: string }>("package.json");
 
     const mainWindow = config.app.windows.find((window) => window.label === "main");
+    expect(config.productName).toBe("Junban");
+    expect(config.version).toBe(pkg.version);
     expect(mainWindow).toMatchObject({
       title: "Junban",
       decorations: false,
@@ -48,6 +53,35 @@ describe("Tauri desktop configuration", () => {
     for (const iconPath of config.bundle.icon) {
       expectIconFile(iconPath);
     }
+  });
+
+  it("keeps release branding metadata aligned with Junban", () => {
+    const configText = fs.readFileSync(path.join(rootDir, "src-tauri/tauri.conf.json"), "utf8");
+    const capabilityText = fs.readFileSync(
+      path.join(rootDir, "src-tauri/capabilities/default.json"),
+      "utf8",
+    );
+    const cargoText = fs.readFileSync(path.join(rootDir, "src-tauri/Cargo.toml"), "utf8");
+    const defaultsText = fs.readFileSync(
+      path.join(rootDir, "src", "config", "defaults.ts"),
+      "utf8",
+    );
+    const packageText = fs.readFileSync(path.join(rootDir, "package.json"), "utf8");
+    const pkg = readJson<{ name: string; version: string }>("package.json");
+    const config = readJson<{ productName: string; version: string; identifier: string }>(
+      "src-tauri/tauri.conf.json",
+    );
+
+    expect(pkg.name).toBe("asf-junban");
+    expect(config.productName).toBe("Junban");
+    expect(config.identifier).toBe("com.asf.junban");
+    expect(config.version).toBe(pkg.version);
+    expect(cargoText).toContain(`name = "${pkg.name}"`);
+    expect(cargoText).toContain(`version = "${pkg.version}"`);
+    expect(defaultsText).toContain(`APP_VERSION = "${pkg.version}"`);
+    expect(`${configText}\n${capabilityText}\n${cargoText}\n${packageText}`).not.toMatch(
+      /ASF Junban/,
+    );
   });
 
   it("grants the main window permissions needed by the custom titlebar", () => {

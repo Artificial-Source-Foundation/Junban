@@ -9,7 +9,12 @@ This guide describes how Junban desktop releases, in-app updates, changelog entr
 - Tauri update metadata is served from `releases/latest/download/latest.json`.
 - The desktop app checks that metadata from `Settings -> About`.
 - When an update is available, the app can download, install, and relaunch itself.
-- The release workflow now fails if package metadata still uses pre-Junban branding or if `latest.json` is missing from the draft release.
+- The release workflow now fails if package metadata still uses pre-Junban branding, if uploaded installer asset names still expose stale visible `ASF Junban` branding, or if `latest.json` is missing from the draft release.
+
+## Branding Boundaries
+
+- User-visible names should be `Junban` in window titles, launcher entries, installer asset names, and release titles.
+- Technical identifiers such as the npm/Cargo package name `asf-junban` and bundle identifier `com.asf.junban` intentionally keep the owner namespace for upgrade continuity and collision avoidance.
 
 ## Where User Data Lives
 
@@ -74,7 +79,7 @@ This guide describes how Junban desktop releases, in-app updates, changelog entr
 - Local `pnpm tauri:build` runs the same sidecar validation before Tauri bundles desktop artifacts.
 - `Dependency Review` runs on pull requests to flag risky dependency updates.
 - `Release` can run from a pushed tag or manual dispatch, but it only proceeds when the tag resolves to a commit already present on `main`.
-- `Release` now also verifies package metadata still says `Junban` and confirms the draft release includes installer assets plus `latest.json` before publishing.
+- `Release` now also verifies package metadata still says `Junban`, blocks stale visible `ASF Junban` installer asset names, and confirms the draft release includes installer assets plus `latest.json` before publishing.
 
 ## Current Limits
 
