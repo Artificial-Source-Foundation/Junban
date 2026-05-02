@@ -15,6 +15,7 @@ type RunOptions = {
   includeAptGet?: boolean;
   includeSudo?: boolean;
   isRoot?: boolean;
+  seedStaleLaunchers?: boolean;
 };
 
 type MockBinOptions = {
@@ -148,6 +149,7 @@ function runInstaller({
   includeAptGet = false,
   includeSudo = false,
   isRoot = true,
+  seedStaleLaunchers = false,
 }: RunOptions = {}) {
   const tempDir = createTempDir();
   const mockBin = path.join(tempDir, "bin");
@@ -156,6 +158,12 @@ function runInstaller({
   fs.mkdirSync(logDir, { recursive: true });
   if (homeDir) {
     fs.mkdirSync(homeDir, { recursive: true });
+    if (seedStaleLaunchers) {
+      const applicationsDir = path.join(homeDir, ".local", "share", "applications");
+      fs.mkdirSync(applicationsDir, { recursive: true });
+      fs.writeFileSync(path.join(applicationsDir, "junban.desktop"), "stale lowercase launcher\n");
+      fs.writeFileSync(path.join(applicationsDir, "Junban.desktop"), "stale appimage launcher\n");
+    }
   }
   createMockBin(mockBin, { includeAptGet, includeSudo, isRoot });
 
@@ -166,6 +174,7 @@ function runInstaller({
     "JUNBAN_OS_RELEASE_FILE",
     "JUNBAN_RELEASE_API",
     "JUNBAN_REPO",
+    "XDG_DATA_HOME",
   ]) {
     delete env[key];
   }
@@ -227,6 +236,15 @@ describe("Linux installer", () => {
     expect(fs.readFileSync(path.join(logDir, "apt-get.args"), "utf8").trim()).toMatch(
       /^install -y .*junban-latest-amd64\.deb$/,
     );
+    expect(
+      fs.readFileSync(
+        path.join(homeDir!, ".local", "share", "applications", "Junban.desktop"),
+        "utf8",
+      ),
+    ).toContain('Exec="asf-junban"');
+    expect(
+      fs.existsSync(path.join(homeDir!, ".local", "share", "applications", "junban.desktop")),
+    ).toBe(false);
     expect(fs.existsSync(path.join(homeDir!, "Applications", "Junban.AppImage"))).toBe(false);
   });
 
@@ -254,17 +272,22 @@ describe("Linux installer", () => {
   });
 
   it("installs the AppImage and desktop entry when apt-get is unavailable", () => {
-    const { homeDir, result } = runInstaller({ args: ["--auto"] });
+    const { homeDir, result } = runInstaller({ args: ["--auto"], seedStaleLaunchers: true });
     expect(homeDir).toBeTruthy();
 
     const appimagePath = path.join(homeDir!, "Applications", "Junban.AppImage");
-    const desktopPath = path.join(homeDir!, ".local", "share", "applications", "junban.desktop");
+    const applicationsDir = path.join(homeDir!, ".local", "share", "applications");
+    const desktopPath = path.join(applicationsDir, "Junban.desktop");
+    const legacyHiddenPath = path.join(applicationsDir, "ASF Junban.desktop");
 
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toContain("Downloading Junban AppImage");
     expect(fs.readFileSync(appimagePath, "utf8")).toBe("appimage asset\n");
     expect(fs.statSync(appimagePath).mode & 0o111).toBeGreaterThan(0);
     expect(fs.readFileSync(desktopPath, "utf8")).toContain(`Exec="${appimagePath}"`);
+    expect(fs.readFileSync(desktopPath, "utf8")).toContain("Icon=asf-junban");
+    expect(fs.existsSync(path.join(applicationsDir, "junban.desktop"))).toBe(false);
+    expect(fs.readFileSync(legacyHiddenPath, "utf8")).toContain("Hidden=true");
   });
 
   it("rejects empty downloaded AppImage assets", () => {
@@ -286,7 +309,7 @@ describe("Linux installer", () => {
     expect(homeDir).toBeTruthy();
 
     const appimagePath = path.join(installDir, "Junban.AppImage");
-    const desktopPath = path.join(homeDir!, ".local", "share", "applications", "junban.desktop");
+    const desktopPath = path.join(homeDir!, ".local", "share", "applications", "Junban.desktop");
     const escapedAppimagePath = appimagePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 
     expect(result.status, result.stderr).toBe(0);

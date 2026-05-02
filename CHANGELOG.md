@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-No unreleased changes yet.
+### Fixed
+
+- Linux installer now refreshes a single `Junban` launcher entry and removes stale local AppImage launcher files that could create duplicate app finder results.
 
 ## [1.0.9] — 2026-05-02
 

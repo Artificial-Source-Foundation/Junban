@@ -148,32 +148,61 @@ install_deb() {
 
   info "Installing Junban with apt-get"
   run_as_root apt-get install -y "$deb_file"
+  configure_user_launcher "asf-junban"
 
   info "Junban installed. Launch it from your app menu."
 }
 
-write_desktop_entry() {
-  appimage_path="$1"
-  escaped_appimage_path="$(printf '%s' "$appimage_path" | sed 's/\\/\\\\/g; s/"/\\"/g')"
-  applications_dir="${XDG_DATA_HOME:-${HOME}/.local/share}/applications"
-  desktop_file="${applications_dir}/junban.desktop"
+refresh_desktop_database() {
+  applications_dir="$1"
+  if command_exists update-desktop-database; then
+    update-desktop-database "$applications_dir" >/dev/null 2>&1 || true
+  fi
+}
 
-  mkdir -p "$applications_dir"
+write_legacy_hidden_desktop_entry() {
+  applications_dir="$1"
+  legacy_desktop_file="${applications_dir}/ASF Junban.desktop"
+
+  {
+    printf '%s\n' '[Desktop Entry]'
+    printf '%s\n' 'Type=Application'
+    printf '%s\n' 'Name=ASF Junban'
+    printf '%s\n' 'Hidden=true'
+  } >"$legacy_desktop_file"
+  chmod 644 "$legacy_desktop_file"
+}
+
+write_desktop_entry() {
+  applications_dir="$1"
+  exec_command="$2"
+  escaped_exec_command="$(printf '%s' "$exec_command" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+  desktop_file="${applications_dir}/Junban.desktop"
+
+  rm -f "${applications_dir}/junban.desktop"
   {
     printf '%s\n' '[Desktop Entry]'
     printf '%s\n' 'Type=Application'
     printf '%s\n' 'Name=Junban'
-    printf '%s\n' 'Comment=Local-first task manager'
-    printf 'Exec="%s"\n' "$escaped_appimage_path"
+    printf '%s\n' 'Comment=Junban - Open-source local-first task management'
+    printf 'Exec="%s"\n' "$escaped_exec_command"
+    printf '%s\n' 'Icon=asf-junban'
     printf '%s\n' 'Terminal=false'
-    printf '%s\n' 'Categories=Office;Utility;'
-    printf '%s\n' 'StartupWMClass=Junban'
+    printf '%s\n' 'Categories=Office;ProjectManagement;'
+    printf '%s\n' 'StartupWMClass=asf-junban'
   } >"$desktop_file"
   chmod 644 "$desktop_file"
+}
 
-  if command_exists update-desktop-database; then
-    update-desktop-database "$applications_dir" >/dev/null 2>&1 || true
-  fi
+configure_user_launcher() {
+  exec_command="$1"
+  [ -n "${HOME:-}" ] || return 0
+
+  applications_dir="${XDG_DATA_HOME:-${HOME}/.local/share}/applications"
+  mkdir -p "$applications_dir"
+  write_desktop_entry "$applications_dir" "$exec_command"
+  write_legacy_hidden_desktop_entry "$applications_dir"
+  refresh_desktop_database "$applications_dir"
 }
 
 install_appimage() {
@@ -190,7 +219,7 @@ install_appimage() {
   curl -fL "$appimage_url" -o "$appimage_path"
   [ -s "$appimage_path" ] || die "downloaded AppImage asset is empty"
   chmod +x "$appimage_path"
-  write_desktop_entry "$appimage_path"
+  configure_user_launcher "$appimage_path"
 
   info "Junban AppImage installed. Launch it from your app menu or run: ${appimage_path}"
 }
