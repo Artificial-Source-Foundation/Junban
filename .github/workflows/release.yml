@@ -131,7 +131,7 @@ jobs:
 
       - name: Create draft release
         id: create
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           RELEASE_BODY: ${{ steps.changelog.outputs.body }}
         with:
@@ -289,7 +289,7 @@ jobs:
       contents: write
     steps:
       - name: Validate uploaded assets and updater metadata
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const { data } = await github.rest.repos.getRelease({
@@ -335,7 +335,7 @@ jobs:
       contents: write
     steps:
       - name: Publish release
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.repos.updateRelease({
