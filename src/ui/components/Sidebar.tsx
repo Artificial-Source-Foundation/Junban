@@ -246,7 +246,7 @@ export function Sidebar({
     hasToolsContent,
     settings.sidebar_section_order,
     settings.sidebar_nav_order,
-    viewsBySlot.navigation,
+    viewsBySlot,
   ]);
 
   const handleDragEnd = useCallback(

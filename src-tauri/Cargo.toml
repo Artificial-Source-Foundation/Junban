@@ -10,13 +10,13 @@ name = "asf_junban_lib"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [build-dependencies]
-tauri-build = { version = "=2.5.5", features = [] }
+tauri-build = { version = "=2.6.0", features = [] }
 
 [dependencies]
-tauri = { version = "=2.10.2", features = [] }
-tauri-plugin-fs = "=2.4.5"
-tauri-plugin-dialog = "=2.6.0"
-tauri-plugin-updater = "=2.10.0"
+tauri = { version = "=2.11.0", features = [] }
+tauri-plugin-fs = "=2.5.1"
+tauri-plugin-dialog = "=2.7.1"
+tauri-plugin-updater = "=2.10.1"
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-shell = "2"
 axum = "0.8"
