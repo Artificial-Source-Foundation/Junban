@@ -63,9 +63,16 @@ function collectTextFiles(dir: string): string[] {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       if (
-        [".git", "node_modules", "dist", "coverage", ".wrangler", ".sst", "target"].includes(
-          entry.name,
-        )
+        [
+          ".git",
+          "node_modules",
+          "dist",
+          "dist-node",
+          "coverage",
+          ".wrangler",
+          ".sst",
+          "target",
+        ].includes(entry.name)
       ) {
         continue;
       }

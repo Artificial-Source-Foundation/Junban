@@ -5,7 +5,8 @@ This guide describes how Junban desktop releases, in-app updates, changelog entr
 ## What Ships to Users
 
 - Linux desktop installers are published on the GitHub Releases page.
-- Linux users can download and run `scripts/install-linux.sh` from the raw GitHub URL to install the latest `.deb` on Debian/Ubuntu or the latest AppImage elsewhere. The `.deb` path may ask for `sudo`; the AppImage path installs under the user's home directory without `sudo`.
+- Linux users can download and run `scripts/install-linux.sh` from the raw GitHub URL to install the latest `.deb` on Debian/Ubuntu or the latest AppImage elsewhere. The `.deb` path may ask for `sudo`; the AppImage path installs under the user's home directory without `sudo`; interactive runs can also offer to install CLI tools.
+- GitHub Releases include `junban-cli.tgz`, a separate CLI package tarball that can be installed with `npm install -g https://github.com/Artificial-Source/Junban/releases/latest/download/junban-cli.tgz` without an npm account or npm registry publish. Desktop packages do not install that shell command by themselves; the Linux helper installs it only when the user chooses the CLI tools option or passes `--with-cli`.
 - Tauri update metadata is served from `releases/latest/download/latest.json`.
 - The desktop app checks that metadata from `Settings -> About`.
 - When an update is available, the app can download, install, and relaunch itself.
@@ -61,7 +62,7 @@ This guide describes how Junban desktop releases, in-app updates, changelog entr
 3. Update versions with `pnpm release:prepare <version>` and move the relevant items from `Unreleased` into a new version section in `CHANGELOG.md` as part of that promotion.
 4. Merge the promotion PR into `main`.
 5. Tag the merged `main` commit as `v<version>`.
-6. Push the tag so GitHub Actions builds Linux installers and updater metadata.
+6. Push the tag so GitHub Actions builds Linux installers, the CLI package tarball, and updater metadata.
 7. Let the release workflow verify the tagged commit branding metadata and the uploaded draft assets.
 8. Review the draft GitHub release before publishing.
 
@@ -76,18 +77,21 @@ This guide describes how Junban desktop releases, in-app updates, changelog entr
 - `CI` runs on pushes to `developer` and `main`, and on pull requests targeting those branches.
 - The required quality gate is `Lint, Typecheck, Test & Packaging Smoke`.
 - Normal CI now runs `pnpm build`, `pnpm tauri:prepare-sidecar`, and `pnpm tauri:validate-sidecar` so pull requests fail before merge if the packaged desktop sidecar cannot be staged correctly.
+- `pnpm build` also runs `pnpm build:cli`, which emits the npm CLI package output under `dist-node/` without sharing Vite's frontend `dist/` directory.
 - Local `pnpm tauri:build` runs the same sidecar validation before Tauri bundles desktop artifacts.
 - `Dependency Review` runs on pull requests to flag risky dependency updates.
 - `Release` can run from a pushed tag or manual dispatch, but it only proceeds when the tag resolves to a commit already present on `main`.
-- `Release` now also verifies package metadata still says `Junban`, blocks stale visible `ASF Junban` Linux installer asset names, and confirms the draft release includes `.deb`, AppImage, and `latest.json` assets before publishing.
+- `Release` builds `junban-cli.tgz` with `npm pack`, smoke-tests a global install from the tarball, uploads it to the draft release, and verifies the draft release includes that CLI asset alongside `.deb`, AppImage, and `latest.json` assets before publishing.
+- `Release` also verifies package metadata still says `Junban` and blocks stale visible `ASF Junban` Linux installer asset names.
 
 ## Current Limits
 
 - Update checks are desktop-only.
 - Release notes shown in-app depend on the updater metadata / release body.
 - Automated release publishing is Linux-only for now. Windows and macOS builds should move to separate optional workflows once their packaging path is stable.
+- Automated npm registry publishing is not wired yet; the GitHub Release CLI tarball is the current no-registry CLI install channel. Publish to npm manually later only after `pnpm build:cli` and package smoke checks pass.
 - We do not yet publish checksums or detached verification steps in the README.
-- Linux package-manager based installs are not yet supported as an update channel; the install helper fetches release assets but does not configure an apt/yum/dnf repository.
+- Linux package-manager based installs are not yet supported as an update channel; the install helper fetches release assets but does not configure an apt/yum/dnf repository. Its optional CLI tools path installs the release tarball with the user's existing npm global prefix.
 
 ## Alpha Checklist
 

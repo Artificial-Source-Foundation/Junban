@@ -20,10 +20,10 @@ src/mcp/server.ts  (entry point)
     └── registerMcpPrompts()    → pre-built conversation starters
     |
     v
-bootstrap() → AppServices (same as CLI and web app)
+createNodeBackendRuntime() → AppServices + plugin runtime
 ```
 
-The MCP server reuses the exact same `bootstrap()` and `ToolRegistry` as the CLI and web app — zero business logic duplication.
+The MCP server reuses the same Node service factory and `ToolRegistry` as the CLI and web app, then initializes the Node runtime so plugin-contributed tools can load for long-lived agent sessions.
 
 ---
 
@@ -33,22 +33,9 @@ The MCP server reuses the exact same `bootstrap()` and `ToolRegistry` as the CLI
 pnpm mcp
 ```
 
-This starts the server on stdio (JSON-RPC). Use it as a manual smoke test or for clients that expect you to start the server yourself. Built packages also expose `junban-mcp` from `dist/mcp/server.js`. Claude Desktop and similar stdio clients can launch either process from config.
+This starts the server on stdio (JSON-RPC). Use it as a manual smoke test or for clients that expect you to start the server yourself. MCP packaging is separate from the npm `junban` CLI package; the current supported MCP client config launches the source-checkout script.
 
-For Claude Desktop with an installed package, add to `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "junban": {
-      "command": "junban-mcp",
-      "args": []
-    }
-  }
-}
-```
-
-For a source checkout, use the repo script form:
+For Claude Desktop, add to `claude_desktop_config.json`:
 
 ```json
 {
@@ -68,8 +55,8 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 const transport = new StdioClientTransport({
-  command: "junban-mcp",
-  args: [],
+  command: "pnpm",
+  args: ["--dir", "/path/to/junban", "mcp"],
 });
 
 const client = new Client({ name: "my-agent", version: "1.0.0" });
@@ -92,8 +79,8 @@ const today = await client.readResource({ uri: "junban://tasks/today" });
 ### `server.ts`
 
 **Path:** `src/mcp/server.ts`
-**Purpose:** Entry point. Redirects `console.log`/`console.warn`/`console.info` to stderr (stdio MCP requirement — only JSON-RPC on stdout). Calls `bootstrap()` to initialize services, creates `McpServer`, registers tools/resources/prompts, connects via `StdioServerTransport`.
-**Key Dependencies:** `bootstrap`, `McpServer`, `StdioServerTransport`
+**Purpose:** Entry point. Redirects `console.log`/`console.warn`/`console.info` to stderr (stdio MCP requirement — only JSON-RPC on stdout). Creates and initializes `NodeBackendRuntime`, creates `McpServer`, registers tools/resources/prompts, connects via `StdioServerTransport`.
+**Key Dependencies:** `createNodeBackendRuntime`, `McpServer`, `StdioServerTransport`
 
 ### `tools.ts`
 
@@ -227,7 +214,7 @@ Tests use `InMemoryTransport` from the MCP SDK to create a linked server/client 
 
 1. **Zero duplication**: Tools are registered by iterating `ToolRegistry.getDefinitions()` and delegating to `ToolRegistry.execute()`. No tool logic is reimplemented.
 
-2. **Same bootstrap**: The MCP server calls the same `bootstrap()` as the CLI, sharing identical service wiring.
+2. **Same service wiring**: The MCP server uses the same Node service factory as the CLI, with runtime initialization added for plugin lifecycle ownership.
 
 3. **JSON Schema → Zod bridge**: The existing tools define parameters as JSON Schema objects (for LLM providers). The MCP SDK expects Zod shapes. `schema-converter.ts` bridges the gap for the subset of JSON Schema our tools use.
 

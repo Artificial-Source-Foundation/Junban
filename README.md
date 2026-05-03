@@ -97,7 +97,7 @@ Linux quick install from the latest release:
 curl -fsSL https://raw.githubusercontent.com/Artificial-Source/Junban/main/scripts/install-linux.sh | sh
 ```
 
-The installer prints the detected distro, architecture, and selected install path. It uses the `.deb` on Debian/Ubuntu and the portable AppImage on other Linux distributions. It also refreshes the Junban launcher entry so the app menu shows a single `Junban` result. The `.deb` path explains and asks before using `sudo` because `apt-get` installs a system package.
+The installer prints the detected distro, architecture, and selected install path. It uses the `.deb` on Debian/Ubuntu and the portable AppImage on other Linux distributions. It also refreshes the Junban launcher entry so the app menu shows a single `Junban` result. The `.deb` path explains and asks before using `sudo` because `apt-get` installs a system package. When an interactive terminal is available, the helper also asks whether to install the optional CLI tools.
 
 If you want to choose the install type yourself:
 
@@ -111,7 +111,22 @@ To install without `sudo`, force the AppImage path:
 curl -fsSL https://raw.githubusercontent.com/Artificial-Source/Junban/main/scripts/install-linux.sh | sh -s -- --appimage
 ```
 
+To install the desktop app and CLI tools in one run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Artificial-Source/Junban/main/scripts/install-linux.sh | sh -s -- --with-cli
+```
+
 If you prefer the browser flow, download the `.deb` or `.AppImage` from the release page above and run the matching install step manually.
+
+CLI install stays available as a separate path too. The GitHub release includes a CLI package tarball, so users can install the terminal command without an npm account or npm registry publish:
+
+```bash
+npm install -g https://github.com/Artificial-Source/Junban/releases/latest/download/junban-cli.tgz
+junban --help
+```
+
+Both CLI install paths use the `npm` command as a package installer and require Node 22+. The desktop packages do not add `junban` to your shell `PATH` by themselves; the Linux helper installs it only when you choose the CLI tools option. See `docs/how-to/use-cli.md` for source-checkout usage and desktop database configuration.
 
 Desktop remote access:
 
@@ -190,8 +205,8 @@ Junban is designed so external AI agents can help manage tasks without sending y
 - `junban` gives humans and terminal-controlled agents a local command line interface.
 - `junban tools` lists the registered AI/agent tools, including task, project, tag, planning, organization, reminders, and analytics tools.
 - `junban tool <name> --args '{...}'` runs one registered tool with validated JSON arguments.
-- `junban-mcp` starts the local MCP server for Claude Desktop and other MCP-compatible agents.
-- In the desktop app, open `Settings -> Agent Tools` to copy or download MCP config and a small agent skill/instructions file.
+- MCP support is separate from CLI installation; use `pnpm mcp` from a source checkout for Claude Desktop and other MCP-compatible agents.
+- In the desktop app, open `Settings -> Agent Tools` to copy or download CLI-focused agent instructions and a separate source-checkout MCP config.
 
 Examples:
 
@@ -200,7 +215,6 @@ junban add "submit invoice tomorrow p1 #finance"
 junban list --today --json
 junban tools --json
 junban tool create_task --args '{"title":"Review roadmap","priority":2}' --json
-junban-mcp
 ```
 
 Docs:

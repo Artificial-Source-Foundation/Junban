@@ -3,21 +3,13 @@ import { Check, Copy, Download, ExternalLink, Terminal } from "lucide-react";
 import { APP_VERSION } from "../../../config/defaults.js";
 import { isTauri } from "../../../utils/tauri.js";
 
-const RELEASES_URL = "https://github.com/Artificial-Source/Junban/releases/latest";
 const MCP_DOCS_URL =
   "https://github.com/Artificial-Source/Junban/blob/main/docs/how-to/connect-claude-desktop.md";
 const CLI_DOCS_URL = "https://github.com/Artificial-Source/Junban/blob/main/docs/how-to/use-cli.md";
+const CLI_INSTALL_COMMAND =
+  "npm install -g https://github.com/Artificial-Source/Junban/releases/latest/download/junban-cli.tgz";
 
-const CLAUDE_CONFIG = `{
-  "mcpServers": {
-    "junban": {
-      "command": "junban-mcp",
-      "args": []
-    }
-  }
-}`;
-
-const SOURCE_CHECKOUT_CONFIG = `{
+const MCP_SOURCE_CHECKOUT_CONFIG = `{
   "mcpServers": {
     "junban": {
       "command": "pnpm",
@@ -33,14 +25,12 @@ Use Junban when the user wants to manage tasks, plan a day, review workload, or 
 ## Available local tools
 
 - CLI command: junban
-- MCP server command: junban-mcp
 
 ## Preferred behavior
 
-1. Use MCP first when your agent supports it.
-2. Use the CLI for simple terminal workflows.
-3. Use junban tools and junban tool <name> --args '{...}' when MCP is unavailable but terminal control is available.
-4. Keep task data local to the user's machine.
+1. Use the CLI for simple terminal workflows.
+2. Use junban tools and junban tool <name> --args '{...}' when terminal control is available.
+3. Keep task data local to the user's machine.
 
 ## Useful CLI examples
 
@@ -52,17 +42,9 @@ junban edit <task-id> --due "next friday"
 junban tools --json
 junban tool create_task --args '{"title":"Review roadmap","priority":2}'
 \`\`\`
-
-## MCP setup
-
-Add this server to your MCP client:
-
-\`\`\`json
-${CLAUDE_CONFIG}
-\`\`\`
 `;
 
-type DownloadTarget = "claude" | "skill" | "source";
+type DownloadTarget = "skill" | "mcpSource";
 
 async function downloadTextFile(filename: string, text: string): Promise<boolean> {
   if (isTauri()) {
@@ -100,12 +82,13 @@ async function downloadTextFile(filename: string, text: string): Promise<boolean
 
 function getDownload(target: DownloadTarget): { filename: string; text: string } {
   switch (target) {
-    case "claude":
-      return { filename: "junban-claude-mcp-config.json", text: CLAUDE_CONFIG };
-    case "source":
-      return { filename: "junban-source-checkout-mcp-config.json", text: SOURCE_CHECKOUT_CONFIG };
     case "skill":
       return { filename: "junban-agent-skill.md", text: AGENT_SKILL };
+    case "mcpSource":
+      return {
+        filename: "junban-source-checkout-mcp-config.json",
+        text: MCP_SOURCE_CHECKOUT_CONFIG,
+      };
   }
 }
 
@@ -156,23 +139,24 @@ export function AgentToolsTab() {
           <div>
             <h3 className="text-sm font-semibold text-on-surface">Agent Tools</h3>
             <p className="text-xs text-on-surface-muted">
-              Connect Junban to terminals, Claude Desktop, and other AI agents.
+              Connect Junban to terminals and local AI agents.
             </p>
           </div>
         </div>
       </div>
 
       <div className="rounded-xl border border-border bg-surface-secondary p-4">
-        <h4 className="text-sm font-semibold text-on-surface">Installed commands</h4>
+        <h4 className="text-sm font-semibold text-on-surface">CLI command</h4>
         <p className="mt-1 text-xs text-on-surface-muted">
-          Junban publishes two local commands after installation and build.
+          The GitHub release CLI package exposes one user command. Desktop packages do not add it to
+          PATH by themselves; the Linux helper can install it when you choose CLI tools.
         </p>
         <div className="mt-3 space-y-2 text-xs">
           <code className="block rounded-lg border border-border bg-surface px-3 py-2 text-on-surface-secondary">
-            junban
+            {CLI_INSTALL_COMMAND}
           </code>
           <code className="block rounded-lg border border-border bg-surface px-3 py-2 text-on-surface-secondary">
-            junban-mcp
+            junban
           </code>
         </div>
         <p className="mt-3 text-xs text-on-surface-muted">
@@ -182,17 +166,8 @@ export function AgentToolsTab() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         <SetupCard
-          title="Claude MCP config"
-          description="Use this when Junban is installed as a normal command."
-          target="claude"
-          copied={copied === "claude"}
-          downloaded={downloaded === "claude"}
-          onCopy={handleCopy}
-          onDownload={handleDownload}
-        />
-        <SetupCard
           title="Agent skill"
-          description="Give this to another AI agent so it knows how to use Junban."
+          description="Give this to another AI agent so it knows how to use the CLI."
           target="skill"
           copied={copied === "skill"}
           downloaded={downloaded === "skill"}
@@ -200,11 +175,11 @@ export function AgentToolsTab() {
           onDownload={handleDownload}
         />
         <SetupCard
-          title="Source checkout config"
-          description="Use this while running Junban from a cloned project folder."
-          target="source"
-          copied={copied === "source"}
-          downloaded={downloaded === "source"}
+          title="MCP source config"
+          description="MCP is separate from the CLI; use this from a cloned project folder."
+          target="mcpSource"
+          copied={copied === "mcpSource"}
+          downloaded={downloaded === "mcpSource"}
           onCopy={handleCopy}
           onDownload={handleDownload}
         />
@@ -214,12 +189,12 @@ export function AgentToolsTab() {
 
       <div className="flex flex-wrap gap-3 text-xs">
         <a
-          href={RELEASES_URL}
+          href={CLI_DOCS_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-accent hover:underline"
         >
-          Download Junban
+          CLI guide
           <ExternalLink className="h-3 w-3" />
         </a>
         <a
@@ -229,15 +204,6 @@ export function AgentToolsTab() {
           className="inline-flex items-center gap-1 text-accent hover:underline"
         >
           MCP setup guide
-          <ExternalLink className="h-3 w-3" />
-        </a>
-        <a
-          href={CLI_DOCS_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-accent hover:underline"
-        >
-          CLI guide
           <ExternalLink className="h-3 w-3" />
         </a>
       </div>

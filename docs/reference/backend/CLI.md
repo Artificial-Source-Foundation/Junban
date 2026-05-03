@@ -1,6 +1,6 @@
 # CLI Module Documentation
 
-The `src/cli/` directory implements the Junban CLI companion tool. It uses Commander.js for command registration and shares the same core services as the UI through the `bootstrap()` function. Built packages expose the `junban` binary from `dist/cli/index.js`.
+The `src/cli/` directory implements the Junban CLI companion tool. It uses Commander.js for command registration and shares the same core services as the UI through the `bootstrap()` function. Built packages expose the `junban` binary from `dist-node/cli/index.js`.
 
 ## Start Here
 
@@ -28,7 +28,15 @@ The long-lived Node runtime owner in `src/backend/node-runtime.ts` is primarily 
 
 ## Files
 
-Invocation note: the examples below use the repository script form (`pnpm cli -- ...`) because that is the default contributor workflow in this repo. If you installed the CLI as `junban`, the same commands work without the `pnpm cli --` prefix. The package `bin` field maps `junban` to `dist/cli/index.js`.
+Invocation note: the examples below use the repository script form (`pnpm cli -- ...`) because that is the default contributor workflow in this repo. If you installed the CLI as `junban`, the same commands work without the `pnpm cli --` prefix. The package `bin` field maps only the user CLI command, `junban`, to `dist-node/cli/index.js`; MCP packaging is a separate entrypoint and is not part of CLI installation.
+
+### Package Build
+
+`pnpm build:cli` runs `scripts/build-cli.mjs`, which compiles the CLI dependency graph with `tsconfig.cli.json` into `dist-node/`, copies `src/db/migrations/` to `dist-node/db/migrations/`, verifies the CLI shebang, and marks the entrypoint executable on Unix-like systems. The migrations copy is required because `src/db/migrate.ts` resolves migration files relative to its compiled module location.
+
+The main `pnpm build` command runs `pnpm typecheck`, then `pnpm build:cli`, then `vite build`. Keeping CLI output in `dist-node/` prevents Vite's frontend `dist/` output from deleting the packaged `junban` binary.
+
+The release workflow packs this output as `junban-cli.tgz`, smoke-tests a global install from that tarball, and uploads it to GitHub Releases. Users can install that release asset by URL without an npm account or npm registry publish; the Linux install helper can also install the same tarball when invoked with `--with-cli` or when the user accepts the interactive CLI tools prompt. npm registry publishing remains a separate future distribution channel.
 
 ### `index.ts`
 

@@ -13,15 +13,21 @@ type RunOptions = {
   env?: Record<string, string | undefined>;
   home?: string | null;
   includeAptGet?: boolean;
+  includeNode?: boolean;
+  includeNpm?: boolean;
   includeSudo?: boolean;
   isRoot?: boolean;
+  nodeMajor?: number;
   seedStaleLaunchers?: boolean;
 };
 
 type MockBinOptions = {
   includeAptGet: boolean;
+  includeNode: boolean;
+  includeNpm: boolean;
   includeSudo: boolean;
   isRoot: boolean;
+  nodeMajor: number;
 };
 
 function createTempDir() {
@@ -48,7 +54,10 @@ function symlinkCommand(mockBin: string, command: string) {
   fs.symlinkSync(resolveCommand(command), path.join(mockBin, command));
 }
 
-function createMockBin(mockBin: string, { includeAptGet, includeSudo, isRoot }: MockBinOptions) {
+function createMockBin(
+  mockBin: string,
+  { includeAptGet, includeNode, includeNpm, includeSudo, isRoot, nodeMajor }: MockBinOptions,
+) {
   fs.mkdirSync(mockBin, { recursive: true });
   for (const command of ["chmod", "head", "mkdir", "mktemp", "rm", "sed", "tr"]) {
     symlinkCommand(mockBin, command);
@@ -97,7 +106,9 @@ case "$url" in
       printf '%s\n' '{"browser_download_url":'
       printf '%s\n' '"https://downloads.example/Junban_1.0.5_amd64.deb"},'
       printf '%s\n' '{"browser_download_url":'
-      printf '%s\n' '"https://downloads.example/Junban_1.0.5_amd64.AppImage"}'
+      printf '%s\n' '"https://downloads.example/Junban_1.0.5_amd64.AppImage"},'
+      printf '%s\n' '{"browser_download_url":'
+      printf '%s\n' '"https://downloads.example/junban-cli.tgz"}'
       printf '%s\n' ']}'
     } >"$out"
     ;;
@@ -113,6 +124,13 @@ case "$url" in
       : >"$out"
     else
       printf 'appimage asset\n' >"$out"
+    fi
+    ;;
+  *junban-cli.tgz)
+    if [ "\${JUNBAN_TEST_EMPTY_ASSET:-}" = "cli" ]; then
+      : >"$out"
+    else
+      printf 'cli package\n' >"$out"
     fi
     ;;
   *)
@@ -132,6 +150,27 @@ printf '%s\n' "$*" >"\${JUNBAN_TEST_LOG_DIR}/apt-get.args"
     );
   }
 
+  if (includeNode) {
+    writeExecutable(
+      path.join(mockBin, "node"),
+      `#!/bin/sh
+case "\${1:-}" in
+  -p) printf '${nodeMajor}\n' ;;
+  *) printf 'v${nodeMajor}.0.0\n' ;;
+esac
+`,
+    );
+  }
+
+  if (includeNpm) {
+    writeExecutable(
+      path.join(mockBin, "npm"),
+      `#!/bin/sh
+printf '%s\n' "$*" >"\${JUNBAN_TEST_LOG_DIR}/npm.args"
+`,
+    );
+  }
+
   if (includeSudo) {
     writeExecutable(
       path.join(mockBin, "sudo"),
@@ -147,8 +186,11 @@ function runInstaller({
   env: envOverrides = {},
   home,
   includeAptGet = false,
+  includeNode = false,
+  includeNpm = false,
   includeSudo = false,
   isRoot = true,
+  nodeMajor = 22,
   seedStaleLaunchers = false,
 }: RunOptions = {}) {
   const tempDir = createTempDir();
@@ -165,11 +207,19 @@ function runInstaller({
       fs.writeFileSync(path.join(applicationsDir, "Junban.desktop"), "stale appimage launcher\n");
     }
   }
-  createMockBin(mockBin, { includeAptGet, includeSudo, isRoot });
+  createMockBin(mockBin, {
+    includeAptGet,
+    includeNode,
+    includeNpm,
+    includeSudo,
+    isRoot,
+    nodeMajor,
+  });
 
   const env = { ...process.env };
   for (const key of [
     "JUNBAN_INSTALL_DIR",
+    "JUNBAN_INSTALL_CLI",
     "JUNBAN_INSTALL_KIND",
     "JUNBAN_OS_RELEASE_FILE",
     "JUNBAN_RELEASE_API",
@@ -309,6 +359,37 @@ describe("Linux installer", () => {
     expect(fs.readFileSync(desktopPath, "utf8")).toContain("Icon=asf-junban");
     expect(fs.existsSync(path.join(applicationsDir, "junban.desktop"))).toBe(false);
     expect(fs.readFileSync(legacyHiddenPath, "utf8")).toContain("Hidden=true");
+  });
+
+  it("installs CLI tools from the release tarball when requested", () => {
+    const { logDir, result } = runInstaller({
+      args: ["--appimage", "--with-cli"],
+      includeNode: true,
+      includeNpm: true,
+    });
+
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain(
+      "Selected CLI tools install because it was requested explicitly",
+    );
+    expect(result.stdout).toContain("Downloading Junban CLI tools");
+    expect(result.stdout).toContain("Installing Junban CLI tools with npm");
+    expect(result.stdout).toContain("Junban CLI installed. Run: junban --help");
+    expect(fs.readFileSync(path.join(logDir, "npm.args"), "utf8").trim()).toMatch(
+      /^install -g .*junban-cli\.tgz$/,
+    );
+  });
+
+  it("requires Node 22+ before installing requested CLI tools", () => {
+    const { result } = runInstaller({
+      args: ["--appimage", "--with-cli"],
+      includeNode: true,
+      includeNpm: true,
+      nodeMajor: 20,
+    });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("Node 22+ is required to install Junban CLI tools");
   });
 
   it("rejects empty downloaded AppImage assets", () => {

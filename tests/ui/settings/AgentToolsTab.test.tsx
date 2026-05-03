@@ -58,12 +58,15 @@ describe("AgentToolsTab", () => {
     render(<AgentToolsTab />);
 
     expect(screen.getByRole("heading", { name: "Agent Tools" })).toBeInTheDocument();
+    expect(screen.getByText(/releases\/latest\/download\/junban-cli\.tgz/)).toBeInTheDocument();
     expect(screen.getByText("junban")).toBeInTheDocument();
-    expect(screen.getByText("junban-mcp")).toBeInTheDocument();
     expect(screen.getByText("App version:")).toHaveTextContent("1.2.3");
-    expect(screen.getByRole("heading", { name: "Claude MCP config" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Agent skill" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Source checkout config" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "MCP source config" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /CLI guide/i })).toHaveAttribute(
+      "href",
+      expect.stringContaining("use-cli"),
+    );
     expect(screen.getByRole("link", { name: /MCP setup guide/i })).toHaveAttribute(
       "href",
       expect.stringContaining("connect-claude-desktop"),
@@ -91,7 +94,7 @@ describe("AgentToolsTab", () => {
   it("keeps copy feedback off when clipboard write fails", async () => {
     writeText.mockRejectedValueOnce(new Error("clipboard denied"));
     render(<AgentToolsTab />);
-    const card = cardFor("Claude MCP config");
+    const card = cardFor("MCP source config");
 
     await act(async () => {
       fireEvent.click(within(card).getByRole("button", { name: /copy/i }));
@@ -103,7 +106,7 @@ describe("AgentToolsTab", () => {
 
   it("downloads setup snippets with the browser fallback and revokes object URLs", async () => {
     render(<AgentToolsTab />);
-    const card = cardFor("Source checkout config");
+    const card = cardFor("MCP source config");
 
     await act(async () => {
       fireEvent.click(within(card).getByRole("button", { name: /download/i }));
@@ -132,7 +135,7 @@ describe("AgentToolsTab", () => {
 
     await act(async () => {
       fireEvent.click(
-        within(cardFor("Claude MCP config")).getByRole("button", { name: /download/i }),
+        within(cardFor("MCP source config")).getByRole("button", { name: /download/i }),
       );
     });
 

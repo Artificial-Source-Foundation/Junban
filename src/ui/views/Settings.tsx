@@ -101,7 +101,7 @@ const TABS: TabMeta[] = [
   {
     id: "agent-tools",
     label: "Agent Tools",
-    subtitle: "CLI & MCP setup",
+    subtitle: "CLI setup",
     icon: <Terminal className="w-4 h-4" />,
     mobileIcon: <Terminal className="w-5 h-5" />,
   },

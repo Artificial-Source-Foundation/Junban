@@ -6,15 +6,18 @@ API_URL="${JUNBAN_RELEASE_API:-https://api.github.com/repos/${REPO}/releases/lat
 INSTALL_KIND="${JUNBAN_INSTALL_KIND:-auto}"
 REQUESTED_INSTALL_KIND="$INSTALL_KIND"
 INSTALL_DIR="${JUNBAN_INSTALL_DIR:-}"
+INSTALL_CLI="${JUNBAN_INSTALL_CLI:-prompt}"
 OS_RELEASE_FILE="${JUNBAN_OS_RELEASE_FILE:-/etc/os-release}"
 ASSET_ARCH="amd64"
+CLI_ASSET_NAME="junban-cli.tgz"
+SHOULD_INSTALL_CLI="0"
 DETECTED_ARCH=""
 DETECTED_DISTRO_NAME="Linux"
 DETECTED_DISTRO_ID="unknown"
 DETECTED_DISTRO_ID_LIKE=""
 
 usage() {
-  printf '%s\n' 'Usage: install-linux.sh [--auto|--choose|--deb|--appimage]'
+  printf '%s\n' 'Usage: install-linux.sh [--auto|--choose|--deb|--appimage] [--with-cli|--no-cli]'
   printf '%s\n' ''
   printf '%s\n' 'Installs the latest Junban Linux desktop release.'
   printf '%s\n' ''
@@ -23,11 +26,14 @@ usage() {
   printf '%s\n' '  --choose     Ask whether to install the .deb or AppImage'
   printf '%s\n' '  --deb        Force the Debian/Ubuntu .deb installer; may require sudo'
   printf '%s\n' '  --appimage   Force the portable AppImage installer; does not use sudo'
+  printf '%s\n' '  --with-cli   Also install the junban CLI tools from the release tarball'
+  printf '%s\n' '  --no-cli     Do not ask about or install the CLI tools'
   printf '%s\n' '  -h, --help   Show this help'
   printf '%s\n' ''
   printf '%s\n' 'Environment:'
   printf '%s\n' '  JUNBAN_INSTALL_DIR   AppImage install directory (default: ~/Applications)'
   printf '%s\n' '  JUNBAN_INSTALL_KIND  auto, choose, deb, or appimage'
+  printf '%s\n' '  JUNBAN_INSTALL_CLI   prompt, yes, no, 1, or 0 (default: prompt)'
 }
 
 die() {
@@ -57,6 +63,12 @@ while [ "$#" -gt 0 ]; do
     --appimage)
       INSTALL_KIND="appimage"
       ;;
+    --with-cli | --cli | --cli-tools)
+      INSTALL_CLI="yes"
+      ;;
+    --no-cli)
+      INSTALL_CLI="no"
+      ;;
     -h | --help)
       usage
       exit 0
@@ -71,6 +83,21 @@ done
 case "$INSTALL_KIND" in
   auto | choose | deb | appimage) ;;
   *) die "JUNBAN_INSTALL_KIND must be auto, choose, deb, or appimage" ;;
+esac
+
+case "$INSTALL_CLI" in
+  yes | YES | true | TRUE | 1 | on | ON)
+    INSTALL_CLI="yes"
+    ;;
+  no | NO | false | FALSE | 0 | off | OFF)
+    INSTALL_CLI="no"
+    ;;
+  prompt | PROMPT | ask | ASK | "")
+    INSTALL_CLI="prompt"
+    ;;
+  *)
+    die "JUNBAN_INSTALL_CLI must be prompt, yes, no, 1, or 0"
+    ;;
 esac
 REQUESTED_INSTALL_KIND="$INSTALL_KIND"
 
@@ -210,6 +237,74 @@ find_asset_url() {
     | head -n 1
 }
 
+find_cli_asset_url() {
+  tr -d '\n\r' <"$RELEASE_JSON" \
+    | tr '{' '\n' \
+    | sed -n "s/.*\"browser_download_url\"[[:space:]]*:[[:space:]]*\"\([^\"]*${CLI_ASSET_NAME}\)\".*/\1/p" \
+    | head -n 1
+}
+
+choose_cli_install() {
+  case "$INSTALL_CLI" in
+    yes)
+      SHOULD_INSTALL_CLI="1"
+      info "Selected CLI tools install because it was requested explicitly"
+      return
+      ;;
+    no)
+      SHOULD_INSTALL_CLI="0"
+      info "Skipping CLI tools because it was disabled"
+      return
+      ;;
+  esac
+
+  info "Optional CLI tools install: adds the junban terminal command from ${CLI_ASSET_NAME}"
+  info "CLI tools require Node 22+ and npm. The desktop app works without them."
+  if read_terminal_answer 'Install CLI tools too? [y/N] '; then
+    case "$TERMINAL_ANSWER" in
+      y | Y | yes | YES | Yes)
+        SHOULD_INSTALL_CLI="1"
+        info "Selected CLI tools install"
+        ;;
+      *)
+        SHOULD_INSTALL_CLI="0"
+        info "Skipping CLI tools"
+        ;;
+    esac
+  else
+    SHOULD_INSTALL_CLI="0"
+    info "Skipping CLI tools because no interactive terminal is available; rerun with --with-cli or JUNBAN_INSTALL_CLI=1 to install them."
+  fi
+}
+
+install_cli() {
+  command_exists node || die "Node 22+ is required to install Junban CLI tools; install Node 22+ or rerun with --no-cli"
+  command_exists npm || die "npm is required to install Junban CLI tools; install npm or rerun with --no-cli"
+
+  node_major="$(node -p "process.versions.node.split('.')[0]" 2>/dev/null || true)"
+  case "$node_major" in
+    "" | *[!0123456789]*)
+      die "could not determine Node version; Node 22+ is required to install Junban CLI tools"
+      ;;
+  esac
+  [ "$node_major" -ge 22 ] || die "Node 22+ is required to install Junban CLI tools; detected Node ${node_major}"
+
+  cli_url="$(find_cli_asset_url)"
+  [ -n "$cli_url" ] || die "could not find ${CLI_ASSET_NAME} in the latest release"
+
+  cli_file="${TMP_DIR}/${CLI_ASSET_NAME}"
+  info "Downloading Junban CLI tools"
+  curl -fL "$cli_url" -o "$cli_file"
+  [ -s "$cli_file" ] || die "downloaded CLI package asset is empty"
+
+  info "Installing Junban CLI tools with npm"
+  if ! npm install -g "$cli_file"; then
+    die "CLI installation failed; check npm global install permissions or install manually with: npm install -g ${cli_url}"
+  fi
+
+  info "Junban CLI installed. Run: junban --help"
+}
+
 run_as_root() {
   if [ "$(id -u)" -eq 0 ]; then
     "$@"
@@ -346,7 +441,13 @@ describe_install_choice
 info "Fetching latest Junban release metadata"
 curl -fsSL "$API_URL" -o "$RELEASE_JSON"
 
+choose_cli_install
+
 case "$INSTALL_KIND" in
   deb) install_deb ;;
   appimage) install_appimage ;;
 esac
+
+if [ "$SHOULD_INSTALL_CLI" = "1" ]; then
+  install_cli
+fi

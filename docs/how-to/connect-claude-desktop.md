@@ -6,20 +6,7 @@ This guide shows the quickest reliable path to expose Junban tasks, projects, ta
 
 Claude Desktop launches the Junban MCP server itself from the config entry below. You do not need to keep a separate `pnpm mcp` terminal running for normal Claude Desktop usage.
 
-If Junban is installed as a packaged command, add this block to your `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "junban": {
-      "command": "junban-mcp",
-      "args": []
-    }
-  }
-}
-```
-
-If you are running Junban from a source checkout, use the project script form instead:
+The current supported MCP setup uses a source checkout. Add this block to your `claude_desktop_config.json`:
 
 ```json
 {
@@ -31,6 +18,8 @@ If you are running Junban from a source checkout, use the project script form in
   }
 }
 ```
+
+The npm `junban` CLI package is a separate user terminal command and does not install the MCP server command.
 
 ## 2) Restart Claude Desktop
 
@@ -48,13 +37,7 @@ These map to the MCP tool/resources/prompts exposed by Junban.
 
 ## 4) Optional manual smoke test
 
-If you want to verify that the server starts cleanly outside Claude Desktop, run:
-
-```bash
-junban-mcp
-```
-
-From a source checkout, run:
+If you want to verify that the server starts cleanly outside Claude Desktop, run this from a source checkout:
 
 ```bash
 pnpm mcp
@@ -67,10 +50,10 @@ The MCP entrypoint in `src/mcp/server.ts` runs on stdio (JSON-RPC). The server u
 - The server intentionally uses stdio transport, so stdout must remain JSON-RPC only.
 - Console output is redirected to stderr in `src/mcp/server.ts` to avoid protocol noise.
 - Plugin-contributed tools are available when plugin loading runs in bootstrap, so MCP sees the same tool registry exposed by Junban.
-- The Agent Tools settings tab in the app can copy or download the same MCP config and a short agent skill file.
+- The Agent Tools settings tab in the app can copy or download the same source-checkout MCP config. Its CLI agent skill is separate from MCP setup.
 
 ## Related docs
 
 - Full MCP reference: [`../reference/backend/MCP.md`](../reference/backend/MCP.md)
-- CLI and setup context for local profile behavior: [`../guides/SETUP.md`](../guides/SETUP.md)
+- Setup context for local profile behavior: [`../guides/SETUP.md`](../guides/SETUP.md)
 - Source entrypoint: [`../../src/mcp/server.ts`](../../src/mcp/server.ts)

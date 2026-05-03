@@ -6,7 +6,8 @@ Use this page when you want to get Junban installed for local use.
 
 - A local web app you can run from source (`pnpm dev` / `pnpm dev:full`)
 - Optional desktop app workflow with Tauri (`pnpm tauri:dev`, `pnpm tauri:build`)
-- CLI and MCP entrypoints from the same source tree, plus packaged `junban` and `junban-mcp` commands after a built install
+- Source-run CLI and MCP entrypoints (`pnpm cli`, `pnpm mcp`)
+- A separately packaged user CLI command, `junban`, from the GitHub release CLI tarball
 
 ## Install options
 
@@ -24,7 +25,7 @@ On Linux, run the installer helper to fetch the latest release and choose the ri
 curl -fsSL https://raw.githubusercontent.com/Artificial-Source/Junban/main/scripts/install-linux.sh | sh
 ```
 
-The helper prints the detected distro, architecture, and selected install path. It installs the `.deb` on Debian/Ubuntu systems and installs the portable AppImage under `~/Applications` elsewhere. It also refreshes the Junban launcher entry so the app menu shows one `Junban` result. The `.deb` path explains and asks before using `sudo` because `apt-get` installs a system package. Use the AppImage path for an install under your home directory without `sudo`.
+The helper prints the detected distro, architecture, and selected install path. It installs the `.deb` on Debian/Ubuntu systems and installs the portable AppImage under `~/Applications` elsewhere. It also refreshes the Junban launcher entry so the app menu shows one `Junban` result. The `.deb` path explains and asks before using `sudo` because `apt-get` installs a system package. Use the AppImage path for an install under your home directory without `sudo`. When an interactive terminal is available, the helper also asks whether to install the optional CLI tools.
 
 If you want to choose the install type yourself:
 
@@ -40,6 +41,14 @@ curl -fsSL https://raw.githubusercontent.com/Artificial-Source/Junban/main/scrip
 curl -fsSL https://raw.githubusercontent.com/Artificial-Source/Junban/main/scripts/install-linux.sh | sh -s -- --appimage
 ```
 
+To install the desktop app and `junban` CLI tools in one run, pass `--with-cli`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Artificial-Source/Junban/main/scripts/install-linux.sh | sh -s -- --with-cli
+```
+
+The CLI tools option installs the `junban-cli.tgz` GitHub Release asset with `npm install -g`, so it requires Node 22+ and npm. Non-interactive runs skip the CLI prompt unless you pass `--with-cli` or set `JUNBAN_INSTALL_CLI=1`; pass `--no-cli` or set `JUNBAN_INSTALL_CLI=0` to suppress the prompt.
+
 ### Option B: Run from source (developer and power-user path)
 
 1. Install prerequisites from [Local Development Setup](../guides/SETUP.md).
@@ -53,25 +62,49 @@ curl -fsSL https://raw.githubusercontent.com/Artificial-Source/Junban/main/scrip
 
 3. If you want a local config file for frontend-side defaults, copy the example environment file:
 
-    ```bash
-    cp .env.example .env
-    ```
+   ```bash
+   cp .env.example .env
+   ```
 
    The current Node entrypoints still read `process.env` directly, so non-default values for `pnpm db:migrate`, `pnpm server`, `pnpm cli`, and `pnpm mcp` should be exported in your shell or passed inline.
 
 4. Prepare the default SQLite development database:
 
-    ```bash
-    mkdir -p data/dev
-    pnpm db:migrate
-    ```
+   ```bash
+   mkdir -p data/dev
+   pnpm db:migrate
+   ```
 
 5. Start either:
-
    - Web only: `pnpm dev`
    - Full stack (UI + standalone API): `pnpm dev:full`
 
    (See [How to run Junban locally](run-locally.md).)
+
+### Option C: Install the CLI only
+
+Desktop packages do not add `junban` to your shell `PATH` by themselves. On Linux, the helper can install the CLI tools alongside the desktop app when you pass `--with-cli` or answer yes to the prompt. You can also install the standalone user CLI from the GitHub release package tarball with:
+
+```bash
+npm install -g https://github.com/Artificial-Source/Junban/releases/latest/download/junban-cli.tgz
+junban --help
+```
+
+This uses the `npm` command as the installer, but it does not require an npm account or a package published to the npm registry. It requires Node 22+ on the target machine.
+
+If the package is later published to the npm registry, the shorter install also works:
+
+```bash
+npm install -g asf-junban
+```
+
+The CLI uses the Node environment defaults unless you pass overrides such as `DB_PATH`, `STORAGE_MODE`, or `MARKDOWN_PATH`. To use the same SQLite database as a packaged desktop app, open `Settings -> Data -> Storage` in the app, copy the database path, and run:
+
+```bash
+DB_PATH="/path/from/settings/junban.db" junban list
+```
+
+MCP setup is separate from CLI installation. Use `pnpm mcp` from a source checkout for the current MCP workflow.
 
 ## Optional desktop prerequisites
 
@@ -86,7 +119,7 @@ When installed, you can use the desktop scripts listed in `package.json` and ref
 
 - The install path is project-local. Source-run data is isolated under `data/dev` via default profile behavior.
 - The data location for your packaged desktop install is managed by Tauri AppData, not this repository tree.
-- In the app, Settings → Agent Tools can copy or download the MCP config and a short agent skill file for other AI assistants.
+- In the app, Settings -> Agent Tools shows CLI setup, a short CLI-focused agent skill file, and a separate source-checkout MCP config.
 
 ## Upgrading an existing desktop install
 

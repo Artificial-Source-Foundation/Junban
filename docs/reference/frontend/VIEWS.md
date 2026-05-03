@@ -23,7 +23,7 @@ The view layer currently includes:
 - project-specific views
 - calendar views
 - settings surfaces
-- settings Agent Tools surface for downloadable CLI/MCP setup snippets
+- settings Agent Tools surface for CLI setup and a separate source-checkout MCP config snippet
 - AI and plugin-owned view surfaces
 - lightweight utility views such as quick capture
 
@@ -242,20 +242,20 @@ Settings tab implementations live in `src/ui/views/settings/`.
 
 Current tab implementations:
 
-| File                                      | Responsibility                                                                               |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `src/ui/views/settings/GeneralTab.tsx`    | Core essentials such as date/time and task defaults                                          |
-| `src/ui/views/settings/AppearanceTab.tsx` | Theme, density, font, and other visual preferences                                           |
-| `src/ui/views/settings/AlertsTab.tsx`     | App/browser notifications with permission and test actions, sound previews, and smart nudges  |
-| `src/ui/views/settings/FiltersLabelsTab.tsx` | Saved filter and label management moved into Settings                                      |
-| `src/ui/views/settings/FeaturesTab.tsx`   | Advanced feature flags and developer controls                                                |
-| `src/ui/views/settings/KeyboardTab.tsx`   | Shortcut customization, keyboard chords, and quick-capture hotkey settings                   |
-| `src/ui/views/settings/TemplatesTab.tsx`  | Template management                                                                          |
-| `src/ui/views/settings/AITab.tsx`         | AI provider, briefing, memory, and instruction settings                                      |
-| `src/ui/views/settings/AgentToolsTab.tsx` | CLI and MCP setup notes for external agents                                                  |
-| `src/ui/views/settings/VoiceTab.tsx`      | Experimental voice provider, microphone, and local model settings; currently hidden from Settings navigation |
-| `src/ui/views/settings/DataTab.tsx`       | Import, export, storage details, and desktop remote-access controls including port, auto-start, password protection, and the local mutation-guard state; import is blocked while the remote-access lock is active |
-| `src/ui/views/settings/AboutTab.tsx`      | Version, update, and about information                                                       |
+| File                                         | Responsibility                                                                                                                                                                                                    |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/ui/views/settings/GeneralTab.tsx`       | Core essentials such as date/time and task defaults                                                                                                                                                               |
+| `src/ui/views/settings/AppearanceTab.tsx`    | Theme, density, font, and other visual preferences                                                                                                                                                                |
+| `src/ui/views/settings/AlertsTab.tsx`        | App/browser notifications with permission and test actions, sound previews, and smart nudges                                                                                                                      |
+| `src/ui/views/settings/FiltersLabelsTab.tsx` | Saved filter and label management moved into Settings                                                                                                                                                             |
+| `src/ui/views/settings/FeaturesTab.tsx`      | Advanced feature flags and developer controls                                                                                                                                                                     |
+| `src/ui/views/settings/KeyboardTab.tsx`      | Shortcut customization, keyboard chords, and quick-capture hotkey settings                                                                                                                                        |
+| `src/ui/views/settings/TemplatesTab.tsx`     | Template management                                                                                                                                                                                               |
+| `src/ui/views/settings/AITab.tsx`            | AI provider, briefing, memory, and instruction settings                                                                                                                                                           |
+| `src/ui/views/settings/AgentToolsTab.tsx`    | CLI setup notes for external agents plus separate source-checkout MCP config                                                                                                                                      |
+| `src/ui/views/settings/VoiceTab.tsx`         | Experimental voice provider, microphone, and local model settings; currently hidden from Settings navigation                                                                                                      |
+| `src/ui/views/settings/DataTab.tsx`          | Import, export, storage details, and desktop remote-access controls including port, auto-start, password protection, and the local mutation-guard state; import is blocked while the remote-access lock is active |
+| `src/ui/views/settings/AboutTab.tsx`         | Version, update, and about information                                                                                                                                                                            |
 
 Important helper directories:
 

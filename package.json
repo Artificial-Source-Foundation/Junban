@@ -24,9 +24,11 @@
   ],
   "type": "module",
   "bin": {
-    "junban": "./dist/cli/index.js",
-    "junban-mcp": "./dist/mcp/server.js"
+    "junban": "./dist-node/cli/index.js"
   },
+  "files": [
+    "dist-node"
+  ],
   "engines": {
     "node": ">=22.0.0"
   },
@@ -37,7 +39,8 @@
     "dev": "node scripts/run-with-profile.mjs dev vite",
     "dev:full": "node scripts/run-with-profile.mjs dev concurrently --kill-others \"node --import tsx src/server.ts\" \"VITE_USE_BACKEND=true vite\"",
     "server": "node scripts/run-with-profile.mjs dev node --import tsx src/server.ts",
-    "build": "tsc && vite build",
+    "build": "pnpm typecheck && pnpm build:cli && vite build",
+    "build:cli": "node scripts/build-cli.mjs",
     "start": "vite preview",
     "lint": "eslint src/ tests/",
     "lint:fix": "eslint src/ tests/ --fix",
@@ -60,6 +63,7 @@
     "release:prepare": "tsx scripts/prepare-release.ts",
     "release:tag": "git tag -a v$(node -p \"require('./package.json').version\") -m \"v$(node -p \"require('./package.json').version\")\" && git push --tags",
     "plugin:create": "tsx scripts/create-plugin.ts",
+    "prepack": "pnpm build:cli",
     "prepare": "husky"
   },
   "dependencies": {

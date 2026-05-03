@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- GitHub Releases now include a `junban-cli.tgz` package asset so users can install the `junban` terminal command without npm registry publishing.
+- Linux installer helper can optionally install the CLI tools from `junban-cli.tgz` when users accept the prompt, pass `--with-cli`, or set `JUNBAN_INSTALL_CLI=1`.
+
 ### Fixed
 
 - Linux installer now refreshes a single `Junban` launcher entry and removes stale local AppImage launcher files that could create duplicate app finder results.

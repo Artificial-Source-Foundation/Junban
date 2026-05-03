@@ -198,6 +198,49 @@ jobs:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.args }}
 
+  build-cli-package:
+    if: ${{ github.event_name != 'workflow_dispatch' || !github.event.inputs.dry_run }}
+    name: Build CLI Release Package
+    needs: [verify-release, create-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.verify-release.outputs.tag_name }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - run: corepack enable
+      - run: corepack prepare pnpm@10.29.1 --activate
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:cli
+
+      - name: Pack CLI tarball
+        run: |
+          node dist-node/cli/index.js --help
+          npm pack --pack-destination "$RUNNER_TEMP"
+          PACKED="$(find "$RUNNER_TEMP" -maxdepth 1 -name 'asf-junban-*.tgz' -print -quit)"
+          if [ -z "$PACKED" ]; then
+            echo "npm pack did not produce an asf-junban tarball" >&2
+            exit 1
+          fi
+          cp "$PACKED" "$RUNNER_TEMP/junban-cli.tgz"
+
+      - name: Smoke-test packed CLI install
+        run: |
+          npm install --global --prefix "$RUNNER_TEMP/junban-cli-global" "$RUNNER_TEMP/junban-cli.tgz"
+          "$RUNNER_TEMP/junban-cli-global/bin/junban" --help
+          DB_PATH="$RUNNER_TEMP/junban-cli-smoke.sqlite" STORAGE_MODE=sqlite "$RUNNER_TEMP/junban-cli-global/bin/junban" list --json
+
+      - name: Upload CLI package to draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload '${{ needs.verify-release.outputs.tag_name }}' "$RUNNER_TEMP/junban-cli.tgz" --clobber
+
   dry-run-build:
     if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run }}
     needs: verify-release
@@ -240,7 +283,7 @@ jobs:
   verify-release-assets:
     if: ${{ github.event_name != 'workflow_dispatch' || !github.event.inputs.dry_run }}
     name: Verify Draft Release Assets
-    needs: [verify-release, create-release, build]
+    needs: [verify-release, create-release, build, build-cli-package]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -277,6 +320,11 @@ jobs:
 
             if (!assetNames.some((name) => /\.AppImage$/i.test(name))) {
               core.setFailed("Draft release is missing the Linux AppImage installer");
+              return;
+            }
+
+            if (!assetNames.some((name) => name === "junban-cli.tgz")) {
+              core.setFailed("Draft release is missing the CLI package tarball");
             }
 
   publish:
