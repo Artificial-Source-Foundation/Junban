@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
 import { StorageError } from "../../core/errors.js";
@@ -30,8 +29,19 @@ import {
   persistDailyStats,
   persistTaskRelations,
   persistAiMemories,
+  writeTextFileAtomic,
+  deleteFileIfExists,
 } from "./persistence.js";
-import { updateTask } from "./task-ops.js";
+import { updateTask, rewriteTaskFile } from "./task-ops.js";
+
+function compareChatMessages(a: ChatMessageRow, b: ChatMessageRow): number {
+  if (typeof a.id === "number" && typeof b.id === "number" && a.id !== b.id) {
+    return a.id - b.id;
+  }
+  const createdAtCompare = a.createdAt.localeCompare(b.createdAt);
+  if (createdAtCompare !== 0) return createdAtCompare;
+  return (a.id ?? 0) - (b.id ?? 0);
+}
 
 // ── Tags ──
 
@@ -54,8 +64,20 @@ export function insertTag(idx: MarkdownIndexes, tag: TagRow): MutationResult {
 
 export function deleteTag(idx: MarkdownIndexes, id: string): MutationResult {
   const had = idx.tagIndex.has(id);
+  const affectedTaskIds: string[] = [];
+  for (const [taskId, tagIds] of idx.taskTagIndex) {
+    if (tagIds.delete(id)) {
+      affectedTaskIds.push(taskId);
+      if (tagIds.size === 0) {
+        idx.taskTagIndex.delete(taskId);
+      }
+    }
+  }
   idx.tagIndex.delete(id);
   persistTags(idx);
+  for (const taskId of affectedTaskIds) {
+    rewriteTaskFile(idx, taskId);
+  }
   return had ? OK : NOOP;
 }
 
@@ -79,11 +101,7 @@ export function savePluginSettings(idx: MarkdownIndexes, pluginId: string, setti
   idx.pluginSettingsMap.set(pluginId, row);
 
   const filePath = path.join(idx.basePath, "_plugins", `${pluginId}.yaml`);
-  try {
-    fs.writeFileSync(filePath, YAML.stringify({ settings, updatedAt: now }), "utf-8");
-  } catch (err) {
-    throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
-  }
+  writeTextFileAtomic(filePath, YAML.stringify({ settings, updatedAt: now }));
 }
 
 // ── App Settings ──
@@ -108,7 +126,7 @@ export function deleteAppSetting(idx: MarkdownIndexes, key: string): MutationRes
 // ── Chat Messages ──
 
 export function listChatMessages(idx: MarkdownIndexes, sessionId: string): ChatMessageRow[] {
-  return idx.chatMessages.get(sessionId) ?? [];
+  return [...(idx.chatMessages.get(sessionId) ?? [])].sort(compareChatMessages);
 }
 
 export function insertChatMessage(idx: MarkdownIndexes, msg: ChatMessageRow): MutationResult {
@@ -127,13 +145,7 @@ export function deleteChatSession(idx: MarkdownIndexes, sessionId: string): Muta
   idx.chatMessages.delete(sessionId);
 
   const filePath = path.join(idx.basePath, "_chat", `${sessionId}.yaml`);
-  try {
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-  } catch (err) {
-    throw new StorageError(`delete ${filePath}`, err instanceof Error ? err : undefined);
-  }
+  deleteFileIfExists(filePath);
   return had ? OK : NOOP;
 }
 
@@ -141,7 +153,8 @@ export function getLatestSessionId(idx: MarkdownIndexes): { sessionId: string } 
   let latest: { sessionId: string; time: string } | undefined;
   for (const [sessionId, messages] of idx.chatMessages) {
     if (messages.length === 0) continue;
-    const lastMsg = messages[messages.length - 1];
+    const orderedMessages = [...messages].sort(compareChatMessages);
+    const lastMsg = orderedMessages[orderedMessages.length - 1];
     if (!latest || lastMsg.createdAt > latest.time) {
       latest = { sessionId, time: lastMsg.createdAt };
     }
@@ -150,24 +163,36 @@ export function getLatestSessionId(idx: MarkdownIndexes): { sessionId: string } 
 }
 
 export function listChatSessions(idx: MarkdownIndexes): ChatSessionInfo[] {
-  const sessions: ChatSessionInfo[] = [];
+  const sessions: Array<ChatSessionInfo & { latestAt: string }> = [];
   for (const [sessionId, messages] of idx.chatMessages) {
     if (messages.length === 0) continue;
+    const orderedMessages = [...messages].sort(compareChatMessages);
+    const latestMessage = orderedMessages[orderedMessages.length - 1];
     const override = getAppSetting(idx, `chat_session_title:${sessionId}`);
     let title = override?.value ?? "";
     if (!title) {
-      const firstUserMsg = messages.find((m) => m.role === "user");
+      const firstUserMsg = orderedMessages.find((m) => m.role === "user");
       title = firstUserMsg?.content?.slice(0, 40) ?? "New chat";
     }
     sessions.push({
       sessionId,
       title,
-      createdAt: messages[0].createdAt,
-      messageCount: messages.length,
+      createdAt: orderedMessages[0].createdAt,
+      messageCount: orderedMessages.length,
+      latestAt: latestMessage.createdAt,
     });
   }
-  sessions.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  return sessions;
+  sessions.sort((a, b) =>
+    b.latestAt === a.latestAt
+      ? b.createdAt.localeCompare(a.createdAt)
+      : b.latestAt.localeCompare(a.latestAt),
+  );
+  return sessions.map((session) => ({
+    sessionId: session.sessionId,
+    title: session.title,
+    createdAt: session.createdAt,
+    messageCount: session.messageCount,
+  }));
 }
 
 export function renameChatSession(idx: MarkdownIndexes, sessionId: string, title: string): void {

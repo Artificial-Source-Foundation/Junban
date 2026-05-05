@@ -2,6 +2,7 @@ import { useDirectServices, BASE, handleResponse, handleVoidResponse } from "../
 import { getServices } from "../direct-services.js";
 import { getSecureSetting, setSecureSetting } from "../../../storage/encrypted-settings.js";
 import type { AIConfigInfo } from "./ai-types.js";
+import { isAllowedAIBaseUrl } from "../../../ai/base-url-policy.js";
 
 export async function getAIConfig(): Promise<AIConfigInfo> {
   if (useDirectServices()) {
@@ -46,6 +47,9 @@ export async function updateAIConfig(config: {
     }
     if (config.baseUrl !== undefined) {
       if (config.baseUrl) {
+        if (!isAllowedAIBaseUrl(config.baseUrl)) {
+          throw new Error("Invalid baseUrl");
+        }
         svc.storage.setAppSetting("ai_base_url", config.baseUrl);
       } else {
         svc.storage.deleteAppSetting("ai_base_url");

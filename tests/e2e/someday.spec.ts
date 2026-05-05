@@ -60,7 +60,7 @@ test.describe("Someday / Maybe view", () => {
 
   test("Someday nav item disappears when feature_someday is disabled", async ({ page }) => {
     // Verify the Someday button exists in the sidebar
-    await expect(page.getByRole("button", { name: "Someday", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Someday / Maybe", exact: true })).toBeVisible();
 
     // Disable the feature via API
     await page.request.put("/api/settings/feature_someday", {
@@ -71,7 +71,9 @@ test.describe("Someday / Maybe view", () => {
     await expect(page.getByText("Inbox").first()).toBeVisible({ timeout: 10000 });
 
     // The Someday nav item should no longer be in the sidebar
-    await expect(page.getByRole("button", { name: "Someday", exact: true })).not.toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Someday / Maybe", exact: true }),
+    ).not.toBeVisible();
 
     // Re-enable for cleanup
     await page.request.put("/api/settings/feature_someday", {

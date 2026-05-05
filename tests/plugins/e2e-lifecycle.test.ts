@@ -5,7 +5,7 @@
  * filesystem plugins written as .mjs ESM modules.
  */
 
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, beforeEach } from "vitest";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -18,6 +18,8 @@ import { UIRegistry } from "../../src/plugins/ui-registry.js";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 let tmpDirs: string[] = [];
+const UNSAFE_COMMUNITY_PLUGIN_VM_ENV = "JUNBAN_ENABLE_UNSAFE_COMMUNITY_PLUGIN_VM";
+let previousUnsafeCommunityPluginVm: string | undefined;
 
 function makeTmpPluginDir(): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "junban-plugin-test-"));
@@ -88,7 +90,17 @@ function createLoaderWithServices(pluginDir: string): {
 
 // ── Cleanup ───────────────────────────────────────────────────────────────────
 
+beforeEach(() => {
+  previousUnsafeCommunityPluginVm = process.env[UNSAFE_COMMUNITY_PLUGIN_VM_ENV];
+  process.env[UNSAFE_COMMUNITY_PLUGIN_VM_ENV] = "true";
+});
+
 afterEach(() => {
+  if (previousUnsafeCommunityPluginVm === undefined) {
+    delete process.env[UNSAFE_COMMUNITY_PLUGIN_VM_ENV];
+  } else {
+    process.env[UNSAFE_COMMUNITY_PLUGIN_VM_ENV] = previousUnsafeCommunityPluginVm;
+  }
   for (const dir of tmpDirs) {
     fs.rmSync(dir, { recursive: true, force: true });
   }

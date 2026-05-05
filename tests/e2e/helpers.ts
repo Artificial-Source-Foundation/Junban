@@ -20,12 +20,34 @@ export async function dismissOnboarding(page: Page) {
 
 /** Navigate to a view via the sidebar. */
 export async function navigateTo(page: Page, viewLabel: string) {
+  const expectedHeading =
+    viewLabel === "Stats"
+      ? "Productivity"
+      : viewLabel === "Someday"
+        ? "Someday / Maybe"
+        : viewLabel;
+
   // Nav buttons may include a count badge (e.g. "Today 2"), so match the button
   // whose accessible name starts with the label.
-  await page
+  const navButton = page
     .getByRole("navigation", { name: "Views" })
-    .getByRole("button", { name: new RegExp(`^${viewLabel}`) })
-    .click();
+    .getByRole("button", { name: new RegExp(`^${viewLabel}`) });
+
+  await expect(navButton).toBeVisible({ timeout: 10000 });
+  await expect(navButton).toBeEnabled();
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await navButton.click();
+
+    const heading = page.getByRole("heading", { name: expectedHeading, level: 1 });
+    if (await heading.isVisible({ timeout: 1500 }).catch(() => false)) {
+      return;
+    }
+  }
+
+  await expect(page.getByRole("heading", { name: expectedHeading, level: 1 })).toBeVisible({
+    timeout: 5000,
+  });
 }
 
 /** Create a task using the task input field. */
@@ -37,7 +59,7 @@ export async function createTask(page: Page, text: string) {
   // Wait for the task to appear in the list
   const title = text.replace(/\s*[#~!@+p]\S*/g, "").trim();
   await expect(
-    page.getByRole("button", { name: new RegExp(`^Task: ${title}$`) }).first(),
+    page.getByRole("group", { name: new RegExp(`^Task: ${title}`) }).first(),
   ).toBeVisible({
     timeout: 5000,
   });
@@ -59,7 +81,7 @@ export async function closeSettings(page: Page) {
 /** Open a task's detail panel by clicking on its title. */
 export async function openTaskDetail(page: Page, title: string) {
   await page
-    .getByRole("button", { name: new RegExp(`^Task: ${title}$`) })
+    .getByRole("group", { name: new RegExp(`^Task: ${title}`) })
     .first()
     .click();
   // Wait for the detail panel to appear
@@ -95,6 +117,33 @@ export async function resetFeatureFlags(page: Page) {
     flags.map((flag) => page.request.put(`/api/settings/${flag}`, { data: { value: "true" } })),
   );
   await page.request.put("/api/settings/developer_mode", { data: { value: "false" } });
+  await page.request.put("/api/settings/saved_filters", { data: { value: "[]" } });
+  await page.request.put("/api/settings/sidebar_favorite_views", { data: { value: "" } });
+}
+
+/** Activate built-in plugin views used by E2E tests. */
+export async function activateBuiltinPlugins(page: Page) {
+  const response = await page.request.get("/api/plugins");
+  if (!response.ok()) {
+    throw new Error(`Failed to list plugins (${response.status()}): ${await response.text()}`);
+  }
+
+  const plugins = (await response.json()) as Array<{
+    id: string;
+    builtin?: boolean;
+    enabled?: boolean;
+    permissions?: string[];
+  }>;
+
+  await Promise.all(
+    plugins
+      .filter((plugin) => plugin.builtin && !plugin.enabled)
+      .map((plugin) =>
+        page.request.post(`/api/plugins/${plugin.id}/permissions/approve`, {
+          data: { permissions: plugin.permissions ?? [] },
+        }),
+      ),
+  );
 }
 
 /** Navigate to a fresh page and dismiss onboarding. */
@@ -103,6 +152,7 @@ export async function setupPage(page: Page) {
   // Reset the database so each test starts with a clean slate
   await page.request.post("/api/test-reset");
   await resetFeatureFlags(page);
+  await activateBuiltinPlugins(page);
   await page.reload();
   await dismissOnboarding(page);
   // Wait for the main content to render

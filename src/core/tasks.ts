@@ -12,6 +12,8 @@ import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger("tasks");
 
+type PendingTaskEvent = { type: "task:create"; task: Task } | { type: "task:complete"; task: Task };
+
 /**
  * Task service — handles task CRUD operations.
  * This is the core of the application. Both UI and CLI use this module.
@@ -54,15 +56,30 @@ export class TaskService {
     return Promise.all(tagNames.map((tagName) => this.tagService.getOrCreate(tagName)));
   }
 
+  private emitPendingTaskEvents(events: PendingTaskEvent[]): void {
+    for (const event of events) {
+      this.emitTaskEvent(event);
+    }
+  }
+
+  private emitTaskEvent(event: PendingTaskEvent): void {
+    this.queries.afterTransactionCommit(() => {
+      this.eventBus?.emit(event.type, event.task);
+    });
+  }
+
   async create(input: CreateTaskInput): Promise<Task> {
+    return this.createTask(input);
+  }
+
+  private async createTask(
+    input: CreateTaskInput,
+    pendingEvents?: PendingTaskEvent[],
+  ): Promise<Task> {
     const now = new Date().toISOString();
     const id = generateId();
 
-    // Resolve tags: getOrCreate each tag name
-    const tags = await this.resolveTags(input.tags);
-
-    // Insert the task row
-    this.queries.insertTask({
+    const row: TaskRow = {
       id,
       title: input.title,
       description: input.description ?? null,
@@ -84,12 +101,19 @@ export class TaskService {
       sortOrder: 0,
       createdAt: now,
       updatedAt: now,
-    });
+    };
 
-    // Insert task-tag associations
-    for (const tag of tags) {
-      this.queries.insertTaskTag(id, tag.id);
-    }
+    let tags: Tag[] = [];
+    await this.queries.transaction(async () => {
+      // Resolve tags inside the transaction so auto-created tags roll back with the task.
+      tags = await this.resolveTags(input.tags);
+      this.queries.insertTask(row);
+
+      // Insert task-tag associations
+      for (const tag of tags) {
+        this.queries.insertTaskTag(id, tag.id);
+      }
+    });
 
     const task: Task = {
       id,
@@ -117,7 +141,11 @@ export class TaskService {
     };
 
     logger.debug("Task created", { id, title: input.title });
-    this.eventBus?.emit("task:create", task);
+    if (pendingEvents) {
+      pendingEvents.push({ type: "task:create", task });
+    } else {
+      this.emitTaskEvent({ type: "task:create", task });
+    }
 
     return task;
   }
@@ -165,17 +193,22 @@ export class TaskService {
     const now = new Date().toISOString();
     const { tags: tagNames, ...fields } = input;
 
-    // Update task fields
-    this.queries.updateTask(id, { ...fields, updatedAt: now });
+    let resolvedTags: Tag[] = [];
 
-    // If tags are being updated, replace all tag associations
-    if (tagNames !== undefined) {
-      this.queries.deleteTaskTags(id);
-      const resolvedTags = await this.resolveTags(tagNames);
-      for (const tag of resolvedTags) {
-        this.queries.insertTaskTag(id, tag.id);
+    await this.queries.transaction(async () => {
+      resolvedTags = tagNames !== undefined ? await this.resolveTags(tagNames) : [];
+
+      // Update task fields
+      this.queries.updateTask(id, { ...fields, updatedAt: now });
+
+      // If tags are being updated, replace all tag associations
+      if (tagNames !== undefined) {
+        this.queries.deleteTaskTags(id);
+        for (const tag of resolvedTags) {
+          this.queries.insertTaskTag(id, tag.id);
+        }
       }
-    }
+    });
 
     const updated = (await this.get(id))!;
     logger.debug("Task updated", { id, fields: Object.keys(fields) });
@@ -203,6 +236,18 @@ export class TaskService {
   }
 
   async complete(id: string): Promise<Task> {
+    const pendingEvents: PendingTaskEvent[] = [];
+    const completed = await this.queries.transaction(() =>
+      this.completeInTransaction(id, pendingEvents),
+    );
+    this.emitPendingTaskEvents(pendingEvents);
+    return completed;
+  }
+
+  private async completeInTransaction(
+    id: string,
+    pendingEvents: PendingTaskEvent[],
+  ): Promise<Task> {
     const existing = await this.get(id);
     if (!existing) throw new NotFoundError("Task", id);
 
@@ -217,7 +262,7 @@ export class TaskService {
     const children = await this.getChildren(id);
     for (const child of children) {
       if (child.status === "pending") {
-        await this.complete(child.id);
+        await this.completeInTransaction(child.id, pendingEvents);
       }
     }
 
@@ -251,26 +296,29 @@ export class TaskService {
           nextDeadline = new Date(nextDate.getTime() + deadlineOffsetMs).toISOString();
         }
 
-        await this.create({
-          title: existing.title,
-          description: existing.description,
-          priority: existing.priority,
-          dueDate: nextDate.toISOString(),
-          dueTime: existing.dueTime,
-          projectId: existing.projectId,
-          recurrence: existing.recurrence,
-          remindAt: nextRemindAt,
-          sectionId: existing.sectionId,
-          estimatedMinutes: existing.estimatedMinutes,
-          deadline: nextDeadline,
-          isSomeday: existing.isSomeday,
-          tags: existing.tags.map((t) => t.name),
-        });
+        await this.createTask(
+          {
+            title: existing.title,
+            description: existing.description,
+            priority: existing.priority,
+            dueDate: nextDate.toISOString(),
+            dueTime: existing.dueTime,
+            projectId: existing.projectId,
+            recurrence: existing.recurrence,
+            remindAt: nextRemindAt,
+            sectionId: existing.sectionId,
+            estimatedMinutes: existing.estimatedMinutes,
+            deadline: nextDeadline,
+            isSomeday: existing.isSomeday,
+            tags: existing.tags.map((t) => t.name),
+          },
+          pendingEvents,
+        );
       }
     }
 
     const completed = (await this.get(id))!;
-    this.eventBus?.emit("task:complete", completed);
+    pendingEvents.push({ type: "task:complete", task: completed });
 
     return completed;
   }
@@ -295,8 +343,10 @@ export class TaskService {
 
   async delete(id: string): Promise<boolean> {
     const existing = await this.get(id);
-    this.queries.deleteTaskTags(id);
-    const result = this.queries.deleteTask(id);
+    const result = await this.queries.transaction(() => {
+      this.queries.deleteTaskTags(id);
+      return this.queries.deleteTask(id);
+    });
     const deleted = result.changes > 0;
     if (deleted && existing) {
       logger.debug("Task deleted", { id });
@@ -308,10 +358,15 @@ export class TaskService {
   /** Complete multiple tasks. Handles recurrence per-task. */
   async completeMany(ids: string[]): Promise<Task[]> {
     logger.debug("Completing batch", { count: ids.length });
-    const results: Task[] = [];
-    for (const id of ids) {
-      results.push(await this.complete(id));
-    }
+    const pendingEvents: PendingTaskEvent[] = [];
+    const results = await this.queries.transaction(async () => {
+      const completed: Task[] = [];
+      for (const id of ids) {
+        completed.push(await this.completeInTransaction(id, pendingEvents));
+      }
+      return completed;
+    });
+    this.emitPendingTaskEvents(pendingEvents);
     return results;
   }
 
@@ -324,8 +379,10 @@ export class TaskService {
       if (task) snapshots.push(task);
     }
     if (ids.length > 0) {
-      this.queries.deleteManyTaskTags(ids);
-      this.queries.deleteManyTasks(ids);
+      await this.queries.transaction(() => {
+        this.queries.deleteManyTaskTags(ids);
+        this.queries.deleteManyTasks(ids);
+      });
     }
     for (const task of snapshots) {
       this.eventBus?.emit("task:delete", task);
@@ -339,20 +396,25 @@ export class TaskService {
     const { tags: tagNames, ...fields } = changes;
     const now = new Date().toISOString();
 
-    if (Object.keys(fields).length > 0) {
-      this.queries.updateManyTasks(ids, { ...fields, updatedAt: now });
-    }
+    let resolvedTags: Tag[] = [];
 
-    // Handle tags per-task if provided
-    if (tagNames !== undefined) {
-      const resolvedTags = await this.resolveTags([...new Set(tagNames)]);
-      for (const id of ids) {
-        this.queries.deleteTaskTags(id);
-        for (const tag of resolvedTags) {
-          this.queries.insertTaskTag(id, tag.id);
+    await this.queries.transaction(async () => {
+      resolvedTags = tagNames !== undefined ? await this.resolveTags([...new Set(tagNames)]) : [];
+
+      if (Object.keys(fields).length > 0) {
+        this.queries.updateManyTasks(ids, { ...fields, updatedAt: now });
+      }
+
+      // Handle tags per-task if provided
+      if (tagNames !== undefined) {
+        for (const id of ids) {
+          this.queries.deleteTaskTags(id);
+          for (const tag of resolvedTags) {
+            this.queries.insertTaskTag(id, tag.id);
+          }
         }
       }
-    }
+    });
 
     const results: Task[] = [];
     for (const id of ids) {
@@ -367,34 +429,41 @@ export class TaskService {
 
   /** Restore a previously deleted task (for undo). */
   async restoreTask(task: Task): Promise<Task> {
-    this.queries.insertTaskWithId({
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      status: task.status,
-      priority: task.priority,
-      dueDate: task.dueDate,
-      dueTime: task.dueTime,
-      completedAt: task.completedAt,
-      projectId: task.projectId,
-      recurrence: task.recurrence,
-      parentId: task.parentId,
-      remindAt: task.remindAt,
-      estimatedMinutes: task.estimatedMinutes,
-      actualMinutes: task.actualMinutes,
-      deadline: task.deadline,
-      isSomeday: task.isSomeday,
-      sectionId: task.sectionId,
-      dreadLevel: task.dreadLevel,
-      sortOrder: task.sortOrder,
-      createdAt: task.createdAt,
-      updatedAt: task.updatedAt,
-    });
+    const resolvedTags: Tag[] = [];
 
-    for (const tag of task.tags) {
-      const resolved = await this.tagService.getOrCreate(tag.name);
-      this.queries.insertTaskTag(task.id, resolved.id);
-    }
+    await this.queries.transaction(async () => {
+      for (const tag of task.tags) {
+        resolvedTags.push(await this.tagService.getOrCreate(tag.name));
+      }
+
+      this.queries.insertTaskWithId({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        dueDate: task.dueDate,
+        dueTime: task.dueTime,
+        completedAt: task.completedAt,
+        projectId: task.projectId,
+        recurrence: task.recurrence,
+        parentId: task.parentId,
+        remindAt: task.remindAt,
+        estimatedMinutes: task.estimatedMinutes,
+        actualMinutes: task.actualMinutes,
+        deadline: task.deadline,
+        isSomeday: task.isSomeday,
+        sectionId: task.sectionId,
+        dreadLevel: task.dreadLevel,
+        sortOrder: task.sortOrder,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
+      });
+
+      for (const tag of resolvedTags) {
+        this.queries.insertTaskTag(task.id, tag.id);
+      }
+    });
 
     this.eventBus?.emit("task:create", task);
     return task;
@@ -402,9 +471,11 @@ export class TaskService {
 
   /** Reorder tasks by assigning sequential sort orders. */
   async reorder(orderedIds: string[]): Promise<void> {
-    for (let i = 0; i < orderedIds.length; i++) {
-      this.queries.updateTask(orderedIds[i], { sortOrder: i });
-    }
+    await this.queries.transaction(() => {
+      for (let i = 0; i < orderedIds.length; i++) {
+        this.queries.updateTask(orderedIds[i], { sortOrder: i });
+      }
+    });
     this.eventBus?.emit("task:reorder", orderedIds);
   }
 

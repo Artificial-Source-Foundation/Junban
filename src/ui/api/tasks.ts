@@ -222,6 +222,9 @@ export async function importTasks(tasks: ImportedTask[]): Promise<ImportResult> 
       {
         taskService: svc.taskService,
         projectService: svc.projectService,
+        transaction: svc.storage.supportsTransactionalRollback
+          ? (operation) => svc.storage.transaction(operation)
+          : undefined,
       },
       tasks,
     );

@@ -89,6 +89,24 @@ describe("LLMProviderRegistry", () => {
     expect(executor.execute).toBeTypeOf("function");
   });
 
+  it("rejects unsafe base URLs before creating executors", () => {
+    const registry = new LLMProviderRegistry();
+    let createExecutorCalled = false;
+    registry.register(
+      createTestPlugin("test", {
+        createExecutor: () => {
+          createExecutorCalled = true;
+          throw new Error("should not be called");
+        },
+      }),
+    );
+
+    expect(() =>
+      registry.createExecutor({ provider: "test", baseUrl: "http://192.168.1.20:11434" }),
+    ).toThrow("Invalid AI provider baseUrl");
+    expect(createExecutorCalled).toBe(false);
+  });
+
   it("throws when creating with unknown provider", () => {
     const registry = new LLMProviderRegistry();
     expect(() => registry.createExecutor({ provider: "nope" })).toThrow("Unknown AI provider");

@@ -2,9 +2,23 @@ import { useDirectServices, BASE, handleResponse, handleVoidResponse } from "../
 import { getServices } from "../direct-services.js";
 import type { AIChatMessage } from "./ai-types.js";
 import { getSecureSetting } from "../../../storage/encrypted-settings.js";
+import { isAllowedAIBaseUrl } from "../../../ai/base-url-policy.js";
+
+type AIBaseUrlSettings = {
+  getAppSetting(key: string): { value: string } | undefined;
+};
 
 function normalizeAuthType(value: string | undefined): "api-key" | "oauth" | undefined {
   return value === "api-key" || value === "oauth" ? value : undefined;
+}
+
+function getValidatedStoredBaseUrl(storage: AIBaseUrlSettings): string | undefined {
+  const baseUrlSetting = storage.getAppSetting("ai_base_url");
+  if (!baseUrlSetting?.value) return undefined;
+  if (!isAllowedAIBaseUrl(baseUrlSetting.value)) {
+    throw new Error("Stored AI provider baseUrl is not allowed");
+  }
+  return baseUrlSetting.value;
 }
 
 export async function sendChatMessage(
@@ -31,10 +45,9 @@ export async function sendChatMessage(
     }
 
     try {
-      const { gatherContext } = await import("../../../ai/chat.js");
       const apiKey = await getSecureSetting(svc.storage, "ai_api_key");
       const modelSetting = svc.storage.getAppSetting("ai_model");
-      const baseUrlSetting = svc.storage.getAppSetting("ai_base_url");
+      const storedBaseUrl = getValidatedStoredBaseUrl(svc.storage);
       const authTypeSetting = svc.storage.getAppSetting("ai_auth_type");
       const oauthToken = await getSecureSetting(svc.storage, "ai_oauth_token");
 
@@ -42,7 +55,7 @@ export async function sendChatMessage(
         provider: providerSetting.value as string,
         apiKey: apiKey ?? undefined,
         model: modelSetting?.value,
-        baseUrl: baseUrlSetting?.value,
+        baseUrl: storedBaseUrl,
         authType: normalizeAuthType(authTypeSetting?.value),
         oauthToken: oauthToken ?? undefined,
       });
@@ -57,6 +70,7 @@ export async function sendChatMessage(
 
       const isLocalProvider =
         providerSetting.value === "ollama" || providerSetting.value === "lmstudio";
+      const { gatherContext } = await import("../../../ai/chat.js");
       const contextBlock = await gatherContext(toolServices, {
         compact: isLocalProvider,
         voiceCall: options?.voiceCall,
@@ -127,7 +141,7 @@ export async function getChatMessages(): Promise<AIChatMessage[]> {
         if (providerSetting?.value) {
           const apiKey = await getSecureSetting(svc.storage, "ai_api_key");
           const modelSetting = svc.storage.getAppSetting("ai_model");
-          const baseUrlSetting = svc.storage.getAppSetting("ai_base_url");
+          const storedBaseUrl = getValidatedStoredBaseUrl(svc.storage);
           const authTypeSetting = svc.storage.getAppSetting("ai_auth_type");
           const oauthToken = await getSecureSetting(svc.storage, "ai_oauth_token");
 
@@ -135,7 +149,7 @@ export async function getChatMessages(): Promise<AIChatMessage[]> {
             provider: providerSetting.value as string,
             apiKey: apiKey ?? undefined,
             model: modelSetting?.value,
-            baseUrl: baseUrlSetting?.value,
+            baseUrl: storedBaseUrl,
             authType: normalizeAuthType(authTypeSetting?.value),
             oauthToken: oauthToken ?? undefined,
           });

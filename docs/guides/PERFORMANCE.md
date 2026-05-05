@@ -81,9 +81,9 @@ Check:
 - FCP / LCP
 - whether a change removed work from the startup path, not just moved code around
 
-## Automated Benchmarks
+## Targeted Benchmarks
 
-Junban also ships a Playwright-based benchmark pass for the most important user-facing flows:
+Junban also ships a Playwright-based benchmark pass for the most important user-facing flows. It is a targeted validation command, not part of the default CI gate today:
 
 ```bash
 pnpm test:perf

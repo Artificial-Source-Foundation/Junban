@@ -11,7 +11,7 @@ Boundary note: this document covers domain/service behavior in `src/core/**`. Pe
 ### `tasks.ts`
 
 **Path:** `src/core/tasks.ts`
-**Purpose:** The central task service -- handles all task CRUD operations, subtask hierarchy, batch operations, recurring task creation, and reminder queries. Both the UI and CLI use this module.
+**Purpose:** The central task service -- handles all task CRUD operations, subtask hierarchy, batch operations, recurring task creation, and reminder queries. Task create/complete events are deferred through the storage after-commit hook when called inside an outer transaction, so rolled-back imports or nested transactions do not publish events for discarded task rows. Completion cascades, recurring next-task creation, and `completeMany()` run inside the storage transaction helper on transactional backends. Both the UI and CLI use this module.
 **Key Exports:**
 
 - `TaskService` -- class with methods: `create`, `list`, `get`, `update`, `complete`, `delete`, `completeMany`, `deleteMany`, `updateMany`, `restoreTask`, `reorder`, `getDueReminders`, `getChildren`, `listTree`, `indent`, `outdent`
@@ -182,7 +182,7 @@ Performance notes:
 ### `export.ts`
 
 **Path:** `src/core/export.ts`
-**Purpose:** Exports task data in three formats: structured JSON (full backup), CSV (spreadsheet-compatible), and Markdown (checkbox list).
+**Purpose:** Exports flat task transfer data in three formats: structured JSON, CSV (spreadsheet-compatible task list), and Markdown (checkbox task list). Junban JSON import/export preserves core task fields such as reminders, estimates, actual time, deadlines, someday flags, and dread level, plus referenced project/tag names; project hierarchy/status/favorites/view settings, tag colors, comments/activity, task relations, section layout, templates, settings, plugin data, AI chat history/memories, stats, and recovery metadata remain outside this scope. This is not a full app backup or recovery image.
 **Key Exports:**
 
 - `ExportData` -- interface: `{ tasks, projects, tags, exportedAt, version }`
@@ -218,7 +218,7 @@ Performance notes:
 ### `import-execution.ts`
 
 **Path:** `src/core/import-execution.ts`
-**Purpose:** Executes task imports with rollback safety. Creates needed projects/tasks for the import batch and, on the first failure, rolls back tasks/projects created during that run before returning an error result.
+**Purpose:** Executes task imports with rollback safety. Creates needed projects/tasks for the import batch and, on the first failure, either uses the storage transaction hook (SQLite) or rolls back tasks/projects created during that run before returning an error result.
 **Key Exports:**
 
 - `importTasksWithRollback(services, importedTasks): Promise<ImportResult>`

@@ -83,6 +83,26 @@ function readTaskColumnNames(sqlite: Database): string[] {
   return (result[0]?.values ?? []).map((row) => String(row[1]));
 }
 
+function readIndexNames(sqlite: Database): string[] {
+  const result = sqlite.exec("SELECT name FROM sqlite_master WHERE type = 'index' ORDER BY name");
+  return (result[0]?.values ?? []).map((row) => String(row[0]));
+}
+
+function expectHotPathIndexes(sqlite: Database): void {
+  expect(readIndexNames(sqlite)).toEqual(
+    expect.arrayContaining([
+      "chat_messages_session_id_id_idx",
+      "chat_messages_session_created_at_idx",
+      "task_tags_tag_id_idx",
+      "tasks_status_sort_idx",
+      "tasks_project_sort_idx",
+      "tasks_section_sort_idx",
+      "tasks_parent_sort_idx",
+      "tasks_reminder_due_idx",
+    ]),
+  );
+}
+
 async function applyMigrationPrefix(sqlite: Database, count: number): Promise<void> {
   ensureMigrationsTable(sqlite);
 
@@ -150,6 +170,7 @@ describe("migrate-web", () => {
       })),
     );
     expect(readTaskColumnNames(sqlite)).toContain("dread_level");
+    expectHotPathIndexes(sqlite);
   });
 
   it("backfills ledger for a schemaful legacy database missing __drizzle_migrations", async () => {
@@ -168,6 +189,7 @@ describe("migrate-web", () => {
       })),
     );
     expect(readTaskColumnNames(sqlite)).toContain("dread_level");
+    expectHotPathIndexes(sqlite);
   });
 
   it("applies only migrations that are still pending", async () => {
@@ -183,6 +205,7 @@ describe("migrate-web", () => {
       migrationJournal.entries.map((entry) => entry.when),
     );
     expect(readTaskColumnNames(sqlite)).toContain("dread_level");
+    expectHotPathIndexes(sqlite);
   });
 
   it("is safe to rerun without duplicating migration rows", async () => {

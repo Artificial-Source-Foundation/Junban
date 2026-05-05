@@ -9,6 +9,20 @@ import { getServices } from "../direct-services.js";
 import type { AIProviderInfo, ModelDiscoveryInfo } from "./ai-types.js";
 import { DEFAULT_LMSTUDIO_BASE_URL } from "../../../config/defaults.js";
 import { getSecureSetting } from "../../../storage/encrypted-settings.js";
+import { isAllowedAIBaseUrl } from "../../../ai/base-url-policy.js";
+
+type AIBaseUrlSettings = {
+  getAppSetting(key: string): { value: string } | undefined;
+};
+
+function getValidatedStoredBaseUrl(storage: AIBaseUrlSettings): string | undefined {
+  const baseUrlSetting = storage.getAppSetting("ai_base_url");
+  if (!baseUrlSetting?.value) return undefined;
+  if (!isAllowedAIBaseUrl(baseUrlSetting.value)) {
+    throw new Error("Stored AI provider baseUrl is not allowed");
+  }
+  return baseUrlSetting.value;
+}
 
 export async function listAIProviders(): Promise<AIProviderInfo[]> {
   if (useDirectServices()) {
@@ -35,13 +49,22 @@ export async function fetchModels(
   baseUrl?: string,
 ): Promise<ModelDiscoveryInfo[]> {
   if (useDirectServices()) {
+    if (baseUrl && !isAllowedAIBaseUrl(baseUrl)) {
+      return [];
+    }
+
     const svc = await getServices();
+    let storedBaseUrl: string | undefined;
+    try {
+      storedBaseUrl = getValidatedStoredBaseUrl(svc.storage);
+    } catch {
+      return [];
+    }
     const apiKey = await getSecureSetting(svc.storage, "ai_api_key");
-    const baseUrlSetting = svc.storage.getAppSetting("ai_base_url");
     const { fetchAvailableModels } = await import("../../../ai/model-discovery.js");
     return fetchAvailableModels(providerName, {
       apiKey: apiKey ?? undefined,
-      baseUrl: baseUrl || baseUrlSetting?.value,
+      baseUrl: baseUrl || storedBaseUrl,
     });
   }
   const res = await fetch(
@@ -59,14 +82,23 @@ export async function loadModel(
   baseUrl?: string,
 ): Promise<void> {
   if (useDirectServices()) {
+    if (baseUrl && !isAllowedAIBaseUrl(baseUrl)) {
+      throw new Error("Invalid baseUrl");
+    }
+
     const svc = await getServices();
-    const baseUrlSetting = svc.storage.getAppSetting("ai_base_url");
+    let storedBaseUrl: string | undefined;
+    try {
+      storedBaseUrl = getValidatedStoredBaseUrl(svc.storage);
+    } catch {
+      throw new Error("Invalid stored baseUrl");
+    }
     const apiKey = await getSecureSetting(svc.storage, "ai_api_key");
     if (providerName === "lmstudio") {
       const { loadLMStudioModel } = await import("../../../ai/model-discovery.js");
       await loadLMStudioModel(
         modelKey,
-        baseUrl || baseUrlSetting?.value || DEFAULT_LMSTUDIO_BASE_URL,
+        baseUrl || storedBaseUrl || DEFAULT_LMSTUDIO_BASE_URL,
         apiKey ?? undefined,
       );
     }
@@ -87,14 +119,23 @@ export async function unloadModel(
   baseUrl?: string,
 ): Promise<void> {
   if (useDirectServices()) {
+    if (baseUrl && !isAllowedAIBaseUrl(baseUrl)) {
+      throw new Error("Invalid baseUrl");
+    }
+
     const svc = await getServices();
-    const baseUrlSetting = svc.storage.getAppSetting("ai_base_url");
+    let storedBaseUrl: string | undefined;
+    try {
+      storedBaseUrl = getValidatedStoredBaseUrl(svc.storage);
+    } catch {
+      throw new Error("Invalid stored baseUrl");
+    }
     const apiKey = await getSecureSetting(svc.storage, "ai_api_key");
     if (providerName === "lmstudio") {
       const { unloadLMStudioModel } = await import("../../../ai/model-discovery.js");
       await unloadLMStudioModel(
         modelKey,
-        baseUrl || baseUrlSetting?.value || DEFAULT_LMSTUDIO_BASE_URL,
+        baseUrl || storedBaseUrl || DEFAULT_LMSTUDIO_BASE_URL,
         apiKey ?? undefined,
       );
     }

@@ -60,7 +60,9 @@ plugins/my-plugin/
 
 ### Runtime Isolation (Community Plugins)
 
-Community plugins run in a sandboxed VM context.
+Community plugin code execution is disabled by default in V1 because the legacy same-process VM sandbox is not a security boundary. Trusted local development can opt into that legacy path with `JUNBAN_ENABLE_UNSAFE_COMMUNITY_PLUGIN_VM=true`; untrusted community plugins should not be executed until an isolated runtime replaces it.
+
+When the unsafe local-development opt-in is enabled, community plugins run in a sandboxed VM context.
 
 What this means for plugin authors:
 

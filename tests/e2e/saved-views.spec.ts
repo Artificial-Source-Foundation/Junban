@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { setupPage, createTaskViaApi, navigateTo } from "./helpers.js";
+import { setupPage, createTaskViaApi, openSettings } from "./helpers.js";
 
 test.describe("Saved views / filters", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe("Saved views / filters", () => {
   });
 
   test("create a saved filter", async ({ page }) => {
-    await navigateTo(page, "Filters & Labels");
+    await openSettings(page, "Filters & Labels");
 
     // Click the "Add filter" button
     await page.getByRole("button", { name: /Add filter/i }).click();
@@ -67,7 +67,7 @@ test.describe("Saved views / filters", () => {
   });
 
   test("persists across reload", async ({ page }) => {
-    await navigateTo(page, "Filters & Labels");
+    await openSettings(page, "Filters & Labels");
 
     // Click the "Add filter" button
     await page.getByRole("button", { name: /Add filter/i }).click();
@@ -84,7 +84,7 @@ test.describe("Saved views / filters", () => {
     await page.reload();
     await expect(page.getByText("Inbox").first()).toBeVisible({ timeout: 10000 });
 
-    await navigateTo(page, "Filters & Labels");
+    await openSettings(page, "Filters & Labels");
 
     // Still there
     await expect(page.getByText("Persisted Filter").first()).toBeVisible({ timeout: 5000 });

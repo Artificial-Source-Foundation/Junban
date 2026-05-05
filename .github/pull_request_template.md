@@ -10,9 +10,12 @@
 
 ## Testing
 
-- [ ] `pnpm typecheck`
-- [ ] `pnpm test`
-- [ ] `pnpm test:e2e`
+- [ ] `pnpm check`
+- [ ] `pnpm docs:check` (docs, links, or workflow docs changed)
+- [ ] `pnpm build` (build, packaging, runtime, or release-affecting changes)
+- [ ] `pnpm test:e2e` (UI/browser flows or release candidate; not a default CI gate)
+- [ ] `pnpm test:perf` (performance-sensitive changes; not a default CI gate)
+- [ ] Accessibility/keyboard verification for UI semantics or focus changes; describe automated axe, interaction, or manual coverage below
 - [ ] other: _describe below_
 
 ## Documentation Checklist

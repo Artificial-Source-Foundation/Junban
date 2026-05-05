@@ -17,7 +17,7 @@ If you just want to run the app and not modify source, use the release page:
 
 - [GitHub Releases](https://github.com/Artificial-Source/Junban/releases/latest)
 
-Assets include `.exe/.msi` for Windows, `.dmg` for macOS, and `.deb`/`.AppImage` for Linux.
+Current automated release assets include `.deb` and `.AppImage` desktop packages for Linux, updater metadata (`latest.json`), and the `junban-cli.tgz` CLI package tarball. Windows and macOS desktop installers are not produced by the current release workflow yet; use source/Tauri builds on those platforms until dedicated packaging jobs are added.
 
 On Linux, run the installer helper to fetch the latest release and choose the right asset for your distro:
 

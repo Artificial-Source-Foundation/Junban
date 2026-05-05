@@ -6,6 +6,7 @@ import { StorageError } from "../../core/errors.js";
 import type { ProjectRow, MutationResult, MarkdownIndexes } from "./types.js";
 import { OK, NOOP } from "./types.js";
 import { updateTask } from "./task-ops.js";
+import { persistSections, writeTextFileAtomic } from "./persistence.js";
 
 export function listProjects(idx: MarkdownIndexes): ProjectRow[] {
   return Array.from(idx.projectIndex.values()).map((e) => e.row);
@@ -40,7 +41,7 @@ export function insertProject(idx: MarkdownIndexes, project: ProjectRow): Mutati
   };
   try {
     fs.mkdirSync(dirPath, { recursive: true });
-    fs.writeFileSync(path.join(dirPath, "_project.yaml"), YAML.stringify(meta), "utf-8");
+    writeTextFileAtomic(path.join(dirPath, "_project.yaml"), YAML.stringify(meta));
   } catch (err) {
     throw new StorageError(`write project ${dirPath}`, err instanceof Error ? err : undefined);
   }
@@ -70,14 +71,7 @@ export function updateProject(
     archived: newRow.archived,
     createdAt: newRow.createdAt,
   };
-  try {
-    fs.writeFileSync(path.join(entry.dirPath, "_project.yaml"), YAML.stringify(meta), "utf-8");
-  } catch (err) {
-    throw new StorageError(
-      `write project ${entry.dirPath}`,
-      err instanceof Error ? err : undefined,
-    );
-  }
+  writeTextFileAtomic(path.join(entry.dirPath, "_project.yaml"), YAML.stringify(meta));
 
   idx.projectIndex.set(id, { row: newRow, dirPath: entry.dirPath });
   return OK;
@@ -87,12 +81,28 @@ export function deleteProject(idx: MarkdownIndexes, id: string): MutationResult 
   const entry = idx.projectIndex.get(id);
   if (!entry) return NOOP;
 
-  // Move project tasks to inbox
+  // Move project tasks to inbox and clear section membership.
   for (const [taskId, taskEntry] of idx.taskIndex) {
     if (taskEntry.row.projectId === id) {
-      updateTask(idx, taskId, { projectId: null });
+      updateTask(idx, taskId, { projectId: null, sectionId: null });
     }
   }
+
+  // Promote child projects to the top level instead of deleting them.
+  for (const [projectId, projectEntry] of idx.projectIndex) {
+    if (projectEntry.row.parentId === id) {
+      updateProject(idx, projectId, { parentId: null });
+    }
+  }
+
+  let sectionsChanged = false;
+  for (const [sectionId, section] of [...idx.sectionIndex]) {
+    if (section.projectId === id) {
+      idx.sectionIndex.delete(sectionId);
+      sectionsChanged = true;
+    }
+  }
+  if (sectionsChanged) persistSections(idx);
 
   // Remove project directory
   try {

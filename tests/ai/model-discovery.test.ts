@@ -55,13 +55,24 @@ describe("fetchAvailableModels", () => {
     });
 
     const models = await fetchAvailableModels("ollama", {
-      baseUrl: "http://myserver:11434",
+      baseUrl: "http://127.0.0.1:11434",
     });
     expect(ids(models)).toEqual(["phi3"]);
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      "http://myserver:11434/api/tags",
+      "http://127.0.0.1:11434/api/tags",
       expect.any(Object),
     );
+  });
+
+  it("rejects unsafe custom baseUrl before model discovery fetches", async () => {
+    globalThis.fetch = vi.fn();
+
+    const models = await fetchAvailableModels("ollama", {
+      baseUrl: "http://192.168.1.20:11434",
+    });
+
+    expect(models).toEqual([]);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   it("fetches lmstudio models from native API with correct shape", async () => {
@@ -147,9 +158,9 @@ describe("fetchAvailableModels", () => {
         }),
     });
 
-    await fetchAvailableModels("lmstudio", { baseUrl: "http://myhost:1234/v1" });
+    await fetchAvailableModels("lmstudio", { baseUrl: "http://127.0.0.1:1234/v1" });
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      "http://myhost:1234/api/v1/models",
+      "http://127.0.0.1:1234/api/v1/models",
       expect.any(Object),
     );
   });

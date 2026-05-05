@@ -8,6 +8,7 @@ import type { LLMProviderPlugin, LLMExecutor } from "./interface.js";
 import type { LLMCapabilities, ModelDescriptor } from "../core/capabilities.js";
 import type { AIProviderConfig } from "../types.js";
 import { createLogger } from "../../utils/logger.js";
+import { assertAllowedAIBaseUrl } from "../base-url-policy.js";
 
 const logger = createLogger("llm-registry");
 
@@ -64,6 +65,10 @@ export class LLMProviderRegistry {
 
   /** Create an executor for the given config. Validates API key requirements. */
   createExecutor(config: AIProviderConfig): LLMExecutor {
+    if (config.baseUrl) {
+      assertAllowedAIBaseUrl(config.baseUrl);
+    }
+
     const reg = this.providers.get(config.provider);
     if (!reg) {
       logger.error("Unknown AI provider", { provider: config.provider });
@@ -79,6 +84,10 @@ export class LLMProviderRegistry {
 
   /** Discover models for a provider. */
   async discoverModels(providerName: string, config: AIProviderConfig): Promise<ModelDescriptor[]> {
+    if (config.baseUrl) {
+      assertAllowedAIBaseUrl(config.baseUrl);
+    }
+
     logger.debug("Discovering models", { provider: providerName });
     const reg = this.providers.get(providerName);
     if (!reg) return [];
@@ -91,6 +100,10 @@ export class LLMProviderRegistry {
 
   /** Load a model on a provider (local providers). */
   async loadModel(providerName: string, modelKey: string, config: AIProviderConfig): Promise<void> {
+    if (config.baseUrl) {
+      assertAllowedAIBaseUrl(config.baseUrl);
+    }
+
     const reg = this.providers.get(providerName);
     if (!reg?.plugin.loadModel) {
       throw new Error(`Provider "${providerName}" does not support model loading`);
@@ -104,6 +117,10 @@ export class LLMProviderRegistry {
     modelId: string,
     config: AIProviderConfig,
   ): LLMCapabilities {
+    if (config.baseUrl) {
+      assertAllowedAIBaseUrl(config.baseUrl);
+    }
+
     const reg = this.providers.get(providerName);
     if (!reg) {
       return { streaming: true, toolCalling: true, vision: false, structuredOutput: false };

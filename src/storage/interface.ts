@@ -152,6 +152,10 @@ export interface MutationResult {
  * Method signatures mirror the existing Queries type for drop-in compatibility.
  */
 export interface IStorage {
+  readonly supportsTransactionalRollback: boolean;
+  transaction<T>(operation: () => T | Promise<T>): Promise<T>;
+  afterTransactionCommit(callback: () => void): void;
+
   // ── Tasks ──
   listTasks(): TaskRow[];
   listTasksByParent(parentId: string): TaskRow[];

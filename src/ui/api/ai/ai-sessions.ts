@@ -4,11 +4,25 @@ import type { AIChatMessage, ChatSessionInfo } from "./ai-types.js";
 import { deserializeChatMessages } from "../../../ai/message-utils.js";
 import { createLogger } from "../../../utils/logger.js";
 import { getSecureSetting } from "../../../storage/encrypted-settings.js";
+import { isAllowedAIBaseUrl } from "../../../ai/base-url-policy.js";
 
 const log = createLogger("ai-sessions");
 
+type AIBaseUrlSettings = {
+  getAppSetting(key: string): { value: string } | undefined;
+};
+
 function normalizeAuthType(value: string | undefined): "api-key" | "oauth" | undefined {
   return value === "api-key" || value === "oauth" ? value : undefined;
+}
+
+function getValidatedStoredBaseUrl(storage: AIBaseUrlSettings): string | undefined {
+  const baseUrlSetting = storage.getAppSetting("ai_base_url");
+  if (!baseUrlSetting?.value) return undefined;
+  if (!isAllowedAIBaseUrl(baseUrlSetting.value)) {
+    throw new Error("Stored AI provider baseUrl is not allowed");
+  }
+  return baseUrlSetting.value;
 }
 
 export async function listChatSessions(): Promise<ChatSessionInfo[]> {
@@ -70,7 +84,12 @@ export async function switchChatSession(sessionId: string): Promise<AIChatMessag
 
     const apiKey = await getSecureSetting(svc.storage, "ai_api_key");
     const modelSetting = svc.storage.getAppSetting("ai_model");
-    const baseUrlSetting = svc.storage.getAppSetting("ai_base_url");
+    let storedBaseUrl: string | undefined;
+    try {
+      storedBaseUrl = getValidatedStoredBaseUrl(svc.storage);
+    } catch {
+      throw new Error("Invalid stored baseUrl");
+    }
     const authTypeSetting = svc.storage.getAppSetting("ai_auth_type");
     const oauthToken = await getSecureSetting(svc.storage, "ai_oauth_token");
 
@@ -78,7 +97,7 @@ export async function switchChatSession(sessionId: string): Promise<AIChatMessag
       provider: providerSetting.value as string,
       apiKey: apiKey ?? undefined,
       model: modelSetting?.value,
-      baseUrl: baseUrlSetting?.value,
+      baseUrl: storedBaseUrl,
       authType: normalizeAuthType(authTypeSetting?.value),
       oauthToken: oauthToken ?? undefined,
     });

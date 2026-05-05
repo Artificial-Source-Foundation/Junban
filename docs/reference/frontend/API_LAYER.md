@@ -113,7 +113,7 @@ src/ui/api/
 | `importTasks`       | `(tasks: ImportedTask[]) => Promise<ImportResult>`               | Import tasks from external source           |
 
 - **Server route family:** `/api/tasks/*` (CRUD, bulk operations, hierarchy operations, reminders, import)
-- **Notes:** Imports now run with rollback safety in both direct-service and server mode. If any item fails, tasks/projects created during that import run are rolled back and the result reports `imported: 0` with error details. In Tauri mode, `svc.save()` is only called after a successful import.
+- **Notes:** Imports now run with rollback safety in both direct-service and server mode. SQLite direct-service imports use the storage transaction hook; non-transactional backends fall back to best-effort cleanup of tasks/projects created during that import run. If any item fails, the result reports `imported: 0` with error details. In Tauri mode, `svc.save()` is only called after a successful import.
 
 ---
 
@@ -268,7 +268,7 @@ src/ui/api/
 - **Server route family:** `/api/ai/*` (providers, config, streaming chat, and session management)
 
 - **SSE Stream Format:** `sendChatMessage` returns a `ReadableStream<Uint8Array>`. In Tauri mode, this is constructed in-process by iterating over the chat session's async generator. Each SSE event is `data: {JSON}\n\n` with types: `token`, `tool_call`, `tool_result`, `done`, `error`.
-- **Notes:** In Tauri mode, `sendChatMessage` builds the entire AI pipeline in-process: loads provider, gathers context (compact mode for local providers), creates/restores session, and streams events. The `voiceCall` option passes a flag to the context gatherer for voice-optimized prompts. `updateAIConfig` clears the chat session when the provider changes. `getChatMessages` attempts to restore the session from storage if no active session exists. `switchChatSession` in Tauri mode manually reconstructs a `ChatSession` from stored messages. `deleteChatSession` also removes the title override setting. `createNewChatSession` in Tauri mode clears the in-memory session without deleting from the database. In direct-services mode, API key and OAuth token reads/writes use the same encrypted setting helpers as the Hono API path.
+- **Notes:** In Tauri mode, `sendChatMessage` builds the entire AI pipeline in-process: loads provider, gathers context (compact mode for local providers), creates/restores session, and streams events. The `voiceCall` option passes a flag to the context gatherer for voice-optimized prompts. `updateAIConfig` clears the chat session when the provider changes and validates `baseUrl` with the shared AI base-URL policy before direct-service persistence. Direct-services model discovery/load/unload and chat/session executor paths also validate stored or per-call `baseUrl` values before making provider/model calls; discovery returns an empty list for unsafe URLs while lifecycle/session operations fail like the Hono path. `getChatMessages` attempts to restore the session from storage if no active session exists. `switchChatSession` in Tauri mode manually reconstructs a `ChatSession` from stored messages. `deleteChatSession` also removes the title override setting. `createNewChatSession` in Tauri mode clears the in-memory session without deleting from the database. In direct-services mode, API key and OAuth token reads/writes use the same encrypted setting helpers as the Hono API path.
 
 ---
 
@@ -278,15 +278,15 @@ src/ui/api/
 - **Purpose:** App settings persistence, storage info, and data export.
 - **Key Exports:**
 
-| Function         | Signature                                  | Description              |
-| ---------------- | ------------------------------------------ | ------------------------ |
-| `exportAllData`  | `() => Promise<{ tasks, projects, tags }>` | Export all data          |
-| `getAppSetting`  | `(key) => Promise<string \| null>`         | Get a single setting     |
-| `getStorageInfo` | `() => Promise<{ mode, path }>`            | Get storage backend info |
-| `setAppSetting`  | `(key, value) => Promise<void>`            | Set a single setting     |
+| Function         | Signature                                  | Description                    |
+| ---------------- | ------------------------------------------ | ------------------------------ |
+| `exportAllData`  | `() => Promise<{ tasks, projects, tags }>` | Export flat task transfer data |
+| `getAppSetting`  | `(key) => Promise<string \| null>`         | Get a single setting           |
+| `getStorageInfo` | `() => Promise<{ mode, path }>`            | Get storage backend info       |
+| `setAppSetting`  | `(key, value) => Promise<void>`            | Set a single setting           |
 
 - **REST Endpoints (server mode):**
   - `GET /api/settings/:key`
   - `PUT /api/settings/:key`
   - `GET /api/settings/storage`
-- **Notes:** In Tauri mode, `getStorageInfo` always returns `{ mode: "sqlite", path: "(embedded database)" }`. In server mode, `exportAllData` extracts unique tags from task data since there is no dedicated tags export endpoint. Settings are key-value pairs stored in the app_settings table. Used for keyboard shortcuts, notification preferences, AI config, and general settings. In direct-services mode, settings access now mirrors the Hono settings policy: `getAllSettings` filters sensitive keys, `getAppSetting` redacts sensitive values, and `setAppSetting` enforces the writable-key allowlist.
+- **Notes:** In Tauri mode, `getStorageInfo` always returns `{ mode: "sqlite", path: "(embedded database)" }`. In server mode, `exportAllData` extracts unique tags from task data since there is no dedicated tags export endpoint. Export/import is a flat task transfer path, not a full app backup: Junban JSON transfer preserves core task fields such as reminders, estimates, actual time, deadlines, someday flags, and dread level, plus referenced project/tag names. Project hierarchy/status/favorites/view settings, tag colors, settings, plugin data, AI chat history/memories, comments/activity, task relations, section layout, templates, stats, and database recovery metadata are excluded. Settings are key-value pairs stored in the app_settings table. Used for keyboard shortcuts, notification preferences, AI config, and general settings. In direct-services mode, settings access now mirrors the Hono settings policy: `getAllSettings` filters sensitive keys, `getAppSetting` redacts sensitive values, and `setAppSetting` enforces the writable-key allowlist.

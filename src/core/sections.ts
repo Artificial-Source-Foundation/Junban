@@ -73,15 +73,17 @@ export class SectionService {
     const existing = this.queries.getSection(id);
     if (!existing) return false;
 
-    // Clear sectionId on tasks that belong to this section
     const tasks = this.queries.listTasks();
-    for (const task of tasks) {
-      if (task.sectionId === id) {
-        this.queries.updateTask(task.id, { sectionId: null });
+    const result = await this.queries.transaction(() => {
+      // Clear sectionId on tasks that belong to this section
+      for (const task of tasks) {
+        if (task.sectionId === id) {
+          this.queries.updateTask(task.id, { sectionId: null });
+        }
       }
-    }
 
-    const result = this.queries.deleteSection(id);
+      return this.queries.deleteSection(id);
+    });
     const deleted = result.changes > 0;
 
     if (deleted) {
@@ -97,9 +99,11 @@ export class SectionService {
    * @param orderedIds - Section IDs in the desired order.
    */
   async reorder(orderedIds: string[]): Promise<void> {
-    for (let i = 0; i < orderedIds.length; i++) {
-      this.queries.updateSection(orderedIds[i], { sortOrder: i });
-    }
+    await this.queries.transaction(() => {
+      for (let i = 0; i < orderedIds.length; i++) {
+        this.queries.updateSection(orderedIds[i], { sortOrder: i });
+      }
+    });
     logger.debug("Sections reordered", { count: orderedIds.length });
     this.eventBus?.emit("section:reorder", orderedIds);
   }

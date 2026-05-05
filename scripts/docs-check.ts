@@ -71,6 +71,7 @@ function collectTextFiles(dir: string): string[] {
           "coverage",
           ".wrangler",
           ".sst",
+          ".plans",
           "target",
         ].includes(entry.name)
       ) {

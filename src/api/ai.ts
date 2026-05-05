@@ -31,6 +31,15 @@ export function aiRoutes(services: AppServices, options: AiRoutesOptions = {}): 
 
   const ensurePlugins = options.ensurePluginsLoaded ?? ensurePluginsViaLoader;
 
+  function getValidatedStoredBaseUrl(): string | undefined {
+    const baseUrlSetting = services.storage.getAppSetting("ai_base_url");
+    if (!baseUrlSetting?.value) return undefined;
+    if (!isAllowedAIBaseUrl(baseUrlSetting.value)) {
+      throw new Error("Stored AI provider baseUrl is not allowed");
+    }
+    return baseUrlSetting.value;
+  }
+
   async function ensurePluginsBestEffort(route: string): Promise<void> {
     try {
       await ensurePlugins();
@@ -98,6 +107,9 @@ export function aiRoutes(services: AppServices, options: AiRoutesOptions = {}): 
     }
     if (baseUrl !== undefined) {
       if (baseUrl) {
+        if (!isAllowedAIBaseUrl(baseUrl)) {
+          return c.json({ error: "Invalid baseUrl" }, 400);
+        }
         services.storage.setAppSetting("ai_base_url", baseUrl);
       } else {
         services.storage.deleteAppSetting("ai_base_url");
@@ -128,12 +140,12 @@ export function aiRoutes(services: AppServices, options: AiRoutesOptions = {}): 
       }
 
       const apiKey = await getSecureSetting(services.storage, "ai_api_key");
-      const baseUrlSetting = services.storage.getAppSetting("ai_base_url");
+      const storedBaseUrl = getValidatedStoredBaseUrl();
 
       const { fetchAvailableModels } = await import("../ai/model-discovery.js");
       const models = await fetchAvailableModels(providerName, {
         apiKey: apiKey ?? undefined,
-        baseUrl: baseUrlOverride || baseUrlSetting?.value,
+        baseUrl: baseUrlOverride || storedBaseUrl,
       });
       return c.json({ models });
     } catch {
@@ -155,14 +167,19 @@ export function aiRoutes(services: AppServices, options: AiRoutesOptions = {}): 
       return c.json({ error: "Invalid baseUrl" }, 400);
     }
 
-    const baseUrlSetting = services.storage.getAppSetting("ai_base_url");
+    let storedBaseUrl: string | undefined;
+    try {
+      storedBaseUrl = getValidatedStoredBaseUrl();
+    } catch {
+      return c.json({ error: "Invalid stored baseUrl" }, 400);
+    }
     const apiKey = await getSecureSetting(services.storage, "ai_api_key");
 
     if (providerName === "lmstudio") {
       const { loadLMStudioModel } = await import("../ai/model-discovery.js");
       await loadLMStudioModel(
         modelKey,
-        baseUrlOverride || baseUrlSetting?.value || DEFAULT_LMSTUDIO_BASE_URL,
+        baseUrlOverride || storedBaseUrl || DEFAULT_LMSTUDIO_BASE_URL,
         apiKey ?? undefined,
       );
     }
@@ -184,14 +201,19 @@ export function aiRoutes(services: AppServices, options: AiRoutesOptions = {}): 
       return c.json({ error: "Invalid baseUrl" }, 400);
     }
 
-    const baseUrlSetting = services.storage.getAppSetting("ai_base_url");
+    let storedBaseUrl: string | undefined;
+    try {
+      storedBaseUrl = getValidatedStoredBaseUrl();
+    } catch {
+      return c.json({ error: "Invalid stored baseUrl" }, 400);
+    }
     const apiKey = await getSecureSetting(services.storage, "ai_api_key");
 
     if (providerName === "lmstudio") {
       const { unloadLMStudioModel } = await import("../ai/model-discovery.js");
       await unloadLMStudioModel(
         modelKey,
-        baseUrlOverride || baseUrlSetting?.value || DEFAULT_LMSTUDIO_BASE_URL,
+        baseUrlOverride || storedBaseUrl || DEFAULT_LMSTUDIO_BASE_URL,
         apiKey ?? undefined,
       );
     }
@@ -226,7 +248,7 @@ export function aiRoutes(services: AppServices, options: AiRoutesOptions = {}): 
       const { gatherContext } = await import("../ai/chat.js");
       const apiKey = await getSecureSetting(services.storage, "ai_api_key");
       const modelSetting = services.storage.getAppSetting("ai_model");
-      const baseUrlSetting = services.storage.getAppSetting("ai_base_url");
+      const storedBaseUrl = getValidatedStoredBaseUrl();
       const authTypeSetting = services.storage.getAppSetting("ai_auth_type");
       const oauthToken = await getSecureSetting(services.storage, "ai_oauth_token");
 
@@ -234,7 +256,7 @@ export function aiRoutes(services: AppServices, options: AiRoutesOptions = {}): 
         provider: providerSetting.value as string,
         apiKey: apiKey ?? undefined,
         model: modelSetting?.value,
-        baseUrl: baseUrlSetting?.value,
+        baseUrl: storedBaseUrl,
         authType: authTypeSetting?.value as "api-key" | "oauth" | undefined,
         oauthToken: oauthToken ?? undefined,
       });
@@ -298,7 +320,7 @@ export function aiRoutes(services: AppServices, options: AiRoutesOptions = {}): 
         if (providerSetting?.value) {
           const apiKey = await getSecureSetting(services.storage, "ai_api_key");
           const modelSetting = services.storage.getAppSetting("ai_model");
-          const baseUrlSetting = services.storage.getAppSetting("ai_base_url");
+          const storedBaseUrl = getValidatedStoredBaseUrl();
           const authTypeSetting = services.storage.getAppSetting("ai_auth_type");
           const oauthToken = await getSecureSetting(services.storage, "ai_oauth_token");
 
@@ -306,7 +328,7 @@ export function aiRoutes(services: AppServices, options: AiRoutesOptions = {}): 
             provider: providerSetting.value as string,
             apiKey: apiKey ?? undefined,
             model: modelSetting?.value,
-            baseUrl: baseUrlSetting?.value,
+            baseUrl: storedBaseUrl,
             authType: authTypeSetting?.value as "api-key" | "oauth" | undefined,
             oauthToken: oauthToken ?? undefined,
           });
@@ -391,7 +413,12 @@ export function aiRoutes(services: AppServices, options: AiRoutesOptions = {}): 
 
     const apiKey = await getSecureSetting(services.storage, "ai_api_key");
     const modelSetting = services.storage.getAppSetting("ai_model");
-    const baseUrlSetting = services.storage.getAppSetting("ai_base_url");
+    let storedBaseUrl: string | undefined;
+    try {
+      storedBaseUrl = getValidatedStoredBaseUrl();
+    } catch {
+      return c.json({ error: "Invalid stored baseUrl" }, 400);
+    }
     const authTypeSetting = services.storage.getAppSetting("ai_auth_type");
     const oauthToken = await getSecureSetting(services.storage, "ai_oauth_token");
 
@@ -399,7 +426,7 @@ export function aiRoutes(services: AppServices, options: AiRoutesOptions = {}): 
       provider: providerSetting.value as string,
       apiKey: apiKey ?? undefined,
       model: modelSetting?.value,
-      baseUrl: baseUrlSetting?.value,
+      baseUrl: storedBaseUrl,
       authType: authTypeSetting?.value as "api-key" | "oauth" | undefined,
       oauthToken: oauthToken ?? undefined,
     });

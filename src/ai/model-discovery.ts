@@ -6,6 +6,7 @@
 
 import type { AIProviderConfig } from "./types.js";
 import { createLogger } from "../utils/logger.js";
+import { assertAllowedAIBaseUrl } from "./base-url-policy.js";
 
 const logger = createLogger("model-discovery");
 
@@ -58,6 +59,7 @@ export async function loadLMStudioModel(
   baseUrl: string,
   apiKey?: string,
 ): Promise<string> {
+  assertAllowedAIBaseUrl(baseUrl);
   const registry = await createRegistry();
   const config: AIProviderConfig = {
     provider: "lmstudio",
@@ -76,6 +78,7 @@ export async function unloadLMStudioModel(
   baseUrl: string,
   apiKey?: string,
 ): Promise<void> {
+  assertAllowedAIBaseUrl(baseUrl);
   const { unloadLMStudioModel: unload } = await import("./provider/adapters/lmstudio.js");
   const config: AIProviderConfig = {
     provider: "lmstudio",

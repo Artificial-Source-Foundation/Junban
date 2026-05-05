@@ -43,6 +43,12 @@ describe("parseJunbanJSON", () => {
           priority: 1,
           dueDate: "2025-12-25T00:00:00.000Z",
           dueTime: false,
+          remindAt: "2025-12-24T09:00:00.000Z",
+          estimatedMinutes: 45,
+          actualMinutes: 30,
+          deadline: "2025-12-26T00:00:00.000Z",
+          isSomeday: true,
+          dreadLevel: 4,
           completedAt: null,
           projectId: "p1",
           recurrence: null,
@@ -66,6 +72,12 @@ describe("parseJunbanJSON", () => {
     expect(preview.tasks[0].description).toBe("Milk and eggs");
     expect(preview.tasks[0].status).toBe("pending");
     expect(preview.tasks[0].priority).toBe(1);
+    expect(preview.tasks[0].remindAt).toBe("2025-12-24T09:00:00.000Z");
+    expect(preview.tasks[0].estimatedMinutes).toBe(45);
+    expect(preview.tasks[0].actualMinutes).toBe(30);
+    expect(preview.tasks[0].deadline).toBe("2025-12-26T00:00:00.000Z");
+    expect(preview.tasks[0].isSomeday).toBe(true);
+    expect(preview.tasks[0].dreadLevel).toBe(4);
     expect(preview.tasks[0].projectName).toBe("Home");
     expect(preview.tasks[0].tagNames).toEqual(["shopping"]);
     expect(preview.projects).toEqual(["Home"]);
@@ -100,6 +112,42 @@ describe("parseJunbanJSON", () => {
 
     expect(preview.warnings.length).toBeGreaterThan(0);
     expect(preview.warnings[0]).toContain("unknown project ID");
+  });
+
+  it("flattens project and tag metadata to referenced names only", () => {
+    const data = {
+      tasks: [
+        {
+          title: "Flattened metadata task",
+          projectId: "child-project",
+          tags: [{ id: "tag1", name: "urgent", color: "#ef4444" }],
+        },
+      ],
+      projects: [
+        {
+          id: "child-project",
+          name: "Child Project",
+          color: "#3b82f6",
+          icon: "folder",
+          parentId: "parent-project",
+          archived: true,
+          isFavorite: true,
+          viewStyle: "board",
+        },
+      ],
+      tags: [{ id: "tag1", name: "urgent", color: "#ef4444" }],
+      version: "1.0",
+    };
+
+    const preview = parseJunbanJSON(JSON.stringify(data));
+
+    expect(preview.tasks[0]).toMatchObject({
+      title: "Flattened metadata task",
+      projectName: "Child Project",
+      tagNames: ["urgent"],
+    });
+    expect(preview.projects).toEqual(["Child Project"]);
+    expect(preview.tags).toEqual(["urgent"]);
   });
 
   it("returns warnings for invalid JSON", () => {

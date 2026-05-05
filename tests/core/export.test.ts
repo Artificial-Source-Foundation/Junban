@@ -46,7 +46,7 @@ function makeTasks(): Task[] {
 }
 
 describe("exportJSON", () => {
-  it("produces valid JSON with all data", () => {
+  it("serializes the provided transfer payload", () => {
     const data = {
       tasks: makeTasks(),
       projects: [],

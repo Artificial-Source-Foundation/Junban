@@ -24,14 +24,14 @@ This section is the fastest way for developers and AI agents to understand how t
 - `this.app` is always present. Missing permissions throw clear runtime errors instead of giving you `undefined` APIs.
 - `settings` is for user-facing configuration. `storage` is for plugin-owned state.
 - Commands, views, panels, and status-bar items are removed automatically on unload.
-- Community plugins are sandboxed and must be self-contained JavaScript modules.
+- Community plugin code execution is disabled by default in V1 while the legacy same-process VM sandbox is replaced; trusted local development can opt in with `JUNBAN_ENABLE_UNSAFE_COMMUNITY_PLUGIN_VM=true`.
 
 ## Built-in Vs Community Plugins
 
 | Capability | Built-in | Community |
 | --- | --- | --- |
 | Language/runtime | App-compiled TypeScript/React allowed | JavaScript runtime files only |
-| Module loading | Host loader / native import path | Sandboxed VM with local-only `require()` |
+| Module loading | Host loader / native import path | Disabled by default; unsafe local-dev opt-in uses sandboxed VM with local-only `require()` |
 | React UI | Supported | Not portable; prefer `structured` content |
 | Node built-ins / host globals | Trusted app code | Blocked |
 | Permission approval flow | Explicit activation | Explicit activation plus permission approval |

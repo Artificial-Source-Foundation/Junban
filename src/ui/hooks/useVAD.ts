@@ -32,6 +32,12 @@ interface UseVADReturn {
   gracePeriodProgress: number;
 }
 
+interface MicVADInstance {
+  start: () => void;
+  pause: () => void;
+  destroy: () => void;
+}
+
 export function useVAD({
   onSpeechStart,
   onSpeechEnd,
@@ -45,7 +51,10 @@ export function useVAD({
   const [isSupported, setIsSupported] = useState(true);
   const [isInGracePeriod, setIsInGracePeriod] = useState(false);
   const [gracePeriodProgress, setGracePeriodProgress] = useState(0);
-  const vadRef = useRef<{ start: () => void; pause: () => void; destroy: () => void } | null>(null);
+  const vadRef = useRef<MicVADInstance | null>(null);
+  const startPromiseRef = useRef<Promise<void> | null>(null);
+  const startGenerationRef = useRef(0);
+  const mountedRef = useRef(true);
   const onSpeechStartRef = useRef(onSpeechStart);
   const onSpeechEndRef = useRef(onSpeechEnd);
 
@@ -68,7 +77,12 @@ export function useVAD({
   const gracePeriodMsRef = useRef(gracePeriodMs);
   gracePeriodMsRef.current = gracePeriodMs;
 
-  const clearGraceTimer = useCallback(() => {
+  const cleanupVAD = useCallback((vad: MicVADInstance) => {
+    vad.pause();
+    vad.destroy();
+  }, []);
+
+  const clearGraceTimer = useCallback((updateState = true) => {
     if (graceTimerRef.current) {
       clearTimeout(graceTimerRef.current);
       graceTimerRef.current = null;
@@ -77,120 +91,184 @@ export function useVAD({
       cancelAnimationFrame(graceAnimRef.current);
       graceAnimRef.current = null;
     }
-    setIsInGracePeriod(false);
-    setGracePeriodProgress(0);
+    if (updateState && mountedRef.current) {
+      setIsInGracePeriod(false);
+      setGracePeriodProgress(0);
+    }
   }, []);
 
-  const flushAudioBuffer = useCallback(() => {
-    clearGraceTimer();
-    const chunks = audioBufferRef.current;
-    audioBufferRef.current = [];
-    if (chunks.length === 0) return;
+  const flushAudioBuffer = useCallback(
+    (updateState = true) => {
+      clearGraceTimer(updateState);
+      const chunks = audioBufferRef.current;
+      audioBufferRef.current = [];
+      if (chunks.length === 0) return;
 
-    // Concatenate all buffered audio
-    const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
-    const combined = new Float32Array(totalLength);
-    let offset = 0;
-    for (const chunk of chunks) {
-      combined.set(chunk, offset);
-      offset += chunk.length;
-    }
-    const wavBlob = float32ToWav(combined, 16000);
-    onSpeechEndRef.current?.(wavBlob);
-  }, [clearGraceTimer]);
+      // Concatenate all buffered audio
+      const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
+      const combined = new Float32Array(totalLength);
+      let offset = 0;
+      for (const chunk of chunks) {
+        combined.set(chunk, offset);
+        offset += chunk.length;
+      }
+      const wavBlob = float32ToWav(combined, 16000);
+      onSpeechEndRef.current?.(wavBlob);
+    },
+    [clearGraceTimer],
+  );
 
   const start = useCallback(async () => {
     if (vadRef.current) return;
+    if (startPromiseRef.current) return startPromiseRef.current;
 
-    try {
-      log.debug("loading @ricky0123/vad-web");
-      const { MicVAD } = await import("@ricky0123/vad-web");
-      const vadOptions: Record<string, unknown> = {
-        onSpeechStart: () => {
-          log.debug("VAD speech started");
-          setIsSpeaking(true);
+    const startGeneration = startGenerationRef.current + 1;
+    startGenerationRef.current = startGeneration;
 
-          // If in grace period, cancel the timer — user is speaking again
-          if (smartEndpointRef.current && graceTimerRef.current) {
-            log.debug("VAD speech resumed during grace period");
-            clearGraceTimer();
-          }
+    let startPromise: Promise<void> | null = null;
+    startPromise = (async () => {
+      let vad: MicVADInstance | null = null;
+      const isCurrentStart = () =>
+        mountedRef.current &&
+        startGenerationRef.current === startGeneration &&
+        vadRef.current === vad;
 
-          onSpeechStartRef.current?.();
-        },
-        onSpeechEnd: (audio: Float32Array) => {
-          log.debug("VAD speech ended", { samples: audio.length });
-          setIsSpeaking(false);
+      try {
+        log.debug("loading @ricky0123/vad-web");
+        const { MicVAD } = await import("@ricky0123/vad-web");
+        if (!mountedRef.current || startGenerationRef.current !== startGeneration) return;
 
-          if (smartEndpointRef.current) {
-            // Buffer the audio and start grace timer
-            audioBufferRef.current.push(audio);
-            setIsInGracePeriod(true);
-            graceStartRef.current = Date.now();
+        const vadOptions: Record<string, unknown> = {
+          onSpeechStart: () => {
+            if (!isCurrentStart()) return;
+            log.debug("VAD speech started");
+            setIsSpeaking(true);
 
-            // Animate progress
-            const animate = () => {
-              const elapsed = Date.now() - graceStartRef.current;
-              const progress = Math.min(elapsed / gracePeriodMsRef.current, 1);
-              setGracePeriodProgress(progress);
-              if (progress < 1) {
-                graceAnimRef.current = requestAnimationFrame(animate);
-              }
-            };
-            graceAnimRef.current = requestAnimationFrame(animate);
+            // If in grace period, cancel the timer — user is speaking again
+            if (smartEndpointRef.current && graceTimerRef.current) {
+              log.debug("VAD speech resumed during grace period");
+              clearGraceTimer();
+            }
 
-            graceTimerRef.current = setTimeout(() => {
-              log.debug("VAD grace period expired, flushing audio");
-              flushAudioBuffer();
-            }, gracePeriodMsRef.current);
-          } else {
-            const wavBlob = float32ToWav(audio, 16000);
-            onSpeechEndRef.current?.(wavBlob);
-          }
-        },
-      };
-      if (deviceIdRef.current) {
-        vadOptions.additionalAudioConstraints = {
-          deviceId: { exact: deviceIdRef.current },
+            onSpeechStartRef.current?.();
+          },
+          onSpeechEnd: (audio: Float32Array) => {
+            if (!isCurrentStart()) return;
+            log.debug("VAD speech ended", { samples: audio.length });
+            setIsSpeaking(false);
+
+            if (smartEndpointRef.current) {
+              // Buffer the audio and start grace timer
+              audioBufferRef.current.push(audio);
+              setIsInGracePeriod(true);
+              graceStartRef.current = Date.now();
+
+              // Animate progress
+              const animate = () => {
+                if (!isCurrentStart()) return;
+                const elapsed = Date.now() - graceStartRef.current;
+                const progress = Math.min(elapsed / gracePeriodMsRef.current, 1);
+                setGracePeriodProgress(progress);
+                if (progress < 1) {
+                  graceAnimRef.current = requestAnimationFrame(animate);
+                }
+              };
+              graceAnimRef.current = requestAnimationFrame(animate);
+
+              graceTimerRef.current = setTimeout(() => {
+                if (!isCurrentStart()) return;
+                log.debug("VAD grace period expired, flushing audio");
+                flushAudioBuffer();
+              }, gracePeriodMsRef.current);
+            } else {
+              const wavBlob = float32ToWav(audio, 16000);
+              onSpeechEndRef.current?.(wavBlob);
+            }
+          },
         };
+        if (deviceIdRef.current) {
+          vadOptions.additionalAudioConstraints = {
+            deviceId: { exact: deviceIdRef.current },
+          };
+        }
+        vad = await MicVAD.new(vadOptions);
+
+        if (!mountedRef.current || startGenerationRef.current !== startGeneration) {
+          cleanupVAD(vad);
+          return;
+        }
+
+        vadRef.current = vad;
+        vad.start();
+        if (!isCurrentStart()) {
+          cleanupVAD(vad);
+          if (vadRef.current === vad) vadRef.current = null;
+          return;
+        }
+        setIsListening(true);
+        log.debug("VAD started successfully");
+      } catch (err) {
+        if (vad && vadRef.current !== vad) {
+          cleanupVAD(vad);
+        }
+        if (!mountedRef.current || startGenerationRef.current !== startGeneration) return;
+        log.warn("VAD failed to initialize", { error: String(err) });
+        setIsSupported(false);
+      } finally {
+        if (startPromise && startPromiseRef.current === startPromise) {
+          startPromiseRef.current = null;
+        }
       }
-      const vad = await MicVAD.new(vadOptions);
+    })();
 
-      vadRef.current = vad;
-      vad.start();
-      setIsListening(true);
-      log.debug("VAD started successfully");
-    } catch (err) {
-      log.warn("VAD failed to initialize", { error: String(err) });
-      setIsSupported(false);
-    }
-  }, [clearGraceTimer, flushAudioBuffer]);
+    startPromiseRef.current = startPromise;
+    return startPromise;
+  }, [cleanupVAD, clearGraceTimer, flushAudioBuffer]);
 
-  const stop = useCallback(() => {
-    // Flush any buffered audio before stopping
-    if (audioBufferRef.current.length > 0) {
-      flushAudioBuffer();
-    }
-    clearGraceTimer();
-    if (vadRef.current) {
-      vadRef.current.pause();
-      vadRef.current.destroy();
-      vadRef.current = null;
-    }
-    setIsListening(false);
-    setIsSpeaking(false);
-  }, [flushAudioBuffer, clearGraceTimer]);
+  const stop = useCallback(
+    (options?: { flushBuffered?: boolean; updateState?: boolean }) => {
+      const flushBuffered = options?.flushBuffered ?? true;
+      const updateState = options?.updateState ?? true;
+      startGenerationRef.current += 1;
+      // Drop any pending start for the invalidated generation so a rapid
+      // disable/re-enable can create a fresh MicVAD while the stale promise
+      // resolves and cleans itself up.
+      startPromiseRef.current = null;
+
+      // Flush any buffered audio before stopping
+      if (flushBuffered && audioBufferRef.current.length > 0) {
+        flushAudioBuffer(updateState);
+      } else {
+        audioBufferRef.current = [];
+      }
+      clearGraceTimer(updateState);
+      if (vadRef.current) {
+        cleanupVAD(vadRef.current);
+        vadRef.current = null;
+      }
+      if (updateState && mountedRef.current) {
+        setIsListening(false);
+        setIsSpeaking(false);
+      }
+    },
+    [cleanupVAD, flushAudioBuffer, clearGraceTimer],
+  );
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      stop({ flushBuffered: false, updateState: false });
+    };
+  }, [stop]);
 
   // Auto-start/stop when enabled changes
   useEffect(() => {
     if (enabled) {
-      start();
+      void start();
     } else {
       stop();
     }
-    return () => {
-      stop();
-    };
   }, [enabled, start, stop]);
 
   return {

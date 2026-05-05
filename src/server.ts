@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import { bodyLimit } from "hono/body-limit";
-import { serve } from "@hono/node-server";
+import { serve, type HttpBindings } from "@hono/node-server";
 import { createNodeBackendRuntime } from "./bootstrap.js";
 import { loadEnv } from "./config/env.js";
 import { NotFoundError, ValidationError } from "./core/errors.js";
@@ -23,36 +23,82 @@ const env = loadEnv();
 setDefaultLogLevel(env.LOG_LEVEL);
 const logger = createLogger("server");
 
-const API_HOST = process.env.API_HOST?.trim() || "0.0.0.0";
+const API_HOST = process.env.API_HOST?.trim() || "127.0.0.1";
 const API_PORT = parseInt(process.env.API_PORT ?? "4822", 10);
-const HEALTH_RESPONSE = {
-  ok: true,
-  service: "junban-backend",
-  runtime: "node",
-} as const;
+const BODY_LIMIT_BYTES = 10 * 1024 * 1024;
+const VOICE_BODY_LIMIT_BYTES = 25 * 1024 * 1024;
+const TEST_RESET_TOKEN = process.env.JUNBAN_TEST_RESET_TOKEN?.trim();
+const ALLOW_UNSAFE_API_HOST = process.env.JUNBAN_ALLOW_UNSAFE_API_HOST === "true";
+
+function isLoopbackHost(host: string): boolean {
+  const normalized = normalizeHost(host);
+  if (normalized === "localhost" || normalized === "::1" || normalized === "0:0:0:0:0:0:0:1") {
+    return true;
+  }
+
+  if (normalized.startsWith("::ffff:")) {
+    return isLoopbackHost(normalized.slice("::ffff:".length));
+  }
+
+  const octets = normalized.split(".");
+  return (
+    octets.length === 4 &&
+    octets[0] === "127" &&
+    octets.every((octet) => /^\d{1,3}$/.test(octet) && Number(octet) <= 255)
+  );
+}
+
+function normalizeHost(host: string): string {
+  const trimmed = host.trim().toLowerCase();
+  return trimmed.startsWith("[") && trimmed.endsWith("]") ? trimmed.slice(1, -1) : trimmed;
+}
+
+function bodyLimitForPath(pathname: string): number {
+  return pathname === "/api/voice/transcribe" ? VOICE_BODY_LIMIT_BYTES : BODY_LIMIT_BYTES;
+}
+
+if (!isLoopbackHost(API_HOST) && !ALLOW_UNSAFE_API_HOST) {
+  throw new Error(
+    `Refusing to bind API server to non-loopback host "${API_HOST}". Set JUNBAN_ALLOW_UNSAFE_API_HOST=true only when the network exposure is intentional and protected.`,
+  );
+}
 
 logger.info("Bootstrapping services...");
 const runtime = createNodeBackendRuntime();
 const { services } = runtime;
+let runtimeReady = false;
+let startupError: string | null = null;
 
 try {
   await runtime.initialize();
+  runtimeReady = true;
 } catch (err) {
-  logger.error(
-    `Plugin startup failed during server bootstrap: ${err instanceof Error ? err.message : err}`,
-  );
+  startupError = err instanceof Error ? err.message : String(err);
+  logger.error(`Plugin startup failed during server bootstrap: ${startupError}`);
 }
 
-const ensurePluginsLoaded = async () => runtime.initialize();
+async function ensurePluginsLoaded(): Promise<void> {
+  try {
+    await runtime.initialize();
+    runtimeReady = true;
+    startupError = null;
+  } catch (err) {
+    runtimeReady = false;
+    startupError = err instanceof Error ? err.message : String(err);
+    throw err;
+  }
+}
 
 // Build Hono app
-const app = new Hono();
+const app = new Hono<{ Bindings: HttpBindings }>();
 
 // Security headers
 app.use("*", secureHeaders());
 
-// Global body-size limit (10MB default; voice routes override to 25MB)
-app.use("*", bodyLimit({ maxSize: 10 * 1024 * 1024 }));
+// Global body-size limit. Voice upload routes need Groq's 25MB limit.
+app.use("*", async (c, next) => {
+  return bodyLimit({ maxSize: bodyLimitForPath(c.req.path) })(c, next);
+});
 
 // CORS middleware — restrict to localhost origins only
 const ALLOWED_ORIGINS = [
@@ -69,7 +115,7 @@ app.use(
   cors({
     origin: ALLOWED_ORIGINS,
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "x-api-key", "Authorization"],
+    allowHeaders: ["Content-Type", "x-api-key", "Authorization", "x-junban-test-reset-token"],
   }),
 );
 
@@ -93,6 +139,14 @@ app.onError((err, c) => {
 // POST /api/test-reset — delete all data (for E2E tests only)
 if (process.env.NODE_ENV === "test" || process.env.E2E_MODE === "true") {
   app.post("/api/test-reset", async (c) => {
+    const requestHost = c.env?.incoming?.socket.remoteAddress ?? new URL(c.req.url).hostname;
+    const token = c.req.header("x-junban-test-reset-token")?.trim();
+    if (!isLoopbackHost(requestHost) && (!TEST_RESET_TOKEN || token !== TEST_RESET_TOKEN)) {
+      return c.json(
+        { error: "test reset is restricted to loopback or token-authenticated calls" },
+        403,
+      );
+    }
     const tasks = await services.taskService.list();
     if (tasks.length > 0) {
       await services.taskService.deleteMany(tasks.map((t) => t.id));
@@ -133,7 +187,16 @@ app.route(
 app.route("/api/voice", voiceRoutes());
 
 // Health check
-app.get("/api/health", (c) => c.json(HEALTH_RESPONSE));
+app.get("/api/health", (c) =>
+  c.json({
+    ok: true,
+    ready: runtimeReady,
+    degraded: !runtimeReady,
+    service: "junban-backend",
+    runtime: "node",
+    ...(startupError ? { degradedReason: "plugin_initialization_failed" } : {}),
+  }),
+);
 
 // Start the server
 const server = serve(

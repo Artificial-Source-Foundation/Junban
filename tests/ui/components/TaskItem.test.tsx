@@ -141,16 +141,29 @@ describe("TaskItem", () => {
     const onMultiSelect = vi.fn();
     render(<TaskItem {...defaultProps} onMultiSelect={onMultiSelect} />);
 
-    const row = screen.getByRole("button", { name: /Task: My Task/ });
+    const row = screen.getByRole("group", { name: /Task: My Task/ });
     fireEvent.click(row, { ctrlKey: true });
     expect(onMultiSelect).toHaveBeenCalledWith("t1", expect.objectContaining({ ctrlKey: true }));
+  });
+
+  it("keeps keyboard selection on the task row without exposing it as a button", () => {
+    const onSelect = vi.fn();
+    render(<TaskItem {...defaultProps} onSelect={onSelect} />);
+
+    const row = screen.getByRole("group", { name: /Task: My Task/ });
+    expect(screen.queryByRole("button", { name: /Task: My Task/ })).toBeNull();
+
+    fireEvent.keyDown(row, { key: "Enter" });
+    fireEvent.keyDown(row, { key: " " });
+    expect(onSelect).toHaveBeenCalledTimes(2);
+    expect(onSelect).toHaveBeenCalledWith("t1");
   });
 
   it("fires context menu handler", () => {
     const onContextMenu = vi.fn();
     render(<TaskItem {...defaultProps} onContextMenu={onContextMenu} />);
 
-    const row = screen.getByRole("button", { name: /Task: My Task/ });
+    const row = screen.getByRole("group", { name: /Task: My Task/ });
     fireEvent.contextMenu(row);
     expect(onContextMenu).toHaveBeenCalledWith("t1", expect.any(Object));
   });

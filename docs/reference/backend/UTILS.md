@@ -143,6 +143,21 @@ This document covers two directories: `src/utils/` (shared utility modules) and 
 
 ---
 
+### `crypto.ts`
+
+**Path:** `src/utils/crypto.ts`
+**Purpose:** Encrypts sensitive app settings such as AI API keys and OAuth tokens.
+
+**Key Exports:**
+
+- `encryptValue(plaintext)` -- returns an `enc:v1:` AES-GCM payload
+- `decryptValue(value)` -- decrypts encrypted values, returns plaintext values unchanged for migration, and returns `null` when encrypted data cannot be decrypted
+- `isEncryptedValue(value)` -- detects the `enc:v1:` prefix
+
+**Runtime behavior:** Node/desktop paths derive keys from an app-local random secret file (`junban/secret.key` under the platform data directory, or `JUNBAN_SECRET_KEY_FILE` when set) with restrictive permissions where possible. Legacy `enc:v1:` values derived from the older runtime seed are still attempted on decrypt. Browser-only fallback uses Web Crypto with a runtime-derived seed and is lower assurance.
+
+---
+
 ## Configuration (`src/config/`)
 
 ### `env.ts`

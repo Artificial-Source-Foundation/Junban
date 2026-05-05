@@ -2,7 +2,8 @@
  * AES-256-GCM encryption for sensitive settings (API keys, OAuth tokens).
  *
  * Works in both Node.js (crypto module) and browser (Web Crypto API).
- * Key is derived from machine-specific data via PBKDF2.
+ * Node derives its key from an app-local random secret file. Browser-only
+ * fallback derives from browser runtime data and is lower assurance.
  *
  * Encrypted format: "enc:v1:" + base64(iv + ciphertext + authTag)
  * - IV: 12 bytes (standard for GCM)
@@ -18,6 +19,8 @@ const PBKDF2_ITERATIONS = 100_000;
 const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
 const KEY_LENGTH = 32; // 256 bits
+const NODE_SECRET_BYTES = 32;
+const NODE_SECRET_FILE_ENV = "JUNBAN_SECRET_KEY_FILE";
 
 /** Check if a value was encrypted by this module. */
 export function isEncryptedValue(value: string): boolean {
@@ -26,7 +29,7 @@ export function isEncryptedValue(value: string): boolean {
 
 // ── Key derivation seed ──
 
-function getDeviceSeed(): string {
+function getLegacyDeviceSeed(): string {
   // Browser: use a stable-enough identifier
   if (typeof globalThis.crypto?.subtle !== "undefined" && typeof navigator !== "undefined") {
     return navigator.userAgent + "junban-encryption-key";
@@ -39,6 +42,78 @@ function getDeviceSeed(): string {
   } catch {
     return "junban-fallback-device-seed";
   }
+}
+
+async function getNodeSecretSeed(): Promise<string> {
+  const crypto = await import("node:crypto");
+  const fs = await import("node:fs");
+  const os = await import("node:os");
+  const path = await import("node:path");
+
+  const configuredPath = process.env[NODE_SECRET_FILE_ENV]?.trim();
+  const secretPath = configuredPath
+    ? path.resolve(configuredPath)
+    : path.join(getNodeDataHome(os, path), "junban", "secret.key");
+
+  try {
+    const existing = fs.readFileSync(secretPath, "utf8").trim();
+    if (existing.length >= 32) {
+      try {
+        fs.chmodSync(secretPath, 0o600);
+      } catch {
+        // Best effort: not all filesystems honor POSIX permissions.
+      }
+      return existing;
+    }
+    throw new Error(`Secret key file is too short: ${secretPath}`);
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code !== "ENOENT") throw err;
+  }
+
+  const secret = crypto.randomBytes(NODE_SECRET_BYTES).toString("base64url");
+  fs.mkdirSync(path.dirname(secretPath), { recursive: true, mode: 0o700 });
+  try {
+    fs.writeFileSync(secretPath, `${secret}\n`, { mode: 0o600, flag: "wx" });
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code !== "EEXIST") throw err;
+    const existing = fs.readFileSync(secretPath, "utf8").trim();
+    if (existing.length < 32) {
+      throw new Error(`Secret key file is too short: ${secretPath}`);
+    }
+    try {
+      fs.chmodSync(secretPath, 0o600);
+    } catch {
+      // Best effort: not all filesystems honor POSIX permissions.
+    }
+    return existing;
+  }
+  return secret;
+}
+
+function getNodeDataHome(os: typeof import("node:os"), path: typeof import("node:path")): string {
+  if (process.platform === "linux") {
+    const xdgDataHome = process.env.XDG_DATA_HOME?.trim();
+    if (xdgDataHome && path.isAbsolute(xdgDataHome) && !xdgDataHome.includes("\0")) {
+      return xdgDataHome;
+    }
+    return path.join(os.homedir(), ".local", "share");
+  }
+
+  if (process.platform === "darwin") {
+    return path.join(os.homedir(), "Library", "Application Support");
+  }
+
+  if (process.platform === "win32") {
+    const appData = process.env.APPDATA?.trim();
+    if (appData && path.isAbsolute(appData) && !appData.includes("\0")) {
+      return appData;
+    }
+    return path.join(os.homedir(), "AppData", "Roaming");
+  }
+
+  return path.join(os.homedir(), ".junban");
 }
 
 // ── Shared helpers ──
@@ -70,9 +145,8 @@ function base64Decode(str: string): Uint8Array {
 
 // ── Node.js implementation ──
 
-async function deriveKeyNode(): Promise<Buffer> {
+async function deriveKeyNode(seed: string): Promise<Buffer> {
   const crypto = await import("node:crypto");
-  const seed = getDeviceSeed();
   return new Promise((resolve, reject) => {
     crypto.pbkdf2(seed, SALT, PBKDF2_ITERATIONS, KEY_LENGTH, "sha256", (err, key) => {
       if (err) reject(err);
@@ -83,7 +157,7 @@ async function deriveKeyNode(): Promise<Buffer> {
 
 async function encryptNode(plaintext: string): Promise<string> {
   const crypto = await import("node:crypto");
-  const key = await deriveKeyNode();
+  const key = await deriveKeyNode(await getNodeSecretSeed());
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
 
@@ -99,11 +173,13 @@ async function encryptNode(plaintext: string): Promise<string> {
   return ENCRYPTED_VALUE_PREFIX + base64Encode(combined);
 }
 
-async function decryptNode(encrypted: string): Promise<string> {
+async function decryptNodeWithKey(encrypted: string, key: Buffer): Promise<string> {
   const crypto = await import("node:crypto");
-  const key = await deriveKeyNode();
   const raw = encrypted.slice(ENCRYPTED_VALUE_PREFIX.length);
   const combined = base64Decode(raw);
+  if (combined.length < IV_LENGTH + AUTH_TAG_LENGTH) {
+    throw new Error("Invalid encrypted payload");
+  }
 
   const iv = combined.slice(0, IV_LENGTH);
   const authTag = combined.slice(combined.length - AUTH_TAG_LENGTH);
@@ -116,10 +192,18 @@ async function decryptNode(encrypted: string): Promise<string> {
   return decrypted.toString("utf8");
 }
 
+async function decryptNode(encrypted: string): Promise<string> {
+  try {
+    return await decryptNodeWithKey(encrypted, await deriveKeyNode(await getNodeSecretSeed()));
+  } catch {
+    return decryptNodeWithKey(encrypted, await deriveKeyNode(getLegacyDeviceSeed()));
+  }
+}
+
 // ── Browser (Web Crypto) implementation ──
 
 async function deriveKeyBrowser(): Promise<CryptoKey> {
-  const seed = getDeviceSeed();
+  const seed = getLegacyDeviceSeed();
   const encoder = new TextEncoder();
   const keyMaterial = await globalThis.crypto.subtle.importKey(
     "raw",
@@ -166,6 +250,9 @@ async function decryptBrowser(encrypted: string): Promise<string> {
   const key = await deriveKeyBrowser();
   const raw = encrypted.slice(ENCRYPTED_VALUE_PREFIX.length);
   const combined = base64Decode(raw);
+  if (combined.length < IV_LENGTH + AUTH_TAG_LENGTH) {
+    throw new Error("Invalid encrypted payload");
+  }
 
   const iv = combined.slice(0, IV_LENGTH);
   const data = combined.slice(IV_LENGTH); // ciphertext + authTag (Web Crypto expects them together)
@@ -183,10 +270,15 @@ async function decryptBrowser(encrypted: string): Promise<string> {
 
 function useWebCrypto(): boolean {
   return (
+    !useNodeCrypto() &&
     typeof globalThis.crypto?.subtle !== "undefined" &&
     typeof globalThis.crypto?.getRandomValues === "function" &&
     typeof navigator !== "undefined"
   );
+}
+
+function useNodeCrypto(): boolean {
+  return typeof process !== "undefined" && typeof process.versions?.node === "string";
 }
 
 // ── Public API ──
@@ -196,10 +288,9 @@ function useWebCrypto(): boolean {
  * Returns a prefixed base64 string: "enc:v1:" + base64(iv + ciphertext + authTag).
  */
 export async function encryptValue(plaintext: string): Promise<string> {
-  if (useWebCrypto()) {
-    return encryptBrowser(plaintext);
-  }
-  return encryptNode(plaintext);
+  if (useNodeCrypto()) return encryptNode(plaintext);
+  if (useWebCrypto()) return encryptBrowser(plaintext);
+  throw new Error("No supported crypto runtime is available");
 }
 
 /**
@@ -212,10 +303,9 @@ export async function decryptValue(encrypted: string): Promise<string | null> {
     return encrypted;
   }
   try {
-    if (useWebCrypto()) {
-      return await decryptBrowser(encrypted);
-    }
-    return await decryptNode(encrypted);
+    if (useNodeCrypto()) return await decryptNode(encrypted);
+    if (useWebCrypto()) return await decryptBrowser(encrypted);
+    return null;
   } catch {
     // Plaintext migration is handled by the prefix check above. If we reach
     // this path, the value was encrypted but could not be decrypted safely.

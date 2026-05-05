@@ -359,7 +359,8 @@ function StorageSection() {
           </p>
           <p className="text-xs text-on-surface-muted">
             Storage mode is set via the STORAGE_MODE environment variable. Switching modes requires
-            restart. Data is not automatically migrated — use Export then Import to transfer.
+            restart. Data is not automatically migrated — use Export then Import to transfer flat
+            tasks with referenced project/tag names.
           </p>
         </div>
       ) : (
@@ -434,7 +435,7 @@ function DataSection({ isLocked }: DataSectionProps) {
           version: "1.0",
         };
         content = exportJSON(exportData);
-        filename = `junban-export-${new Date().toISOString().split("T")[0]}.json`;
+        filename = `junban-transfer-${new Date().toISOString().split("T")[0]}.json`;
         mimeType = "application/json";
       } else if (format === "csv") {
         content = exportCSV(filteredTasks);
@@ -523,7 +524,7 @@ function DataSection({ isLocked }: DataSectionProps) {
 
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-2">
-          <h3 className="text-sm font-medium text-on-surface-secondary">Export</h3>
+          <h3 className="text-sm font-medium text-on-surface-secondary">Export task data</h3>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover"
@@ -566,13 +567,21 @@ function DataSection({ isLocked }: DataSectionProps) {
           </div>
         )}
 
+        <p className="mb-3 max-w-2xl text-xs text-on-surface-muted">
+          Export creates a flat task transfer file. Import restores tasks and referenced project/tag
+          names only. It is not a full app backup and does not include project
+          hierarchy/status/favorites/view settings, tag colors, settings, plugin data, AI chat
+          history/memories, comments/activity, task relations, section layout, templates, stats, or
+          database recovery metadata.
+        </p>
+
         <div className="flex gap-3">
           <button
             onClick={() => handleExport("json")}
             disabled={exporting}
             className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-surface-secondary disabled:opacity-50"
           >
-            Export JSON
+            Export Task Transfer JSON
           </button>
           <button
             onClick={() => handleExport("csv")}
@@ -624,7 +633,7 @@ function DataSection({ isLocked }: DataSectionProps) {
               className="hidden"
             />
             <span className="ml-2 text-xs text-on-surface-muted">
-              Supports Junban JSON, Todoist JSON, and Markdown/text
+              Supports Junban task transfer JSON, Todoist JSON, and Markdown/text
             </span>
             {importError && <p className="mt-2 text-xs text-error">{importError}</p>}
           </div>
@@ -644,15 +653,15 @@ function DataSection({ isLocked }: DataSectionProps) {
               </p>
               {importPreview.projects.length > 0 && (
                 <p>
-                  {importPreview.projects.length} project
+                  {importPreview.projects.length} referenced project name
                   {importPreview.projects.length !== 1 ? "s" : ""}:{" "}
                   {importPreview.projects.join(", ")}
                 </p>
               )}
               {importPreview.tags.length > 0 && (
                 <p>
-                  {importPreview.tags.length} tag{importPreview.tags.length !== 1 ? "s" : ""}:{" "}
-                  {importPreview.tags.join(", ")}
+                  {importPreview.tags.length} tag name
+                  {importPreview.tags.length !== 1 ? "s" : ""}: {importPreview.tags.join(", ")}
                 </p>
               )}
             </div>

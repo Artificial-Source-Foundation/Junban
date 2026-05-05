@@ -1,10 +1,13 @@
-import { useEffect } from "react";
-import { Play } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Loader2, Play } from "lucide-react";
 import { useVoiceContext, type VoiceMode } from "../../context/VoiceContext.js";
 import { VoiceFeatureProvider } from "../../context/VoiceFeatureProvider.js";
 import { MicrophoneSection } from "./voice/MicrophoneSection.js";
 import { ProviderApiKeyInput } from "./voice/ProviderApiKeyInput.js";
 import { LocalModelsSection } from "./voice/LocalModelsSection.js";
+
+const LOCAL_STT_PROVIDER_IDS = new Set(["whisper-local-stt"]);
+const LOCAL_TTS_PROVIDER_IDS = new Set(["piper-local-tts", "kokoro-local-tts"]);
 
 export function VoiceTab() {
   return (
@@ -23,12 +26,44 @@ function VoiceTabContent() {
     ttsVoices,
     ttsModels,
     localProvidersLoaded,
+    ensureRegistryLoaded,
     ensureLocalProvidersLoaded,
   } = voice;
+  const [loadingLocalProviders, setLoadingLocalProviders] = useState(false);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    void ensureLocalProvidersLoaded();
-  }, [ensureLocalProvidersLoaded]);
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    void ensureRegistryLoaded();
+  }, [ensureRegistryLoaded]);
+
+  const loadLocalProviders = useCallback(async () => {
+    if (localProvidersLoaded || loadingLocalProviders) return;
+    setLoadingLocalProviders(true);
+    try {
+      await ensureLocalProvidersLoaded();
+    } finally {
+      if (mountedRef.current) {
+        setLoadingLocalProviders(false);
+      }
+    }
+  }, [ensureLocalProvidersLoaded, loadingLocalProviders, localProvidersLoaded]);
+
+  const shouldLoadEnabledLocalProvider =
+    (settings.voiceMode !== "off" && LOCAL_STT_PROVIDER_IDS.has(settings.sttProviderId)) ||
+    (settings.ttsEnabled && LOCAL_TTS_PROVIDER_IDS.has(settings.ttsProviderId));
+
+  useEffect(() => {
+    if (shouldLoadEnabledLocalProvider) {
+      void loadLocalProviders();
+    }
+  }, [loadLocalProviders, shouldLoadEnabledLocalProvider]);
 
   const sttProviders = registry.listSTT();
   const ttsProviders = registry.listTTS();
@@ -66,9 +101,6 @@ function VoiceTabContent() {
                 </option>
               ))}
             </select>
-            {!localProvidersLoaded && (
-              <p className="mt-1 text-xs text-on-surface-muted">Loading local voice providers...</p>
-            )}
           </div>
 
           {selectedSTT?.needsApiKey && (
@@ -249,7 +281,26 @@ function VoiceTabContent() {
         </fieldset>
 
         {/* ── Local Models ── */}
-        <LocalModelsSection registry={registry} />
+        {localProvidersLoaded ? (
+          <LocalModelsSection registry={registry} />
+        ) : (
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-semibold text-on-surface mb-2">Local Models</legend>
+            <p className="text-xs text-on-surface-muted -mt-2">
+              Local speech models are loaded on demand so opening settings does not download or
+              initialize local assets.
+            </p>
+            <button
+              type="button"
+              onClick={() => void loadLocalProviders()}
+              disabled={loadingLocalProviders}
+              className="flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-lg bg-surface text-on-surface hover:bg-surface-secondary transition-colors disabled:opacity-50"
+            >
+              {loadingLocalProviders && <Loader2 size={14} className="animate-spin" />}
+              {loadingLocalProviders ? "Loading local providers..." : "Load local voice providers"}
+            </button>
+          </fieldset>
+        )}
       </div>
     </section>
   );

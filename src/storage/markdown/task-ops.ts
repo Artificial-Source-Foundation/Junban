@@ -5,6 +5,12 @@ import { StorageError } from "../../core/errors.js";
 import type { TaskRow, MutationResult, MarkdownIndexes } from "./types.js";
 import { OK, NOOP } from "./types.js";
 import type { TaskTagJoin } from "../interface.js";
+import {
+  deleteFileIfExists,
+  persistTaskMeta,
+  persistTaskRelations,
+  writeTextFileAtomic,
+} from "./persistence.js";
 
 // ── Helpers ──
 
@@ -35,11 +41,7 @@ export function rewriteTaskFile(idx: MarkdownIndexes, taskId: string): void {
 
   const tagNames = getTagNamesForTask(idx, taskId);
   const content = serializeTaskFile(entry.row, entry.row.title, entry.description, tagNames);
-  try {
-    fs.writeFileSync(entry.filePath, content, "utf-8");
-  } catch (err) {
-    throw new StorageError(`write ${entry.filePath}`, err instanceof Error ? err : undefined);
-  }
+  writeTextFileAtomic(entry.filePath, content);
 }
 
 // ── Task CRUD ──
@@ -62,11 +64,7 @@ export function insertTask(idx: MarkdownIndexes, task: TaskRow): MutationResult 
   // Get tag names for frontmatter
   const tagNames = getTagNamesForTask(idx, task.id);
   const content = serializeTaskFile(task, task.title, description, tagNames);
-  try {
-    fs.writeFileSync(filePath, content, "utf-8");
-  } catch (err) {
-    throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
-  }
+  writeTextFileAtomic(filePath, content);
 
   idx.taskIndex.set(task.id, { row: { ...task, description: null }, filePath, description });
   return OK;
@@ -108,8 +106,7 @@ export function updateTask(
   const tagNames = getTagNamesForTask(idx, id);
   const content = serializeTaskFile(newRow, newRow.title, newDescription, tagNames);
   try {
-    fs.mkdirSync(path.dirname(newFilePath), { recursive: true });
-    fs.writeFileSync(newFilePath, content, "utf-8");
+    writeTextFileAtomic(newFilePath, content);
   } catch (err) {
     throw new StorageError(`write ${newFilePath}`, err instanceof Error ? err : undefined);
   }
@@ -137,15 +134,27 @@ export function deleteTask(idx: MarkdownIndexes, id: string): MutationResult {
   const entry = idx.taskIndex.get(id);
   if (!entry) return NOOP;
 
-  try {
-    if (fs.existsSync(entry.filePath)) {
-      fs.unlinkSync(entry.filePath);
-    }
-  } catch (err) {
-    throw new StorageError(`delete ${entry.filePath}`, err instanceof Error ? err : undefined);
+  const childIds = Array.from(idx.taskIndex.values())
+    .filter((taskEntry) => taskEntry.row.parentId === id)
+    .map((taskEntry) => taskEntry.row.id);
+  for (const childId of childIds) {
+    deleteTask(idx, childId);
   }
+
+  deleteFileIfExists(entry.filePath);
   idx.taskIndex.delete(id);
   idx.taskTagIndex.delete(id);
+  idx.taskCommentIndex.delete(id);
+  idx.taskActivityIndex.delete(id);
+  persistTaskMeta(idx, id);
+
+  const beforeRelations = idx.taskRelationList.length;
+  idx.taskRelationList = idx.taskRelationList.filter(
+    (relation) => relation.taskId !== id && relation.relatedTaskId !== id,
+  );
+  if (idx.taskRelationList.length !== beforeRelations) {
+    persistTaskRelations(idx);
+  }
   return OK;
 }
 

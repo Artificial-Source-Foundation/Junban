@@ -75,20 +75,17 @@ Download the latest desktop release here:
 
 <https://github.com/Artificial-Source/Junban/releases/latest>
 
-Pick the file for your platform:
+Current automated releases publish Linux desktop artifacts, updater metadata, and a CLI package tarball. Windows and macOS desktop installers are not produced or verified by the current release workflow yet; use the source/Tauri workflow on those platforms until dedicated packaging jobs are added.
 
-| Platform              | Download this file         |
-| --------------------- | -------------------------- |
-| Windows               | `.exe` installer or `.msi` |
-| macOS (Apple Silicon) | `.dmg` with `aarch64`      |
-| macOS (Intel)         | `.dmg` with `x64`          |
-| Linux (Debian/Ubuntu) | `.deb` with `amd64`        |
-| Linux (portable)      | `.AppImage` with `amd64`   |
+Pick the Linux file for your install path:
+
+| Platform / install path | Download this file      |
+| ----------------------- | ----------------------- |
+| Linux (Debian/Ubuntu)   | `.deb` with `amd64`     |
+| Linux (portable)        | `.AppImage` with `amd64` |
 
 Install notes:
 
-- Windows: download the installer and open it.
-- macOS: download the `.dmg`, open it, and move Junban to `Applications`.
 - Linux: use the commands below, or download the asset in your browser and run the matching install step.
 
 Linux quick install from the latest release:

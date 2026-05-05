@@ -1,31 +1,43 @@
-import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, primaryKey, index } from "drizzle-orm/sqlite-core";
 import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 
-export const tasks = sqliteTable("tasks", {
-  id: text("id").primaryKey(),
-  title: text("title").notNull(),
-  description: text("description"),
-  status: text("status", { enum: ["pending", "completed", "cancelled"] })
-    .notNull()
-    .default("pending"),
-  priority: integer("priority"),
-  dueDate: text("due_date"),
-  dueTime: integer("due_time", { mode: "boolean" }).default(false),
-  completedAt: text("completed_at"),
-  projectId: text("project_id").references(() => projects.id, { onDelete: "set null" }),
-  recurrence: text("recurrence"),
-  parentId: text("parent_id").references((): AnySQLiteColumn => tasks.id, { onDelete: "cascade" }),
-  remindAt: text("remind_at"),
-  sortOrder: integer("sort_order").notNull().default(0),
-  estimatedMinutes: integer("estimated_minutes"),
-  actualMinutes: integer("actual_minutes"),
-  deadline: text("deadline"),
-  isSomeday: integer("is_someday", { mode: "boolean" }).notNull().default(false),
-  sectionId: text("section_id").references(() => sections.id, { onDelete: "set null" }),
-  dreadLevel: integer("dread_level"),
-  createdAt: text("created_at").notNull(),
-  updatedAt: text("updated_at").notNull(),
-});
+export const tasks = sqliteTable(
+  "tasks",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    description: text("description"),
+    status: text("status", { enum: ["pending", "completed", "cancelled"] })
+      .notNull()
+      .default("pending"),
+    priority: integer("priority"),
+    dueDate: text("due_date"),
+    dueTime: integer("due_time", { mode: "boolean" }).default(false),
+    completedAt: text("completed_at"),
+    projectId: text("project_id").references(() => projects.id, { onDelete: "set null" }),
+    recurrence: text("recurrence"),
+    parentId: text("parent_id").references((): AnySQLiteColumn => tasks.id, {
+      onDelete: "cascade",
+    }),
+    remindAt: text("remind_at"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    estimatedMinutes: integer("estimated_minutes"),
+    actualMinutes: integer("actual_minutes"),
+    deadline: text("deadline"),
+    isSomeday: integer("is_someday", { mode: "boolean" }).notNull().default(false),
+    sectionId: text("section_id").references(() => sections.id, { onDelete: "set null" }),
+    dreadLevel: integer("dread_level"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("tasks_status_sort_idx").on(table.status, table.sortOrder, table.createdAt),
+    index("tasks_project_sort_idx").on(table.projectId, table.sortOrder, table.createdAt),
+    index("tasks_section_sort_idx").on(table.sectionId, table.sortOrder, table.createdAt),
+    index("tasks_parent_sort_idx").on(table.parentId, table.sortOrder, table.createdAt),
+    index("tasks_reminder_due_idx").on(table.status, table.remindAt),
+  ],
+);
 
 export const projects = sqliteTable("projects", {
   id: text("id").primaryKey(),
@@ -60,7 +72,10 @@ export const taskTags = sqliteTable(
       .notNull()
       .references(() => tags.id, { onDelete: "cascade" }),
   },
-  (table) => [primaryKey({ columns: [table.taskId, table.tagId] })],
+  (table) => [
+    primaryKey({ columns: [table.taskId, table.tagId] }),
+    index("task_tags_tag_id_idx").on(table.tagId),
+  ],
 );
 
 export const taskRelations = sqliteTable(
@@ -105,15 +120,22 @@ export const taskTemplates = sqliteTable("task_templates", {
   updatedAt: text("updated_at").notNull(),
 });
 
-export const chatMessages = sqliteTable("chat_messages", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  sessionId: text("session_id").notNull(),
-  role: text("role", { enum: ["system", "user", "assistant", "tool"] }).notNull(),
-  content: text("content").notNull(),
-  toolCallId: text("tool_call_id"),
-  toolCalls: text("tool_calls"),
-  createdAt: text("created_at").notNull(),
-});
+export const chatMessages = sqliteTable(
+  "chat_messages",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    sessionId: text("session_id").notNull(),
+    role: text("role", { enum: ["system", "user", "assistant", "tool"] }).notNull(),
+    content: text("content").notNull(),
+    toolCallId: text("tool_call_id"),
+    toolCalls: text("tool_calls"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("chat_messages_session_id_id_idx").on(table.sessionId, table.id),
+    index("chat_messages_session_created_at_idx").on(table.sessionId, table.createdAt),
+  ],
+);
 
 export const sections = sqliteTable("sections", {
   id: text("id").primaryKey(),

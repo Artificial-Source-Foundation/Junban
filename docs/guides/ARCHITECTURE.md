@@ -102,6 +102,7 @@ Desktop remote-access note:
 
 - Packaged Tauri builds can also host a lightweight Rust web server that serves the compiled frontend and brokers authenticated remote access for personal trusted-network use.
 - The remote browser path now keeps the existing Rust-owned password/session gate, then proxies authenticated `/api/*` calls to the same localhost Node sidecar backend used by the packaged desktop window.
+- The Rust remote-access proxy bounds request bodies before forwarding them to the sidecar backend; voice transcription can use the larger audio upload limit while ordinary API traffic remains smaller.
 - Remote browsers no longer bootstrap `src/bootstrap-web.ts` or synchronize the raw SQLite file over HTTP for normal app traffic; the backend remains the owner of API, storage, and plugin/runtime behavior, and the legacy raw `/_junban/db` path is removed.
 - The local packaged desktop window is no longer on that browser-owned path; it talks to the bundled Node sidecar over localhost so it uses the same backend API/storage ownership model as source-run server mode.
 - Remote access settings are persisted by the Tauri runtime so the desktop app can auto-start the server on launch.
@@ -225,9 +226,11 @@ The server is responsible for:
 
 - Wiring request handling to core services
 - CORS and security headers
-- request body limits
+- request body limits (10 MB generally; 25 MB for `/api/voice/transcribe`)
 - route-specific transport concerns
 - mapping domain errors to HTTP responses
+
+The standalone server binds to `127.0.0.1` unless `API_HOST` is set. Non-loopback binds are refused unless `JUNBAN_ALLOW_UNSAFE_API_HOST=true` is also set. `/api/health` keeps the stable Junban identity fields (`ok`, `service`, `runtime`) and also reports readiness/degraded state for startup diagnostics.
 
 The API layer should remain thin. Domain logic belongs in `src/core/`.
 

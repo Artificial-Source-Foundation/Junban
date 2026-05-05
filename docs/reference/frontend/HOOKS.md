@@ -265,7 +265,7 @@
   - `gracePeriodProgress: number` -- 0 to 1, animated via `requestAnimationFrame`
 - **Key Dependencies:** `@ricky0123/vad-web` (MicVAD, dynamically imported), `float32ToWav` from `ai/voice/audio-utils.js`
 - **Used By:** `AIChatPanel.tsx`
-- **Notes:** Smart endpoint: when speech ends, starts a grace period timer. If speech resumes within the grace period, the timer cancels and audio continues buffering. If the grace period expires, all buffered `Float32Array` chunks are concatenated, converted to a 16kHz WAV Blob via `float32ToWav`, and delivered to `onSpeechEnd`. Without smart endpoint, each speech segment is immediately converted and delivered. VAD is auto-started/stopped when `enabled` changes. On stop, any buffered audio is flushed before destroying the VAD instance.
+- **Notes:** Smart endpoint: when speech ends, starts a grace period timer. If speech resumes within the grace period, the timer cancels and audio continues buffering. If the grace period expires, all buffered `Float32Array` chunks are concatenated, converted to a 16kHz WAV Blob via `float32ToWav`, and delivered to `onSpeechEnd`. Without smart endpoint, each speech segment is immediately converted and delivered. VAD is auto-started/stopped when `enabled` changes. Async `MicVAD` creation is generation-guarded: disabling or unmounting during startup destroys any late-created instance and stale callbacks are ignored; rapid disable/re-enable drops stale pending starts so the enabled generation can create a fresh active instance. On stop, any buffered audio is flushed before destroying the active VAD instance.
 
 ---
 
@@ -312,7 +312,7 @@
   - `active: boolean` -- whether the trap is active
 - **Return Value:** None (side effect only)
 - **Key Dependencies:** None
-- **Used By:** `MobileDrawer.tsx`
+- **Used By:** `MobileDrawer.tsx`, `TaskDetailPanel.tsx`
 - **Notes:** Queries all focusable elements (`a[href]`, `button:not([disabled])`, `textarea:not([disabled])`, `input:not([disabled])`, `select:not([disabled])`, `[tabindex]:not([tabindex="-1"])`) within the container. Tab on the last element wraps to the first; Shift+Tab on the first wraps to the last. Restores the originally focused element when the trap deactivates.
 
 ---

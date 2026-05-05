@@ -61,7 +61,7 @@
   - `projects?: Project[]`
 - **Key Dependencies:** `lucide-react` icons, `DatePicker.tsx` (inline date editing), `core/types.js`
 - **Used By:** `TaskList.tsx` (via `SortableTaskItem`), `FocusMode.tsx`
-- **Notes:** Priority colors map: p1=red, p2=amber, p3=accent, p4=muted. Overdue dates shown in red. Mobile-responsive -- hides drag handle on touch devices. Supports `onContextMenu` handler for right-click context menu integration.
+- **Notes:** Priority colors map: p1=red, p2=amber, p3=accent, p4=muted. Overdue dates shown in red. Mobile-responsive -- hides drag handle on touch devices. Supports `onContextMenu` handler for right-click context menu integration. The task row is exposed as a focusable group (not a button) so child controls remain valid sibling interactions; Enter/Space on the row still selects the task.
 
 ---
 
@@ -108,7 +108,7 @@
   - `onReorderSubtasks?: (ids) => void`
 - **Key Dependencies:** `SubtaskSection.tsx`, `TaskMetadataSidebar.tsx`, `MarkdownMessage.tsx`, `lucide-react`
 - **Used By:** `App.tsx` (rendered as overlay when a task is selected)
-- **Notes:** Title is inline-editable. Description toggles between Markdown preview (using `MarkdownMessage`) and edit mode (textarea) — click preview or pencil icon to edit, blur to save. Arrow key navigation between tasks in the list. Closes on Escape. Mobile-responsive -- stacks columns vertically on small screens.
+- **Notes:** Title is inline-editable. Description toggles between Markdown preview (using `MarkdownMessage`) and edit mode (textarea) — click preview or pencil icon to edit, blur to save. Arrow key navigation between tasks in the list. Closes on Escape and traps Tab focus within the panel while open. Mobile-responsive -- stacks columns vertically on small screens.
 
 ---
 

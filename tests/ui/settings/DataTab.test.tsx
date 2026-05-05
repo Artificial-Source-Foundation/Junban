@@ -139,10 +139,15 @@ describe("DataTab", () => {
   it("renders export buttons", async () => {
     render(<DataTab />);
     await waitFor(() => {
-      expect(screen.getByText("Export JSON")).toBeInTheDocument();
+      expect(screen.getByText("Export Task Transfer JSON")).toBeInTheDocument();
     });
     expect(screen.getByText("Export CSV")).toBeInTheDocument();
     expect(screen.getByText("Export Markdown")).toBeInTheDocument();
+    expect(screen.getByText(/not a full app backup/i)).toBeInTheDocument();
+    expect(screen.getByText(/referenced project\/tag names only/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/project hierarchy\/status\/favorites\/view settings/i),
+    ).toBeInTheDocument();
   });
 
   it("renders import section", async () => {

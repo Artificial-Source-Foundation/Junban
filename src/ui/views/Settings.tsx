@@ -108,7 +108,7 @@ const TABS: TabMeta[] = [
   {
     id: "data",
     label: "Data",
-    subtitle: "Backup & transfer",
+    subtitle: "Transfer",
     icon: <Database className="w-4 h-4" />,
     mobileIcon: <Database className="w-5 h-5" />,
   },

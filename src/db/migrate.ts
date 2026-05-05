@@ -74,6 +74,17 @@ const legacyMigrationProbes = [
     hasColumn(sqlite, "tasks", "actual_minutes"),
   (sqlite: SQLiteClient) => hasColumns(sqlite, "ai_memories", ["id", "content", "category"]),
   (sqlite: SQLiteClient) => hasColumn(sqlite, "tasks", "dread_level"),
+  (sqlite: SQLiteClient) =>
+    [
+      "chat_messages_session_id_id_idx",
+      "chat_messages_session_created_at_idx",
+      "task_tags_tag_id_idx",
+      "tasks_status_sort_idx",
+      "tasks_project_sort_idx",
+      "tasks_section_sort_idx",
+      "tasks_parent_sort_idx",
+      "tasks_reminder_due_idx",
+    ].every((indexName) => hasIndex(sqlite, indexName)),
 ] as const;
 
 const knownAppTables = [
@@ -98,6 +109,14 @@ function hasTable(sqlite: SQLiteClient, tableName: string): boolean {
     sqlite
       .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1")
       .get(tableName) !== undefined
+  );
+}
+
+function hasIndex(sqlite: SQLiteClient, indexName: string): boolean {
+  return (
+    sqlite
+      .prepare("SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ? LIMIT 1")
+      .get(indexName) !== undefined
   );
 }
 

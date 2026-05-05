@@ -67,6 +67,7 @@ plugins/*/dist/
 !screenshots/*.png
 
 # Dev tool artifacts
+.plans/
 .claude/worktrees/
 .swarm/
 .mcp.json

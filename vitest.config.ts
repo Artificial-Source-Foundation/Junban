@@ -11,6 +11,15 @@ export default defineConfig({
     globals: true,
     restoreMocks: true,
     setupFiles: ["tests/ui/setup.ts"],
+    coverage: {
+      provider: "v8",
+      thresholds: {
+        statements: 60,
+        branches: 50,
+        functions: 60,
+        lines: 60,
+      },
+    },
     projects: [
       {
         resolve: { alias },

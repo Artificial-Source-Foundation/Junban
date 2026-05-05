@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { setupPage, createTaskViaApi } from "./helpers";
+import { setupPage, createTaskViaApi, navigateTo } from "./helpers";
 
 test.describe("Dopamine Menu (Quick Wins)", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,8 +7,9 @@ test.describe("Dopamine Menu (Quick Wins)", () => {
   });
 
   test("navigates to Quick Wins via sidebar", async ({ page }) => {
-    await page.getByRole("button", { name: "Quick Wins", exact: true }).click();
-    await expect(page.getByText("Need a quick win? Pick one!")).toBeVisible({ timeout: 5000 });
+    await navigateTo(page, "Quick Wins");
+    await expect(page.getByRole("heading", { name: "Quick Wins" })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Need a quick win? Pick one!")).toBeVisible();
   });
 
   test("shows quick win tasks matching filter criteria", async ({ page }) => {
@@ -23,7 +24,7 @@ test.describe("Dopamine Menu (Quick Wins)", () => {
     await page.reload();
     await expect(page.getByText("Inbox").first()).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole("button", { name: "Quick Wins", exact: true }).click();
+    await navigateTo(page, "Quick Wins");
     await expect(page.getByText("Quick 5min task")).toBeVisible({ timeout: 5000 });
     await expect(page.getByText("Easy p4 task")).toBeVisible();
     // Hard task should NOT appear
@@ -37,7 +38,7 @@ test.describe("Dopamine Menu (Quick Wins)", () => {
       priority: 1,
     });
 
-    await page.getByRole("button", { name: "Quick Wins", exact: true }).click();
+    await navigateTo(page, "Quick Wins");
     await expect(
       page.getByText("No quick wins right now. You're tackling the hard stuff!"),
     ).toBeVisible({ timeout: 5000 });

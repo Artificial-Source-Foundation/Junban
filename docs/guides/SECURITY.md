@@ -34,7 +34,7 @@ Junban is a local-first application. By default, no data leaves the user's machi
 
 | Surface | Threat | Mitigation |
 |---------|--------|------------|
-| Plugin system | Arbitrary code execution | Sandboxed execution, permission model |
+| Plugin system | Arbitrary code execution | Built-ins only by default; community code execution is disabled unless explicitly opted into for trusted local development |
 | Plugin registry | Supply malicious plugin | Manual review, signature verification (future) |
 | Natural language parser | Input injection | Parser produces structured data, no eval |
 | SQLite database | SQL injection | Drizzle ORM parameterized queries |
@@ -46,7 +46,9 @@ Junban is a local-first application. By default, no data leaves the user's machi
 
 ### Execution Environment
 
-Plugins run in a restricted JavaScript context with controlled access:
+Built-in plugins are loaded through the trusted built-in path. Community plugin code execution is disabled by default for V1 because the legacy same-process `node:vm` sandbox is not a security boundary. Trusted local development can opt into that legacy path with `JUNBAN_ENABLE_UNSAFE_COMMUNITY_PLUGIN_VM=true`, but this should not be used for untrusted plugins.
+
+The legacy community sandbox, when explicitly enabled, runs in a restricted JavaScript context with controlled access:
 
 ```
 ┌───────────────────────────────────────────┐
@@ -169,6 +171,14 @@ Task data is stored unencrypted in local files. This is a deliberate trade-off:
 For users who need encryption at rest, we recommend:
 - Full-disk encryption (FileVault, BitLocker, LUKS)
 - Encrypted containers (VeraCrypt) for the `data/` directory
+
+AI API keys and OAuth tokens are stored via Junban's encrypted-setting helpers. In Node/desktop paths, new encryption uses an app-local random secret file (`junban/secret.key` under the platform data directory, or `JUNBAN_SECRET_KEY_FILE` when set) with restrictive file permissions where the filesystem supports them. Existing `enc:v1:` values derived from the older runtime seed remain decryptable for migration. Browser-only direct-service fallback remains lower assurance because browser code cannot protect a local secret from the same origin.
+
+## Standalone API Exposure
+
+The standalone Hono API binds to `127.0.0.1` by default. Binding to a non-loopback address requires `JUNBAN_ALLOW_UNSAFE_API_HOST=true` and should only be done behind intentional network protections. The test-only `/api/test-reset` route is available only in test/E2E mode and accepts loopback calls or calls with `x-junban-test-reset-token` matching `JUNBAN_TEST_RESET_TOKEN`.
+
+AI provider `baseUrl` values are allowlisted before they are saved or used for model discovery/execution. Loopback URLs are allowed for local providers; cloud provider overrides must use HTTPS on known provider domains.
 
 ## Desktop Remote Access
 

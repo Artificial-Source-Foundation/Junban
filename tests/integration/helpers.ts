@@ -8,7 +8,7 @@ import { TaskService } from "../../src/core/tasks.js";
 import { ProjectService } from "../../src/core/projects.js";
 import { TagService } from "../../src/core/tags.js";
 import { EventBus } from "../../src/core/event-bus.js";
-import { SQLiteBackend } from "../../src/storage/sqlite-backend.js";
+import { NodeSQLiteBackend } from "../../src/storage/sqlite-backend-node.js";
 import type { IStorage } from "../../src/storage/interface.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -22,7 +22,7 @@ export function createTestServices() {
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder });
 
-  const storage: IStorage = new SQLiteBackend(db);
+  const storage: IStorage = new NodeSQLiteBackend(db);
   const tagService = new TagService(storage);
   const projectService = new ProjectService(storage);
   const eventBus = new EventBus();

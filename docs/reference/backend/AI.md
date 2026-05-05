@@ -109,6 +109,14 @@ Providers register a plugin-like definition that can:
 
 Executors are the runtime objects that actually process requests.
 
+### Base URL policy
+
+Provider `baseUrl` overrides are treated as an outbound network boundary. `src/ai/base-url-policy.ts` allows loopback URLs for local providers and HTTPS URLs on known built-in provider domains. The Hono `/api/ai/config` route and direct-services config path reject unsafe values before saving, while provider registry/model-discovery paths revalidate persisted or per-call overrides before executor creation, model discovery, model load, or model unload.
+
+### Secret storage
+
+AI API keys and OAuth tokens use `src/storage/encrypted-settings.ts` and `src/utils/crypto.ts`. Node/desktop encryption derives from an app-local random secret file with restrictive permissions where possible; `JUNBAN_SECRET_KEY_FILE` can override the file path for tests or controlled deployments. Existing legacy `enc:v1:` values remain decryptable for migration. Browser-only direct-services fallback remains lower assurance because it cannot hide a durable secret from same-origin browser code.
+
 ### Runtime split
 
 There are separate registry factories for Node and browser-style startup:

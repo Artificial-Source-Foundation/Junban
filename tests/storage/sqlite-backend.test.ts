@@ -3,9 +3,10 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import path from "node:path";
+import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import * as schema from "../../src/db/schema.js";
-import { SQLiteBackend } from "../../src/storage/sqlite-backend.js";
+import { NodeSQLiteBackend } from "../../src/storage/sqlite-backend-node.js";
 import type { IStorage, TaskRow, ProjectRow, TagRow } from "../../src/storage/interface.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -17,7 +18,7 @@ function createBackend(): IStorage {
   sqlite.pragma("foreign_keys = ON");
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder });
-  return new SQLiteBackend(db);
+  return new NodeSQLiteBackend(db);
 }
 
 const now = new Date().toISOString();
@@ -68,6 +69,82 @@ describe("SQLiteBackend", () => {
 
   beforeEach(() => {
     storage = createBackend();
+  });
+
+  it("keeps Node async_hooks out of the shared browser backend module", () => {
+    const sharedBackendPath = path.resolve(__dirname, "../../src/storage/sqlite-backend.ts");
+    const source = fs.readFileSync(sharedBackendPath, "utf8");
+
+    expect(source).not.toContain("node:async_hooks");
+    expect(source).not.toContain("AsyncLocalStorage");
+  });
+
+  it("rolls back writes inside failed transactions", async () => {
+    expect(storage.supportsTransactionalRollback).toBe(true);
+
+    await expect(
+      storage.transaction(() => {
+        storage.insertTask(makeTask({ id: "tx-task" }));
+        throw new Error("rollback me");
+      }),
+    ).rejects.toThrow("rollback me");
+
+    expect(storage.getTask("tx-task")).toHaveLength(0);
+  });
+
+  it("serializes overlapping top-level transactions so independent work is not rolled back", async () => {
+    let releaseTransactionA!: () => void;
+    let transactionAPaused!: () => void;
+    const transactionAReady = new Promise<void>((resolve) => {
+      transactionAPaused = resolve;
+    });
+    const transactionACanRollback = new Promise<void>((resolve) => {
+      releaseTransactionA = resolve;
+    });
+
+    const transactionA = storage.transaction(async () => {
+      storage.insertTask(makeTask({ id: "tx-a" }));
+      transactionAPaused();
+      await transactionACanRollback;
+      throw new Error("rollback transaction A");
+    });
+
+    await transactionAReady;
+
+    let transactionBSettled = false;
+    const transactionB = storage
+      .transaction(() => {
+        storage.insertTask(makeTask({ id: "tx-b" }));
+      })
+      .then(() => {
+        transactionBSettled = true;
+      });
+
+    await Promise.resolve();
+    expect(transactionBSettled).toBe(false);
+
+    releaseTransactionA();
+
+    await expect(transactionA).rejects.toThrow("rollback transaction A");
+    await transactionB;
+
+    expect(storage.getTask("tx-a")).toHaveLength(0);
+    expect(storage.getTask("tx-b")).toHaveLength(1);
+  });
+
+  it("reuses the active transaction for true nested transaction calls", async () => {
+    await expect(
+      storage.transaction(async () => {
+        storage.insertTask(makeTask({ id: "outer-task" }));
+        await storage.transaction(() => {
+          storage.insertTask(makeTask({ id: "inner-task" }));
+        });
+        throw new Error("rollback nested work");
+      }),
+    ).rejects.toThrow("rollback nested work");
+
+    expect(storage.getTask("outer-task")).toHaveLength(0);
+    expect(storage.getTask("inner-task")).toHaveLength(0);
   });
 
   describe("Tasks", () => {
@@ -284,6 +361,30 @@ describe("SQLiteBackend", () => {
       expect(messages[0].content).toBe("Hello");
     });
 
+    it("lists chat messages in insertion order", () => {
+      storage.insertChatMessage({
+        sessionId: "s1",
+        role: "user",
+        content: "First",
+        toolCallId: null,
+        toolCalls: null,
+        createdAt: "2025-06-01T00:00:00.000Z",
+      });
+      storage.insertChatMessage({
+        sessionId: "s1",
+        role: "assistant",
+        content: "Second",
+        toolCallId: null,
+        toolCalls: null,
+        createdAt: "2025-01-01T00:00:00.000Z",
+      });
+
+      expect(storage.listChatMessages("s1").map((message) => message.content)).toEqual([
+        "First",
+        "Second",
+      ]);
+    });
+
     it("deletes a session", () => {
       storage.insertChatMessage({
         sessionId: "s1",
@@ -315,6 +416,35 @@ describe("SQLiteBackend", () => {
         createdAt: "2025-06-01T00:00:00.000Z",
       });
       expect(storage.getLatestSessionId()?.sessionId).toBe("s2");
+    });
+
+    it("lists chat sessions by latest activity", () => {
+      storage.insertChatMessage({
+        sessionId: "s1",
+        role: "user",
+        content: "Old session first",
+        toolCallId: null,
+        toolCalls: null,
+        createdAt: "2025-01-01T00:00:00.000Z",
+      });
+      storage.insertChatMessage({
+        sessionId: "s2",
+        role: "user",
+        content: "Newer session",
+        toolCallId: null,
+        toolCalls: null,
+        createdAt: "2025-02-01T00:00:00.000Z",
+      });
+      storage.insertChatMessage({
+        sessionId: "s1",
+        role: "assistant",
+        content: "Latest reply",
+        toolCallId: null,
+        toolCalls: null,
+        createdAt: "2025-03-01T00:00:00.000Z",
+      });
+
+      expect(storage.listChatSessions().map((session) => session.sessionId)).toEqual(["s1", "s2"]);
     });
   });
 

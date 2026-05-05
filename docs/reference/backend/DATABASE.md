@@ -65,6 +65,8 @@ Defined in `src/db/schema.ts` using Drizzle ORM. Fourteen tables:
 | `tag_id`  | TEXT | NOT NULL, FK -> tags.id, ON DELETE CASCADE  |
 |           |      | PRIMARY KEY (task_id, tag_id)               |
 
+Index notes: `task_tags_tag_id_idx` supports reverse tag cleanup and tag-centric joins; the primary key already covers task-centric joins.
+
 ### `task_relations` (junction table)
 
 | Column            | Type | Constraints                                 |
@@ -128,6 +130,8 @@ Defined in `src/db/schema.ts` using Drizzle ORM. Fourteen tables:
 | `tool_calls`   | TEXT    | nullable (JSON)                            |
 | `created_at`   | TEXT    | NOT NULL                                   |
 
+Index notes: `(session_id, id)` supports stable message ordering, and `(session_id, created_at)` supports session activity/history lookups.
+
 ### `sections`
 
 | Column         | Type              | Constraints                                    |
@@ -172,6 +176,16 @@ Defined in `src/db/schema.ts` using Drizzle ORM. Fourteen tables:
 | `minutes_tracked` | INTEGER | NOT NULL, default 0 |
 | `streak`          | INTEGER | NOT NULL, default 0 |
 | `created_at`      | TEXT    | NOT NULL            |
+
+---
+
+## Hot-path Indexes And Ordering
+
+- `tasks_status_sort_idx`, `tasks_project_sort_idx`, `tasks_section_sort_idx`, and `tasks_parent_sort_idx` support common task list, project/section, and hierarchy lookups with stable `sort_order`/creation ordering.
+- `tasks_reminder_due_idx` supports pending reminder scans by `(status, remind_at)`.
+- `task_tags_tag_id_idx` complements the task-tags primary key for tag deletion/cascade paths.
+- `chat_messages_session_id_id_idx` and `chat_messages_session_created_at_idx` support ordered chat replay and latest-activity session lists.
+- Query helpers order task lists by `sort_order`, `created_at`, and `id`; reminder queries by `remind_at`; chat messages by insertion id; and chat sessions by latest activity.
 
 ---
 
@@ -266,7 +280,7 @@ Storage architecture details for `src/storage/**` should be maintained in [`STOR
 
 - Row types: `TaskRow`, `ProjectRow`, `TagRow`, `TaskTagJoin`, `PluginSettingsRow`, `AppSettingRow`, `ChatMessageRow`, `ChatSessionInfo`, `TemplateRow`, `SectionRow`, `TaskCommentRow`, `TaskActivityRow`, `TaskRelationRow`, `DailyStatRow`, `AiMemoryRow`
 - `MutationResult` -- `{ changes: number }`
-- `IStorage` -- the complete storage interface with methods for tasks (10 methods), task-tags (6), projects (6), tags (4), plugin settings (2), app settings (4), chat messages (6), plugin permissions (3), task templates (5), sections (5), task comments (4), task activity (2), task relations (5), daily stats (3), ai memories (4)
+- `IStorage` -- the complete storage interface, including a transaction capability flag/helper, an after-commit hook for deferred side effects, and method groups for tasks, task-tags, projects, tags, plugin settings, app settings, chat messages, plugin permissions, task templates, sections, task comments, task activity, task relations, daily stats, and AI memories
   **Key Dependencies:** None (pure types)
   **Used By:** Every service class in `src/core/`, `src/plugins/`, `src/ai/chat.ts`, `src/bootstrap.ts`, `src/bootstrap-web.ts`
 
@@ -275,10 +289,20 @@ Storage architecture details for `src/storage/**` should be maintained in [`STOR
 ### `sqlite-backend.ts`
 
 **Path:** `src/storage/sqlite-backend.ts`
-**Purpose:** SQLite storage backend. Thin adapter that wraps `createQueries()` and satisfies the `IStorage` interface. Delegates all operations to the Drizzle-based query layer.
+**Purpose:** Browser-safe SQLite storage backend. Thin adapter that wraps `createQueries()` and satisfies the `IStorage` interface. Delegates all operations to the Drizzle-based query layer, serializes independent top-level transaction helpers, and supports after-commit callbacks so transactional side effects such as task create/complete events are discarded on rollback.
 **Key Exports:** `SQLiteBackend` -- class implementing `IStorage`
 **Key Dependencies:** `createQueries` from `src/db/queries.ts`, `IStorage` and row types from `src/storage/interface.ts`
-**Used By:** `src/bootstrap.ts`, `src/bootstrap-web.ts`
+**Used By:** `src/bootstrap-web.ts`, `src/storage/sqlite-backend-node.ts`
+
+---
+
+### `sqlite-backend-node.ts`
+
+**Path:** `src/storage/sqlite-backend-node.ts`
+**Purpose:** Node-only wrapper for `SQLiteBackend` that supplies `AsyncLocalStorage` transaction context without exposing Node built-ins to the browser/Tauri sql.js bundle.
+**Key Exports:** `NodeSQLiteBackend` -- class implementing `IStorage`
+**Key Dependencies:** `SQLiteBackend`, Node `AsyncLocalStorage`
+**Used By:** `src/backend/node-factory.ts`
 
 ---
 

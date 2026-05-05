@@ -8,6 +8,12 @@ export interface ImportedTask {
   priority: number | null;
   dueDate: string | null;
   dueTime: boolean;
+  remindAt?: string | null;
+  estimatedMinutes?: number | null;
+  actualMinutes?: number | null;
+  deadline?: string | null;
+  isSomeday?: boolean;
+  dreadLevel?: number | null;
   projectName: string | null;
   tagNames: string[];
   recurrence: string | null;
@@ -70,6 +76,12 @@ const JunbanTaskSchema = z.object({
   completedAt: z.string().nullable().optional(),
   projectId: z.string().nullable().optional(),
   recurrence: z.string().nullable().optional(),
+  remindAt: z.string().nullable().optional(),
+  estimatedMinutes: z.number().int().min(1).nullable().optional(),
+  actualMinutes: z.number().int().min(0).nullable().optional(),
+  deadline: z.string().nullable().optional(),
+  isSomeday: z.boolean().optional(),
+  dreadLevel: z.number().int().min(1).max(5).nullable().optional(),
   tags: z.array(JunbanTagSchema).optional(),
   sortOrder: z.number().optional(),
   createdAt: z.string().optional(),
@@ -121,7 +133,7 @@ export function parseJunbanJSON(json: string): ImportPreview {
       warnings.push(`Task "${t.title}" references unknown project ID "${t.projectId}"`);
     }
 
-    return {
+    const importedTask: ImportedTask = {
       title: t.title,
       description: t.description ?? null,
       status,
@@ -132,6 +144,15 @@ export function parseJunbanJSON(json: string): ImportPreview {
       tagNames: (t.tags ?? []).map((tag) => tag.name),
       recurrence: t.recurrence ?? null,
     };
+
+    if ("remindAt" in t) importedTask.remindAt = t.remindAt ?? null;
+    if ("estimatedMinutes" in t) importedTask.estimatedMinutes = t.estimatedMinutes ?? null;
+    if ("actualMinutes" in t) importedTask.actualMinutes = t.actualMinutes ?? null;
+    if ("deadline" in t) importedTask.deadline = t.deadline ?? null;
+    if ("isSomeday" in t) importedTask.isSomeday = t.isSomeday ?? false;
+    if ("dreadLevel" in t) importedTask.dreadLevel = t.dreadLevel ?? null;
+
+    return importedTask;
   });
 
   const projects = [

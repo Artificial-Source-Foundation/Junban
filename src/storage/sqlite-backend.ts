@@ -1,4 +1,5 @@
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 import type * as schema from "../db/schema.js";
 import { createQueries } from "../db/queries.js";
 import type {
@@ -131,15 +132,118 @@ interface StorageQueries {
   deleteAiMemory(id: string): MutationResult;
 }
 
+type AfterTransactionCommitCallback = () => void;
+
+export interface SQLiteTransactionContext {
+  active: boolean;
+  afterCommit: AfterTransactionCommitCallback[];
+}
+
+export interface SQLiteTransactionContextStore {
+  getStore(): SQLiteTransactionContext | undefined;
+  run<T>(context: SQLiteTransactionContext, operation: () => Promise<T>): Promise<T>;
+}
+
+class BrowserSafeTransactionContextStore implements SQLiteTransactionContextStore {
+  private currentContext: SQLiteTransactionContext | undefined;
+
+  getStore(): SQLiteTransactionContext | undefined {
+    return this.currentContext;
+  }
+
+  async run<T>(context: SQLiteTransactionContext, operation: () => Promise<T>): Promise<T> {
+    const previousContext = this.currentContext;
+    this.currentContext = context;
+    try {
+      return await operation();
+    } finally {
+      this.currentContext = previousContext;
+    }
+  }
+}
+
 /**
  * SQLite backend — thin wrapper that delegates to the existing createQueries() function.
  * Satisfies IStorage so services can use either backend interchangeably.
  */
 export class SQLiteBackend implements IStorage {
-  private q: StorageQueries;
+  readonly supportsTransactionalRollback = true;
 
-  constructor(db: BaseSQLiteDatabase<"sync", unknown, typeof schema>) {
+  private q: StorageQueries;
+  // SQLite allows only one writer transaction at a time. Async operations can
+  // yield while a manual transaction is open, so serialize independent
+  // top-level transactions and use the injected transaction context only for
+  // true nested calls from the same logical transaction.
+  private transactionQueue: Promise<void> = Promise.resolve();
+
+  constructor(
+    private db: BaseSQLiteDatabase<"sync", unknown, typeof schema>,
+    private readonly transactionContext: SQLiteTransactionContextStore = new BrowserSafeTransactionContextStore(),
+  ) {
     this.q = createQueries(db) as unknown as StorageQueries;
+  }
+
+  afterTransactionCommit(callback: AfterTransactionCommitCallback): void {
+    const currentContext = this.transactionContext.getStore();
+    if (!currentContext?.active) {
+      callback();
+      return;
+    }
+
+    currentContext.afterCommit.push(callback);
+  }
+
+  async transaction<T>(operation: () => T | Promise<T>): Promise<T> {
+    const currentContext = this.transactionContext.getStore();
+    if (currentContext?.active) {
+      return operation();
+    }
+
+    const previousTransaction = this.transactionQueue;
+    let releaseTransaction: () => void = () => {};
+    const currentTransaction = new Promise<void>((resolve) => {
+      releaseTransaction = resolve;
+    });
+    this.transactionQueue = previousTransaction.then(
+      () => currentTransaction,
+      () => currentTransaction,
+    );
+
+    await previousTransaction.catch(() => undefined);
+
+    const context: SQLiteTransactionContext = { active: true, afterCommit: [] };
+    try {
+      return await this.transactionContext.run(context, async () => {
+        let transactionStarted = false;
+        try {
+          this.db.run(sql.raw("BEGIN IMMEDIATE"));
+          transactionStarted = true;
+          const result = await operation();
+          this.db.run(sql.raw("COMMIT"));
+          transactionStarted = false;
+          context.active = false;
+          const afterCommitCallbacks = context.afterCommit.splice(0);
+          for (const callback of afterCommitCallbacks) {
+            callback();
+          }
+          return result;
+        } catch (err) {
+          if (transactionStarted) {
+            try {
+              this.db.run(sql.raw("ROLLBACK"));
+            } catch {
+              // Preserve the original operation/commit error.
+            }
+          }
+          throw err;
+        } finally {
+          context.active = false;
+          context.afterCommit.length = 0;
+        }
+      });
+    } finally {
+      releaseTransaction();
+    }
   }
 
   // ── Tasks ──

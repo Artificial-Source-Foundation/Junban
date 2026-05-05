@@ -9,7 +9,7 @@ import { createDefaultRegistry } from "../ai/provider-node.js";
 import { createDefaultToolRegistry } from "../ai/tool-registry.js";
 import { PluginLoader, type PluginServices } from "../plugins/loader.js";
 import { MarkdownBackend } from "../storage/markdown-backend.js";
-import { SQLiteBackend } from "../storage/sqlite-backend.js";
+import { NodeSQLiteBackend } from "../storage/sqlite-backend-node.js";
 import type { IStorage } from "../storage/interface.js";
 import { createLogger } from "../utils/logger.js";
 import { createBackendKernel, type AppServices, type BackendKernelAIRuntime } from "./kernel.js";
@@ -41,7 +41,7 @@ function createNodeStorage(env: Env): IStorage {
   runMigrations(db);
 
   logger.info("SQLite backend initialized", { path: resolvedPath });
-  return new SQLiteBackend(db);
+  return new NodeSQLiteBackend(db);
 }
 
 function resolveBuiltinPluginDir(): string {

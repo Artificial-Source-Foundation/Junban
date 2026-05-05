@@ -135,23 +135,20 @@ export function CommandPalette({ commands, isOpen, onClose }: CommandPaletteProp
                   id={`cmd-${cmd.id}`}
                   role="option"
                   aria-selected={index === selectedIndex}
+                  onClick={() => handleSelect(cmd)}
+                  onMouseEnter={() => setSelectedIndex(index)}
+                  className={`cursor-pointer px-4 py-2 flex justify-between text-sm transition-colors ${
+                    index === selectedIndex
+                      ? "bg-accent/10 text-accent"
+                      : "text-on-surface hover:bg-surface-secondary"
+                  }`}
                 >
-                  <button
-                    onClick={() => handleSelect(cmd)}
-                    tabIndex={-1}
-                    className={`w-full text-left px-4 py-2 flex justify-between text-sm transition-colors ${
-                      index === selectedIndex
-                        ? "bg-accent/10 text-accent"
-                        : "text-on-surface hover:bg-surface-secondary"
-                    }`}
-                  >
-                    <span>{cmd.name}</span>
-                    {cmd.hotkey && (
-                      <kbd className="text-xs text-on-surface-muted bg-surface-tertiary px-1.5 py-0.5 rounded">
-                        {cmd.hotkey}
-                      </kbd>
-                    )}
-                  </button>
+                  <span>{cmd.name}</span>
+                  {cmd.hotkey && (
+                    <kbd className="text-xs text-on-surface-muted bg-surface-tertiary px-1.5 py-0.5 rounded">
+                      {cmd.hotkey}
+                    </kbd>
+                  )}
                 </li>
               ))}
               {filtered.length === 0 && (

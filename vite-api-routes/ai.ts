@@ -79,6 +79,12 @@ export const registerAIRoutes: RouteRegistrar = (server, getServices) => {
       }
       if (baseUrl !== undefined) {
         if (baseUrl) {
+          if (!isAllowedAIBaseUrl(baseUrl)) {
+            res.statusCode = 400;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: "Invalid baseUrl" }));
+            return;
+          }
           svc.storage.setAppSetting("ai_base_url", baseUrl);
         } else {
           svc.storage.deleteAppSetting("ai_base_url");

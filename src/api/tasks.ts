@@ -109,6 +109,9 @@ export function taskRoutes(services: AppServices): Hono {
       {
         taskService: services.taskService,
         projectService: services.projectService,
+        transaction: services.storage.supportsTransactionalRollback
+          ? (operation) => services.storage.transaction(operation)
+          : undefined,
       },
       importedTasks,
     );

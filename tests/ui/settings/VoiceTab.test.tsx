@@ -1,5 +1,15 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+
+const voiceTabMocks = vi.hoisted(() => ({
+  state: {
+    localProvidersLoaded: true,
+  },
+  updateSettings: vi.fn(),
+  ensureRegistryLoaded: vi.fn().mockResolvedValue(undefined),
+  ensureLocalProvidersLoaded: vi.fn().mockResolvedValue(undefined),
+  speak: vi.fn(),
+}));
 
 vi.mock("lucide-react", () => ({
   Mic: (props: any) => <svg data-testid="mic-icon" {...props} />,
@@ -29,7 +39,7 @@ vi.mock("../../../src/ui/context/VoiceContext.js", () => ({
       groqApiKey: "",
       inworldApiKey: "",
     },
-    updateSettings: vi.fn(),
+    updateSettings: voiceTabMocks.updateSettings,
     registry: {
       listSTT: () => [
         { id: "browser-stt", name: "Browser Speech Recognition", needsApiKey: false },
@@ -41,11 +51,12 @@ vi.mock("../../../src/ui/context/VoiceContext.js", () => ({
     sttProvider: null,
     ttsProvider: null,
     isSpeaking: false,
-    speak: vi.fn(),
+    speak: voiceTabMocks.speak,
     cancelSpeech: vi.fn(),
     transcribeAudio: vi.fn(),
-    localProvidersLoaded: true,
-    ensureLocalProvidersLoaded: vi.fn().mockResolvedValue(undefined),
+    localProvidersLoaded: voiceTabMocks.state.localProvidersLoaded,
+    ensureRegistryLoaded: voiceTabMocks.ensureRegistryLoaded,
+    ensureLocalProvidersLoaded: voiceTabMocks.ensureLocalProvidersLoaded,
   }),
 }));
 
@@ -60,6 +71,11 @@ vi.mock("../../../src/ai/voice/adapters/whisper-local-stt.js", () => ({}));
 import { VoiceTab } from "../../../src/ui/views/settings/VoiceTab.js";
 
 describe("VoiceTab", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    voiceTabMocks.state.localProvidersLoaded = true;
+  });
+
   it("renders Voice heading", () => {
     render(<VoiceTab />);
     expect(screen.getByText("Voice")).toBeDefined();
@@ -108,5 +124,26 @@ describe("VoiceTab", () => {
   it("renders TTS provider options", () => {
     render(<VoiceTab />);
     expect(screen.getByText("Browser Speech Synthesis")).toBeDefined();
+  });
+
+  it("does not eagerly load local voice providers on mount", async () => {
+    voiceTabMocks.state.localProvidersLoaded = false;
+
+    render(<VoiceTab />);
+
+    await waitFor(() => expect(voiceTabMocks.ensureRegistryLoaded).toHaveBeenCalledTimes(1));
+    expect(voiceTabMocks.ensureLocalProvidersLoaded).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Load local voice providers" })).toBeDefined();
+  });
+
+  it("loads local voice providers from the explicit Local Models action", async () => {
+    voiceTabMocks.state.localProvidersLoaded = false;
+
+    render(<VoiceTab />);
+    fireEvent.click(screen.getByRole("button", { name: "Load local voice providers" }));
+
+    await waitFor(() => {
+      expect(voiceTabMocks.ensureLocalProvidersLoaded).toHaveBeenCalledTimes(1);
+    });
   });
 });

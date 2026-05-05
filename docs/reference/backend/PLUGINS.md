@@ -33,7 +33,7 @@ Plugin discovery -> manifest validation -> approval/permission check -> API crea
 
 module load:
   built-in plugin   -> trusted dynamic import()
-  community plugin  -> vm sandbox execute() with local-only module linker
+  community plugin  -> disabled by default; unsafe local-dev opt-in uses VM sandbox
 ```
 
 On unload, the system should reverse plugin-owned registrations and detach listeners cleanly.
@@ -95,15 +95,17 @@ It is responsible for:
 
 Before changing plugin loading or runtime code, decide which path you are touching:
 
-| Concern          | Built-in plugin path               | Community plugin path                                |
-| ---------------- | ---------------------------------- | ---------------------------------------------------- |
-| Runtime loader   | Host loader / native import path   | `sandbox.ts` VM execution                            |
-| Module freshness | Temp staged copy per load          | Fresh sandbox/module cache per load                  |
-| UI strategy      | React/text/structured all possible | Prefer text/structured                               |
-| Policy gates     | Activation/toggle rules            | Activation, approval, and community enablement rules |
-| Common risk      | Stale native module cache          | Sandbox escape / unsupported module syntax           |
+| Concern          | Built-in plugin path               | Community plugin path                                             |
+| ---------------- | ---------------------------------- | ----------------------------------------------------------------- |
+| Runtime loader   | Host loader / native import path   | Disabled by default; unsafe opt-in uses `sandbox.ts` VM execution |
+| Module freshness | Temp staged copy per load          | Fresh sandbox/module cache per load when unsafe opt-in is enabled |
+| UI strategy      | React/text/structured all possible | Prefer text/structured                                            |
+| Policy gates     | Activation/toggle rules            | Activation, approval, community enablement, and unsafe opt-in     |
+| Common risk      | Stale native module cache          | Sandbox escape / unsupported module syntax                        |
 
 Any change in loader behavior should be reviewed against both columns.
+
+V1 security gate: community plugin JavaScript does not execute by default, even when the community-plugin setting and permissions are enabled. The legacy same-process VM sandbox can be used only for trusted local development by setting `JUNBAN_ENABLE_UNSAFE_COMMUNITY_PLUGIN_VM=true`. Built-in plugins continue to use the trusted built-in loader path and are not affected by this unsafe community opt-in.
 
 ### Compatibility enforcement policy
 
@@ -137,10 +139,11 @@ In normal startup (`discoverBuiltin()` before community `discover()`), this also
 The loader treats built-in and community plugins differently:
 
 - Community plugins are affected by the community-plugin enablement setting and permission approval flow.
+- Community plugin code execution also requires the explicit unsafe local-development opt-in described above.
 - Built-in extensions are trusted from a manifest perspective but still remain explicitly activated by the user.
 - Web/direct-services bootstrap now mirrors that activation model: built-ins are surfaced in plugin metadata immediately, but their commands, views, status items, and hooks are only loaded after a stored approval exists.
 - Built-in extensions loaded via native `import()` are staged into a fresh temp directory per load so entry and dependency modules both get fresh module URLs (avoids stale dependency caches on unload/reload or reinstall-at-same-path).
-- Community plugins execute in a fresh sandbox per load; sandbox module cache is scoped to that sandbox and is destroyed on unload.
+- When the unsafe opt-in is enabled, community plugins execute in a fresh sandbox per load; sandbox module cache is scoped to that sandbox and is destroyed on unload.
 
 This distinction matters when modifying loader behavior.
 

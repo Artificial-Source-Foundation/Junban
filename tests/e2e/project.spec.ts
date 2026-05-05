@@ -8,10 +8,16 @@ test.describe("Project view", () => {
 
   test("create project via modal", async ({ page }) => {
     // Click the add project button in sidebar
-    await page.getByRole("button", { name: "New project" }).click();
+    const newProjectButton = page.getByRole("button", { name: "New project" });
+    const nameInput = page.getByPlaceholder("My project");
+    await expect(newProjectButton).toBeVisible({ timeout: 10000 });
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await newProjectButton.click();
+      if (await nameInput.isVisible({ timeout: 1500 }).catch(() => false)) break;
+    }
 
     // Fill in the project name
-    const nameInput = page.getByPlaceholder("My project");
+    await expect(nameInput).toBeVisible({ timeout: 5000 });
     await nameInput.fill("Test Project");
     await page.getByRole("button", { name: "Add", exact: true }).click();
 

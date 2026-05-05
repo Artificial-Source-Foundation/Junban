@@ -125,37 +125,31 @@ export function CalendarWeekView({
                           isCompleted ? "opacity-50" : "hover:shadow-sm"
                         }`}
                       >
-                        <button
-                          onClick={() => onSelectTask(task.id)}
-                          className={`w-full text-left text-xs md:text-[11px] leading-tight px-2 py-2.5 md:px-1.5 md:py-1.5 min-h-[44px] md:min-h-0 rounded-r-md transition-colors ${
+                        <div
+                          className={`flex items-start gap-1.5 md:gap-1 w-full text-xs md:text-[11px] leading-tight px-2 py-2.5 md:px-1.5 md:py-1.5 min-h-[44px] md:min-h-0 rounded-r-md transition-colors ${
                             isCompleted
                               ? "bg-surface-secondary/50"
                               : "bg-surface-secondary hover:bg-surface-tertiary"
                           }`}
                         >
-                          <div className="flex items-start gap-1.5 md:gap-1">
-                            <span
-                              role="button"
-                              tabIndex={0}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onToggleTask(task.id);
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  onToggleTask(task.id);
-                                }
-                              }}
-                              className="shrink-0 mt-px p-1 md:p-0 text-on-surface-muted hover:text-accent transition-colors cursor-pointer"
-                            >
-                              {isCompleted ? (
-                                <CheckCircle2 size={14} className="text-accent md:w-3 md:h-3" />
-                              ) : (
-                                <Circle size={14} className="md:w-3 md:h-3" />
-                              )}
-                            </span>
+                          <button
+                            type="button"
+                            onClick={() => onToggleTask(task.id)}
+                            aria-label={isCompleted ? "Mark task incomplete" : "Complete task"}
+                            className="shrink-0 mt-px p-1 md:p-0 text-on-surface-muted hover:text-accent transition-colors"
+                          >
+                            {isCompleted ? (
+                              <CheckCircle2 size={14} className="text-accent md:w-3 md:h-3" />
+                            ) : (
+                              <Circle size={14} className="md:w-3 md:h-3" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onSelectTask(task.id)}
+                            aria-label={`Open task: ${task.title}`}
+                            className="min-w-0 flex-1 text-left"
+                          >
                             <span
                               className={`line-clamp-2 ${
                                 isCompleted
@@ -165,19 +159,19 @@ export function CalendarWeekView({
                             >
                               {task.title}
                             </span>
-                          </div>
-                          {project && (
-                            <div className="flex items-center gap-1 mt-0.5 ml-5 md:ml-4">
-                              <span
-                                className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
-                                style={{ backgroundColor: project.color }}
-                              />
-                              <span className="text-[10px] text-on-surface-muted truncate">
-                                {project.name}
+                            {project && (
+                              <span className="flex items-center gap-1 mt-0.5">
+                                <span
+                                  className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                                  style={{ backgroundColor: project.color }}
+                                />
+                                <span className="text-[10px] text-on-surface-muted truncate">
+                                  {project.name}
+                                </span>
                               </span>
-                            </div>
-                          )}
-                        </button>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     );
                   })}

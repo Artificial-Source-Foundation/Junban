@@ -8,6 +8,7 @@ import m0006 from "./migrations/0006_solid_mephisto.sql?raw";
 import m0007 from "./migrations/0007_cold_living_mummy.sql?raw";
 import m0008 from "./migrations/0008_sparkling_micromacro.sql?raw";
 import m0009 from "./migrations/0009_damp_retro_girl.sql?raw";
+import m0010 from "./migrations/0010_nice_night_nurse.sql?raw";
 import migrationsJournalRaw from "./migrations/meta/_journal.json?raw";
 import type { Database } from "sql.js";
 
@@ -43,6 +44,7 @@ const migrationSources: Record<string, string> = {
   "0007_cold_living_mummy": m0007,
   "0008_sparkling_micromacro": m0008,
   "0009_damp_retro_girl": m0009,
+  "0010_nice_night_nurse": m0010,
 };
 
 const migrations = (JSON.parse(migrationsJournalRaw) as WebMigrationJournal).entries.map(
@@ -112,6 +114,17 @@ const legacyMigrationProbes: readonly LegacyMigrationProbe[] = [
     hasColumn(sqlite, "tasks", "actual_minutes"),
   (sqlite) => hasColumns(sqlite, "ai_memories", ["id", "content", "category"]),
   (sqlite) => hasColumn(sqlite, "tasks", "dread_level"),
+  (sqlite) =>
+    [
+      "chat_messages_session_id_id_idx",
+      "chat_messages_session_created_at_idx",
+      "task_tags_tag_id_idx",
+      "tasks_status_sort_idx",
+      "tasks_project_sort_idx",
+      "tasks_section_sort_idx",
+      "tasks_parent_sort_idx",
+      "tasks_reminder_due_idx",
+    ].every((indexName) => hasIndex(sqlite, indexName)),
 ];
 
 const knownAppTables = [
@@ -135,6 +148,14 @@ function hasTable(sqlite: Database, tableName: string): boolean {
   const result = sqlite.exec(
     "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
     [tableName],
+  );
+  return (result[0]?.values.length ?? 0) > 0;
+}
+
+function hasIndex(sqlite: Database, indexName: string): boolean {
+  const result = sqlite.exec(
+    "SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ? LIMIT 1",
+    [indexName],
   );
   return (result[0]?.values.length ?? 0) > 0;
 }

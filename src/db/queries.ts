@@ -1,14 +1,24 @@
-import { eq, desc, inArray, and, or, lte, gte, isNotNull, min, count } from "drizzle-orm";
+import { eq, asc, desc, inArray, and, or, lte, gte, isNotNull, min, max, count } from "drizzle-orm";
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import * as schema from "./schema.js";
 
 export function createQueries(db: BaseSQLiteDatabase<"sync", unknown, typeof schema>) {
   return {
     // ── Tasks ────────────────────────────────────────────
-    listTasks: () => db.select().from(schema.tasks).all(),
+    listTasks: () =>
+      db
+        .select()
+        .from(schema.tasks)
+        .orderBy(asc(schema.tasks.sortOrder), asc(schema.tasks.createdAt), asc(schema.tasks.id))
+        .all(),
 
     listTasksByParent: (parentId: string) =>
-      db.select().from(schema.tasks).where(eq(schema.tasks.parentId, parentId)).all(),
+      db
+        .select()
+        .from(schema.tasks)
+        .where(eq(schema.tasks.parentId, parentId))
+        .orderBy(asc(schema.tasks.sortOrder), asc(schema.tasks.createdAt), asc(schema.tasks.id))
+        .all(),
 
     getTask: (id: string) => db.select().from(schema.tasks).where(eq(schema.tasks.id, id)).all(),
 
@@ -44,6 +54,7 @@ export function createQueries(db: BaseSQLiteDatabase<"sync", unknown, typeof sch
             eq(schema.tasks.status, "pending"),
           ),
         )
+        .orderBy(asc(schema.tasks.remindAt), asc(schema.tasks.id))
         .all(),
 
     // ── Task Tags (junction) ─────────────────────────────
@@ -53,6 +64,7 @@ export function createQueries(db: BaseSQLiteDatabase<"sync", unknown, typeof sch
         .from(schema.taskTags)
         .innerJoin(schema.tags, eq(schema.taskTags.tagId, schema.tags.id))
         .where(eq(schema.taskTags.taskId, taskId))
+        .orderBy(asc(schema.tags.name), asc(schema.tags.id))
         .all(),
 
     getTaskTagsByTaskIds: (taskIds: string[]) =>
@@ -63,6 +75,7 @@ export function createQueries(db: BaseSQLiteDatabase<"sync", unknown, typeof sch
             .from(schema.taskTags)
             .innerJoin(schema.tags, eq(schema.taskTags.tagId, schema.tags.id))
             .where(inArray(schema.taskTags.taskId, taskIds))
+            .orderBy(asc(schema.taskTags.taskId), asc(schema.tags.name), asc(schema.tags.id))
             .all(),
 
     listAllTaskTags: () =>
@@ -70,6 +83,7 @@ export function createQueries(db: BaseSQLiteDatabase<"sync", unknown, typeof sch
         .select()
         .from(schema.taskTags)
         .innerJoin(schema.tags, eq(schema.taskTags.tagId, schema.tags.id))
+        .orderBy(asc(schema.taskTags.taskId), asc(schema.tags.name), asc(schema.tags.id))
         .all(),
 
     insertTaskTag: (taskId: string, tagId: string) =>
@@ -151,6 +165,7 @@ export function createQueries(db: BaseSQLiteDatabase<"sync", unknown, typeof sch
         .select()
         .from(schema.chatMessages)
         .where(eq(schema.chatMessages.sessionId, sessionId))
+        .orderBy(asc(schema.chatMessages.id))
         .all(),
 
     insertChatMessage: (msg: typeof schema.chatMessages.$inferInsert) =>
@@ -176,7 +191,7 @@ export function createQueries(db: BaseSQLiteDatabase<"sync", unknown, typeof sch
         })
         .from(schema.chatMessages)
         .groupBy(schema.chatMessages.sessionId)
-        .orderBy(desc(min(schema.chatMessages.createdAt)))
+        .orderBy(desc(max(schema.chatMessages.createdAt)), desc(max(schema.chatMessages.id)))
         .all(),
 
     getFirstUserMessage: (sessionId: string) =>
@@ -186,6 +201,7 @@ export function createQueries(db: BaseSQLiteDatabase<"sync", unknown, typeof sch
         .where(
           and(eq(schema.chatMessages.sessionId, sessionId), eq(schema.chatMessages.role, "user")),
         )
+        .orderBy(asc(schema.chatMessages.id))
         .limit(1)
         .get(),
 
@@ -237,7 +253,16 @@ export function createQueries(db: BaseSQLiteDatabase<"sync", unknown, typeof sch
 
     // ── Sections ────────────────────────────────────
     listSections: (projectId: string) =>
-      db.select().from(schema.sections).where(eq(schema.sections.projectId, projectId)).all(),
+      db
+        .select()
+        .from(schema.sections)
+        .where(eq(schema.sections.projectId, projectId))
+        .orderBy(
+          asc(schema.sections.sortOrder),
+          asc(schema.sections.createdAt),
+          asc(schema.sections.id),
+        )
+        .all(),
 
     getSection: (id: string) =>
       db.select().from(schema.sections).where(eq(schema.sections.id, id)).get(),

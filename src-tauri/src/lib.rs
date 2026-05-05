@@ -11,7 +11,7 @@ use std::{
 mod tauri_paths;
 
 use axum::{
-    body::{to_bytes, Body},
+    body::{to_bytes, Body, Bytes},
     extract::{OriginalUri, Path, State},
     http::{header, HeaderMap, HeaderName, HeaderValue, Method, StatusCode},
     response::{IntoResponse, Redirect, Response},
@@ -51,6 +51,7 @@ window.__JUNBAN_RUNTIME_READY__ = window.__TAURI_INTERNALS__.invoke('desktop_run
 "#;
 const REMOTE_SESSION_COOKIE: &str = "junban_remote_session";
 const REMOTE_LOGIN_MAX_FAILED_ATTEMPTS: u32 = 5;
+const REMOTE_API_PROXY_MAX_BODY_BYTES: usize = 25 * 1024 * 1024;
 const REMOTE_LOGIN_LOCKOUT_SECONDS: u64 = 60;
 const DESKTOP_API_HOST: &str = "127.0.0.1";
 const DESKTOP_BACKEND_START_ATTEMPTS: usize = 3;
@@ -503,6 +504,12 @@ fn build_remote_api_proxy_target(
         .unwrap_or(path_and_query);
 
     Ok(format!("{base}{suffix}"))
+}
+
+async fn read_remote_api_proxy_body(body: Body) -> Result<Bytes, Response> {
+    to_bytes(body, REMOTE_API_PROXY_MAX_BODY_BYTES)
+        .await
+        .map_err(|_| (StatusCode::PAYLOAD_TOO_LARGE, "Request body too large").into_response())
 }
 
 fn ensure_remote_access_backend_ready(runtime: &JunbanRuntimeDescriptor) -> Result<(), String> {
@@ -1170,9 +1177,9 @@ async fn proxy_remote_api(
         Err(err) => return (StatusCode::SERVICE_UNAVAILABLE, err).into_response(),
     };
 
-    let body_bytes = match to_bytes(body, usize::MAX).await {
+    let body_bytes = match read_remote_api_proxy_body(body).await {
         Ok(bytes) => bytes,
-        Err(_) => return (StatusCode::BAD_REQUEST, "Invalid request body").into_response(),
+        Err(response) => return response,
     };
 
     let mut upstream_request = state.http_client.request(method, target_url);
@@ -1493,11 +1500,15 @@ mod tests {
         build_desktop_runtime_descriptor, build_remote_api_proxy_target, build_session_status,
         build_status, build_unready_desktop_runtime_descriptor, default_remote_config,
         ensure_remote_access_backend_ready, is_expected_desktop_backend_response,
-        is_same_origin_remote_post, parse_session_cookie, read_remote_session_status,
-        register_failed_login_attempt, remote_server_bind_addrs, should_redirect_remote_path_to_root,
-        RemoteAuthState, JUNBAN_BACKEND_SERVICE,
+        is_same_origin_remote_post, parse_session_cookie, read_remote_api_proxy_body,
+        read_remote_session_status, register_failed_login_attempt, remote_server_bind_addrs,
+        should_redirect_remote_path_to_root, RemoteAuthState, JUNBAN_BACKEND_SERVICE,
+        REMOTE_API_PROXY_MAX_BODY_BYTES,
     };
-    use axum::http::{header, HeaderMap, HeaderValue};
+    use axum::{
+        body::Body,
+        http::{header, HeaderMap, HeaderValue, StatusCode},
+    };
     use std::io;
     use tokio::time::{Duration, Instant};
 
@@ -1590,6 +1601,17 @@ mod tests {
             .expect_err("unready runtime should not proxy requests");
 
         assert_eq!(error, "backend unavailable");
+    }
+
+    #[tokio::test]
+    async fn remote_api_proxy_rejects_bodies_above_limit() {
+        let body = Body::from(vec![0_u8; REMOTE_API_PROXY_MAX_BODY_BYTES + 1]);
+
+        let response = read_remote_api_proxy_body(body)
+            .await
+            .expect_err("body above proxy limit should be rejected");
+
+        assert_eq!(response.status(), StatusCode::PAYLOAD_TOO_LARGE);
     }
 
     #[test]

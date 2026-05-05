@@ -63,6 +63,14 @@ describe("MarkdownBackend", () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
+  it("does not advertise SQLite-equivalent transaction rollback", async () => {
+    expect(backend.supportsTransactionalRollback).toBe(false);
+    await backend.transaction(() => {
+      backend.insertTask(makeTask({ id: "tx-task" }));
+    });
+    expect(backend.getTask("tx-task")).toHaveLength(1);
+  });
+
   describe("initialize", () => {
     it("creates directory structure on empty dir", () => {
       expect(fs.existsSync(path.join(tmpDir, "inbox"))).toBe(true);
@@ -182,6 +190,43 @@ describe("MarkdownBackend", () => {
         .readdirSync(path.join(tmpDir, "inbox"))
         .filter((f) => f.endsWith(".md"));
       expect(inboxFiles).toHaveLength(0);
+    });
+
+    it("deletes dependent Markdown task data when deleting a task tree", () => {
+      backend.insertTag(makeTag());
+      backend.insertTask(makeTask({ id: "parent", title: "Parent" }));
+      backend.insertTask(makeTask({ id: "child", title: "Child", parentId: "parent" }));
+      backend.insertTask(makeTask({ id: "related", title: "Related" }));
+      backend.insertTaskTag("child", "tag-1");
+      backend.insertTaskComment({
+        id: "comment-1",
+        taskId: "child",
+        content: "note",
+        createdAt: now,
+        updatedAt: now,
+      });
+      backend.insertTaskActivity({
+        id: "activity-1",
+        taskId: "child",
+        action: "update",
+        field: null,
+        oldValue: null,
+        newValue: null,
+        createdAt: now,
+      });
+      backend.insertTaskRelation({ taskId: "child", relatedTaskId: "related", type: "blocks" });
+
+      expect(fs.existsSync(path.join(tmpDir, "_task_meta", "child.yaml"))).toBe(true);
+
+      backend.deleteTask("parent");
+
+      expect(backend.getTask("parent")).toHaveLength(0);
+      expect(backend.getTask("child")).toHaveLength(0);
+      expect(backend.getTaskTags("child")).toHaveLength(0);
+      expect(backend.listTaskComments("child")).toHaveLength(0);
+      expect(backend.listTaskActivity("child")).toHaveLength(0);
+      expect(backend.getTaskRelations("child")).toHaveLength(0);
+      expect(fs.existsSync(path.join(tmpDir, "_task_meta", "child.yaml"))).toBe(false);
     });
 
     it("deleteManyTasks", () => {
@@ -330,6 +375,34 @@ describe("MarkdownBackend", () => {
       const task = backend.getTask("task-abc123")[0];
       expect(task.projectId).toBeNull();
     });
+
+    it("deletes a project with Markdown cascade parity", () => {
+      backend.insertProject(makeProject());
+      backend.insertProject(
+        makeProject({ id: "child-project", name: "Child", parentId: "proj-1" }),
+      );
+      backend.insertSection({
+        id: "section-1",
+        projectId: "proj-1",
+        name: "Doing",
+        sortOrder: 0,
+        isCollapsed: false,
+        createdAt: now,
+      });
+      backend.insertTask(makeTask({ projectId: "proj-1", sectionId: "section-1" }));
+
+      backend.deleteProject("proj-1");
+
+      expect(backend.getTask("task-abc123")[0]).toEqual(
+        expect.objectContaining({ projectId: null, sectionId: null }),
+      );
+      expect(backend.listSections("proj-1")).toHaveLength(0);
+      expect(backend.getProject("child-project")[0].parentId).toBeNull();
+      expect(fs.existsSync(path.join(tmpDir, "projects", "work"))).toBe(false);
+      expect(fs.readdirSync(path.join(tmpDir, "inbox")).some((file) => file.endsWith(".md"))).toBe(
+        true,
+      );
+    });
   });
 
   describe("Tags", () => {
@@ -354,6 +427,41 @@ describe("MarkdownBackend", () => {
       backend.insertTag(makeTag());
       backend.deleteTag("tag-1");
       expect(backend.listTags()).toHaveLength(0);
+    });
+
+    it("removes deleted tags from task frontmatter", () => {
+      backend.insertTag(makeTag());
+      backend.insertTask(makeTask());
+      backend.insertTaskTag("task-abc123", "tag-1");
+
+      backend.deleteTag("tag-1");
+
+      expect(backend.getTaskTags("task-abc123")).toHaveLength(0);
+      const inboxFiles = fs.readdirSync(path.join(tmpDir, "inbox"));
+      const mdFile = inboxFiles.find((file) => file.endsWith(".md"))!;
+      const content = fs.readFileSync(path.join(tmpDir, "inbox", mdFile), "utf-8");
+      expect(content).not.toContain("tags:");
+      expect(content).not.toContain("urgent");
+    });
+  });
+
+  describe("Task metadata", () => {
+    it("removes empty metadata files after comment deletion", () => {
+      backend.insertTask(makeTask());
+      backend.insertTaskComment({
+        id: "comment-1",
+        taskId: "task-abc123",
+        content: "note",
+        createdAt: now,
+        updatedAt: now,
+      });
+      const metaPath = path.join(tmpDir, "_task_meta", "task-abc123.yaml");
+      expect(fs.existsSync(metaPath)).toBe(true);
+
+      backend.deleteTaskComment("comment-1");
+
+      expect(backend.listTaskComments("task-abc123")).toHaveLength(0);
+      expect(fs.existsSync(metaPath)).toBe(false);
     });
   });
 

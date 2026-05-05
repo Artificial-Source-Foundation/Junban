@@ -47,15 +47,24 @@ export default class TestPlugin {
   async onUnload() {}
 }
 `;
+const UNSAFE_COMMUNITY_PLUGIN_VM_ENV = "JUNBAN_ENABLE_UNSAFE_COMMUNITY_PLUGIN_VM";
 
 describe("Plugin System Integration", () => {
   let pluginDir: string;
+  let previousUnsafeCommunityPluginVm: string | undefined;
 
   beforeEach(() => {
+    previousUnsafeCommunityPluginVm = process.env[UNSAFE_COMMUNITY_PLUGIN_VM_ENV];
+    process.env[UNSAFE_COMMUNITY_PLUGIN_VM_ENV] = "true";
     pluginDir = createTempPluginDir();
   });
 
   afterEach(() => {
+    if (previousUnsafeCommunityPluginVm === undefined) {
+      delete process.env[UNSAFE_COMMUNITY_PLUGIN_VM_ENV];
+    } else {
+      process.env[UNSAFE_COMMUNITY_PLUGIN_VM_ENV] = previousUnsafeCommunityPluginVm;
+    }
     fs.rmSync(pluginDir, { recursive: true, force: true });
   });
 

@@ -91,6 +91,16 @@ function readTaskColumnNames(sqlite: Database.Database): string[] {
   );
 }
 
+function readIndexNames(sqlite: Database.Database): string[] {
+  return (
+    sqlite
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'index' ORDER BY name")
+      .all() as Array<{
+      name: string;
+    }>
+  ).map((row) => row.name);
+}
+
 function hasTable(sqlite: Database.Database, tableName: string): boolean {
   return (
     sqlite
@@ -144,6 +154,26 @@ describe("runMigrations legacy ledger compatibility", () => {
     expect(sqlite.prepare("SELECT project_id FROM tasks WHERE id = ?").get("task-1")).toEqual({
       project_id: "project-1",
     });
+  });
+
+  it("applies hot-path indexes on a fresh database", () => {
+    const sqlite = createDatabase();
+
+    const db = drizzle(sqlite, { schema });
+    runMigrations(db);
+
+    expect(readIndexNames(sqlite)).toEqual(
+      expect.arrayContaining([
+        "chat_messages_session_id_id_idx",
+        "chat_messages_session_created_at_idx",
+        "task_tags_tag_id_idx",
+        "tasks_status_sort_idx",
+        "tasks_project_sort_idx",
+        "tasks_section_sort_idx",
+        "tasks_parent_sort_idx",
+        "tasks_reminder_due_idx",
+      ]),
+    );
   });
 
   it("refuses to backfill an inconsistent schemaful database", () => {

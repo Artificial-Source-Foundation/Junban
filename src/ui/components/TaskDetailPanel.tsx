@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import type { Task, UpdateTaskInput, TaskComment, TaskActivity } from "../../core/types.js";
 import * as taskApi from "../api/tasks.js";
 import { SubtaskSection } from "./SubtaskSection.js";
@@ -8,6 +8,7 @@ import { TaskRelations } from "./task-detail/TaskRelations.js";
 import { TaskCommentsActivity } from "./task-detail/TaskCommentsActivity.js";
 import { TaskDetailHeader } from "./task-detail/TaskDetailHeader.js";
 import { TaskDetailDescription } from "./task-detail/TaskDetailDescription.js";
+import { useFocusTrap } from "../hooks/useFocusTrap.js";
 
 interface TaskDetailPanelProps {
   task: Task;
@@ -69,6 +70,7 @@ export function TaskDetailPanel({
   onDeleteComment,
 }: TaskDetailPanelProps) {
   const { settings } = useGeneralSettings();
+  const panelRef = useRef<HTMLDivElement>(null);
   const [title, setTitle] = useState(task.title);
 
   // Comments & activity tab state
@@ -184,6 +186,8 @@ export function TaskDetailPanel({
   const showCommentsActivity =
     settings.feature_comments !== "false" && (comments !== undefined || activity !== undefined);
 
+  useFocusTrap(panelRef, true);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -193,6 +197,7 @@ export function TaskDetailPanel({
       onClick={onClose}
     >
       <div
+        ref={panelRef}
         className="bg-surface shadow-xl border border-border flex flex-col fixed bottom-0 left-0 right-0 h-[85vh] max-h-[calc(100vh-var(--height-bottom-nav))] rounded-t-xl md:relative md:inset-auto md:rounded-lg md:w-full md:max-w-4xl md:h-[85vh] md:max-h-[85vh] md:mx-4"
         onClick={(e) => e.stopPropagation()}
       >
@@ -219,6 +224,7 @@ export function TaskDetailPanel({
           <div className="flex-1 overflow-auto p-3 md:p-6 space-y-4">
             <input
               type="text"
+              aria-label="Task title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onBlur={handleTitleBlur}

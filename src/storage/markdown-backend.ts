@@ -47,6 +47,8 @@ const logger = createLogger("storage-md");
  * Reads are served from in-memory indexes; writes update both index and disk.
  */
 export class MarkdownBackend implements IStorage {
+  readonly supportsTransactionalRollback = false;
+
   private idx: MarkdownIndexes;
 
   constructor(basePath: string) {
@@ -68,6 +70,14 @@ export class MarkdownBackend implements IStorage {
       taskRelationList: [],
       aiMemoryIndex: new Map(),
     };
+  }
+
+  async transaction<T>(operation: () => T | Promise<T>): Promise<T> {
+    return operation();
+  }
+
+  afterTransactionCommit(callback: () => void): void {
+    callback();
   }
 
   /** Scan directory tree, parse all files, build in-memory indexes. */

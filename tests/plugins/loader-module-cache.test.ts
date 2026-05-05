@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -9,6 +9,8 @@ import { CommandRegistry } from "../../src/plugins/command-registry.js";
 import { UIRegistry } from "../../src/plugins/ui-registry.js";
 
 const tmpDirs: string[] = [];
+const UNSAFE_COMMUNITY_PLUGIN_VM_ENV = "JUNBAN_ENABLE_UNSAFE_COMMUNITY_PLUGIN_VM";
+let previousUnsafeCommunityPluginVm: string | undefined;
 
 function makeTmpDir(prefix: string): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -79,7 +81,17 @@ function commandNameFor(services: PluginServices, pluginId: string): string | un
     .find((cmd) => cmd.id === `${pluginId}:version`)?.name;
 }
 
+beforeEach(() => {
+  previousUnsafeCommunityPluginVm = process.env[UNSAFE_COMMUNITY_PLUGIN_VM_ENV];
+  process.env[UNSAFE_COMMUNITY_PLUGIN_VM_ENV] = "true";
+});
+
 afterEach(() => {
+  if (previousUnsafeCommunityPluginVm === undefined) {
+    delete process.env[UNSAFE_COMMUNITY_PLUGIN_VM_ENV];
+  } else {
+    process.env[UNSAFE_COMMUNITY_PLUGIN_VM_ENV] = previousUnsafeCommunityPluginVm;
+  }
   for (const dir of tmpDirs) {
     fs.rmSync(dir, { recursive: true, force: true });
   }

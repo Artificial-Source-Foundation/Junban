@@ -73,6 +73,8 @@ describe("server health contract", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       ok: true,
+      ready: true,
+      degraded: false,
       service: "junban-backend",
       runtime: "node",
     });

@@ -137,7 +137,7 @@ export const TaskItem = React.memo(function TaskItem({
     <div
       ref={innerRef}
       style={{ ...style, ...indentPadding }}
-      role="button"
+      role="group"
       tabIndex={0}
       aria-label={`Task: ${task.title}${depth > 0 ? ` (sub-task, level ${depth})` : ""}`}
       onKeyDown={(e) => {

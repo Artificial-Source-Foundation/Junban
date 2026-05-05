@@ -101,6 +101,9 @@ describe("IStorage row types", () => {
     // and references all method groups
     function checkInterface(s: IStorage) {
       // Tasks
+      void s.supportsTransactionalRollback;
+      void s.transaction(() => undefined);
+      s.afterTransactionCommit(() => undefined);
       s.listTasks();
       s.getTask("id");
       // Projects

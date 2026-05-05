@@ -4,6 +4,7 @@ import type { TaskService } from "../../src/core/tasks.js";
 import type { TagService } from "../../src/core/tags.js";
 import type { ProjectService } from "../../src/core/projects.js";
 import type { EventBus } from "../../src/core/event-bus.js";
+import type { IStorage } from "../../src/storage/interface.js";
 import { NotFoundError, ValidationError } from "../../src/core/errors.js";
 
 describe("TaskService", () => {
@@ -11,6 +12,7 @@ describe("TaskService", () => {
   let _tagService: TagService;
   let _projectService: ProjectService;
   let eventBus: EventBus;
+  let storage: IStorage;
 
   beforeEach(() => {
     const services = createTestServices();
@@ -18,6 +20,7 @@ describe("TaskService", () => {
     _tagService = services.tagService;
     _projectService = services.projectService;
     eventBus = services.eventBus;
+    storage = services.storage;
   });
 
   // ── create ──
@@ -107,6 +110,52 @@ describe("TaskService", () => {
       expect(listener).toHaveBeenCalledOnce();
       expect(listener).toHaveBeenCalledWith(expect.objectContaining({ id: task.id }));
     });
+
+    it("defers task:create inside an outer transaction until commit", async () => {
+      const listener = vi.fn();
+      eventBus.on("task:create", listener);
+
+      let taskId = "";
+      await storage.transaction(async () => {
+        const task = await taskService.create({ title: "Outer transaction create" });
+        taskId = task.id;
+        expect(listener).not.toHaveBeenCalled();
+      });
+
+      expect(listener).toHaveBeenCalledOnce();
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({ id: taskId }));
+    });
+
+    it("discards task:create when an outer transaction rolls back", async () => {
+      const listener = vi.fn();
+      eventBus.on("task:create", listener);
+
+      await expect(
+        storage.transaction(async () => {
+          await taskService.create({ title: "Rolled back create" });
+          expect(listener).not.toHaveBeenCalled();
+          throw new Error("outer rollback");
+        }),
+      ).rejects.toThrow("outer rollback");
+
+      expect(listener).not.toHaveBeenCalled();
+      const tasks = await taskService.list();
+      expect(tasks.some((task) => task.title === "Rolled back create")).toBe(false);
+    });
+
+    it("rolls back task row creation when tag association fails", async () => {
+      vi.spyOn(storage, "insertTaskTag").mockImplementationOnce(() => {
+        throw new Error("tag join failed");
+      });
+
+      await expect(taskService.create({ title: "Atomic create", tags: ["work"] })).rejects.toThrow(
+        "tag join failed",
+      );
+
+      const tasks = await taskService.list();
+      expect(tasks.some((task) => task.title === "Atomic create")).toBe(false);
+      expect(storage.getTagByName("work")).toHaveLength(0);
+    });
   });
 
   // ── get ──
@@ -164,6 +213,24 @@ describe("TaskService", () => {
       const updated = await taskService.update(task.id, { tags: ["new-tag", "another"] });
 
       expect(updated.tags.map((t) => t.name).sort()).toEqual(["another", "new-tag"]);
+    });
+
+    it("rolls back tag replacement when a new tag association fails", async () => {
+      const task = await taskService.create({
+        title: "Retag atomically",
+        tags: ["old-tag"],
+      });
+      vi.spyOn(storage, "insertTaskTag").mockImplementationOnce(() => {
+        throw new Error("tag join failed");
+      });
+
+      await expect(taskService.update(task.id, { tags: ["new-tag"] })).rejects.toThrow(
+        "tag join failed",
+      );
+
+      const unchanged = await taskService.get(task.id);
+      expect(unchanged!.tags.map((tag) => tag.name)).toEqual(["old-tag"]);
+      expect(storage.getTagByName("new-tag")).toHaveLength(0);
     });
 
     it("throws NotFoundError for non-existent task", async () => {
@@ -251,6 +318,23 @@ describe("TaskService", () => {
       expect(listener).toHaveBeenCalledOnce();
     });
 
+    it("discards task:complete when an outer transaction rolls back", async () => {
+      const task = await taskService.create({ title: "Rollback complete" });
+      const listener = vi.fn();
+      eventBus.on("task:complete", listener);
+
+      await expect(
+        storage.transaction(async () => {
+          await taskService.complete(task.id);
+          expect(listener).not.toHaveBeenCalled();
+          throw new Error("outer rollback");
+        }),
+      ).rejects.toThrow("outer rollback");
+
+      expect(listener).not.toHaveBeenCalled();
+      expect((await taskService.get(task.id))!.status).toBe("pending");
+    });
+
     it("cascade-completes child tasks", async () => {
       const parent = await taskService.create({ title: "Parent" });
       const child = await taskService.create({
@@ -262,6 +346,32 @@ describe("TaskService", () => {
 
       const childAfter = await taskService.get(child.id);
       expect(childAfter!.status).toBe("completed");
+    });
+
+    it("rolls back parent completion when cascade-completing a child fails", async () => {
+      const parent = await taskService.create({ title: "Parent" });
+      const child = await taskService.create({
+        title: "Child",
+        parentId: parent.id,
+      });
+      const completeListener = vi.fn();
+      eventBus.on("task:complete", completeListener);
+
+      const originalUpdateTask = storage.updateTask.bind(storage);
+      let updateCalls = 0;
+      vi.spyOn(storage, "updateTask").mockImplementation((taskId, data) => {
+        updateCalls += 1;
+        if (updateCalls === 2) {
+          throw new Error("child completion failed");
+        }
+        return originalUpdateTask(taskId, data);
+      });
+
+      await expect(taskService.complete(parent.id)).rejects.toThrow("child completion failed");
+
+      expect((await taskService.get(parent.id))!.status).toBe("pending");
+      expect((await taskService.get(child.id))!.status).toBe("pending");
+      expect(completeListener).not.toHaveBeenCalled();
     });
 
     it("creates next occurrence for recurring tasks", async () => {
@@ -283,6 +393,31 @@ describe("TaskService", () => {
       expect(new Date(pending[0].dueDate!).getTime()).toBeGreaterThan(
         new Date("2026-03-20T09:00:00.000Z").getTime(),
       );
+    });
+
+    it("rolls back recurring completion when next occurrence creation fails", async () => {
+      const task = await taskService.create({
+        title: "Daily standup",
+        dueDate: "2026-03-20T09:00:00.000Z",
+        dueTime: true,
+        recurrence: "daily",
+      });
+      const completeListener = vi.fn();
+      const createListener = vi.fn();
+      eventBus.on("task:complete", completeListener);
+      eventBus.on("task:create", createListener);
+
+      vi.spyOn(storage, "insertTask").mockImplementationOnce(() => {
+        throw new Error("next occurrence failed");
+      });
+
+      await expect(taskService.complete(task.id)).rejects.toThrow("next occurrence failed");
+
+      expect((await taskService.get(task.id))!.status).toBe("pending");
+      const allTasks = await taskService.list();
+      expect(allTasks.filter((t) => t.title === "Daily standup")).toHaveLength(1);
+      expect(completeListener).not.toHaveBeenCalled();
+      expect(createListener).not.toHaveBeenCalled();
     });
   });
 
@@ -438,6 +573,19 @@ describe("TaskService", () => {
       const results = await taskService.completeMany([t1.id, t2.id]);
       expect(results).toHaveLength(2);
       expect(results.every((t) => t.status === "completed")).toBe(true);
+    });
+
+    it("rolls back completeMany when a later item fails", async () => {
+      const t1 = await taskService.create({ title: "Batch 1" });
+      const completeListener = vi.fn();
+      eventBus.on("task:complete", completeListener);
+
+      await expect(taskService.completeMany([t1.id, "missing-task"])).rejects.toThrow(
+        NotFoundError,
+      );
+
+      expect((await taskService.get(t1.id))!.status).toBe("pending");
+      expect(completeListener).not.toHaveBeenCalled();
     });
 
     it("deleteMany deletes multiple tasks", async () => {

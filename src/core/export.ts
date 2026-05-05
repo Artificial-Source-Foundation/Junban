@@ -8,7 +8,7 @@ export interface ExportData {
   version: string;
 }
 
-/** Export all data as a structured JSON string. */
+/** Export flat task transfer data with referenced project/tag names (not a full backup). */
 export function exportJSON(data: ExportData): string {
   return JSON.stringify(data, null, 2);
 }

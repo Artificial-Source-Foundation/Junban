@@ -29,6 +29,11 @@ import {
 } from "./compatibility.js";
 
 const logger = createLogger("plugin-loader");
+const UNSAFE_COMMUNITY_PLUGIN_VM_ENV = "JUNBAN_ENABLE_UNSAFE_COMMUNITY_PLUGIN_VM";
+
+function isUnsafeCommunityPluginVmEnabled(): boolean {
+  return process.env[UNSAFE_COMMUNITY_PLUGIN_VM_ENV] === "true";
+}
 
 export interface LoadedPlugin {
   manifest: PluginManifest;
@@ -132,6 +137,30 @@ export class PluginLoader {
     this.builtinNativeStageDirs.set(pluginId, stageDir);
 
     return path.join(stageDir, entryRelPath);
+  }
+
+  private builtinNativeImportHref(
+    pluginId: string,
+    pluginPath: string,
+    entryRelPath: string,
+  ): string {
+    const entryFile = path.join(pluginPath, entryRelPath);
+
+    // Source-tree built-ins import shared app modules outside their plugin
+    // directory (for example ../../lifecycle.js). Staging only the plugin
+    // directory breaks those relative imports, so use a cache-busted source URL.
+    if (path.resolve(pluginPath).includes(`${path.sep}src${path.sep}plugins${path.sep}builtin${path.sep}`)) {
+      const revision = (this.builtinLoadRevisions.get(pluginId) ?? 0) + 1;
+      this.builtinLoadRevisions.set(pluginId, revision);
+      return `${pathToFileURL(entryFile).href}?junban_plugin_reload=${revision}`;
+    }
+
+    const stagedEntry = this.stageBuiltinForNativeImport(
+      pluginId,
+      pluginPath,
+      entryRelPath,
+    );
+    return pathToFileURL(stagedEntry).href;
   }
 
   private cleanupBuiltinNativeStage(pluginId: string): void {
@@ -382,8 +411,15 @@ export class PluginLoader {
 
       logger.info(`Loading plugin: ${pluginId}`);
 
-      // Block community plugins when restricted mode is on
+      // Community plugins still use the legacy same-process VM sandbox, so V1
+      // only permits execution behind an explicit unsafe local-dev opt-in.
       if (!loaded.builtin) {
+        if (!isUnsafeCommunityPluginVmEnabled()) {
+          throw new ValidationError(
+            `Community plugin execution is disabled in V1 because the legacy same-process sandbox is not a security boundary. Set ${UNSAFE_COMMUNITY_PLUGIN_VM_ENV}=true only for trusted local development plugins.`,
+          );
+        }
+
         const setting =
           this.services.queries.getAppSetting("community_plugins_enabled");
         if (setting?.value !== "true") {
@@ -456,12 +492,12 @@ export class PluginLoader {
                 return this.moduleLoader(specifier);
               }
 
-              const stagedEntry = this.stageBuiltinForNativeImport(
+              const importHref = this.builtinNativeImportHref(
                 pluginId,
                 loaded.path,
                 loaded.manifest.main,
               );
-              return import(/* @vite-ignore */ pathToFileURL(stagedEntry).href);
+              return import(/* @vite-ignore */ importHref);
             })()
           : await (async () => {
               sandbox = createSandbox({

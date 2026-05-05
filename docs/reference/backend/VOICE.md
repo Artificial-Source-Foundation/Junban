@@ -175,6 +175,7 @@ Local Model Flow (Whisper/Kokoro):
 - `baseUrl` — proxy endpoint (default: `/api/voice/transcribe`)
 - `model` — via opts (default: `whisper-large-v3-turbo`)
 - `language` — via opts
+  **Transport limits:** the Hono server and packaged-desktop Rust proxy allow up to 25 MB for `/api/voice/transcribe`, matching Groq's audio upload limit. Other API routes keep the smaller default request-body limit.
   **Key Dependencies:** Fetch API, Vite proxy middleware
   **Used By:** `provider.ts`
 

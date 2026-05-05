@@ -147,6 +147,39 @@ describe("TaskDetailPanel", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it("calls onClose when Escape is pressed", () => {
+    const onClose = vi.fn();
+    render(<TaskDetailPanel {...defaultProps} onClose={onClose} />);
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("traps tab focus inside the panel", () => {
+    render(<TaskDetailPanel {...defaultProps} />);
+
+    const focusable = Array.from(
+      screen
+        .getByRole("dialog")
+        .querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+    );
+    expect(focusable.length).toBeGreaterThan(1);
+    const firstFocusable = focusable[0]!;
+    const lastFocusable = focusable[focusable.length - 1]!;
+
+    expect(document.activeElement).toBe(firstFocusable);
+
+    lastFocusable.focus();
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(document.activeElement).toBe(firstFocusable);
+
+    firstFocusable.focus();
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(lastFocusable);
+  });
+
   it("calls onClose when clicking the backdrop", () => {
     const onClose = vi.fn();
     render(<TaskDetailPanel {...defaultProps} onClose={onClose} />);

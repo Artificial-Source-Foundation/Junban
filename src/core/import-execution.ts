@@ -7,6 +7,12 @@ interface ImportTaskService {
     priority: number | null;
     dueDate?: string;
     dueTime: boolean;
+    remindAt?: string | null;
+    estimatedMinutes?: number | null;
+    actualMinutes?: number | null;
+    deadline?: string | null;
+    isSomeday?: boolean;
+    dreadLevel?: number | null;
     projectId?: string;
     recurrence?: string;
     tags: string[];
@@ -24,6 +30,7 @@ interface ImportProjectService {
 export interface ImportExecutionServices {
   taskService: ImportTaskService;
   projectService: ImportProjectService;
+  transaction?: <T>(operation: () => T | Promise<T>) => Promise<T>;
 }
 
 function messageForError(err: unknown): string {
@@ -38,9 +45,10 @@ function messageForError(err: unknown): string {
  * - on the first failure, previously created tasks/projects in this run are rolled back
  * - result is either full success or failure with `imported: 0`
  */
-export async function importTasksWithRollback(
+async function runImport(
   services: ImportExecutionServices,
   importedTasks: ImportedTask[],
+  rollbackOnFailure: boolean,
 ): Promise<ImportResult> {
   const createdTaskIds: string[] = [];
   const createdProjectIds: string[] = [];
@@ -73,6 +81,12 @@ export async function importTasksWithRollback(
         priority: t.priority,
         dueDate: t.dueDate ?? undefined,
         dueTime: t.dueTime,
+        remindAt: t.remindAt ?? undefined,
+        estimatedMinutes: t.estimatedMinutes ?? undefined,
+        actualMinutes: t.actualMinutes ?? undefined,
+        deadline: t.deadline ?? undefined,
+        isSomeday: t.isSomeday ?? undefined,
+        dreadLevel: t.dreadLevel ?? undefined,
         projectId,
         recurrence: t.recurrence ?? undefined,
         tags: t.tagNames,
@@ -86,6 +100,10 @@ export async function importTasksWithRollback(
 
     return { imported: importedTasks.length, errors: [] };
   } catch (err) {
+    if (!rollbackOnFailure) {
+      throw err;
+    }
+
     const rollbackErrors: string[] = [];
 
     for (const taskId of createdTaskIds.reverse()) {
@@ -109,6 +127,24 @@ export async function importTasksWithRollback(
     return {
       imported: 0,
       errors: [`Import aborted and rolled back: ${messageForError(err)}`, ...rollbackErrors],
+    };
+  }
+}
+
+export async function importTasksWithRollback(
+  services: ImportExecutionServices,
+  importedTasks: ImportedTask[],
+): Promise<ImportResult> {
+  if (!services.transaction) {
+    return runImport(services, importedTasks, true);
+  }
+
+  try {
+    return await services.transaction(() => runImport(services, importedTasks, false));
+  } catch (err) {
+    return {
+      imported: 0,
+      errors: [`Import aborted and rolled back: ${messageForError(err)}`],
     };
   }
 }

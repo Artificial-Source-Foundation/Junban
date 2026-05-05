@@ -19,14 +19,43 @@ import type {
 
 // ── Persist helpers (write index state to disk) ──
 
+export function writeTextFileAtomic(filePath: string, content: string): void {
+  const dir = path.dirname(filePath);
+  const tempPath = path.join(
+    dir,
+    `.${path.basename(filePath)}.${process.pid}.${Date.now()}.${Math.random()
+      .toString(36)
+      .slice(2)}.tmp`,
+  );
+
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(tempPath, content, "utf-8");
+    fs.renameSync(tempPath, filePath);
+  } catch (err) {
+    try {
+      if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+    } catch {
+      // Ignore cleanup failure so the original write error is preserved.
+    }
+    throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
+  }
+}
+
+export function deleteFileIfExists(filePath: string): void {
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  } catch (err) {
+    throw new StorageError(`delete ${filePath}`, err instanceof Error ? err : undefined);
+  }
+}
+
 export function persistTags(idx: MarkdownIndexes): void {
   const tags = Array.from(idx.tagIndex.values()).sort((a, b) => a.name.localeCompare(b.name));
   const filePath = path.join(idx.basePath, "_tags.yaml");
-  try {
-    fs.writeFileSync(filePath, YAML.stringify(tags), "utf-8");
-  } catch (err) {
-    throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
-  }
+  writeTextFileAtomic(filePath, YAML.stringify(tags));
 }
 
 export function persistAppSettings(idx: MarkdownIndexes): void {
@@ -37,11 +66,7 @@ export function persistAppSettings(idx: MarkdownIndexes): void {
     obj[key] = { value: row.value, updatedAt: row.updatedAt };
   }
   const filePath = path.join(idx.basePath, "_settings.yaml");
-  try {
-    fs.writeFileSync(filePath, YAML.stringify(obj), "utf-8");
-  } catch (err) {
-    throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
-  }
+  writeTextFileAtomic(filePath, YAML.stringify(obj));
 }
 
 export function persistPluginPermissions(idx: MarkdownIndexes): void {
@@ -50,22 +75,14 @@ export function persistPluginPermissions(idx: MarkdownIndexes): void {
     obj[id] = perms;
   }
   const filePath = path.join(idx.basePath, "_plugins", "permissions.yaml");
-  try {
-    fs.writeFileSync(filePath, YAML.stringify(obj), "utf-8");
-  } catch (err) {
-    throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
-  }
+  writeTextFileAtomic(filePath, YAML.stringify(obj));
 }
 
 export function persistChatSession(idx: MarkdownIndexes, sessionId: string): void {
   const messages = idx.chatMessages.get(sessionId);
   if (!messages) return;
   const filePath = path.join(idx.basePath, "_chat", `${sessionId}.yaml`);
-  try {
-    fs.writeFileSync(filePath, YAML.stringify(messages), "utf-8");
-  } catch (err) {
-    throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
-  }
+  writeTextFileAtomic(filePath, YAML.stringify(messages));
 }
 
 export function persistTemplates(idx: MarkdownIndexes): void {
@@ -73,39 +90,30 @@ export function persistTemplates(idx: MarkdownIndexes): void {
     a.name.localeCompare(b.name),
   );
   const filePath = path.join(idx.basePath, "_templates.yaml");
-  try {
-    fs.writeFileSync(filePath, YAML.stringify(templates), "utf-8");
-  } catch (err) {
-    throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
-  }
+  writeTextFileAtomic(filePath, YAML.stringify(templates));
 }
 
 export function persistSections(idx: MarkdownIndexes): void {
   const sections = Array.from(idx.sectionIndex.values());
   const filePath = path.join(idx.basePath, "_sections.yaml");
-  try {
-    fs.writeFileSync(filePath, YAML.stringify(sections), "utf-8");
-  } catch (err) {
-    throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
-  }
+  writeTextFileAtomic(filePath, YAML.stringify(sections));
 }
 
 export function persistTaskMeta(idx: MarkdownIndexes, taskId: string): void {
   const comments = idx.taskCommentIndex.get(taskId) ?? [];
   const activities = idx.taskActivityIndex.get(taskId) ?? [];
-  if (comments.length === 0 && activities.length === 0) return;
+  const filePath = path.join(idx.basePath, "_task_meta", `${taskId}.yaml`);
+  if (comments.length === 0 && activities.length === 0) {
+    deleteFileIfExists(filePath);
+    return;
+  }
   const metaDir = path.join(idx.basePath, "_task_meta");
   try {
     fs.mkdirSync(metaDir, { recursive: true });
   } catch {
     // directory may already exist
   }
-  const filePath = path.join(metaDir, `${taskId}.yaml`);
-  try {
-    fs.writeFileSync(filePath, YAML.stringify({ comments, activities }), "utf-8");
-  } catch (err) {
-    throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
-  }
+  writeTextFileAtomic(filePath, YAML.stringify({ comments, activities }));
 }
 
 export function persistDailyStats(idx: MarkdownIndexes): void {
@@ -113,30 +121,18 @@ export function persistDailyStats(idx: MarkdownIndexes): void {
     a.date.localeCompare(b.date),
   );
   const filePath = path.join(idx.basePath, "_daily_stats.yaml");
-  try {
-    fs.writeFileSync(filePath, YAML.stringify(stats), "utf-8");
-  } catch (err) {
-    throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
-  }
+  writeTextFileAtomic(filePath, YAML.stringify(stats));
 }
 
 export function persistTaskRelations(idx: MarkdownIndexes): void {
   const filePath = path.join(idx.basePath, "_task_relations.yaml");
-  try {
-    fs.writeFileSync(filePath, YAML.stringify(idx.taskRelationList), "utf-8");
-  } catch (err) {
-    throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
-  }
+  writeTextFileAtomic(filePath, YAML.stringify(idx.taskRelationList));
 }
 
 export function persistAiMemories(idx: MarkdownIndexes): void {
   const memories = Array.from(idx.aiMemoryIndex.values());
   const filePath = path.join(idx.basePath, "_ai_memories.json");
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(memories, null, 2), "utf-8");
-  } catch (err) {
-    throw new StorageError(`write ${filePath}`, err instanceof Error ? err : undefined);
-  }
+  writeTextFileAtomic(filePath, JSON.stringify(memories, null, 2));
 }
 
 // ── Load helpers (read from disk into indexes) ──

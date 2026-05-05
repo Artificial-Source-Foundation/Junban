@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 
 vi.mock("lucide-react", () => ({
   Circle: (props: any) => <svg data-testid="circle-icon" {...props} />,
@@ -87,6 +87,19 @@ describe("CalendarDayView", () => {
     render(<CalendarDayView {...defaultProps} />);
     fireEvent.click(screen.getByText("Test Task"));
     expect(defaultProps.onSelectTask).toHaveBeenCalledWith("t1");
+  });
+
+  it("uses sibling task and completion buttons instead of nested interactive controls", () => {
+    render(<CalendarDayView {...defaultProps} />);
+
+    const openButton = screen.getByRole("button", { name: "Open task: Test Task" });
+    const completeButton = screen.getByRole("button", { name: "Complete task" });
+
+    expect(completeButton.tagName).toBe("BUTTON");
+    expect(within(openButton).queryByRole("button")).toBeNull();
+
+    fireEvent.click(completeButton);
+    expect(defaultProps.onToggleTask).toHaveBeenCalledWith("t1");
   });
 
   it("shows completed task with strikethrough styling", () => {

@@ -7,7 +7,8 @@ The `src/storage/` directory implements Junban's dual-backend storage architectu
 | File                    | Purpose                                                                     |
 | ----------------------- | --------------------------------------------------------------------------- |
 | `interface.ts`          | `IStorage` interface + row types (`TaskRow`, `ProjectRow`, `TagRow`, etc.)  |
-| `sqlite-backend.ts`     | SQLite implementation wrapping Drizzle ORM queries                          |
+| `sqlite-backend.ts`     | Browser-safe SQLite implementation wrapping Drizzle ORM queries             |
+| `sqlite-backend-node.ts` | Node-only SQLite transaction context wrapper                                |
 | `markdown-backend.ts`   | Markdown backend orchestrator with in-memory indexes                        |
 | `markdown/*.ts`         | Markdown backend task/project/metadata/persistence modules                  |
 | `markdown-utils.ts`     | YAML parsing/formatting helpers for the Markdown backend                    |
@@ -15,7 +16,7 @@ The `src/storage/` directory implements Junban's dual-backend storage architectu
 
 ## IStorage Interface
 
-Defined in `interface.ts`. All methods are synchronous (both backends return values directly, no promises).
+Defined in `interface.ts`. CRUD/query methods are synchronous (both backends return values directly). The `transaction()` helper is async so higher-level import/completion flows can keep a SQLite transaction open across service calls; `afterTransactionCommit()` lets services defer side effects until the outermost transaction commits. Callers must check `supportsTransactionalRollback` before treating a backend as durable rollback support.
 
 ### Row Types
 
@@ -41,6 +42,7 @@ Defined in `interface.ts`. All methods are synchronous (both backends return val
 
 | Group              | Methods                                                                                                                                                                    |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Transactions       | `supportsTransactionalRollback`, `transaction`, `afterTransactionCommit`                                                                                                    |
 | Tasks              | `listTasks`, `listTasksByParent`, `getTask`, `insertTask`, `insertTaskWithId`, `updateTask`, `deleteTask`, `deleteManyTasks`, `updateManyTasks`, `listTasksDueForReminder` |
 | Task-Tag Relations | `getTaskTags`, `getTaskTagsByTaskIds`, `listAllTaskTags`, `insertTaskTag`, `deleteTaskTags`, `deleteManyTaskTags`                                                          |
 | Projects           | `listProjects`, `getProject`, `getProjectByName`, `insertProject`, `updateProject`, `deleteProject`                                                                        |
@@ -59,12 +61,14 @@ Defined in `interface.ts`. All methods are synchronous (both backends return val
 
 ## SQLite Backend
 
-`sqlite-backend.ts` wraps the `createQueries()` function from `src/db/queries.ts`. Each IStorage method maps directly to a Drizzle query. This is the default backend and handles all complex filtering via SQL.
+`sqlite-backend.ts` wraps the `createQueries()` function from `src/db/queries.ts`. Each IStorage method maps directly to a Drizzle query. This is the default backend and handles all complex filtering via SQL. `supportsTransactionalRollback` is `true`; task create/update with tags, task completion cascades/recurrence and `completeMany`, bulk task updates/deletes, project/section cleanup, reorder operations, and import execution use SQLite transactions where the current service architecture allows it. Independent top-level SQLite transactions are serialized so overlapping async callers cannot accidentally share one rollback/commit boundary; nested calls from the same logical transaction reuse the active transaction. The browser/Tauri sql.js path uses the shared browser-safe backend, while Node startup uses `sqlite-backend-node.ts` for the Node-only async transaction context. Task create/complete events queued during a transaction are emitted only after the outermost SQLite commit and are discarded on rollback.
 
 Recent performance-oriented additions:
 
 - `listTasksByParent(parentId)` supports targeted child-task lookup without full task scans.
 - `getTaskTagsByTaskIds(taskIds)` supports batched tag hydration for reminder and child-task flows.
+- Hot-path indexes cover task status/project/section/parent/reminder lookups, task-tag reverse lookup, and chat message/session ordering.
+- Task and section lists use stable sort-order/created/id ordering; chat messages are read in insertion order and chat sessions are sorted by latest activity.
 
 ## Markdown Backend
 
@@ -101,7 +105,10 @@ Key design decisions:
 - Uses the `yaml` package (not `js-yaml`) for parsing
 - `markdown-utils.ts` handles YAML ↔ object conversion
 - Task move/rename writes are fail-safe: the new file is written first, and the old file is removed only after a successful write
+- Metadata and YAML/JSON sidecar writes use a temp-file-and-rename helper where practical, and empty task metadata files are removed when comments/activity are cleared
+- V1 cascade parity covers task delete (children, tags, relations, comments/activity metadata), tag delete (task frontmatter/tag links), project delete/move-to-inbox (task project/section clearing, child-project promotion, section cleanup), and section delete/clear
 - Task/tag lookup helpers mirror the SQLite targeted-query surface so core services can keep the same optimized code paths across both backends
+- Markdown `transaction()` is operation-scoped only and `supportsTransactionalRollback` is `false`; it does not provide SQLite-equivalent transactional recovery across multiple files. Use filesystem backups or version control for recovery before large Markdown imports or bulk edits.
 
 ## Backend Selection
 

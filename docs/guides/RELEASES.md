@@ -79,7 +79,7 @@ This guide describes how Junban desktop releases, in-app updates, changelog entr
 - Normal CI now runs `pnpm build`, `pnpm tauri:prepare-sidecar`, and `pnpm tauri:validate-sidecar` so pull requests fail before merge if the packaged desktop sidecar cannot be staged correctly.
 - `pnpm build` also runs `pnpm build:cli`, which emits the npm CLI package output under `dist-node/` without sharing Vite's frontend `dist/` directory.
 - Local `pnpm tauri:build` runs the same sidecar validation before Tauri bundles desktop artifacts.
-- `Dependency Review` runs on pull requests to flag risky dependency updates.
+- Current CI does not run GitHub Dependency Review, Playwright E2E, Playwright performance, or bundle-budget gates. Treat those as targeted/manual checks until explicit jobs are added; `pnpm check` includes coverage-gated Vitest and focused axe component smoke tests, and `pnpm audit --audit-level=moderate` is the current local dependency-audit command.
 - `Release` can run from a pushed tag or manual dispatch, but it only proceeds when the tag resolves to a commit already present on `main`.
 - `Release` builds `junban-cli.tgz` with `npm pack`, smoke-tests a global install from the tarball, uploads it to the draft release, and verifies the draft release includes that CLI asset alongside `.deb`, AppImage, and `latest.json` assets before publishing.
 - `Release` also verifies package metadata still says `Junban` and blocks stale visible `ASF Junban` Linux installer asset names.
